@@ -1,0 +1,2700 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>孩子行为理解 · AIPIWEN</title>
+<style>
+/* ─────────────────────────────────────
+   DESIGN TOKENS
+───────────────────────────────────── */
+:root {
+  /* Warm editorial palette */
+  --cream:      #FDFCF8;
+  --cream-deep: #F5F3EE;
+  --ink:        #1A1714;
+  --ink-70:     #4A4540;
+  --ink-40:     #8C8580;
+  --ink-20:     #C8C3BC;
+  --ink-10:     #EAE7E2;
+
+  /* Single accent — warm amber */
+  --amber:      #C2692A;
+  --amber-soft: #F5EDE4;
+  --amber-glow: rgba(194,105,42,.12);
+
+  /* Dark surface (buttons, report header) */
+  --dark:       #1A1714;
+  --dark-80:    rgba(26,23,20,.8);
+
+  /* Functional */
+  --ok:         #3A7D5E;
+  --ok-soft:    #EEF6F1;
+
+  /* Spacing & shape */
+  --r-sm:  10px;
+  --r-md:  16px;
+  --r-lg:  24px;
+  --r-xl:  32px;
+
+  /* Typography */
+  --font-serif: Georgia, 'Noto Serif SC', 'Source Han Serif SC', serif;
+  --font-sans:  -apple-system, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+
+  /* Transitions */
+  --ease: cubic-bezier(.4,0,.2,1);
+  --ease-spring: cubic-bezier(.34,1.56,.64,1);
+}
+
+/* ─────────────────────────────────────
+   RESET
+───────────────────────────────────── */
+*,*::before,*::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: var(--font-sans);
+  background: var(--cream);
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+  min-height: 100vh;
+}
+
+/* ─────────────────────────────────────
+   SCREEN SYSTEM
+───────────────────────────────────── */
+.screen { display: none; min-height: 100vh; flex-direction: column; }
+.screen.active { display: flex; }
+
+/* ─────────────────────────────────────
+   PROGRESS THREAD
+───────────────────────────────────── */
+.progress-thread {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: var(--ink-10);
+  z-index: 200;
+}
+.progress-thread-fill {
+  height: 100%;
+  background: var(--amber);
+  transition: width .6s var(--ease);
+}
+
+/* ─────────────────────────────────────
+   TOP NAV
+───────────────────────────────────── */
+.top-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px 12px;
+  position: sticky;
+  top: 0;
+  background: var(--cream);
+  z-index: 100;
+}
+.nav-back {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ink-40);
+  font-size: 14px;
+  cursor: pointer;
+  padding: 6px 0;
+  user-select: none;
+  transition: color .2s;
+}
+.nav-back:active { color: var(--ink); }
+.nav-back svg { width: 16px; height: 16px; }
+.nav-wordmark {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: .08em;
+  color: var(--ink-40);
+  text-transform: uppercase;
+}
+.nav-step-dot {
+  font-size: 13px;
+  color: var(--ink-40);
+}
+
+/* ─────────────────────────────────────
+   CONTENT COLUMN
+───────────────────────────────────── */
+.col {
+  flex: 1;
+  padding: 12px 28px 140px;
+  max-width: 520px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* ─────────────────────────────────────
+   TYPOGRAPHY
+───────────────────────────────────── */
+.t-eyebrow {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--amber);
+}
+.t-h1 {
+  font-family: var(--font-serif);
+  font-size: 34px;
+  line-height: 1.22;
+  letter-spacing: -.5px;
+  color: var(--ink);
+  font-weight: normal;
+}
+.t-h1 em { font-style: italic; color: var(--amber); }
+.t-h2 {
+  font-family: var(--font-serif);
+  font-size: 26px;
+  line-height: 1.3;
+  letter-spacing: -.3px;
+  color: var(--ink);
+  font-weight: normal;
+}
+.t-h2 .hl { color: var(--amber); }
+.t-body {
+  font-size: 16px;
+  line-height: 1.75;
+  color: var(--ink-70);
+}
+.t-caption {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--ink-40);
+}
+.t-note {
+  font-size: 12px;
+  color: var(--ink-40);
+  text-align: center;
+  line-height: 1.6;
+}
+
+/* ─────────────────────────────────────
+   PRIMARY BUTTON
+───────────────────────────────────── */
+.bottom-bar {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  padding: 16px 28px calc(20px + env(safe-area-inset-bottom));
+  background: linear-gradient(to top, var(--cream) 60%, transparent);
+  z-index: 100;
+}
+.btn-primary {
+  display: block;
+  width: 100%;
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 18px 28px;
+  background: var(--dark);
+  color: #FAF9F6;
+  border: none;
+  border-radius: 50px;
+  font-family: var(--font-sans);
+  font-size: 16px;
+  font-weight: 500;
+  letter-spacing: .01em;
+  cursor: pointer;
+  transition: all .25s var(--ease);
+  -webkit-tap-highlight-color: transparent;
+}
+.btn-primary:active { transform: scale(.97); background: #3A3530; }
+.btn-primary:disabled {
+  background: var(--ink-10);
+  color: var(--ink-40);
+  cursor: default;
+  transform: none;
+}
+
+/* ─────────────────────────────────────
+   OPTION CARDS — minimal selector
+───────────────────────────────────── */
+.options { display: flex; flex-direction: column; gap: 10px; }
+.opt {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 17px 20px;
+  background: #FFFEFB;
+  border: 1.5px solid var(--ink-10);
+  border-radius: var(--r-md);
+  cursor: pointer;
+  transition: all .2s var(--ease);
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  position: relative;
+  overflow: hidden;
+}
+.opt::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--amber-glow);
+  opacity: 0;
+  transition: opacity .2s;
+}
+.opt:active::before { opacity: 1; }
+.opt.selected {
+  border-color: var(--amber);
+  background: var(--amber-soft);
+}
+.opt-marker {
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  border: 1.5px solid var(--ink-20);
+  background: transparent;
+  flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  transition: all .2s;
+}
+.opt.selected .opt-marker {
+  background: var(--amber);
+  border-color: var(--amber);
+}
+.opt-marker-inner {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: white;
+  opacity: 0;
+  transition: opacity .2s;
+}
+.opt.selected .opt-marker-inner { opacity: 1; }
+.opt-text {
+  font-size: 15.5px;
+  line-height: 1.5;
+  color: var(--ink);
+}
+.opt.selected .opt-text { color: var(--amber); }
+/* Multi checkbox */
+.opt.multi .opt-marker { border-radius: 6px; }
+.opt.multi.selected .opt-marker-inner {
+  width: 9px; height: 5px;
+  border-radius: 0;
+  border: 2px solid white;
+  border-top: none; border-right: none;
+  background: transparent;
+  transform: rotate(-45deg) translate(0px,-1px);
+}
+
+/* Pill selectors (age/gender) */
+.pill-row { display: flex; gap: 10px; flex-wrap: wrap; }
+.pill {
+  flex: 1;
+  min-width: 80px;
+  padding: 15px 12px;
+  background: #FFFEFB;
+  border: 1.5px solid var(--ink-10);
+  border-radius: 50px;
+  text-align: center;
+  font-size: 15px;
+  color: var(--ink-70);
+  cursor: pointer;
+  transition: all .2s var(--ease);
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.pill:active { transform: scale(.97); }
+.pill.selected {
+  background: var(--dark);
+  border-color: var(--dark);
+  color: #FAF9F6;
+}
+.field-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--ink-40);
+  margin-top: 28px;
+  margin-bottom: 12px;
+}
+
+/* Text input */
+.name-field {
+  width: 100%;
+  padding: 20px 24px;
+  font-size: 22px;
+  font-family: var(--font-sans);
+  border: none;
+  border-bottom: 2px solid var(--ink-20);
+  background: transparent;
+  color: var(--ink);
+  outline: none;
+  text-align: center;
+  letter-spacing: .02em;
+  transition: border-color .2s;
+}
+.name-field:focus { border-color: var(--amber); }
+.name-field::placeholder { color: var(--ink-20); font-size: 18px; }
+
+.free-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  color: var(--ink-40);
+  cursor: pointer;
+  padding: 10px 0;
+  margin-top: 8px;
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-underline-offset: 3px;
+  transition: color .2s;
+}
+.free-link:active { color: var(--ink); }
+.free-textarea {
+  display: none;
+  width: 100%;
+  min-height: 110px;
+  padding: 18px;
+  margin-top: 12px;
+  border: 1.5px solid var(--ink-10);
+  border-radius: var(--r-md);
+  background: #FFFEFB;
+  font-family: var(--font-sans);
+  font-size: 16px;
+  color: var(--ink);
+  resize: none;
+  outline: none;
+  line-height: 1.7;
+  transition: border-color .2s;
+}
+.free-textarea:focus { border-color: var(--amber); }
+.free-textarea::placeholder { color: var(--ink-20); }
+
+/* ─────────────────────────────────────
+   SUMMARY CARD (step 5)
+───────────────────────────────────── */
+.summary-wrap {
+  background: #FFFEFB;
+  border: 1.5px solid var(--ink-10);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+}
+.summary-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--ink-10);
+}
+.summary-row:last-child { border-bottom: none; }
+.summary-check {
+  color: var(--ok);
+  font-size: 15px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.summary-label {
+  font-size: 12px;
+  color: var(--ink-40);
+  margin-bottom: 3px;
+  font-weight: 500;
+}
+.summary-val { font-size: 15px; color: var(--ink); }
+
+/* ═══════════════════════════════════════
+   SCREEN 1: LANDING
+═══════════════════════════════════════ */
+#screen-landing { background: var(--cream); overflow: hidden; }
+
+/* Ambient orb */
+.orb-container {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+.orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: .35;
+  animation: orbFloat 12s ease-in-out infinite;
+}
+.orb-1 {
+  width: 380px; height: 380px;
+  background: radial-gradient(circle, #E8C9A8 0%, #C2692A20 60%, transparent 80%);
+  top: -80px; right: -80px;
+  animation-duration: 14s;
+}
+.orb-2 {
+  width: 280px; height: 280px;
+  background: radial-gradient(circle, #D4E8D8 0%, transparent 70%);
+  bottom: 40px; left: -60px;
+  animation-duration: 10s;
+  animation-delay: -4s;
+}
+.orb-3 {
+  width: 200px; height: 200px;
+  background: radial-gradient(circle, #E8D4C8 0%, transparent 70%);
+  top: 40%; right: 10%;
+  animation-duration: 18s;
+  animation-delay: -8s;
+  opacity: .2;
+}
+@keyframes orbFloat {
+  0%,100% { transform: translate(0,0) scale(1); }
+  33%      { transform: translate(-20px,15px) scale(1.05); }
+  66%      { transform: translate(15px,-10px) scale(.95); }
+}
+
+.landing-scroll {
+  position: relative;
+  z-index: 1;
+  padding: 0 28px 140px;
+  max-width: 520px;
+  margin: 0 auto;
+  width: 100%;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Hero */
+.hero {
+  padding-top: 64px;
+  padding-bottom: 48px;
+}
+.hero-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+.hero-eye-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--amber);
+  animation: blink 3s ease-in-out infinite;
+}
+@keyframes blink {
+  0%,90%,100% { opacity: 1; }
+  45% { opacity: .3; }
+}
+.hero-eyebrow-text {
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--ink-40);
+}
+.hero-title {
+  font-family: var(--font-serif);
+  font-size: 38px;
+  line-height: 1.18;
+  letter-spacing: -.6px;
+  color: var(--ink);
+  font-weight: normal;
+  margin-bottom: 24px;
+}
+.hero-title em { font-style: italic; color: var(--amber); }
+.hero-body {
+  font-size: 17px;
+  line-height: 1.75;
+  color: var(--ink-70);
+  margin-bottom: 36px;
+  max-width: 340px;
+}
+
+/* Empathy quotes — the "storytelling" section */
+.moments {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 40px;
+}
+.moment {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--ink-10);
+  opacity: 0;
+  transform: translateY(10px);
+  animation: fadeUp .6s var(--ease) forwards;
+}
+.moment:nth-child(1) { animation-delay: .15s; }
+.moment:nth-child(2) { animation-delay: .3s; }
+.moment:nth-child(3) { animation-delay: .45s; }
+@keyframes fadeUp {
+  to { opacity: 1; transform: translateY(0); }
+}
+.moment-quote {
+  font-size: 16px;
+  color: var(--ink-70);
+  line-height: 1.6;
+  font-style: italic;
+  flex: 1;
+}
+.moment-mark {
+  color: var(--amber);
+  font-size: 20px;
+  flex-shrink: 0;
+  margin-top: 2px;
+  opacity: .5;
+}
+
+/* Social proof */
+.proof {
+  background: #FFFEFB;
+  border: 1px solid var(--ink-10);
+  border-radius: var(--r-lg);
+  padding: 20px;
+  margin-bottom: 40px;
+}
+.proof-quote {
+  font-family: var(--font-serif);
+  font-size: 15px;
+  line-height: 1.7;
+  color: var(--ink-70);
+  font-style: italic;
+  margin-bottom: 10px;
+}
+.proof-meta {
+  font-size: 12px;
+  color: var(--ink-40);
+}
+.proof-dots {
+  display: flex;
+  gap: 6px;
+  margin-top: 14px;
+}
+.proof-dot {
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: var(--ink-20);
+}
+.proof-dot.active { background: var(--amber); width: 16px; border-radius: 3px; }
+
+.landing-trust {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 36px;
+}
+.trust-item {
+  font-size: 12px;
+  color: var(--ink-40);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.trust-item::before { content:'·'; color: var(--ink-20); }
+.trust-item:first-child::before { display: none; }
+
+/* ═══════════════════════════════════════
+   QUESTION SCREENS — shared
+═══════════════════════════════════════ */
+.q-head { margin-bottom: 32px; }
+.q-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--amber);
+  margin-bottom: 12px;
+}
+.q-title {
+  font-family: var(--font-serif);
+  font-size: 26px;
+  line-height: 1.3;
+  color: var(--ink);
+  font-weight: normal;
+  letter-spacing: -.2px;
+}
+.q-title .child-name { color: var(--amber); }
+.q-sub {
+  margin-top: 10px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--ink-40);
+}
+
+/* ═══════════════════════════════════════
+   LOADING SCREEN
+═══════════════════════════════════════ */
+#screen-loading {
+  background: var(--ink);
+  align-items: center;
+  justify-content: center;
+}
+
+/* Dark orbs for loading */
+.loading-orb-wrap {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+.loading-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(70px);
+  animation: orbFloat 10s ease-in-out infinite;
+}
+.lo-1 {
+  width: 300px; height: 300px;
+  background: radial-gradient(circle, rgba(194,105,42,.4) 0%, transparent 70%);
+  top: -60px; right: -40px;
+}
+.lo-2 {
+  width: 200px; height: 200px;
+  background: radial-gradient(circle, rgba(100,130,200,.25) 0%, transparent 70%);
+  bottom: 40px; left: -20px;
+  animation-delay: -5s;
+}
+
+.loading-center {
+  position: relative;
+  z-index: 1;
+  padding: 40px 28px;
+  max-width: 380px;
+  width: 100%;
+  text-align: center;
+}
+.loading-circle {
+  width: 72px; height: 72px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.12);
+  margin: 0 auto 28px;
+  display: flex; align-items: center; justify-content: center;
+  position: relative;
+}
+.loading-circle::before {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  border-top-color: var(--amber);
+  animation: spin 2s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-emoji { font-size: 28px; }
+.loading-name-dark {
+  font-family: var(--font-serif);
+  font-size: 22px;
+  color: rgba(255,255,255,.9);
+  margin-bottom: 6px;
+  font-weight: normal;
+}
+.loading-sub-dark {
+  font-size: 14px;
+  color: rgba(255,255,255,.35);
+  margin-bottom: 48px;
+}
+.loading-steps-dark {
+  text-align: left;
+  border-top: 1px solid rgba(255,255,255,.08);
+}
+.ls-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 18px 0;
+  border-bottom: 1px solid rgba(255,255,255,.06);
+  opacity: 0;
+  transform: translateY(6px);
+  transition: all .5s var(--ease);
+}
+.ls-row.vis { opacity: 1; transform: translateY(0); }
+.ls-row.done .ls-num { color: var(--amber); }
+.ls-num {
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(255,255,255,.2);
+  width: 20px;
+  flex-shrink: 0;
+  letter-spacing: .05em;
+  transition: color .4s;
+}
+.ls-text { flex: 1; }
+.ls-main {
+  font-size: 15px;
+  color: rgba(255,255,255,.75);
+  margin-bottom: 2px;
+}
+.ls-detail {
+  font-size: 12px;
+  color: rgba(255,255,255,.3);
+}
+.ls-status {
+  font-size: 12px;
+  color: rgba(255,255,255,.2);
+  transition: color .4s;
+}
+.ls-row.done .ls-status { color: var(--amber); }
+
+.loading-breath {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+  margin-top: 40px;
+}
+.breath-dot {
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.25);
+  animation: breathe 2s ease-in-out infinite;
+}
+.breath-dot:nth-child(2) { animation-delay: .3s; }
+.breath-dot:nth-child(3) { animation-delay: .6s; }
+@keyframes breathe {
+  0%,100% { opacity: .25; transform: scale(.8); }
+  50%      { opacity: .7;  transform: scale(1.2); }
+}
+
+/* ═══════════════════════════════════════
+   REPORT SCREEN
+═══════════════════════════════════════ */
+#screen-report { background: var(--cream); }
+
+/* Letter header */
+.letter-header {
+  background: var(--dark);
+  padding: 56px 28px 36px;
+  position: relative;
+  overflow: hidden;
+}
+.letter-header-orb {
+  position: absolute;
+  width: 260px; height: 260px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(194,105,42,.3) 0%, transparent 65%);
+  top: -80px; right: -60px;
+  filter: blur(40px);
+  animation: orbFloat 16s ease-in-out infinite;
+}
+.letter-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,.35);
+  margin-bottom: 16px;
+}
+.letter-title {
+  font-family: var(--font-serif);
+  font-size: 28px;
+  line-height: 1.3;
+  color: #FAF9F6;
+  font-weight: normal;
+  margin-bottom: 10px;
+}
+.letter-meta {
+  font-size: 13px;
+  color: rgba(255,255,255,.35);
+}
+.letter-divider {
+  height: 1px;
+  background: rgba(255,255,255,.1);
+  margin-top: 28px;
+}
+
+/* Report body */
+.letter-body { padding: 0 0 160px; }
+
+.letter-section {
+  padding: 32px 28px;
+  border-bottom: 1px solid var(--ink-10);
+}
+.section-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+.section-num {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--amber);
+}
+.section-rule {
+  flex: 1;
+  height: 1px;
+  background: var(--amber-soft);
+}
+.section-title {
+  font-family: var(--font-serif);
+  font-size: 18px;
+  color: var(--ink);
+  font-weight: normal;
+  margin-bottom: 16px;
+}
+.section-prose {
+  font-size: 15.5px;
+  line-height: 1.85;
+  color: var(--ink-70);
+}
+.section-prose p { margin-bottom: 14px; }
+.section-prose p:last-child { margin-bottom: 0; }
+.section-prose strong { color: var(--ink); font-weight: 600; }
+
+/* Translate rows */
+.translate-card {
+  background: var(--cream-deep);
+  border-radius: var(--r-md);
+  padding: 18px 20px;
+  margin-bottom: 12px;
+}
+.translate-card:last-of-type { margin-bottom: 0; }
+.translate-tag {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--ink-40);
+  margin-bottom: 8px;
+}
+.translate-text {
+  font-size: 15px;
+  line-height: 1.7;
+  color: var(--ink);
+}
+
+/* Blur lock */
+.section-lock {
+  position: relative;
+}
+.section-lock-blur {
+  filter: blur(6px);
+  pointer-events: none;
+  user-select: none;
+  opacity: .5;
+  font-size: 15px;
+  line-height: 1.85;
+  color: var(--ink-70);
+  padding: 8px 0;
+}
+.section-lock-chip {
+  position: absolute;
+  inset: 0;
+  display: flex; align-items: center; justify-content: center;
+}
+.lock-chip-inner {
+  background: rgba(255,255,255,.92);
+  border: 1px solid var(--ink-10);
+  border-radius: 20px;
+  padding: 8px 18px;
+  font-size: 13px;
+  color: var(--ink-40);
+  backdrop-filter: blur(4px);
+}
+
+/* Unlock block */
+.unlock-block {
+  margin: 0;
+  padding: 32px 28px;
+  background: var(--dark);
+  position: relative;
+  overflow: hidden;
+}
+.unlock-block-orb {
+  position: absolute;
+  width: 200px; height: 200px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(194,105,42,.35) 0%, transparent 70%);
+  top: -60px; right: -40px;
+  filter: blur(40px);
+  pointer-events: none;
+}
+.unlock-kicker {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,.3);
+  margin-bottom: 14px;
+}
+.unlock-title {
+  font-family: var(--font-serif);
+  font-size: 24px;
+  color: #FAF9F6;
+  font-weight: normal;
+  margin-bottom: 10px;
+  line-height: 1.35;
+}
+.unlock-body {
+  font-size: 14px;
+  color: rgba(255,255,255,.5);
+  line-height: 1.7;
+  margin-bottom: 24px;
+}
+.btn-unlock {
+  width: 100%;
+  padding: 17px;
+  background: var(--amber);
+  color: white;
+  border: none;
+  border-radius: 50px;
+  font-family: var(--font-sans);
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .2s;
+  letter-spacing: .01em;
+}
+.btn-unlock:active { transform: scale(.98); filter: brightness(.9); }
+
+/* Locked items */
+.locked-items {
+  padding: 20px 28px 0;
+}
+.locked-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--ink-10);
+}
+.locked-item:last-child { border-bottom: none; }
+.locked-glyph {
+  width: 36px; height: 36px;
+  border-radius: 10px;
+  background: var(--cream-deep);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 17px;
+  flex-shrink: 0;
+}
+.locked-info { flex: 1; }
+.locked-info-title {
+  font-size: 15px;
+  color: var(--ink);
+  margin-bottom: 3px;
+  font-weight: 500;
+}
+.locked-info-desc {
+  font-size: 13px;
+  color: var(--ink-40);
+  line-height: 1.4;
+}
+.locked-icon { color: var(--ink-20); font-size: 14px; }
+
+/* Feedback */
+.feedback-section {
+  padding: 28px 28px;
+  text-align: center;
+}
+.feedback-q {
+  font-size: 14px;
+  color: var(--ink-40);
+  margin-bottom: 16px;
+}
+.feedback-row { display: flex; gap: 10px; justify-content: center; }
+.fb-btn {
+  padding: 10px 20px;
+  border-radius: 50px;
+  border: 1.5px solid var(--ink-10);
+  background: transparent;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  color: var(--ink-70);
+  cursor: pointer;
+  transition: all .2s;
+}
+.fb-btn:active, .fb-btn.tapped { border-color: var(--ok); color: var(--ok); background: var(--ok-soft); }
+
+/* Sticky report bar */
+.report-sticky {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  padding: 14px 28px calc(16px + env(safe-area-inset-bottom));
+  background: rgba(253,252,248,.95);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-top: 1px solid var(--ink-10);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  z-index: 100;
+}
+.sticky-text { flex: 1; font-size: 13px; color: var(--ink-70); line-height: 1.4; }
+.sticky-text strong { color: var(--amber); }
+.btn-sticky {
+  padding: 12px 20px;
+  background: var(--dark);
+  color: #FAF9F6;
+  border: none;
+  border-radius: 50px;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: all .2s;
+  -webkit-tap-highlight-color: transparent;
+}
+.btn-sticky:active { transform: scale(.97); }
+
+/* ═══════════════════════════════════════
+   WECHAT SCREEN
+═══════════════════════════════════════ */
+#screen-wechat { background: var(--cream); }
+.wechat-wrap {
+  flex: 1;
+  padding: 60px 28px 120px;
+  max-width: 520px;
+  margin: 0 auto;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+.wechat-mark {
+  width: 64px; height: 64px;
+  border-radius: 50%;
+  background: var(--ok-soft);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 26px;
+  margin-bottom: 22px;
+}
+.wechat-title {
+  font-family: var(--font-serif);
+  font-size: 28px;
+  font-weight: normal;
+  color: var(--ink);
+  margin-bottom: 12px;
+  line-height: 1.3;
+}
+.wechat-body {
+  font-size: 15px;
+  color: var(--ink-70);
+  line-height: 1.75;
+  margin-bottom: 36px;
+  max-width: 300px;
+}
+.qr-card {
+  background: #FFFEFB;
+  border: 1.5px solid var(--ink-10);
+  border-radius: var(--r-xl);
+  padding: 32px 28px 24px;
+  width: 100%;
+  margin-bottom: 20px;
+}
+.qr-frame {
+  width: 156px; height: 156px;
+  border: 2px dashed var(--ink-10);
+  border-radius: var(--r-md);
+  margin: 0 auto 18px;
+  display: flex; align-items: center; justify-content: center;
+  flex-direction: column;
+  gap: 8px;
+  background: var(--cream);
+  color: var(--ink-40);
+  font-size: 13px;
+}
+.qr-icon { font-size: 32px; opacity: .4; }
+.qr-label {
+  font-size: 13px;
+  color: var(--ink-40);
+  margin-bottom: 6px;
+}
+.qr-id {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--ink);
+  letter-spacing: .04em;
+}
+.or-line {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 12px 0 20px;
+  width: 100%;
+}
+.or-line::before,.or-line::after { content:''; flex:1; height:1px; background:var(--ink-10); }
+.or-word { font-size: 12px; color: var(--ink-40); }
+.btn-wechat-green {
+  width: 100%;
+  padding: 18px;
+  background: #09BB07;
+  color: white;
+  border: none;
+  border-radius: 50px;
+  font-family: var(--font-sans);
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .2s;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  margin-bottom: 12px;
+}
+.btn-wechat-green:active { transform: scale(.98); }
+.share-card {
+  width: 100%;
+  margin-top: 32px;
+  text-align: left;
+}
+.share-label {
+  font-size: 13px;
+  color: var(--ink-40);
+  margin-bottom: 12px;
+  text-align: center;
+}
+.share-bubble {
+  background: #FFFEFB;
+  border: 1.5px solid var(--ink-10);
+  border-radius: var(--r-md);
+  padding: 18px;
+  font-size: 14px;
+  color: var(--ink-70);
+  line-height: 1.75;
+  margin-bottom: 12px;
+}
+.btn-copy-text {
+  width: 100%;
+  padding: 14px;
+  background: transparent;
+  color: var(--amber);
+  border: 1.5px solid var(--amber);
+  border-radius: 50px;
+  font-family: var(--font-sans);
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all .2s;
+}
+.btn-copy-text.copied { background: var(--amber-soft); }
+.btn-copy-text:active { transform: scale(.98); }
+
+/* ═══════════════════════════════════════
+   V4 — RELATIONSHIP GRID (Landing)
+═══════════════════════════════════════ */
+.reunderstand-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 36px;
+}
+.reunderstand-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 18px;
+  background: #FFFEFB;
+  border: 1.5px solid var(--ink-10);
+  border-radius: var(--r-md);
+  cursor: pointer;
+  transition: all .2s var(--ease);
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  position: relative;
+  overflow: hidden;
+}
+.reunderstand-card:active { transform: scale(.97); }
+.reunderstand-card.primary {
+  border-color: var(--amber);
+  background: var(--amber-soft);
+  grid-column: span 2;
+}
+.reunderstand-card.soon {
+  opacity: .55;
+}
+.rc-text {
+  font-size: 16px;
+  color: var(--ink);
+  font-weight: 500;
+}
+.reunderstand-card.primary .rc-text {
+  color: var(--amber);
+  font-size: 18px;
+}
+.rc-arrow {
+  color: var(--ink-20);
+  font-size: 16px;
+}
+.reunderstand-card.primary .rc-arrow {
+  color: var(--amber);
+}
+.rc-soon-tag {
+  position: absolute;
+  top: 8px; right: 8px;
+  font-size: 10px;
+  background: var(--ink-10);
+  color: var(--ink-40);
+  padding: 2px 7px;
+  border-radius: 20px;
+  letter-spacing: .04em;
+}
+
+/* Emotional examples */
+.ex-list {
+  margin-bottom: 40px;
+}
+.ex-pair {
+  padding: 18px 0;
+  border-bottom: 1px solid var(--ink-10);
+  opacity: 0;
+  transform: translateY(8px);
+  animation: fadeUp .6s var(--ease) forwards;
+}
+.ex-pair:nth-child(1) { animation-delay: .1s; }
+.ex-pair:nth-child(2) { animation-delay: .25s; }
+.ex-pair:nth-child(3) { animation-delay: .4s; }
+.ex-before {
+  font-size: 14px;
+  color: var(--ink-40);
+  margin-bottom: 4px;
+  text-decoration: line-through;
+  text-decoration-color: var(--ink-20);
+}
+.ex-after {
+  font-size: 16px;
+  color: var(--ink);
+  line-height: 1.5;
+}
+.ex-after em { color: var(--amber); font-style: normal; }
+
+/* ═══════════════════════════════════════
+   V4 — RITUAL SCREEN
+═══════════════════════════════════════ */
+#screen-ritual {
+  background: var(--dark);
+  align-items: center;
+  justify-content: center;
+}
+.ritual-wrap {
+  position: relative;
+  z-index: 1;
+  padding: 60px 36px 160px;
+  max-width: 460px;
+  width: 100%;
+  text-align: center;
+}
+.ritual-mark {
+  width: 48px; height: 48px;
+  border-radius: 50%;
+  background: rgba(194,105,42,.15);
+  border: 1px solid rgba(194,105,42,.3);
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 32px;
+  font-size: 20px;
+}
+.ritual-title {
+  font-family: var(--font-serif);
+  font-size: 15px;
+  color: rgba(255,255,255,.4);
+  font-weight: normal;
+  margin-bottom: 36px;
+  letter-spacing: .04em;
+}
+.ritual-body {
+  font-family: var(--font-serif);
+  font-size: 24px;
+  line-height: 1.85;
+  color: rgba(255,255,255,.85);
+  font-weight: normal;
+  margin-bottom: 16px;
+}
+.ritual-body em { color: var(--amber); font-style: normal; }
+.ritual-note {
+  font-size: 14px;
+  color: rgba(255,255,255,.3);
+  line-height: 1.6;
+  margin-bottom: 48px;
+}
+.ritual-orb-wrap {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+/* ═══════════════════════════════════════
+   V4 — COMING SOON SCREEN
+═══════════════════════════════════════ */
+#screen-relation {
+  background: var(--cream);
+  align-items: center;
+  justify-content: center;
+}
+.relation-wrap {
+  padding: 60px 36px 160px;
+  max-width: 460px;
+  width: 100%;
+  text-align: center;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.relation-icon { font-size: 40px; margin-bottom: 24px; }
+.relation-title {
+  font-family: var(--font-serif);
+  font-size: 26px;
+  color: var(--ink);
+  font-weight: normal;
+  line-height: 1.35;
+  margin-bottom: 16px;
+}
+.relation-body {
+  font-size: 15px;
+  color: var(--ink-70);
+  line-height: 1.75;
+  margin-bottom: 40px;
+  max-width: 280px;
+}
+.relation-coming {
+  font-size: 12px;
+  color: var(--ink-40);
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  margin-bottom: 40px;
+}
+
+/* ═══════════════════════════════════════
+   V4 — SHARE CARD SCREEN
+═══════════════════════════════════════ */
+#screen-sharecard { background: var(--cream); }
+.sharecard-wrap {
+  flex: 1;
+  padding: 40px 28px 160px;
+  max-width: 520px;
+  margin: 0 auto;
+  width: 100%;
+}
+.sharecard-eyebrow {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--amber);
+  margin-bottom: 20px;
+  text-align: center;
+}
+/* The actual card */
+.viral-card {
+  border-radius: var(--r-xl);
+  background: var(--dark);
+  padding: 48px 32px 40px;
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 24px;
+  text-align: center;
+}
+.viral-card-orb-1 {
+  position: absolute;
+  width: 240px; height: 240px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(194,105,42,.4) 0%, transparent 65%);
+  top: -80px; right: -60px;
+  filter: blur(50px);
+  pointer-events: none;
+}
+.viral-card-orb-2 {
+  position: absolute;
+  width: 180px; height: 180px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(100,130,200,.2) 0%, transparent 70%);
+  bottom: -40px; left: -30px;
+  filter: blur(40px);
+  pointer-events: none;
+}
+.viral-sentence {
+  font-family: var(--font-serif);
+  font-size: 28px;
+  line-height: 1.55;
+  color: #FAF9F6;
+  font-weight: normal;
+  position: relative;
+  z-index: 1;
+  margin-bottom: 32px;
+}
+.viral-score-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 20px;
+  position: relative;
+  z-index: 1;
+}
+.viral-score-num {
+  font-family: var(--font-serif);
+  font-size: 36px;
+  color: var(--amber);
+}
+.viral-score-label {
+  font-size: 13px;
+  color: rgba(255,255,255,.4);
+  line-height: 1.4;
+  text-align: left;
+}
+.viral-brand {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,.2);
+  position: relative;
+  z-index: 1;
+}
+.sharecard-hint {
+  text-align: center;
+  font-size: 12px;
+  color: var(--ink-40);
+  margin-bottom: 24px;
+}
+.sharecard-btns {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.btn-share {
+  width: 100%;
+  padding: 16px;
+  background: var(--dark);
+  color: #FAF9F6;
+  border: none;
+  border-radius: 50px;
+  font-family: var(--font-sans);
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all .2s;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+.btn-share:active { transform: scale(.97); }
+.btn-share.outline {
+  background: transparent;
+  border: 1.5px solid var(--ink-10);
+  color: var(--ink-70);
+}
+.btn-share.amber {
+  background: var(--amber);
+}
+.btn-share.copied {
+  background: var(--ok);
+}
+
+/* ═══════════════════════════════════════
+   FEELING SCREEN (Validation Layer)
+═══════════════════════════════════════ */
+#screen-feeling { background: var(--cream); }
+.vq-block { margin-bottom: 40px; }
+.vq-num {
+  font-size: 11px; font-weight: 600; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--amber); margin-bottom: 8px;
+}
+.vq-title {
+  font-family: var(--font-serif); font-size: 20px; line-height: 1.4;
+  color: var(--ink); font-weight: normal; margin-bottom: 16px;
+}
+.sentence-pills { display: flex; flex-direction: column; gap: 8px; }
+.sentence-pill {
+  padding: 14px 18px;
+  background: #FFFEFB;
+  border: 1.5px solid var(--ink-10);
+  border-radius: var(--r-md);
+  font-size: 15px; line-height: 1.6; color: var(--ink-70);
+  cursor: pointer;
+  transition: all .2s var(--ease);
+  user-select: none; -webkit-tap-highlight-color: transparent;
+}
+.sentence-pill.selected {
+  border-color: var(--amber); background: var(--amber-soft); color: var(--amber);
+}
+.slider-wrap { padding: 8px 0 20px; }
+.slider-labels {
+  display: flex; justify-content: space-between;
+  font-size: 12px; color: var(--ink-40); margin-bottom: 12px;
+}
+.slider-score-display {
+  text-align: center; font-family: var(--font-serif);
+  font-size: 56px; color: var(--ink); line-height: 1; margin-bottom: 4px;
+}
+.slider-score-label {
+  text-align: center; font-size: 12px; color: var(--ink-40); margin-bottom: 20px;
+}
+input[type=range].slider {
+  -webkit-appearance: none; appearance: none;
+  width: 100%; height: 3px; border-radius: 3px;
+  background: var(--ink-10); outline: none;
+}
+input[type=range].slider::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none;
+  width: 28px; height: 28px; border-radius: 50%;
+  background: var(--dark); cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0,0,0,.15);
+}
+input[type=range].slider::-moz-range-thumb {
+  width: 28px; height: 28px; border-radius: 50%;
+  background: var(--dark); cursor: pointer; border: none;
+}
+.share-target-row { display: flex; flex-wrap: wrap; gap: 10px; }
+.share-target-pill {
+  padding: 12px 20px; border-radius: 50px;
+  border: 1.5px solid var(--ink-10); background: #FFFEFB;
+  font-family: var(--font-sans); font-size: 15px; color: var(--ink-70);
+  cursor: pointer; transition: all .2s;
+  user-select: none; -webkit-tap-highlight-color: transparent;
+}
+.share-target-pill.selected {
+  background: var(--dark); border-color: var(--dark); color: #FAF9F6;
+}
+
+/* ═══════════════════════════════════════
+   SCORE SCREEN
+═══════════════════════════════════════ */
+#screen-score { background: var(--cream); }
+.score-wrap {
+  flex: 1; padding: 80px 28px 160px;
+  max-width: 520px; margin: 0 auto; width: 100%;
+  display: flex; flex-direction: column; align-items: center; text-align: center;
+}
+.score-eyebrow {
+  font-size: 11px; font-weight: 600; letter-spacing: .12em;
+  text-transform: uppercase; color: var(--amber); margin-bottom: 24px;
+}
+.score-big {
+  font-family: var(--font-serif); font-size: 96px;
+  line-height: 1; color: var(--ink); font-weight: normal; margin-bottom: 4px;
+}
+.score-denom {
+  font-size: 22px; color: var(--ink-40); font-family: var(--font-serif); margin-bottom: 24px;
+}
+.score-label-main {
+  font-size: 24px; font-family: var(--font-serif);
+  color: var(--ink); font-weight: normal; margin-bottom: 12px;
+}
+.score-divider {
+  width: 40px; height: 2px; background: var(--amber); margin: 0 auto 24px;
+}
+.score-interp {
+  font-size: 15px; line-height: 1.75; color: var(--ink-70);
+  max-width: 280px; margin-bottom: 40px;
+}
+
+/* ═══════════════════════════════════════
+   OBSERVER SECTION (in report)
+═══════════════════════════════════════ */
+.observer-section {
+  padding: 28px 28px;
+  background: var(--cream-deep);
+  border-bottom: 1px solid var(--ink-10);
+}
+.observer-tag {
+  font-size: 10px; font-weight: 700; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--ink-40); margin-bottom: 8px;
+}
+.observer-text {
+  font-size: 15px; line-height: 1.7; color: var(--ink);
+}
+</style>
+</head>
+<body>
+
+<!-- ═════════════════════════════════════
+     LANDING
+═════════════════════════════════════ -->
+<div id="screen-landing" class="screen active">
+  <div class="orb-container">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+  </div>
+  <div class="landing-scroll">
+    <div class="hero">
+      <div class="hero-eyebrow">
+        <div class="hero-eye-dot"></div>
+        <div class="hero-eyebrow-text">AIPIWEN · 重新读懂</div>
+      </div>
+      <h1 class="hero-title">
+        重新读懂<br><em>一个人</em>
+      </h1>
+      <p class="hero-body">
+        很多关系的问题，不是因为不爱，<br>
+        而是因为我们越来越<em style="font-style:normal;color:var(--amber)">看不懂彼此</em>。
+      </p>
+    </div>
+
+    <!-- Emotional examples -->
+    <div class="ex-list">
+      <div class="ex-pair">
+        <div class="ex-before">她玻璃心</div>
+        <div class="ex-after">她是在<em>努力消化失望</em></div>
+      </div>
+      <div class="ex-pair">
+        <div class="ex-before">他故意顶嘴</div>
+        <div class="ex-after">他是在<em>保护自己的掌控感</em></div>
+      </div>
+      <div class="ex-pair">
+        <div class="ex-before">她太粘人</div>
+        <div class="ex-after">她是在<em>确认你还在</em></div>
+      </div>
+    </div>
+
+    <!-- Relationship target choice -->
+    <p class="t-caption" style="margin-bottom:14px;font-weight:600;color:var(--ink-70)">你想重新读懂谁？</p>
+    <div class="reunderstand-grid">
+      <div class="reunderstand-card primary" onclick="startChildFlow()">
+        <div class="rc-text">孩子</div>
+        <div class="rc-arrow">→</div>
+      </div>
+      <div class="reunderstand-card soon" onclick="showComingSoon('自己')">
+        <div class="rc-text">自己</div>
+        <div class="rc-soon-tag">即将</div>
+        <div class="rc-arrow">→</div>
+      </div>
+      <div class="reunderstand-card soon" onclick="showComingSoon('爱人')">
+        <div class="rc-text">爱人</div>
+        <div class="rc-soon-tag">即将</div>
+        <div class="rc-arrow">→</div>
+      </div>
+      <div class="reunderstand-card soon" onclick="showComingSoon('父母')">
+        <div class="rc-text">父母</div>
+        <div class="rc-soon-tag">即将</div>
+        <div class="rc-arrow">→</div>
+      </div>
+      <div class="reunderstand-card soon" onclick="showComingSoon('伙伴')">
+        <div class="rc-text">伙伴 / 合伙人</div>
+        <div class="rc-soon-tag">即将</div>
+        <div class="rc-arrow">→</div>
+      </div>
+    </div>
+
+    <!-- Trust row -->
+    <div class="landing-trust">
+      <div class="trust-item">不需要注册</div>
+      <div class="trust-item">不留手机号</div>
+      <div class="trust-item">完全免费</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═════════════════════════════════════
+     COMING SOON
+═════════════════════════════════════ -->
+<div id="screen-relation" class="screen">
+  <div class="top-nav">
+    <div class="nav-back" onclick="goBack()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg> 返回</div>
+    <div class="nav-wordmark">AIPIWEN</div>
+    <div></div>
+  </div>
+  <div class="relation-wrap">
+    <div class="relation-icon">🌱</div>
+    <h2 class="relation-title">「重新读懂<span id="relation-target">TA</span>」<br>正在开发中</h2>
+    <p class="relation-body">这个方向需要一套新的理解框架。<br>我们在认真准备，快了。</p>
+    <div class="relation-coming">COMING SOON</div>
+    <button class="btn-primary" onclick="startChildFlow()" style="max-width:280px">先去重新读懂孩子 →</button>
+  </div>
+</div>
+
+<!-- ═════════════════════════════════════
+     RITUAL
+═════════════════════════════════════ -->
+<div id="screen-ritual" class="screen">
+  <div class="ritual-orb-wrap">
+    <div class="loading-orb lo-1"></div>
+    <div class="loading-orb lo-2"></div>
+  </div>
+  <div class="ritual-wrap">
+    <div class="ritual-mark">✦</div>
+    <div class="ritual-title">开始之前，请记住一件事</div>
+    <div class="ritual-body">
+      这份报告<br>
+      不会<em>评价孩子</em>。<br>
+      也不会判断<em>谁对谁错</em>。<br><br>
+      它只做一件事：<br><br>
+      把你看到的行为，<br>
+      翻译成背后的<em>需求</em>。
+    </div>
+    <div class="ritual-note">行为是信号，不是问题。</div>
+  </div>
+  <div class="bottom-bar" style="background:transparent">
+    <button class="btn-primary" onclick="navigateTo('screen-step0')" style="background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);color:#FAF9F6">我准备好了，开始重新读懂 →</button>
+  </div>
+</div>
+
+<!-- ═════════════════════════════════════
+     STEP 0 — Name
+═════════════════════════════════════ -->
+<div id="screen-step0" class="screen">
+  <div class="progress-thread"><div class="progress-thread-fill" style="width:10%"></div></div>
+  <div class="top-nav">
+    <div class="nav-back" onclick="goBack()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg> 返回</div>
+    <div class="nav-wordmark">AIPIWEN</div>
+    <div class="nav-step-dot"></div>
+  </div>
+  <div class="col">
+    <div class="q-head">
+      <div class="q-label">第一步</div>
+      <h2 class="q-title">先告诉我<br>孩子叫什么名字？</h2>
+      <p class="q-sub">我会在报告里用这个名字，让报告读起来像是专门为你写的</p>
+    </div>
+    <input class="name-field" id="child-name-input" type="text" placeholder="孩子的名字或昵称" maxlength="10" oninput="onNameInput(this.value)" />
+    <p class="t-note" style="margin-top:16px">名字只用于生成这份报告，不会用于其他用途</p>
+  </div>
+  <div class="bottom-bar">
+    <button class="btn-primary" id="btn-step0" disabled onclick="goToStep(1)">继续 →</button>
+  </div>
+</div>
+
+<!-- ═════════════════════════════════════
+     STEP 1 — Behavior
+═════════════════════════════════════ -->
+<div id="screen-step1" class="screen">
+  <div class="progress-thread"><div class="progress-thread-fill" style="width:30%"></div></div>
+  <div class="top-nav">
+    <div class="nav-back" onclick="goBack()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg> 返回</div>
+    <div class="nav-wordmark">AIPIWEN</div>
+    <div class="nav-step-dot">1 / 4</div>
+  </div>
+  <div class="col">
+    <div class="q-head">
+      <div class="q-label">行为描述</div>
+      <h2 class="q-title"><span id="s1-name" class="child-name">孩子</span>最让你<br>搞不懂的是哪种行为？</h2>
+      <p class="q-sub">选最符合的，可以选 2 个</p>
+    </div>
+    <div class="options" id="step1-options">
+      <div class="opt multi" data-val="autonomy" onclick="toggleMulti(this,'step1',2)"><div class="opt-marker"><div class="opt-marker-inner"></div></div><div class="opt-text">拖延，不催就不动</div></div>
+      <div class="opt multi" data-val="autonomy" onclick="toggleMulti(this,'step1',2)"><div class="opt-marker"><div class="opt-marker-inner"></div></div><div class="opt-text">沉迷游戏，很难停下来</div></div>
+      <div class="opt multi" data-val="autonomy" onclick="toggleMulti(this,'step1',2)"><div class="opt-marker"><div class="opt-marker-inner"></div></div><div class="opt-text">很容易生气，像一点就炸</div></div>
+      <div class="opt multi" data-val="sensitive" onclick="toggleMulti(this,'step1',2)"><div class="opt-marker"><div class="opt-marker-inner"></div></div><div class="opt-text">很玻璃心，说一句就难过</div></div>
+      <div class="opt multi" data-val="autonomy" onclick="toggleMulti(this,'step1',2)"><div class="opt-marker"><div class="opt-marker-inner"></div></div><div class="opt-text">总顶嘴，越说越犟</div></div>
+      <div class="opt multi" data-val="autonomy" onclick="toggleMulti(this,'step1',2)"><div class="opt-marker"><div class="opt-marker-inner"></div></div><div class="opt-text">不爱学习，缺少动力</div></div>
+      <div class="opt multi" data-val="sensitive" onclick="toggleMulti(this,'step1',2)"><div class="opt-marker"><div class="opt-marker-inner"></div></div><div class="opt-text">注意力不集中，容易分心</div></div>
+      <div class="opt multi" data-val="relation" onclick="toggleMulti(this,'step1',2)"><div class="opt-marker"><div class="opt-marker-inner"></div></div><div class="opt-text">什么都要问我，不敢自己决定</div></div>
+      <div class="opt multi" data-val="relation" onclick="toggleMulti(this,'step1',2)"><div class="opt-marker"><div class="opt-marker-inner"></div></div><div class="opt-text">在家大放肆，在外面很乖</div></div>
+      <div class="opt multi" data-val="relation" onclick="toggleMulti(this,'step1',2)"><div class="opt-marker"><div class="opt-marker-inner"></div></div><div class="opt-text">太心软，容易被人说服</div></div>
+      <div class="opt multi" data-val="sensitive" onclick="toggleMulti(this,'step1',2)"><div class="opt-marker"><div class="opt-marker-inner"></div></div><div class="opt-text">太在意别人怎么看</div></div>
+      <div class="opt multi" data-val="relation" onclick="toggleMulti(this,'step1',2)"><div class="opt-marker"><div class="opt-marker-inner"></div></div><div class="opt-text">不会拒绝别人</div></div>
+      <div class="opt multi" data-val="relation" onclick="toggleMulti(this,'step1',2)"><div class="opt-marker"><div class="opt-marker-inner"></div></div><div class="opt-text">和同学/朋友相处让我担心</div></div>
+      <div class="opt multi" data-val="relation" onclick="toggleMulti(this,'step1',2)"><div class="opt-marker"><div class="opt-marker-inner"></div></div><div class="opt-text">我和孩子越来越说不到一起</div></div>
+      <div class="opt multi" data-val="relation" onclick="toggleMulti(this,'step1',2)"><div class="opt-marker"><div class="opt-marker-inner"></div></div><div class="opt-text">其他，我想自己描述</div></div>
+    </div>
+    <div style="margin-top:16px">
+      <div class="free-link" onclick="toggleTextInput()">✏️ 用自己的话描述</div>
+      <textarea class="free-textarea" id="free-text" placeholder="用你平时跟别人说的方式写就行……" oninput="onFreeText(this.value)"></textarea>
+    </div>
+  </div>
+  <div class="bottom-bar">
+    <button class="btn-primary" id="btn-step1" disabled onclick="goToStep(2)">继续了解<span class="btn-name"></span> →</button>
+  </div>
+</div>
+
+<!-- ═════════════════════════════════════
+     STEP 2 — Feeling
+═════════════════════════════════════ -->
+<div id="screen-step2" class="screen">
+  <div class="progress-thread"><div class="progress-thread-fill" style="width:55%"></div></div>
+  <div class="top-nav">
+    <div class="nav-back" onclick="goBack()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg> 返回</div>
+    <div class="nav-wordmark">AIPIWEN</div>
+    <div class="nav-step-dot">2 / 4</div>
+  </div>
+  <div class="col">
+    <div class="q-head">
+      <div class="q-label">你的感受</div>
+      <h2 class="q-title">当<span id="s2-name" class="child-name">孩子</span>出现这个行为<br>你第一个感受是什么？</h2>
+      <p class="q-sub">这帮我们更准确地理解行为背后的原因</p>
+    </div>
+    <div class="options" id="step2-options">
+      <div class="opt" data-val="attention" onclick="selectSingle(this,'step2')"><div class="opt-marker"><div class="opt-marker-inner"></div></div><div class="opt-text">烦躁 / 不耐烦</div></div>
+      <div class="opt" data-val="power" onclick="selectSingle(this,'step2')"><div class="opt-marker"><div class="opt-marker-inner"></div></div><div class="opt-text">愤怒 / 想发脾气</div></div>
+      <div class="opt" data-val="safety" onclick="selectSingle(this,'step2')"><div class="opt-marker"><div class="opt-marker-inner"></div></div><div class="opt-text">心疼 / 很担心</div></div>
+      <div class="opt" data-val="helpless" onclick="selectSingle(this,'step2')"><div class="opt-marker"><div class="opt-marker-inner"></div></div><div class="opt-text">无奈 / 不知道怎么办</div></div>
+      <div class="opt" data-val="hurt" onclick="selectSingle(this,'step2')"><div class="opt-marker"><div class="opt-marker-inner"></div></div><div class="opt-text">受伤 / 觉得孩子不在乎你</div></div>
+    </div>
+  </div>
+  <div class="bottom-bar">
+    <button class="btn-primary" id="btn-step2" disabled onclick="goToStep(3)">继续了解<span class="btn-name"></span> →</button>
+  </div>
+</div>
+
+<!-- ═════════════════════════════════════
+     STEP 3 — Age & Gender
+═════════════════════════════════════ -->
+<div id="screen-step3" class="screen">
+  <div class="progress-thread"><div class="progress-thread-fill" style="width:75%"></div></div>
+  <div class="top-nav">
+    <div class="nav-back" onclick="goBack()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg> 返回</div>
+    <div class="nav-wordmark">AIPIWEN</div>
+    <div class="nav-step-dot">3 / 4</div>
+  </div>
+  <div class="col">
+    <div class="q-head">
+      <div class="q-label">基本信息</div>
+      <h2 class="q-title"><span id="s3-name" class="child-name">孩子</span><br>今年多大了？</h2>
+      <p class="q-sub">年龄帮我们校准报告里具体的建议</p>
+    </div>
+    <div class="pill-row" id="age-options">
+      <div class="pill" data-val="3-5" onclick="selectPill(this,'age-options','btn-step3')">3–5岁</div>
+      <div class="pill" data-val="6-9" onclick="selectPill(this,'age-options','btn-step3')">6–9岁</div>
+      <div class="pill" data-val="10-12" onclick="selectPill(this,'age-options','btn-step3')">10–12岁</div>
+      <div class="pill" data-val="13+" onclick="selectPill(this,'age-options','btn-step3')">13岁以上</div>
+    </div>
+    <div class="field-label">孩子是</div>
+    <div class="pill-row" id="gender-options">
+      <div class="pill" data-val="boy" onclick="selectPill(this,'gender-options','btn-step3')">男孩</div>
+      <div class="pill" data-val="girl" onclick="selectPill(this,'gender-options','btn-step3')">女孩</div>
+    </div>
+  </div>
+  <div class="bottom-bar">
+    <button class="btn-primary" id="btn-step3" disabled onclick="goToStep(4)">继续了解<span class="btn-name"></span> →</button>
+  </div>
+</div>
+
+<!-- ═════════════════════════════════════
+     STEP 4 — Need
+═════════════════════════════════════ -->
+<div id="screen-step4" class="screen">
+  <div class="progress-thread"><div class="progress-thread-fill" style="width:90%"></div></div>
+  <div class="top-nav">
+    <div class="nav-back" onclick="goBack()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg> 返回</div>
+    <div class="nav-wordmark">AIPIWEN</div>
+    <div class="nav-step-dot">4 / 4</div>
+  </div>
+  <div class="col">
+    <div class="q-head">
+      <div class="q-label">最后一步</div>
+      <h2 class="q-title">关于<span id="s4-name" class="child-name">孩子</span><br>你最希望得到什么？</h2>
+      <p class="q-sub">帮我们确认报告的方向</p>
+    </div>
+    <div class="options" id="step4-options">
+      <div class="opt" data-val="understand" onclick="selectSingle(this,'step4')"><div class="opt-marker"><div class="opt-marker-inner"></div></div><div class="opt-text">理解为什么孩子会这样</div></div>
+      <div class="opt" data-val="mistake" onclick="selectSingle(this,'step4')"><div class="opt-marker"><div class="opt-marker-inner"></div></div><div class="opt-text">知道我说错了什么</div></div>
+      <div class="opt" data-val="action" onclick="selectSingle(this,'step4')"><div class="opt-marker"><div class="opt-marker-inner"></div></div><div class="opt-text">明天可以做点不一样的</div></div>
+      <div class="opt" data-val="normal" onclick="selectSingle(this,'step4')"><div class="opt-marker"><div class="opt-marker-inner"></div></div><div class="opt-text">确认这是不是正常的</div></div>
+      <div class="opt" data-val="all" onclick="selectSingle(this,'step4')"><div class="opt-marker"><div class="opt-marker-inner"></div></div><div class="opt-text">都想要</div></div>
+    </div>
+  </div>
+  <div class="bottom-bar">
+    <button class="btn-primary" id="btn-step4" disabled onclick="goToStep(5)">生成<span class="btn-name"></span>的报告 →</button>
+  </div>
+</div>
+
+<!-- ═════════════════════════════════════
+     STEP 5 — Confirm
+═════════════════════════════════════ -->
+<div id="screen-step5" class="screen">
+  <div class="top-nav">
+    <div></div>
+    <div class="nav-wordmark">AIPIWEN</div>
+    <div></div>
+  </div>
+  <div class="col">
+    <div style="height:8px"></div>
+    <div class="q-label">准备就绪</div>
+    <h2 class="t-h2" style="margin-bottom:6px">我们已经了解了<br><span id="s5-name" style="color:var(--amber)">孩子</span>的情况</h2>
+    <p class="t-caption" style="margin-bottom:28px">正在为你生成专属报告</p>
+    <div class="summary-wrap" id="summary-card"></div>
+  </div>
+  <div class="bottom-bar">
+    <button class="btn-primary" onclick="startLoading()">生成报告 →</button>
+  </div>
+</div>
+
+<!-- ═════════════════════════════════════
+     LOADING
+═════════════════════════════════════ -->
+<div id="screen-loading" class="screen">
+  <div class="loading-orb-wrap">
+    <div class="loading-orb lo-1"></div>
+    <div class="loading-orb lo-2"></div>
+  </div>
+  <div class="loading-center">
+    <div class="loading-circle"><div class="loading-emoji" id="loading-emoji">🧒</div></div>
+    <div class="loading-name-dark" id="loading-name">正在分析…</div>
+    <div class="loading-sub-dark">请稍等，大约需要10秒</div>
+    <div class="loading-steps-dark">
+      <div class="ls-row" id="ls1">
+        <div class="ls-num">01</div>
+        <div class="ls-text">
+          <div class="ls-main">理解行为背后的需求</div>
+          <div class="ls-detail">识别核心驱动模式</div>
+        </div>
+        <div class="ls-status">···</div>
+      </div>
+      <div class="ls-row" id="ls2">
+        <div class="ls-num">02</div>
+        <div class="ls-text">
+          <div class="ls-main">匹配行为模式库</div>
+          <div class="ls-detail" id="ls2-detail">正在匹配人类理解模式库</div>
+        </div>
+        <div class="ls-status">···</div>
+      </div>
+      <div class="ls-row" id="ls3">
+        <div class="ls-num">03</div>
+        <div class="ls-text">
+          <div class="ls-main">撰写专属理解报告</div>
+          <div class="ls-detail" id="ls3-detail">正在为孩子生成报告…</div>
+        </div>
+        <div class="ls-status">···</div>
+      </div>
+    </div>
+    <div class="loading-breath">
+      <div class="breath-dot"></div>
+      <div class="breath-dot"></div>
+      <div class="breath-dot"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═════════════════════════════════════
+     REPORT
+═════════════════════════════════════ -->
+<div id="screen-report" class="screen">
+  <div class="letter-header">
+    <div class="letter-header-orb"></div>
+    <div class="letter-label">行为理解报告</div>
+    <div class="letter-title" id="report-title">孩子的行为理解报告</div>
+    <div class="letter-meta" id="report-meta">根据你的描述生成</div>
+    <div class="letter-divider"></div>
+  </div>
+  <div class="letter-body" id="report-body"></div>
+  <div class="report-sticky">
+    <div class="sticky-text">还有 <strong>4 节</strong>深度分析等你查看</div>
+    <button class="btn-sticky" onclick="goToWeChat()">免费获取 →</button>
+  </div>
+</div>
+
+<!-- ═════════════════════════════════════
+     FEELING (Validation Layer)
+═════════════════════════════════════ -->
+<div id="screen-feeling" class="screen">
+  <div class="progress-thread"><div class="progress-thread-fill" style="width:100%"></div></div>
+  <div class="top-nav">
+    <div class="nav-back" onclick="goBack()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg> 返回</div>
+    <div class="nav-wordmark">AIPIWEN</div>
+    <div></div>
+  </div>
+  <div class="col">
+    <div class="q-head">
+      <div class="q-label">停一下</div>
+      <h2 class="q-title">哪一句话，<br>让你停了一下？</h2>
+      <p class="q-sub">不是调查，是帮你整理刚才的感受</p>
+    </div>
+
+    <!-- Q1 -->
+    <div class="vq-block">
+      <div class="vq-num">Q1</div>
+      <div class="vq-title">哪一句最打动你？</div>
+      <div class="sentence-pills" id="q1-pills"></div>
+      <div style="margin-top:12px">
+        <div class="free-link" onclick="toggleQ1Custom()">✏️ 用自己的话说</div>
+        <textarea class="free-textarea" id="q1-custom" placeholder="写下那句话……" style="min-height:80px"></textarea>
+      </div>
+    </div>
+
+    <!-- Q2 -->
+    <div class="vq-block">
+      <div class="vq-num">Q2</div>
+      <div class="vq-title">哪一句让你觉得<br>「对，就是这样。」</div>
+      <div class="sentence-pills" id="q2-pills"></div>
+      <div style="margin-top:12px">
+        <div class="free-link" onclick="toggleQ2Custom()">✏️ 补充一句</div>
+        <textarea class="free-textarea" id="q2-custom" placeholder="写下那句话……" style="min-height:80px"></textarea>
+      </div>
+    </div>
+
+    <!-- Q3 -->
+    <div class="vq-block">
+      <div class="vq-num">Q3</div>
+      <div class="vq-title">看完报告后，<br>你觉得自己重新理解孩子了吗？</div>
+      <div class="slider-wrap">
+        <div class="slider-score-display" id="q3-score-display">5</div>
+        <div class="slider-score-label">重新读懂指数</div>
+        <div class="slider-labels"><span>还没有</span><span>非常清晰</span></div>
+        <input type="range" class="slider" id="q3-slider" min="0" max="10" value="5" oninput="onSliderChange(this.value)">
+      </div>
+    </div>
+
+    <!-- Q4 -->
+    <div class="vq-block">
+      <div class="vq-num">Q4</div>
+      <div class="vq-title">你最想把这份报告发给谁？</div>
+      <div class="share-target-row">
+        <div class="share-target-pill" data-val="partner" onclick="selectShareTarget(this)">爱人</div>
+        <div class="share-target-pill" data-val="grandparent" onclick="selectShareTarget(this)">父母</div>
+        <div class="share-target-pill" data-val="teacher" onclick="selectShareTarget(this)">孩子老师</div>
+        <div class="share-target-pill" data-val="friend" onclick="selectShareTarget(this)">朋友</div>
+        <div class="share-target-pill" data-val="none" onclick="selectShareTarget(this)">暂时不分享</div>
+      </div>
+    </div>
+
+    <!-- Q5 -->
+    <div class="vq-block">
+      <div class="vq-num">Q5</div>
+      <div class="vq-title">如果发给TA，<br>你希望TA看到哪一点？</div>
+      <textarea class="free-textarea" id="q5-message" style="display:block;min-height:100px" placeholder="随便写……（可以不填）"></textarea>
+    </div>
+  </div>
+  <div class="bottom-bar">
+    <button class="btn-primary" onclick="submitFeeling()">查看重新读懂指数 →</button>
+  </div>
+</div>
+
+<!-- ═════════════════════════════════════
+     SCORE
+═════════════════════════════════════ -->
+<div id="screen-score" class="screen">
+  <div class="score-wrap">
+    <div class="score-eyebrow">重新读懂指数</div>
+    <div class="score-big" id="score-big">5</div>
+    <div class="score-denom">/ 10</div>
+    <div class="score-label-main" id="score-label-main">开始重新理解</div>
+    <div class="score-divider"></div>
+    <div class="score-interp" id="score-interp">你已经开始从不同角度看孩子的行为了。</div>
+  </div>
+  <div class="bottom-bar">
+    <button class="btn-primary" onclick="buildAndShowShareCard()">查看你的分享卡片 →</button>
+  </div>
+</div>
+
+<!-- ═════════════════════════════════════
+     SHARE CARD
+═════════════════════════════════════ -->
+<div id="screen-sharecard" class="screen">
+  <div class="top-nav">
+    <div class="nav-back" onclick="goBack()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg> 返回</div>
+    <div class="nav-wordmark">AIPIWEN</div>
+    <div></div>
+  </div>
+  <div class="sharecard-wrap">
+    <div class="sharecard-eyebrow">你的重新读懂</div>
+
+    <!-- The viral card -->
+    <div class="viral-card" id="viral-card-el">
+      <div class="viral-card-orb-1"></div>
+      <div class="viral-card-orb-2"></div>
+      <div class="viral-sentence" id="viral-sentence-text">她不是玻璃心<br>她是在努力消化失望</div>
+      <div class="viral-score-row">
+        <div class="viral-score-num" id="viral-score-num">5</div>
+        <div class="viral-score-label">重新读懂指数<br>/ 10</div>
+      </div>
+      <div class="viral-brand">AIPIWEN · 重新读懂</div>
+    </div>
+
+    <div class="sharecard-hint">长按截图保存，发到朋友圈 ☝️</div>
+
+    <div class="sharecard-btns">
+      <button class="btn-share amber" id="btn-share-main" onclick="triggerShare()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+        发给另一半
+      </button>
+      <button class="btn-share outline" id="btn-copy-viral" onclick="copyViralText()">复制分享文案</button>
+      <button class="btn-share" onclick="goToWeChatFinal()" style="margin-top:4px">获取完整报告 →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═════════════════════════════════════
+     WECHAT
+═════════════════════════════════════ -->
+<div id="screen-wechat" class="screen">
+  <div class="wechat-wrap">
+    <div class="wechat-mark">✓</div>
+    <h2 class="wechat-title">完整报告<br>马上发给你</h2>
+    <p class="wechat-body">
+      添加顾问企业微信<br>
+      <span id="wechat-name-text">孩子</span>的完整7节报告<br>将在24小时内发到你手上
+    </p>
+    <div class="qr-card">
+      <div class="qr-frame" id="qr-frame-wrap">
+        <img id="qr-img" alt="企业微信二维码" style="width:140px;height:140px;border-radius:8px;display:none" onerror="this.style.display='none';document.getElementById('qr-placeholder').style.display='flex'">
+        <div id="qr-placeholder" style="display:flex;flex-direction:column;align-items:center;gap:8px">
+          <div class="qr-icon">⬛</div>
+          <div style="font-size:13px;color:var(--ink-40)">企业微信二维码</div>
+        </div>
+      </div>
+      <div class="qr-label">或搜索企业微信号</div>
+      <div class="qr-id" id="wechat-id-display">AIPIWEN_2026</div>
+    </div>
+    <div class="or-line"><span class="or-word">或者</span></div>
+    <button class="btn-wechat-green" onclick="openWeChat()">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M9.5 4C5.36 4 2 6.91 2 10.5c0 2.04 1.07 3.87 2.75 5.09L4 18l2.64-1.32C7.6 16.88 8.53 17 9.5 17c.34 0 .67-.02 1-.06A6.5 6.5 0 0 0 9.5 14c0-3.59 3.36-6.5 7.5-6.5.34 0 .67.02 1 .06A5.5 5.5 0 0 0 9.5 4z"/><path d="M17 11c-3.31 0-6 2.24-6 5s2.69 5 6 5c.83 0 1.62-.17 2.35-.47L22 22l-.76-2.67A4.95 4.95 0 0 0 23 16c0-2.76-2.69-5-6-5z"/></svg>
+      点击添加企业微信
+    </button>
+    <div class="share-card">
+      <div class="share-label">也可以发给另一半一起看 →</div>
+      <div class="share-bubble" id="share-text">我在这里做了一份孩子的行为理解报告，写的特别准，你也去试试：[链接]</div>
+      <button class="btn-copy-text" id="copy-btn" onclick="copyShare()">复制分享文字</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═════════════════════════════════════
+     JAVASCRIPT — logic unchanged
+═════════════════════════════════════ -->
+<script>
+// ─────────────────────────────────────
+// WECHAT CONFIG — update these to deploy
+// ─────────────────────────────────────
+const WECHAT_CONFIG = {
+  QR_IMAGE: 'wechat_qr.png',   // place file alongside HTML to activate
+  WECHAT_ID: 'AIPIWEN_2026'    // replace with real enterprise WeChat ID
+};
+
+/* Future V5 — WeChat OAuth integration:
+   - WeChat OAuth login (openid)
+   - Save reports per user
+   - Save feedback & validation data
+   - Share tracking (did user actually share?)
+   - Report history page
+   - Push notifications for follow-up
+*/
+
+const state = {
+  childName: '',
+  behaviors: [],
+  parentFeeling: '',
+  age: '',
+  gender: '',
+  need: '',
+  reportType: 'sensitive',
+  relationTarget: 'child',
+  screenHistory: ['screen-landing']
+};
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0, 0);
+}
+function goBack() {
+  state.screenHistory.pop();
+  showScreen(state.screenHistory[state.screenHistory.length - 1]);
+}
+function navigateTo(id) {
+  state.screenHistory.push(id);
+  showScreen(id);
+}
+function startFlow() { navigateTo('screen-ritual'); }
+
+function startChildFlow() {
+  state.relationTarget = 'child';
+  navigateTo('screen-ritual');
+}
+
+function showComingSoon(target) {
+  document.getElementById('relation-target').textContent = target;
+  navigateTo('screen-relation');
+}
+
+const STEP_SCREENS = { 1:'screen-step1', 2:'screen-step2', 3:'screen-step3', 4:'screen-step4', 5:'screen-step5' };
+
+function goToStep(n) {
+  syncNames();
+  if (n === 5) buildSummary();
+  navigateTo(STEP_SCREENS[n]);
+}
+
+function syncNames() {
+  const name = state.childName || '孩子';
+  document.querySelectorAll('.btn-name').forEach(el => el.textContent = name ? ' ' + name : '');
+  ['s1-name','s2-name','s3-name','s4-name','s5-name'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = name;
+  });
+}
+
+function onNameInput(val) {
+  state.childName = val.trim();
+  document.getElementById('btn-step0').disabled = !state.childName;
+}
+function toggleTextInput() {
+  const ta = document.getElementById('free-text');
+  ta.style.display = ta.style.display === 'none' ? 'block' : 'none';
+  if (ta.style.display === 'block') ta.focus();
+}
+function onFreeText(val) {
+  if (val.trim().length > 5) {
+    document.getElementById('btn-step1').disabled = false;
+    state.behaviors = ['relation'];
+  }
+}
+function toggleMulti(el, groupId, maxSelect) {
+  const group = document.getElementById(groupId + '-options') || el.closest('.options');
+  const selected = group.querySelectorAll('.selected');
+  if (el.classList.contains('selected')) { el.classList.remove('selected'); }
+  else { if (selected.length >= maxSelect) selected[0].classList.remove('selected'); el.classList.add('selected'); }
+  const vals = [...group.querySelectorAll('.selected')].map(c => c.dataset.val);
+  state.behaviors = vals;
+  const btn = document.getElementById('btn-' + groupId);
+  if (btn) btn.disabled = vals.length === 0;
+}
+function selectSingle(el, groupId) {
+  const group = document.getElementById(groupId + '-options') || el.closest('.options');
+  group.querySelectorAll('.opt').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  if (groupId === 'step2') state.parentFeeling = el.dataset.val;
+  if (groupId === 'step4') state.need = el.dataset.val;
+  const btn = document.getElementById('btn-' + groupId);
+  if (btn) btn.disabled = false;
+}
+function selectPill(el, groupId, btnId) {
+  document.getElementById(groupId).querySelectorAll('.pill').forEach(p => p.classList.remove('selected'));
+  el.classList.add('selected');
+  if (groupId === 'age-options') state.age = el.dataset.val;
+  if (groupId === 'gender-options') state.gender = el.dataset.val;
+  const ageOk = document.querySelector('#age-options .selected');
+  const genderOk = document.querySelector('#gender-options .selected');
+  document.getElementById(btnId).disabled = !(ageOk && genderOk);
+}
+
+function buildSummary() {
+  const name = state.childName || '孩子';
+  const behaviorLabels = [...document.querySelectorAll('#step1-options .selected')]
+    .map(el => el.querySelector('.opt-text').textContent).slice(0,2);
+  const feelingMap = {attention:'烦躁/不耐烦',power:'愤怒/想发脾气',safety:'心疼/担心',helpless:'无奈',hurt:'受伤'};
+  const genderLabel = state.gender === 'boy' ? '男孩' : state.gender === 'girl' ? '女孩' : '—';
+  const rows = [
+    ['最困惑的行为', behaviorLabels.join('、') || '已记录'],
+    ['你当时的感受', feelingMap[state.parentFeeling] || '已记录'],
+    [name + '的年龄', (state.age || '—') + ' · ' + genderLabel],
+    ['最希望得到', needLabel(state.need)],
+  ];
+  document.getElementById('summary-card').innerHTML = rows.map(([label, val]) =>
+    `<div class="summary-row"><div class="summary-check">✓</div><div><div class="summary-label">${label}</div><div class="summary-val">${val}</div></div></div>`
+  ).join('');
+  document.getElementById('s5-name').textContent = name;
+  // Report type
+  const counts = {sensitive:0,autonomy:0,relation:0};
+  state.behaviors.forEach(v => { if (counts[v] !== undefined) counts[v]++; });
+  state.reportType = Object.entries(counts).sort((a,b)=>b[1]-a[1])[0][0] || 'sensitive';
+}
+
+function needLabel(val) {
+  return {understand:'理解为什么孩子会这样',mistake:'知道我说错了什么',
+          action:'明天可以做点不一样的',normal:'确认这是不是正常的',all:'都想要'}[val] || '已记录';
+}
+
+function startLoading() {
+  const name = state.childName || '孩子';
+  const emojiMap = {sensitive:'🌸', autonomy:'⚡', relation:'💛'};
+  document.getElementById('loading-emoji').textContent = emojiMap[state.reportType] || '🧒';
+  document.getElementById('loading-name').textContent = '正在为' + name + '分析…';
+  document.getElementById('ls2-detail').textContent = '正在从行为、情绪、关系三个层面重新理解';
+  document.getElementById('ls3-detail').textContent = '正在比对行为模式、关系模式与家庭系统线索';
+  navigateTo('screen-loading');
+  ['ls1','ls2','ls3'].forEach((id, i) => {
+    setTimeout(() => {
+      const el = document.getElementById(id);
+      el.classList.add('vis');
+      const status = el.querySelector('.ls-status');
+      setTimeout(() => { el.classList.add('done'); if(status) status.textContent = '完成'; }, 700);
+    }, i * 2800 + 400);
+  });
+  setTimeout(() => buildAndShowReport(), 9500);
+}
+
+/* ── Report data ── */
+const REPORTS = {
+  sensitive: {
+    typeLabel: '感知力丰富型',
+    s1title: '我对{name}的理解',
+    s1: `{name}是一个感知力非常丰富的孩子——对周围每一个人的评价都是开着的，内心一直在认真工作，但还没找到一个稳定的地方放自己。\n\n当你批评{name}的时候，{name}感受到的不只是"这件事做错了"，而是"爸爸/妈妈觉得我整个人不好"。那不是一句评论，是一个结论。\n\n这份灵敏，长大以后会是{name}最宝贵的东西。`,
+    s2title: '家长最常有的一个误解',
+    s2: `<strong>你可能认为：</strong>孩子太敏感，要让{name}变得更坚强，以后才能承受挫折。\n\n<strong>真正发生的是：</strong>{name}的感知系统比大多数同龄孩子灵敏得多。你批评{name}，{name}收到的信号量是你发出的三倍。不是矫情，是处理量本来就更大。\n\n<strong>你需要做的，不是让{name}变硬，而是帮{name}找到放这份灵敏的地方。</strong>`,
+    translates: [
+      {label:'你看到的', text:'你只说了一句"你怎么这么粗心"，{name}哭了很久，晚上还在难过。'},
+      {label:'实际发生的', text:'{name}的情绪系统接收到的，不只是那句话本身。{name}听到的是："爸爸/妈妈对我失望了。"处理的重量，比那句话大得多。'}
+    ],
+    adv: `{name}有一个你可能没意识到的隐藏能力：<strong>真正感受到别人的感受</strong>。班里有同学难受，{name}第一个察觉——这是非常稀有的共情天赋。`,
+    risk: `{name}正在把别人给的评价，变成对自己的定义。这个年龄是建立"我是谁"的关键窗口。你现在用具体的认可替换掉笼统的否定，可以帮{name}画一幅完全不同的自画像。`,
+    say: { before:'「你真棒！」', after:'「{name}，你今天想到这个方法，我当时没想到，你想到了。」', why:'{name}需要具体的证据才能更新"我够好了"的刻度线。越具体，{name}越信。' },
+    need: '{name}最需要的，是你帮他/她成为自己的见证人——记住他/她真实做到的事，具体的，说得出来的。'
+  },
+  autonomy: {
+    typeLabel: '自主驱动型',
+    s1title: '我对{name}的理解',
+    s1: `{name}是一个对"自己说了算"有强烈需求的孩子——不是任性，是{name}的神经系统需要感到"我的世界是我在掌控的"，才能安心运作。\n\n当你改变了已经说好的事、或者要求{name}按你的方式来，{name}体验到的不是"只是换一种方法"，而是"我的控制感被拿走了"。那个烦躁，是神经系统的自动防御。\n\n这份对自主的坚持，在未来会是{name}最强的驱动力。`,
+    s2title: '家长最常有的一个误解',
+    s2: `<strong>你可能认为：</strong>孩子太固执，不懂灵活变通，这样长大了会吃亏。\n\n<strong>真正发生的是：</strong>"被改变"和"自己决定改变"对{name}来说是完全不同的体验。你替{name}做决定，{name}感受到的是被剥夺，而不是被帮助。\n\n<strong>有效的路不是减少{name}的固执，而是把决定权还给{name}。</strong>`,
+    translates: [
+      {label:'你看到的', text:'{name}自己说的目标，不到一周就放弃了，感觉说话不算数。'},
+      {label:'实际发生的', text:'当目标是{name}自己选的，动力来自内部。当你把它变成"你应该完成的任务"，动力就被切断了。{name}不是没毅力，是动力来源被换掉了。'}
+    ],
+    adv: `当{name}真正想做一件事，执行力惊人。那些"自己的事立刻行动"的瞬间，就是这份驱动力在工作。这是最强的竞争力之一。`,
+    risk: `如果{name}的自主需求长期被压制，{name}会学会在你面前表演顺从，在你看不见的地方按自己的方式来。表面听话，内心越来越疏远。`,
+    say: { before:'「你必须完成这个目标」', after:'「这件事，你打算怎么搞定？」然后闭嘴，等{name}说完。', why:'把方案的所有权还给{name}，{name}才有动力去执行它。你的工作是提问，不是提答案。' },
+    need: '{name}最需要的是：在你给的安全范围里，有真实的选择权。在可以的地方，{name}说了算。'
+  },
+  relation: {
+    typeLabel: '关系连接型',
+    s1title: '我对{name}的理解',
+    s1: `{name}是一个以关系为中心运作的孩子——{name}的状态好不好，直接取决于和你之间的连接质量。当连接充足，{name}能稳定、能学习、能成长。当连接不稳定，其他什么都会出问题。\n\n{name}问你问题、粘着你——不是依赖，是在检测关系还在不在。\n\n你对{name}来说，是整个世界的锚点。`,
+    s2title: '家长最常有的一个误解',
+    s2: `<strong>你可能认为：</strong>孩子太依赖，要让{name}更独立，不能什么都要问我。\n\n<strong>真正发生的是：</strong>{name}内心有一个"关系稳不稳"的雷达一直开着。越急着推{name}独立，雷达越焦虑，需要更多确认才能安心。\n\n<strong>有效的路反过来：先把连接充足地给到{name}，{name}才有安全感去真正独立。</strong>`,
+    translates: [
+      {label:'你看到的', text:'问{name}今天怎么样，{name}总说"还行"，什么都不分享。'},
+      {label:'实际发生的', text:'{name}不是没有话说，是不确定"说了之后你会怎么回应我"。如果以前分享过，换来的是建议或评论，{name}就学会了"说了也没用"，干脆不说。'}
+    ],
+    adv: `{name}知道关系重要。这在很多孩子身上是感受不到的。这份对关系的敏感，长大之后会让{name}成为真正懂得经营关系的人。`,
+    risk: `如果{name}在家得不到足够的连接，{name}会开始向外寻找——同伴、网络、任何给{name}"被需要"感觉的地方。预防这一点最好的方式，是现在就主动给够。`,
+    say: { before:'「今天怎么样？」（然后等来"还行"）', after:'「今天有没有一件事，让你觉得还不错？」然后安静等，不评论，只说"嗯"。', why:'具体的小问题比大问题容易回答。{name}需要先看到你只是在听，不是在评判，才会慢慢打开。' },
+    need: '{name}最需要的是：每天有一段真正属于你们两个人的时间。哪怕只有10分钟，你完全在场，{name}说什么你都接得住。'
+  }
+};
+
+/* ── Observer data ── */
+const OBSERVER = {
+  sensitive: {
+    easy: '孩子的情绪变化、细腻的感受、对人际关系的敏感——这些你其实都注意到了。',
+    hard: '把灵敏当软弱，把哭泣当"不坚强"。你在心疼的同时，也可能无意间传递了"你的感受是个问题"的信号。'
+  },
+  autonomy: {
+    easy: '孩子的主见、执行力、不服输的劲头——这份能量你是看见的。',
+    hard: '把坚持当固执，把不顺从当不尊重。当{name}抵抗时，你收到的是反叛，{name}体验到的是失控。'
+  },
+  relation: {
+    easy: '孩子重视你、在乎你的看法、需要和你在一起——你感受得到这份连接。',
+    hard: '把需要陪伴当依赖，想推开却让孩子更焦虑。你越说"去自己玩"，{name}越不敢离开。'
+  }
+};
+
+/* ── Report sentences for validation ── */
+const REPORT_SENTENCES = {
+  sensitive: [
+    '那不是一句评论，是一个结论。',
+    '批评你，孩子收到的信号量是你发出的三倍。',
+    '不是矫情，是处理量本来就更大。',
+    '这份灵敏，长大以后会是孩子最宝贵的东西。',
+    '你需要帮孩子找到放这份灵敏的地方。',
+    '孩子正在把别人给的评价，变成对自己的定义。'
+  ],
+  autonomy: [
+    '那个烦躁，是神经系统的自动防御。',
+    '"被改变"和"自己决定改变"是完全不同的体验。',
+    '孩子不是没毅力，是动力来源被换掉了。',
+    '有效的路不是减少固执，而是把决定权还给孩子。',
+    '当孩子真正想做一件事，执行力惊人。',
+    '在可以的地方，孩子说了算。'
+  ],
+  relation: [
+    '孩子问你问题——不是依赖，是在检测关系还在不在。',
+    '越急着推孩子独立，孩子越焦虑。',
+    '先把连接充足地给到孩子，孩子才有安全感去真正独立。',
+    '孩子不是没有话说，是不确定说了之后你会怎么回应。',
+    '你对孩子来说，是整个世界的锚点。',
+    '每天哪怕只有10分钟，你完全在场。'
+  ]
+};
+
+function buildAndShowReport() {
+  const name = state.childName || '孩子';
+  const data = REPORTS[state.reportType] || REPORTS.sensitive;
+  const observer = OBSERVER[state.reportType] || OBSERVER.sensitive;
+  const today = new Date().toLocaleDateString('zh-CN',{year:'numeric',month:'long',day:'numeric'});
+  const fill = str => str.replace(/\{name\}/g, name);
+  const prose = str => '<p>' + fill(str).split('\n\n').join('</p><p>') + '</p>';
+
+  document.getElementById('report-title').textContent = name + '的行为理解报告';
+  document.getElementById('report-meta').textContent = today + ' · ' + data.typeLabel + ' · 根据你的描述生成';
+
+  document.getElementById('report-body').innerHTML = `
+    <div class="letter-section">
+      <div class="section-eyebrow"><div class="section-num">一</div><div class="section-rule"></div></div>
+      <div class="section-title">${fill(data.s1title)}</div>
+      <div class="section-prose">${prose(data.s1)}</div>
+    </div>
+
+    <div class="letter-section">
+      <div class="section-eyebrow"><div class="section-num">二</div><div class="section-rule"></div></div>
+      <div class="section-title">${fill(data.s2title)}</div>
+      <div class="section-prose">${prose(data.s2)}</div>
+    </div>
+
+    <div class="letter-section">
+      <div class="section-eyebrow"><div class="section-num">三</div><div class="section-rule"></div></div>
+      <div class="section-title">行为翻译</div>
+      ${data.translates.map(t=>`
+        <div class="translate-card">
+          <div class="translate-tag">${t.label}</div>
+          <div class="translate-text">${fill(t.text)}</div>
+        </div>`).join('')}
+      <div style="height:14px"></div>
+      <div class="section-lock">
+        <div class="section-lock-blur">${fill(data.translates[0].text)} ···· 还有更多内容等待解锁 ···· 理解{name}的完整行为翻译</div>
+        <div class="section-lock-chip"><div class="lock-chip-inner">🔒 完整内容，免费获取</div></div>
+      </div>
+    </div>
+
+    <div class="unlock-block">
+      <div class="unlock-block-orb"></div>
+      <div class="unlock-kicker">还有 4 节完整分析</div>
+      <div class="unlock-title">完整报告<br>免费发给你</div>
+      <div class="unlock-body">添加顾问，${name}的完整7节报告直接发到你手上，24小时内</div>
+      <button class="btn-unlock" onclick="goToWeChat()">免费获取完整报告 →</button>
+    </div>
+
+    <div class="locked-items">
+      ${[['🌟','你还没发现的优势','从问题行为中提炼出的隐藏天赋'],
+         ['⚠️','需要注意的一件事','如果处理不好，会影响长远的风险'],
+         ['💬','明天换一种说法','含具体句子，明天就能用'],
+         ['❤️','他最需要你给的','让你读完想立刻去做的那一件事']
+      ].map(([icon,title,desc])=>`
+        <div class="locked-item">
+          <div class="locked-glyph">${icon}</div>
+          <div class="locked-info"><div class="locked-info-title">${title}</div><div class="locked-info-desc">${desc}</div></div>
+          <div class="locked-icon">🔒</div>
+        </div>`).join('')}
+    </div>
+
+    <div class="feedback-section">
+      <div class="feedback-q">前两节说的像${name}吗？</div>
+      <div class="feedback-row">
+        <button class="fb-btn" onclick="this.classList.add('tapped');this.textContent='✓ 非常像'">非常像</button>
+        <button class="fb-btn" onclick="this.textContent='✓ 有点像'">有点像</button>
+        <button class="fb-btn" onclick="this.textContent='✓ 不太像'">不太像</button>
+      </div>
+    </div>
+
+    <div class="observer-section">
+      <div class="section-eyebrow"><div class="section-num">你与孩子</div><div class="section-rule"></div></div>
+      <div style="margin-bottom:20px">
+        <div class="observer-tag">你更容易理解的部分</div>
+        <div class="observer-text">${fill(observer.easy)}</div>
+      </div>
+      <div>
+        <div class="observer-tag">你最容易误解的部分</div>
+        <div class="observer-text">${fill(observer.hard)}</div>
+      </div>
+    </div>
+    <div style="height:80px"></div>
+  `;
+  navigateTo('screen-report');
+}
+
+/* ── Validation state ── */
+const validation = {
+  impactSentence: '',
+  accurateSentences: [],
+  reunderstandingScore: 5,
+  sharingTarget: '',
+  sharingMessage: ''
+};
+
+function goToWeChat() {
+  buildFeelingScreen();
+  navigateTo('screen-feeling');
+}
+
+function goToWeChatFinal() {
+  const name = state.childName || '孩子';
+  document.getElementById('wechat-name-text').textContent = name;
+  document.getElementById('share-text').textContent =
+    `我在这里做了一份"${name}的行为理解报告"，写的特别准，你也去试试 → [链接]`;
+  navigateTo('screen-wechat');
+}
+
+function buildFeelingScreen() {
+  const name = state.childName || '孩子';
+  const sentences = REPORT_SENTENCES[state.reportType] || REPORT_SENTENCES.sensitive;
+  const fill = s => s.replace(/孩子/g, name);
+  document.getElementById('q1-pills').innerHTML = sentences.map((s,i) =>
+    `<div class="sentence-pill" data-idx="${i}" onclick="selectQ1(this)">${fill(s)}</div>`).join('');
+  document.getElementById('q2-pills').innerHTML = sentences.map((s,i) =>
+    `<div class="sentence-pill" data-idx="${i}" onclick="toggleQ2Pill(this)">${fill(s)}</div>`).join('');
+  document.getElementById('q3-slider').value = 5;
+  document.getElementById('q3-score-display').textContent = '5';
+  validation.reunderstandingScore = 5;
+  document.querySelectorAll('.share-target-pill').forEach(p => p.classList.remove('selected'));
+  document.getElementById('q1-custom').value = '';
+  document.getElementById('q1-custom').style.display = 'none';
+  document.getElementById('q2-custom').value = '';
+  document.getElementById('q2-custom').style.display = 'none';
+  document.getElementById('q5-message').value = '';
+  validation.impactSentence = '';
+  validation.accurateSentences = [];
+  validation.sharingTarget = '';
+  validation.sharingMessage = '';
+}
+
+function toggleQ1Custom() {
+  const ta = document.getElementById('q1-custom');
+  ta.style.display = ta.style.display === 'none' ? 'block' : 'none';
+  if (ta.style.display === 'block') ta.focus();
+}
+function toggleQ2Custom() {
+  const ta = document.getElementById('q2-custom');
+  ta.style.display = ta.style.display === 'none' ? 'block' : 'none';
+  if (ta.style.display === 'block') ta.focus();
+}
+
+function selectQ1(el) {
+  document.querySelectorAll('#q1-pills .sentence-pill').forEach(p => p.classList.remove('selected'));
+  el.classList.add('selected');
+  validation.impactSentence = el.textContent;
+}
+
+function toggleQ2Pill(el) {
+  el.classList.toggle('selected');
+  validation.accurateSentences = [...document.querySelectorAll('#q2-pills .sentence-pill.selected')].map(p => p.textContent);
+}
+
+function onSliderChange(val) {
+  validation.reunderstandingScore = parseInt(val);
+  document.getElementById('q3-score-display').textContent = val;
+}
+
+function selectShareTarget(el) {
+  document.querySelectorAll('.share-target-pill').forEach(p => p.classList.remove('selected'));
+  el.classList.add('selected');
+  validation.sharingTarget = el.dataset.val;
+}
+
+function submitFeeling() {
+  const q1c = document.getElementById('q1-custom').value.trim();
+  if (q1c) validation.impactSentence = q1c;
+  const q2c = document.getElementById('q2-custom').value.trim();
+  if (q2c) validation.accurateSentences.push(q2c);
+  validation.sharingMessage = document.getElementById('q5-message').value.trim();
+  saveToLocalStorage();
+  showScoreScreen();
+}
+
+function showScoreScreen() {
+  const score = validation.reunderstandingScore;
+  document.getElementById('score-big').textContent = score;
+  let label, interp;
+  if (score >= 8) {
+    label = '高度重新理解';
+    interp = '你已经从更深的层面看见孩子了。这份理解，会改变你们接下来的对话方式。';
+  } else if (score >= 5) {
+    label = '开始重新理解';
+    interp = '你开始从不同的角度看孩子的行为了。完整报告会帮你看得更清晰。';
+  } else {
+    label = '仍有很多疑问';
+    interp = '完全可以理解。孩子的行为有时候需要更多时间解读。顾问可以帮你一对一深入分析。';
+  }
+  document.getElementById('score-label-main').textContent = label;
+  document.getElementById('score-interp').textContent = interp;
+  navigateTo('screen-score');
+}
+
+/* ── Viral sentences by report type ── */
+const VIRAL_SENTENCES = {
+  sensitive: { line1: '她不是玻璃心', line2: '她是在努力消化失望' },
+  autonomy:  { line1: '他不是故意顶嘴', line2: '他是在保护自己的掌控感' },
+  relation:  { line1: '她不是太粘人', line2: '她是在确认你还在' }
+};
+
+function saveToLocalStorage() {
+  try {
+    const session = {
+      ts: new Date().toISOString(),
+      reportType: state.reportType,
+      childName: state.childName,
+      relationTarget: state.relationTarget,
+      impactSentence: validation.impactSentence,
+      accurateSentences: validation.accurateSentences,
+      reunderstandingScore: validation.reunderstandingScore,
+      sharingTarget: validation.sharingTarget,
+      sharingMessage: validation.sharingMessage,
+      viralSentenceShown: (VIRAL_SENTENCES[state.reportType] || VIRAL_SENTENCES.sensitive).line1 + ' ' + (VIRAL_SENTENCES[state.reportType] || VIRAL_SENTENCES.sensitive).line2,
+      shareButtonClicked: false,
+      copyButtonClicked: false
+    };
+    const all = JSON.parse(localStorage.getItem('aipiwen_viral_sessions') || '[]');
+    all.push(session);
+    localStorage.setItem('aipiwen_viral_sessions', JSON.stringify(all));
+    // also keep old key for backward compat
+    localStorage.setItem('aipiwen_sessions', JSON.stringify(all));
+  } catch(e) {}
+}
+
+function updateViralTracking(key) {
+  try {
+    const all = JSON.parse(localStorage.getItem('aipiwen_viral_sessions') || '[]');
+    if (all.length > 0) { all[all.length - 1][key] = true; }
+    localStorage.setItem('aipiwen_viral_sessions', JSON.stringify(all));
+    localStorage.setItem('aipiwen_sessions', JSON.stringify(all));
+  } catch(e) {}
+}
+
+/* ── Share card ── */
+function buildAndShowShareCard() {
+  const vs = VIRAL_SENTENCES[state.reportType] || VIRAL_SENTENCES.sensitive;
+  document.getElementById('viral-sentence-text').innerHTML = vs.line1 + '<br>' + vs.line2;
+  document.getElementById('viral-score-num').textContent = validation.reunderstandingScore;
+  // Init WeChat QR
+  const img = document.getElementById('qr-img');
+  img.src = WECHAT_CONFIG.QR_IMAGE;
+  img.onload = function() {
+    this.style.display = 'block';
+    document.getElementById('qr-placeholder').style.display = 'none';
+  };
+  document.getElementById('wechat-id-display').textContent = WECHAT_CONFIG.WECHAT_ID;
+  navigateTo('screen-sharecard');
+}
+
+function triggerShare() {
+  updateViralTracking('shareButtonClicked');
+  const vs = VIRAL_SENTENCES[state.reportType] || VIRAL_SENTENCES.sensitive;
+  const viralText = vs.line1 + '\n' + vs.line2;
+  const shareText = `这句话很打动我：「${viralText}」\n你也试试：`;
+  const url = window.location.href;
+  if (navigator.share) {
+    navigator.share({
+      title: '我刚刚重新读懂了孩子',
+      text: shareText,
+      url: url
+    }).catch(() => {});
+  } else {
+    copyText(shareText + url, 'btn-share-main', '已复制，去发给另一半 ✓');
+  }
+}
+
+function copyViralText() {
+  updateViralTracking('copyButtonClicked');
+  const vs = VIRAL_SENTENCES[state.reportType] || VIRAL_SENTENCES.sensitive;
+  const name = state.childName || '孩子';
+  const score = validation.reunderstandingScore;
+  const text = `「${vs.line1}\n${vs.line2}」\n\n这是我在 AIPIWEN 上做的 ${name} 的行为理解报告，重新读懂指数 ${score}/10，写的很准，你也去试试 → ${window.location.href}`;
+  copyText(text, 'btn-copy-viral', '已复制 ✓');
+}
+
+function copyText(text, btnId, successLabel) {
+  const btn = document.getElementById(btnId);
+  const orig = btn.textContent;
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(text).then(() => {
+      btn.textContent = successLabel;
+      btn.classList.add('copied');
+      setTimeout(() => { btn.textContent = orig; btn.classList.remove('copied'); }, 3000);
+    });
+  } else {
+    const ta = document.createElement('textarea');
+    ta.value = text; document.body.appendChild(ta); ta.select();
+    document.execCommand('copy'); document.body.removeChild(ta);
+    btn.textContent = successLabel; btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = orig; btn.classList.remove('copied'); }, 3000);
+  }
+}
+function openWeChat() { alert('请在企业微信中搜索：AIPIWEN_2026\n或扫描上方二维码添加'); }
+function copyShare() {
+  const text = document.getElementById('share-text').textContent;
+  const btn = document.getElementById('copy-btn');
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(text).then(() => {
+      btn.textContent = '✓ 已复制，去发给另一半';
+      btn.classList.add('copied');
+    });
+  } else {
+    const ta = document.createElement('textarea');
+    ta.value = text; document.body.appendChild(ta); ta.select();
+    document.execCommand('copy'); document.body.removeChild(ta);
+    btn.textContent = '✓ 已复制'; btn.classList.add('copied');
+  }
+}
+</script>
+</body>
+</html>
