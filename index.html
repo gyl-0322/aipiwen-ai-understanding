@@ -1675,41 +1675,60 @@ input[type=range].slider::-moz-range-thumb {
 .btn-sf-sub { font-size: 12px; color: var(--ink-40); margin-top: 3px; line-height: 1.4; }
 .btn-sf-arr { font-size: 20px; color: var(--ink-40); }
 
-/* Poster modal */
-.poster-modal {
+/* Share panel */
+.share-panel {
   display: none; position: fixed; inset: 0; z-index: 1000;
-  background: rgba(20,17,14,.92);
+  background: rgba(20,17,14,.88);
   flex-direction: column; align-items: center; justify-content: flex-end;
-  padding-bottom: 28px;
 }
-.poster-modal.open { display: flex; }
-.poster-modal-inner {
-  width: 100%; max-width: 440px;
-  padding: 0 20px;
-  display: flex; flex-direction: column; align-items: center;
+.share-panel.open { display: flex; }
+.share-panel-inner {
+  width: 100%; max-width: 460px;
+  display: flex; flex-direction: column;
+  max-height: 92vh; border-radius: 20px 20px 0 0;
+  background: var(--cream); overflow: hidden;
 }
-.poster-canvas-wrap {
-  width: 100%; border-radius: 14px; overflow: hidden;
-  box-shadow: 0 24px 64px rgba(0,0,0,.6);
-  max-height: 60vh; background: #1A1714;
-  display: flex; align-items: center; justify-content: center;
+.share-panel-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 20px 12px; border-bottom: 1px solid var(--ink-10); flex-shrink: 0;
 }
-.poster-canvas-wrap canvas { width: 100%; height: auto; display: block; }
-.poster-hint {
-  margin-top: 14px; font-size: 13px; color: rgba(255,255,255,.45);
-  text-align: center; letter-spacing: .02em;
+.share-panel-title { font-size: 15px; font-weight: 600; color: var(--ink); }
+.share-panel-close {
+  width: 30px; height: 30px; border-radius: 50%;
+  background: var(--cream-deep); border: none; cursor: pointer;
+  font-size: 14px; color: var(--ink-40); line-height: 30px;
+  text-align: center; font-family: var(--font-sans);
 }
-.poster-modal-btns {
-  display: flex; gap: 10px; margin-top: 14px; width: 100%;
+.share-panel-scroll { overflow-y: auto; flex: 1; padding: 16px 20px 8px; }
+.share-poster-wrap {
+  width: 100%; border-radius: 12px; overflow: hidden;
+  box-shadow: 0 8px 28px rgba(0,0,0,.14); background: #F0EDE8;
+  margin-bottom: 14px;
 }
-.poster-btn-close {
-  flex: 1; padding: 14px;
-  background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.12);
-  border-radius: 12px; color: rgba(255,255,255,.7); font-size: 15px;
-  cursor: pointer; font-family: var(--font-sans);
+.share-poster-wrap canvas { width: 100%; height: auto; display: block; }
+.share-text-block {
+  background: var(--cream-deep); border-radius: 12px;
+  padding: 14px 16px; margin-bottom: 10px;
 }
-.poster-btn-save {
-  flex: 2; padding: 14px; background: var(--amber);
+.share-text-label {
+  font-size: 10px; font-weight: 700; letter-spacing: .12em;
+  text-transform: uppercase; color: var(--ink-40); margin-bottom: 8px;
+}
+.share-text-content { font-size: 14px; line-height: 1.75; color: var(--ink); }
+.share-hint {
+  font-size: 12px; color: var(--ink-40); text-align: center;
+  line-height: 1.6; margin-bottom: 10px;
+}
+.share-panel-btns { display: flex; gap: 10px; padding: 4px 0 16px; }
+.share-btn-copy {
+  flex: 1; padding: 13px;
+  background: var(--cream-deep); border: 1.5px solid var(--ink-20);
+  border-radius: 12px; color: var(--ink); font-size: 15px;
+  font-weight: 600; cursor: pointer; font-family: var(--font-sans);
+}
+.share-btn-copy.copied { background: var(--ok-soft); border-color: var(--ok); color: var(--ok); }
+.share-btn-save {
+  flex: 1; padding: 13px; background: var(--amber);
   border: none; border-radius: 12px;
   color: white; font-size: 15px; font-weight: 600;
   cursor: pointer; font-family: var(--font-sans);
@@ -2209,9 +2228,10 @@ input[type=range].slider::-moz-range-thumb {
     <div class="sharecard-hint">长按截图保存，发到朋友圈 ☝️</div>
 
     <div class="sharecard-btns">
-      <button class="btn-share amber" id="btn-share-main" onclick="copyViralText()">复制分享文案</button>
-      <div style="text-align:center;font-size:12px;color:var(--ink-40);margin:-4px 0 4px">复制后打开微信、朋友圈或小红书粘贴即可，网页无法直接跳转</div>
-      <button class="btn-share" onclick="goToWeChatFinal()" style="margin-top:4px">获取完整报告 →</button>
+      <button class="btn-share amber" onclick="showSharePanel('family')">分享给家人看这份报告</button>
+      <button class="btn-share" onclick="showSharePanel('friend')" style="margin-top:8px">邀请朋友也测一测</button>
+      <button class="btn-share" onclick="showSharePanel('moments')" style="margin-top:8px">生成朋友圈分享图</button>
+      <button class="btn-share" onclick="goToWeChatFinal()" style="margin-top:14px;border-color:var(--amber);color:var(--amber)">获取完整报告 →</button>
     </div>
   </div>
 </div>
@@ -2259,9 +2279,24 @@ input[type=range].slider::-moz-range-thumb {
       <div class="qr-label">长按二维码识别，添加企业微信</div>
     </div>
     <div class="share-card">
-      <div class="share-label">也可以把报告分享给另一半一起看</div>
-      <div class="share-bubble" id="share-text">我在这里做了一份孩子的行为理解报告，写的特别准，你也去试试：[链接]</div>
-      <button class="btn-copy-text" id="copy-btn" onclick="copyShare()">复制分享文字</button>
+      <div class="share-label">也可以把这份理解分享出去</div>
+      <div class="share-fission-btns" style="margin-top:12px">
+        <button class="btn-sf" onclick="showSharePanel('family')">
+          <div class="btn-sf-icon">👨‍👩‍👧</div>
+          <div class="btn-sf-body"><div class="btn-sf-main">分享给家人</div></div>
+          <div class="btn-sf-arr">›</div>
+        </button>
+        <button class="btn-sf" onclick="showSharePanel('friend')">
+          <div class="btn-sf-icon">🔗</div>
+          <div class="btn-sf-body"><div class="btn-sf-main">邀请朋友</div></div>
+          <div class="btn-sf-arr">›</div>
+        </button>
+        <button class="btn-sf" onclick="showSharePanel('moments')">
+          <div class="btn-sf-icon">✨</div>
+          <div class="btn-sf-body"><div class="btn-sf-main">发朋友圈</div></div>
+          <div class="btn-sf-arr">›</div>
+        </button>
+      </div>
     </div>
   </div>
 </div>
@@ -2611,19 +2646,27 @@ function buildAndShowReport() {
     <div class="share-fission-section">
       <div class="share-fission-label">把这份理解带给更多人</div>
       <div class="share-fission-btns">
-        <button class="btn-sf" onclick="showPosterModal('family')">
+        <button class="btn-sf" onclick="showSharePanel('family')">
           <div class="btn-sf-icon">👨‍👩‍👧</div>
           <div class="btn-sf-body">
             <div class="btn-sf-main">分享给家人看这份报告</div>
-            <div class="btn-sf-sub">生成专属海报，发给爱人或父母</div>
+            <div class="btn-sf-sub">生成报告分享图，发给爱人或父母</div>
           </div>
           <div class="btn-sf-arr">›</div>
         </button>
-        <button class="btn-sf" onclick="showPosterModal('friend')">
+        <button class="btn-sf" onclick="showSharePanel('friend')">
           <div class="btn-sf-icon">🔗</div>
           <div class="btn-sf-body">
             <div class="btn-sf-main">邀请朋友也测一测</div>
             <div class="btn-sf-sub">帮更多父母重新读懂自己的孩子</div>
+          </div>
+          <div class="btn-sf-arr">›</div>
+        </button>
+        <button class="btn-sf" onclick="showSharePanel('moments')">
+          <div class="btn-sf-icon">✨</div>
+          <div class="btn-sf-body">
+            <div class="btn-sf-main">生成朋友圈分享图</div>
+            <div class="btn-sf-sub">适合公开发朋友圈，不暴露孩子隐私</div>
           </div>
           <div class="btn-sf-arr">›</div>
         </button>
@@ -2662,8 +2705,6 @@ function onFeedback(el, type) {
 function goToWeChatFinal() {
   const name = state.childName || '孩子';
   document.getElementById('wechat-name-text').textContent = name;
-  document.getElementById('share-text').textContent =
-    `我在这里做了一份"${name}的行为理解报告"，写的特别准，你也去试试 → [链接]`;
   navigateTo('screen-wechat');
 }
 
@@ -2808,31 +2849,8 @@ function buildAndShowShareCard() {
   navigateTo('screen-sharecard');
 }
 
-function triggerShare() {
-  updateViralTracking('shareButtonClicked');
-  const vs = VIRAL_SENTENCES[state.reportType] || VIRAL_SENTENCES.sensitive;
-  const viralText = vs.line1 + '\n' + vs.line2;
-  const shareText = `这句话很打动我：「${viralText}」\n你也试试：`;
-  const url = window.location.href;
-  if (navigator.share) {
-    navigator.share({
-      title: '我刚刚重新读懂了孩子',
-      text: shareText,
-      url: url
-    }).catch(() => {});
-  } else {
-    copyText(shareText + url, 'btn-share-main', '已复制，去发给另一半 ✓');
-  }
-}
-
-function copyViralText() {
-  updateViralTracking('copyButtonClicked');
-  const vs = VIRAL_SENTENCES[state.reportType] || VIRAL_SENTENCES.sensitive;
-  const name = state.childName || '孩子';
-  const score = validation.reunderstandingScore;
-  const text = `「${vs.line1}\n${vs.line2}」\n\n这是我在 AIPIWEN 上做的 ${name} 的行为理解报告，重新读懂指数 ${score}/10，写的很准，你也去试试 → ${window.location.href}`;
-  copyText(text, 'btn-share-main', '分享文案已复制，请打开微信或小红书粘贴发送 ✓');
-}
+function triggerShare() { showSharePanel('moments'); }
+function copyViralText() { showSharePanel('family'); }
 
 function copyText(text, btnId, successLabel) {
   const btn = document.getElementById(btnId);
@@ -2854,17 +2872,24 @@ function copyText(text, btnId, successLabel) {
 function openWeChat() { /* 已移除，动作改为长按二维码识别 */ }
 
 /* ══════════════════════════════════════════════
-   FISSION SHARING — Poster generation
+   SHARING — 3 types: family / friend / moments
 ══════════════════════════════════════════════ */
-const BASE_URL = 'http://aipewen-ai-understanding.oss-cn-hangzhou.aliyuncs.com/index.html';
+const BASE_URL = 'https://www.aipewen.cn';
 
-function generateShareURL(type) {
-  if (type === 'friend') return BASE_URL;
+function generateShareURL(forFamily) {
+  if (!forFamily) return BASE_URL;
   const data = REPORTS[state.reportType] || REPORTS.sensitive;
   return BASE_URL + '?share=report'
     + '&name=' + encodeURIComponent(state.childName || '')
     + '&type=' + encodeURIComponent(state.reportType || 'sensitive')
     + '&label=' + encodeURIComponent(data.typeLabel || '');
+}
+
+function generateShareText(type) {
+  const name = state.childName || '孩子';
+  if (type === 'family') return `我刚做了一份${name}的行为理解报告，里面有几句话说得挺准的。你也看看，我们可以一起想想以后怎么和孩子沟通。`;
+  if (type === 'friend') return `我刚试了一个孩子行为理解小工具，输入一个让你困惑的行为，它会帮你从孩子的需求和情绪角度重新解释。你也可以试试看。`;
+  return `很多时候，孩子不是故意不听话，而是我们还没读懂他真正想表达什么。今天试了一个 AI 行为理解工具，挺有启发的。`;
 }
 
 /* ── QR canvas: uses qrcode.min.js loaded as local file (no CDN) ── */
@@ -2920,8 +2945,8 @@ function canvasWrapText(ctx, text, x, y, maxWidth, lineH) {
   if (line) ctx.fillText(line, x, cy);
 }
 
-/* ── Report poster (family share): cream background, AIPIWEN brand ── */
-async function drawReportPoster(canvas) {
+/* ── Poster A: Family share (cream background, child report) ── */
+async function drawPosterA(canvas) {
   const ctx = canvas.getContext('2d');
   const W = 1080, H = 1440;
   const name = state.childName || '孩子';
@@ -3018,7 +3043,7 @@ async function drawReportPoster(canvas) {
 
   // QR code
   const qrSize = 280;
-  const qrC = await generateQRCanvas(generateShareURL('family'), qrSize);
+  const qrC = await generateQRCanvas(generateShareURL(true), qrSize);
   const qrX = (W - qrSize) / 2;
   if (qrC) {
     ctx.fillStyle = 'white';
@@ -3032,11 +3057,11 @@ async function drawReportPoster(canvas) {
   ctx.fillStyle = '#8C8580';
   ctx.font = '24px -apple-system, PingFang SC, sans-serif';
   ctx.textAlign = 'center';
-  ctx.fillText('AIPIWEN · 重新读懂 · aipiwen.cn', W / 2, H - 32);
+  ctx.fillText('AIPIWEN · 重新读懂 · www.aipewen.cn', W / 2, H - 32);
 }
 
-/* ── Friend poster: dark background, invite experience ── */
-async function drawFriendPoster(canvas) {
+/* ── Poster B: Friend invite (dark background) ── */
+async function drawPosterB(canvas) {
   const ctx = canvas.getContext('2d');
   const W = 1080, H = 1440;
 
@@ -3128,7 +3153,7 @@ async function drawFriendPoster(canvas) {
   ctx.fillText('扫码立即体验', W / 2, 1108);
   ctx.fillStyle = 'rgba(255,255,255,0.4)';
   ctx.font = '300 28px -apple-system, PingFang SC, sans-serif';
-  ctx.fillText('aipiwen.cn', W / 2, 1152);
+  ctx.fillText('www.aipewen.cn', W / 2, 1152);
 
   // QR code
   const qrSize = 256;
@@ -3146,42 +3171,137 @@ async function drawFriendPoster(canvas) {
   ctx.fillStyle = 'rgba(255,255,255,0.28)';
   ctx.font = '22px -apple-system, PingFang SC, sans-serif';
   ctx.textAlign = 'center';
-  ctx.fillText('AIPIWEN · 重新读懂 · aipiwen.cn', W / 2, H - 28);
+  ctx.fillText('AIPIWEN · 重新读懂 · www.aipewen.cn', W / 2, H - 28);
 }
 
-/* ── Poster modal controls ── */
-let _posterType = 'family';
+/* ── Poster C: Moments (warm cream, public-facing, no child info) ── */
+async function drawPosterC(canvas) {
+  const ctx = canvas.getContext('2d');
+  const W = 1080, H = 1440;
 
-async function showPosterModal(type) {
-  _posterType = type;
-  const modal = document.getElementById('poster-modal');
-  const canvas = document.getElementById('poster-canvas');
-  const hint = document.getElementById('poster-hint');
-  modal.classList.add('open');
-  hint.textContent = '正在生成海报…';
+  ctx.fillStyle = '#FDFCF8'; ctx.fillRect(0, 0, W, H);
+  const g1 = ctx.createRadialGradient(W / 2, 280, 0, W / 2, 280, 640);
+  g1.addColorStop(0, 'rgba(194,105,42,0.09)'); g1.addColorStop(1, 'transparent');
+  ctx.fillStyle = g1; ctx.fillRect(0, 0, W, H);
+
+  ctx.fillStyle = '#C2692A'; ctx.fillRect(0, 0, W, 8);
+
+  // Brand
+  ctx.textAlign = 'left'; ctx.fillStyle = '#C2692A';
+  ctx.font = '600 36px -apple-system, PingFang SC, sans-serif';
+  ctx.fillText('AIPIWEN', 80, 108);
+  ctx.fillStyle = '#EAE7E2'; ctx.fillRect(80, 128, W - 160, 1);
+
+  // Main headline
+  ctx.fillStyle = '#1A1714'; ctx.font = '300 92px Georgia, serif';
+  ctx.fillText('孩子的行为，', 80, 300);
+  ctx.fillStyle = '#C2692A'; ctx.font = '300 78px Georgia, serif';
+  ctx.fillText('可能是在表达', 80, 402);
+  ctx.fillText('一种需要', 80, 500);
+
+  // Divider
+  ctx.fillStyle = '#C2692A'; ctx.fillRect(80, 546, 72, 4);
+
+  // Sub copy
+  ctx.fillStyle = '#4A4540'; ctx.font = '300 40px Georgia, serif';
+  ctx.fillText('重新读懂孩子，', 80, 622);
+  ctx.fillText('从一个行为开始', 80, 680);
+
+  // Body block
+  ctx.fillStyle = '#F5F3EE'; canvasRoundRect(ctx, 80, 728, W - 160, 172, 16); ctx.fill();
+  ctx.fillStyle = '#4A4540'; ctx.font = '300 30px -apple-system, PingFang SC, sans-serif';
+  ctx.textAlign = 'left';
+  canvasWrapText(ctx, '不是给孩子贴标签，而是从行为背后看见真实需求。帮你用一种新的语言，重新读懂孩子。', 108, 796, W - 220, 50);
+
+  // Value points
+  const pts = ['不评判  只翻译行为背后的需求', '5分钟   自动生成专属报告', '完全免费  不需要注册'];
+  pts.forEach((p, i) => {
+    ctx.fillStyle = '#C2692A'; ctx.font = '700 26px -apple-system, PingFang SC, sans-serif';
+    ctx.fillText('✦', 80, 968 + i * 66);
+    ctx.fillStyle = '#4A4540'; ctx.font = '300 28px -apple-system, PingFang SC, sans-serif';
+    ctx.fillText(p, 118, 968 + i * 66);
+  });
+
+  // Divider
+  ctx.fillStyle = '#EAE7E2'; ctx.fillRect(80, 1232, W - 160, 1);
+
+  // QR
+  ctx.fillStyle = '#1A1714'; ctx.font = '600 32px -apple-system, PingFang SC, sans-serif';
+  ctx.textAlign = 'center'; ctx.fillText('扫码体验', W / 2, 1278);
+  ctx.fillStyle = '#8C8580'; ctx.font = '300 26px -apple-system, PingFang SC, sans-serif';
+  ctx.fillText('www.aipewen.cn', W / 2, 1316);
+
+  const qrSize = 220, qrX = (W - qrSize) / 2;
+  const qrC = await generateQRCanvas(BASE_URL, qrSize);
+  if (qrC) {
+    ctx.fillStyle = 'white'; canvasRoundRect(ctx, qrX - 10, 1330, qrSize + 20, qrSize + 20, 12); ctx.fill();
+    ctx.drawImage(qrC, qrX, 1340, qrSize, qrSize);
+  }
+
+  ctx.fillStyle = '#EAE7E2'; ctx.fillRect(0, H - 68, W, 1);
+  ctx.fillStyle = '#8C8580'; ctx.font = '22px -apple-system, PingFang SC, sans-serif';
+  ctx.textAlign = 'center'; ctx.fillText('AIPIWEN · 重新读懂 · www.aipewen.cn', W / 2, H - 28);
+}
+
+/* ── Share panel controls ── */
+let _shareType = 'family';
+const _shareTitles = { family: '分享给家人', friend: '邀请朋友', moments: '发朋友圈' };
+
+async function showSharePanel(type) {
+  _shareType = type;
+  const panel = document.getElementById('share-panel');
+  const canvas = document.getElementById('share-canvas');
+  const hintEl = document.getElementById('share-panel-hint');
+  const textEl = document.getElementById('share-panel-text');
+  const copyBtn = document.getElementById('share-copy-btn');
+  const titleEl = document.getElementById('share-panel-title');
+
+  titleEl.textContent = _shareTitles[type] || '生成分享图';
+  textEl.textContent = generateShareText(type);
+  copyBtn.textContent = '复制文案';
+  copyBtn.classList.remove('copied');
+  hintEl.textContent = '正在生成分享图…';
+  panel.classList.add('open');
+
   const ctx = canvas.getContext('2d');
   ctx.clearRect(0, 0, 1080, 1440);
   try {
-    if (type === 'family') { await drawReportPoster(canvas); }
-    else { await drawFriendPoster(canvas); }
-    hint.textContent = '长按海报保存到相册 · 或点击「保存图片」';
-  } catch(e) { hint.textContent = '生成失败，请重试'; }
+    if (type === 'family') await drawPosterA(canvas);
+    else if (type === 'friend') await drawPosterB(canvas);
+    else await drawPosterC(canvas);
+    hintEl.textContent = '长按图片保存到相册 · 或点击「保存图片」';
+  } catch(e) { console.error(e); hintEl.textContent = '生成失败，请重试'; }
 }
 
-function closePosterModal() {
-  document.getElementById('poster-modal').classList.remove('open');
+function closeSharePanel() {
+  document.getElementById('share-panel').classList.remove('open');
 }
 
-function downloadPoster() {
-  const canvas = document.getElementById('poster-canvas');
+function copyShareText() {
+  const text = document.getElementById('share-panel-text').textContent;
+  const btn = document.getElementById('share-copy-btn');
+  const done = () => {
+    btn.textContent = '✓ 已复制';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = '复制文案'; btn.classList.remove('copied'); }, 2500);
+  };
+  if (navigator.clipboard) { navigator.clipboard.writeText(text).then(done).catch(() => _fallbackCopy(text, done)); }
+  else { _fallbackCopy(text, done); }
+}
+
+function _fallbackCopy(text, cb) {
+  const ta = document.createElement('textarea');
+  ta.value = text; ta.style.cssText = 'position:fixed;opacity:0';
+  document.body.appendChild(ta); ta.select();
+  try { document.execCommand('copy'); cb(); } catch(e) {}
+  document.body.removeChild(ta);
+}
+
+function downloadShareImage() {
+  const canvas = document.getElementById('share-canvas');
   const name = state.childName || '孩子';
-  const fn = _posterType === 'family'
-    ? 'AIPIWEN_' + name + '行为理解报告.png'
-    : 'AIPIWEN_邀请朋友.png';
-  const a = document.createElement('a');
-  a.download = fn;
-  a.href = canvas.toDataURL('image/png');
-  a.click();
+  const fn = { family: 'AIPIWEN_' + name + '行为理解.png', friend: 'AIPIWEN_邀请朋友.png', moments: 'AIPIWEN_朋友圈.png' }[_shareType] || 'AIPIWEN_分享图.png';
+  const a = document.createElement('a'); a.download = fn; a.href = canvas.toDataURL('image/png'); a.click();
 }
 function copyShare() {
   const text = document.getElementById('share-text').textContent;
@@ -3201,17 +3321,28 @@ function copyShare() {
 </script>
 
 <!-- ═════════════════════════════════════
-     POSTER MODAL
+     SHARE PANEL
 ═════════════════════════════════════ -->
-<div id="poster-modal" class="poster-modal">
-  <div class="poster-modal-inner">
-    <div class="poster-canvas-wrap">
-      <canvas id="poster-canvas" width="1080" height="1440"></canvas>
+<div id="share-panel" class="share-panel">
+  <div class="share-panel-inner">
+    <div class="share-panel-header">
+      <div class="share-panel-title" id="share-panel-title">生成分享图</div>
+      <button class="share-panel-close" onclick="closeSharePanel()">✕</button>
     </div>
-    <div class="poster-hint" id="poster-hint">长按海报保存到相册</div>
-    <div class="poster-modal-btns">
-      <button class="poster-btn-close" onclick="closePosterModal()">关闭</button>
-      <button class="poster-btn-save" onclick="downloadPoster()">保存图片</button>
+    <div class="share-panel-scroll">
+      <div class="share-poster-wrap">
+        <canvas id="share-canvas" width="1080" height="1440"></canvas>
+      </div>
+      <div class="share-hint" id="share-panel-hint">长按图片保存到相册</div>
+      <div class="share-text-block">
+        <div class="share-text-label">转发文案</div>
+        <div class="share-text-content" id="share-panel-text"></div>
+      </div>
+      <div class="share-hint">保存图片后，可发给微信好友或发朋友圈。<br>二维码可直接扫码进入页面。</div>
+      <div class="share-panel-btns">
+        <button class="share-btn-copy" id="share-copy-btn" onclick="copyShareText()">复制文案</button>
+        <button class="share-btn-save" onclick="downloadShareImage()">保存图片</button>
+      </div>
     </div>
   </div>
 </div>
