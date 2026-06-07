@@ -2119,11 +2119,8 @@ input[type=range].slider::-moz-range-thumb {
     <div class="sharecard-hint">长按截图保存，发到朋友圈 ☝️</div>
 
     <div class="sharecard-btns">
-      <button class="btn-share amber" id="btn-share-main" onclick="triggerShare()">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
-        发给另一半
-      </button>
-      <button class="btn-share outline" id="btn-copy-viral" onclick="copyViralText()">复制分享文案</button>
+      <button class="btn-share amber" id="btn-share-main" onclick="copyViralText()">复制分享文案</button>
+      <div style="text-align:center;font-size:12px;color:var(--ink-40);margin:-4px 0 4px">已为你准备好分享文案，复制后可粘贴到微信、朋友圈或小红书</div>
       <button class="btn-share" onclick="goToWeChatFinal()" style="margin-top:4px">获取完整报告 →</button>
     </div>
   </div>
@@ -2137,8 +2134,7 @@ input[type=range].slider::-moz-range-thumb {
     <div class="wechat-mark">✓</div>
     <h2 class="wechat-title">完整报告<br>马上发给你</h2>
     <p class="wechat-body">
-      添加顾问企业微信<br>
-      <span id="wechat-name-text">孩子</span>的完整7节报告<br>将在24小时内发到你手上
+      请用手机长按二维码识别，添加企业微信。<br>顾问会把 <span id="wechat-name-text">孩子</span> 的完整报告发给你。
     </p>
     <div class="qr-card">
       <div class="qr-frame" id="qr-frame-wrap">
@@ -2149,16 +2145,10 @@ input[type=range].slider::-moz-range-thumb {
         </div>
       </div>
       <div class="qr-label">长按二维码识别，添加企业微信</div>
-      <div style="font-size:12px;color:var(--ink-40);margin-top:4px;margin-bottom:2px">备用企业微信号</div>
-      <div class="qr-id" id="wechat-id-display">AIPIWEN_2026</div>
+      <div style="font-size:12px;color:var(--ink-40);margin-top:6px">电脑端可截图后，用手机微信识别二维码</div>
     </div>
-    <div class="or-line"><span class="or-word">或者</span></div>
-    <button class="btn-wechat-green" onclick="openWeChat()">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M9.5 4C5.36 4 2 6.91 2 10.5c0 2.04 1.07 3.87 2.75 5.09L4 18l2.64-1.32C7.6 16.88 8.53 17 9.5 17c.34 0 .67-.02 1-.06A6.5 6.5 0 0 0 9.5 14c0-3.59 3.36-6.5 7.5-6.5.34 0 .67.02 1 .06A5.5 5.5 0 0 0 9.5 4z"/><path d="M17 11c-3.31 0-6 2.24-6 5s2.69 5 6 5c.83 0 1.62-.17 2.35-.47L22 22l-.76-2.67A4.95 4.95 0 0 0 23 16c0-2.76-2.69-5-6-5z"/></svg>
-      点击添加企业微信
-    </button>
     <div class="share-card">
-      <div class="share-label">也可以发给另一半一起看 →</div>
+      <div class="share-label">也可以把报告分享给另一半一起看</div>
       <div class="share-bubble" id="share-text">我在这里做了一份孩子的行为理解报告，写的特别准，你也去试试：[链接]</div>
       <button class="btn-copy-text" id="copy-btn" onclick="copyShare()">复制分享文字</button>
     </div>
@@ -2670,7 +2660,7 @@ function buildAndShowShareCard() {
     this.style.display = 'block';
     document.getElementById('qr-placeholder').style.display = 'none';
   };
-  document.getElementById('wechat-id-display').textContent = WECHAT_CONFIG.WECHAT_ID;
+  // wechat-id-display removed — ID display no longer shown
   navigateTo('screen-sharecard');
 }
 
@@ -2697,7 +2687,7 @@ function copyViralText() {
   const name = state.childName || '孩子';
   const score = validation.reunderstandingScore;
   const text = `「${vs.line1}\n${vs.line2}」\n\n这是我在 AIPIWEN 上做的 ${name} 的行为理解报告，重新读懂指数 ${score}/10，写的很准，你也去试试 → ${window.location.href}`;
-  copyText(text, 'btn-copy-viral', '已复制 ✓');
+  copyText(text, 'btn-share-main', '分享文案已复制，可粘贴到微信或小红书 ✓');
 }
 
 function copyText(text, btnId, successLabel) {
@@ -2717,13 +2707,13 @@ function copyText(text, btnId, successLabel) {
     setTimeout(() => { btn.textContent = orig; btn.classList.remove('copied'); }, 3000);
   }
 }
-function openWeChat() { alert('请在企业微信中搜索：AIPIWEN_2026\n或扫描上方二维码添加'); }
+function openWeChat() { /* 已移除，动作改为长按二维码识别 */ }
 function copyShare() {
   const text = document.getElementById('share-text').textContent;
   const btn = document.getElementById('copy-btn');
   if (navigator.clipboard) {
     navigator.clipboard.writeText(text).then(() => {
-      btn.textContent = '✓ 已复制，去发给另一半';
+      btn.textContent = '✓ 已复制，可粘贴到微信发送';
       btn.classList.add('copied');
     });
   } else {
