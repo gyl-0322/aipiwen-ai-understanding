@@ -681,7 +681,35 @@ body {
   animation: spin 2s linear infinite;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
-.loading-emoji { font-size: 28px; }
+/* AIPIWEN brand mark — replaces emoji */
+.aipiwen-mark {
+  position: relative;
+  width: 44px; height: 44px;
+  display: flex; align-items: center; justify-content: center;
+}
+.mark-outer-arc {
+  position: absolute;
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  border: 1px solid transparent;
+  border-top-color: rgba(214,168,90,0.55);
+  border-right-color: rgba(214,168,90,0.25);
+  animation: spin 4s linear infinite;
+}
+.mark-inner-ring {
+  position: absolute;
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  border: 1px solid rgba(214,168,90,0.30);
+  animation: breathe 3s ease-in-out infinite;
+}
+.mark-core-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--amber);
+  box-shadow: 0 0 8px rgba(214,168,90,0.8), 0 0 18px rgba(214,168,90,0.35);
+  animation: breathe 3s ease-in-out infinite;
+}
 .loading-name-dark {
   font-family: var(--font-serif);
   font-size: 22px;
@@ -1910,7 +1938,13 @@ input[type=range].slider::-moz-range-thumb {
     <div class="loading-orb lo-2"></div>
   </div>
   <div class="loading-center">
-    <div class="loading-circle"><div class="loading-emoji" id="loading-emoji">🧒</div></div>
+    <div class="loading-circle">
+      <div class="aipiwen-mark">
+        <div class="mark-outer-arc"></div>
+        <div class="mark-inner-ring"></div>
+        <div class="mark-core-dot"></div>
+      </div>
+    </div>
     <div class="loading-name-dark" id="loading-name">正在分析…</div>
     <div class="loading-sub-dark">请稍等，大约需要10秒</div>
     <div class="loading-steps-dark">
@@ -2138,8 +2172,8 @@ input[type=range].slider::-moz-range-thumb {
 // WECHAT CONFIG — update these to deploy
 // ─────────────────────────────────────
 const WECHAT_CONFIG = {
-  QR_IMAGE: 'wechat_qr.png',   // place file alongside HTML to activate
-  WECHAT_ID: 'AIPIWEN_2026'    // replace with real enterprise WeChat ID
+  QR_IMAGE: 'images/wechat_qr.png',   // place QR image in images/ folder
+  WECHAT_ID: 'AIPIWEN_2026'
 };
 
 /* Future V5 — WeChat OAuth integration:
@@ -2278,8 +2312,7 @@ function needLabel(val) {
 
 function startLoading() {
   const name = state.childName || '孩子';
-  const emojiMap = {sensitive:'🌸', autonomy:'⚡', relation:'💛'};
-  document.getElementById('loading-emoji').textContent = emojiMap[state.reportType] || '🧒';
+  // Brand mark is pure CSS — no emoji needed
   document.getElementById('loading-name').textContent = '正在为' + name + '分析…';
   document.getElementById('ls2-detail').textContent = '正在从行为、情绪、关系三个层面重新理解';
   document.getElementById('ls3-detail').textContent = '正在比对行为模式、关系模式与家庭系统线索';
