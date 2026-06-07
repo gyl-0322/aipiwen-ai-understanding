@@ -1011,29 +1011,49 @@ body {
 }
 .locked-icon { color: var(--ink-20); font-size: 14px; }
 
-/* Feedback */
+/* Feedback — upgraded module */
 .feedback-section {
-  padding: 28px 28px;
-  text-align: center;
+  padding: 32px 24px 28px;
+  background: var(--cream);
+  border-top: 1px solid var(--ink-10);
+  border-bottom: 1px solid var(--ink-10);
+  margin-bottom: 4px;
 }
 .feedback-q {
-  font-size: 14px;
-  color: var(--ink-40);
-  margin-bottom: 16px;
+  font-family: var(--font-serif);
+  font-size: 20px;
+  color: var(--ink);
+  margin-bottom: 6px;
+  font-weight: normal;
+  text-align: center;
 }
-.feedback-row { display: flex; gap: 10px; justify-content: center; }
+.feedback-sub {
+  font-size: 13px;
+  color: var(--ink-40);
+  margin-bottom: 20px;
+  line-height: 1.5;
+  text-align: center;
+}
+.feedback-row { display: flex; flex-direction: column; gap: 10px; }
 .fb-btn {
-  padding: 10px 20px;
-  border-radius: 50px;
+  width: 100%;
+  padding: 16px 18px;
+  border-radius: var(--r-lg);
   border: 1.5px solid var(--ink-10);
-  background: transparent;
+  background: white;
   font-family: var(--font-sans);
-  font-size: 14px;
+  font-size: 15px;
   color: var(--ink-70);
   cursor: pointer;
   transition: all .2s;
+  text-align: left;
+  display: flex; align-items: center; gap: 10px;
+  box-shadow: 0 1px 4px rgba(0,0,0,.04);
 }
-.fb-btn:active, .fb-btn.tapped { border-color: var(--ok); color: var(--ok); background: var(--ok-soft); }
+.fb-btn::before { content: '○'; font-size: 15px; color: var(--ink-20); flex-shrink: 0; }
+.fb-btn:active { border-color: var(--amber); background: #FFFBF5; }
+.fb-btn.tapped { border-color: var(--ok); background: var(--ok-soft); color: var(--ok); }
+.fb-btn.tapped::before { content: '✓'; color: var(--ok); }
 
 /* Sticky report bar */
 .report-sticky {
@@ -1624,6 +1644,75 @@ input[type=range].slider::-moz-range-thumb {
 .observer-text {
   font-size: 15px; line-height: 1.7; color: var(--ink);
 }
+
+/* ═══════════════════════════════════════
+   FISSION SHARING
+═══════════════════════════════════════ */
+.share-fission-section {
+  padding: 32px 28px 28px;
+  background: var(--cream);
+  border-top: 1px solid var(--ink-10);
+}
+.share-fission-label {
+  font-size: 11px; font-weight: 700; letter-spacing: .12em;
+  text-transform: uppercase; color: var(--ink-40); margin-bottom: 16px;
+}
+.share-fission-btns { display: flex; flex-direction: column; gap: 10px; }
+.btn-sf {
+  width: 100%; padding: 16px 18px;
+  background: transparent; border: 1.5px solid var(--ink-20);
+  border-radius: 12px; font-family: var(--font-sans);
+  color: var(--ink); cursor: pointer;
+  text-align: left; display: flex; align-items: center; gap: 14px;
+  transition: border-color .15s, background .15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.btn-sf:active { background: var(--amber-soft); border-color: var(--amber); }
+.btn-sf-icon { font-size: 22px; flex-shrink: 0; }
+.btn-sf-body { flex: 1; }
+.btn-sf-main { font-size: 15px; font-weight: 600; color: var(--ink); line-height: 1.3; }
+.btn-sf-sub { font-size: 12px; color: var(--ink-40); margin-top: 3px; line-height: 1.4; }
+.btn-sf-arr { font-size: 20px; color: var(--ink-40); }
+
+/* Poster modal */
+.poster-modal {
+  display: none; position: fixed; inset: 0; z-index: 1000;
+  background: rgba(20,17,14,.92);
+  flex-direction: column; align-items: center; justify-content: flex-end;
+  padding-bottom: 28px;
+}
+.poster-modal.open { display: flex; }
+.poster-modal-inner {
+  width: 100%; max-width: 440px;
+  padding: 0 20px;
+  display: flex; flex-direction: column; align-items: center;
+}
+.poster-canvas-wrap {
+  width: 100%; border-radius: 14px; overflow: hidden;
+  box-shadow: 0 24px 64px rgba(0,0,0,.6);
+  max-height: 60vh; background: #1A1714;
+  display: flex; align-items: center; justify-content: center;
+}
+.poster-canvas-wrap canvas { width: 100%; height: auto; display: block; }
+.poster-hint {
+  margin-top: 14px; font-size: 13px; color: rgba(255,255,255,.45);
+  text-align: center; letter-spacing: .02em;
+}
+.poster-modal-btns {
+  display: flex; gap: 10px; margin-top: 14px; width: 100%;
+}
+.poster-btn-close {
+  flex: 1; padding: 14px;
+  background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.12);
+  border-radius: 12px; color: rgba(255,255,255,.7); font-size: 15px;
+  cursor: pointer; font-family: var(--font-sans);
+}
+.poster-btn-save {
+  flex: 2; padding: 14px; background: var(--amber);
+  border: none; border-radius: 12px;
+  color: white; font-size: 15px; font-weight: 600;
+  cursor: pointer; font-family: var(--font-sans);
+}
 </style>
 </head>
 <body>
@@ -2120,7 +2209,7 @@ input[type=range].slider::-moz-range-thumb {
 
     <div class="sharecard-btns">
       <button class="btn-share amber" id="btn-share-main" onclick="copyViralText()">复制分享文案</button>
-      <div style="text-align:center;font-size:12px;color:var(--ink-40);margin:-4px 0 4px">已为你准备好分享文案，复制后可粘贴到微信、朋友圈或小红书</div>
+      <div style="text-align:center;font-size:12px;color:var(--ink-40);margin:-4px 0 4px">复制后打开微信、朋友圈或小红书粘贴即可，网页无法直接跳转</div>
       <button class="btn-share" onclick="goToWeChatFinal()" style="margin-top:4px">获取完整报告 →</button>
     </div>
   </div>
@@ -2134,8 +2223,30 @@ input[type=range].slider::-moz-range-thumb {
     <div class="wechat-mark">✓</div>
     <h2 class="wechat-title">完整报告<br>马上发给你</h2>
     <p class="wechat-body">
-      请用手机长按二维码识别，添加企业微信。<br>顾问会把 <span id="wechat-name-text">孩子</span> 的完整报告发给你。
+      添加企业微信后，顾问会把<br><span id="wechat-name-text">孩子</span> 的完整报告发送给你。
     </p>
+
+    <div style="background:#F7F5F0;border-radius:12px;padding:16px 20px;margin-bottom:20px;text-align:left">
+      <div style="font-size:11px;font-weight:600;letter-spacing:.1em;color:var(--ink-40);text-transform:uppercase;margin-bottom:12px">领取方式</div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div style="display:flex;align-items:flex-start;gap:10px">
+          <div style="width:22px;height:22px;border-radius:50%;background:var(--amber);color:white;font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0">1</div>
+          <div style="font-size:14px;color:var(--ink);padding-top:2px">手机长按下方二维码</div>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:10px">
+          <div style="width:22px;height:22px;border-radius:50%;background:var(--amber);color:white;font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0">2</div>
+          <div style="font-size:14px;color:var(--ink);padding-top:2px">选择「识别图中二维码」</div>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:10px">
+          <div style="width:22px;height:22px;border-radius:50%;background:var(--amber);color:white;font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0">3</div>
+          <div style="font-size:14px;color:var(--ink);padding-top:2px">添加企业微信，领取完整报告</div>
+        </div>
+      </div>
+      <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--ink-10);font-size:12px;color:var(--ink-40)">
+        💻 电脑端请用手机微信「扫一扫」，扫描屏幕上的二维码。
+      </div>
+    </div>
+
     <div class="qr-card">
       <div class="qr-frame" id="qr-frame-wrap">
         <img id="qr-img" alt="企业微信二维码" style="width:140px;height:140px;border-radius:8px;display:none" onerror="this.style.display='none';document.getElementById('qr-placeholder').style.display='flex'">
@@ -2145,7 +2256,6 @@ input[type=range].slider::-moz-range-thumb {
         </div>
       </div>
       <div class="qr-label">长按二维码识别，添加企业微信</div>
-      <div style="font-size:12px;color:var(--ink-40);margin-top:6px">电脑端可截图后，用手机微信识别二维码</div>
     </div>
     <div class="share-card">
       <div class="share-label">也可以把报告分享给另一半一起看</div>
@@ -2451,6 +2561,16 @@ function buildAndShowReport() {
       </div>
     </div>
 
+    <div class="feedback-section">
+      <div class="feedback-q">这份理解说中了吗？</div>
+      <div class="feedback-sub">你的反馈会帮助我们把完整报告生成得更贴近 ${name}。</div>
+      <div class="feedback-row">
+        <button class="fb-btn" id="fb-great" onclick="onFeedback(this,'great')">非常像，想看完整报告</button>
+        <button class="fb-btn" id="fb-ok"    onclick="onFeedback(this,'ok')">有点像，我想继续看看</button>
+        <button class="fb-btn" id="fb-miss"  onclick="onFeedback(this,'miss')">不太像，我想重新试一次</button>
+      </div>
+    </div>
+
     <div class="unlock-block">
       <div class="unlock-block-orb"></div>
       <div class="unlock-kicker">当前免费解读已生成</div>
@@ -2476,15 +2596,6 @@ function buildAndShowReport() {
       <div style="text-align:center;font-size:13px;color:var(--ink-40);margin-top:10px">添加企业微信，24小时内发送完整7节报告</div>
     </div>
 
-    <div class="feedback-section">
-      <div class="feedback-q">前两节说的像${name}吗？</div>
-      <div class="feedback-row">
-        <button class="fb-btn" onclick="this.classList.add('tapped');this.textContent='✓ 非常像'">非常像</button>
-        <button class="fb-btn" onclick="this.textContent='✓ 有点像'">有点像</button>
-        <button class="fb-btn" onclick="this.textContent='✓ 不太像'">不太像</button>
-      </div>
-    </div>
-
     <div class="observer-section">
       <div class="section-eyebrow"><div class="section-num">你与孩子</div><div class="section-rule"></div></div>
       <div style="margin-bottom:20px">
@@ -2494,6 +2605,27 @@ function buildAndShowReport() {
       <div>
         <div class="observer-tag">你最容易误解的部分</div>
         <div class="observer-text">${fill(observer.hard)}</div>
+      </div>
+    </div>
+    <div class="share-fission-section">
+      <div class="share-fission-label">把这份理解带给更多人</div>
+      <div class="share-fission-btns">
+        <button class="btn-sf" onclick="showPosterModal('family')">
+          <div class="btn-sf-icon">👨‍👩‍👧</div>
+          <div class="btn-sf-body">
+            <div class="btn-sf-main">分享给家人看这份报告</div>
+            <div class="btn-sf-sub">生成专属海报，发给爱人或父母</div>
+          </div>
+          <div class="btn-sf-arr">›</div>
+        </button>
+        <button class="btn-sf" onclick="showPosterModal('friend')">
+          <div class="btn-sf-icon">🔗</div>
+          <div class="btn-sf-body">
+            <div class="btn-sf-main">邀请朋友也测一测</div>
+            <div class="btn-sf-sub">帮更多父母重新读懂自己的孩子</div>
+          </div>
+          <div class="btn-sf-arr">›</div>
+        </button>
       </div>
     </div>
     <div style="height:80px"></div>
@@ -2513,6 +2645,17 @@ const validation = {
 function goToWeChat() {
   buildFeelingScreen();
   navigateTo('screen-feeling');
+}
+
+function onFeedback(el, type) {
+  document.querySelectorAll('.fb-btn').forEach(b => b.classList.remove('tapped'));
+  el.classList.add('tapped');
+  if (type === 'great' || type === 'ok') {
+    setTimeout(() => goToWeChat(), 600);
+  } else {
+    // 不太像 — scroll back to top gently
+    setTimeout(() => { document.getElementById('screen-report').scrollTop = 0; }, 300);
+  }
 }
 
 function goToWeChatFinal() {
@@ -2687,7 +2830,7 @@ function copyViralText() {
   const name = state.childName || '孩子';
   const score = validation.reunderstandingScore;
   const text = `「${vs.line1}\n${vs.line2}」\n\n这是我在 AIPIWEN 上做的 ${name} 的行为理解报告，重新读懂指数 ${score}/10，写的很准，你也去试试 → ${window.location.href}`;
-  copyText(text, 'btn-share-main', '分享文案已复制，可粘贴到微信或小红书 ✓');
+  copyText(text, 'btn-share-main', '分享文案已复制，请打开微信或小红书粘贴发送 ✓');
 }
 
 function copyText(text, btnId, successLabel) {
@@ -2708,6 +2851,352 @@ function copyText(text, btnId, successLabel) {
   }
 }
 function openWeChat() { /* 已移除，动作改为长按二维码识别 */ }
+
+/* ══════════════════════════════════════════════
+   FISSION SHARING — Poster generation
+══════════════════════════════════════════════ */
+const BASE_URL = 'http://aipewen-ai-understanding.oss-cn-hangzhou.aliyuncs.com/index.html';
+
+function generateShareURL(type) {
+  if (type === 'friend') return BASE_URL;
+  const data = REPORTS[state.reportType] || REPORTS.sensitive;
+  return BASE_URL + '?share=report'
+    + '&name=' + encodeURIComponent(state.childName || '')
+    + '&type=' + encodeURIComponent(state.reportType || 'sensitive')
+    + '&label=' + encodeURIComponent(data.typeLabel || '');
+}
+
+/* ── Lightweight QR: loads qrcodejs from CDN, renders to offscreen canvas ── */
+function loadQRLib() {
+  return new Promise((resolve) => {
+    if (window.QRCode) { resolve(); return; }
+    const s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js';
+    s.onload = resolve;
+    s.onerror = resolve; // resolve even on fail; generateQRCanvas handles null
+    document.head.appendChild(s);
+  });
+}
+
+async function generateQRCanvas(text, size) {
+  await loadQRLib();
+  if (!window.QRCode) return null;
+  return new Promise((resolve) => {
+    const wrap = document.createElement('div');
+    wrap.style.cssText = 'position:absolute;left:-9999px;top:-9999px;width:' + size + 'px;height:' + size + 'px;';
+    document.body.appendChild(wrap);
+    try {
+      new QRCode(wrap, { text, width: size, height: size, correctLevel: QRCode.CorrectLevel.M });
+    } catch(e) { document.body.removeChild(wrap); resolve(null); return; }
+    // qrcodejs renders with a brief internal setTimeout
+    setTimeout(() => {
+      const qc = wrap.querySelector('canvas');
+      const qi = wrap.querySelector('img');
+      const out = document.createElement('canvas');
+      out.width = size; out.height = size;
+      const ctx = out.getContext('2d');
+      if (qc) {
+        ctx.drawImage(qc, 0, 0, size, size);
+        document.body.removeChild(wrap); resolve(out);
+      } else if (qi && qi.src) {
+        const img = new Image();
+        img.onload = () => { ctx.drawImage(img, 0, 0, size, size); document.body.removeChild(wrap); resolve(out); };
+        img.onerror = () => { document.body.removeChild(wrap); resolve(null); };
+        img.src = qi.src;
+      } else { document.body.removeChild(wrap); resolve(null); }
+    }, 200);
+  });
+}
+
+/* ── Canvas path helper ── */
+function canvasRoundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+
+function canvasWrapText(ctx, text, x, y, maxWidth, lineH) {
+  let line = '', cy = y;
+  for (const ch of text) {
+    const test = line + ch;
+    if (ctx.measureText(test).width > maxWidth && line.length > 0) {
+      ctx.fillText(line, x, cy); line = ch; cy += lineH;
+    } else { line = test; }
+  }
+  if (line) ctx.fillText(line, x, cy);
+}
+
+/* ── Report poster (family share): cream background, AIPIWEN brand ── */
+async function drawReportPoster(canvas) {
+  const ctx = canvas.getContext('2d');
+  const W = 1080, H = 1440;
+  const name = state.childName || '孩子';
+  const data = REPORTS[state.reportType] || REPORTS.sensitive;
+  const vs = VIRAL_SENTENCES[state.reportType] || VIRAL_SENTENCES.sensitive;
+
+  // Background
+  ctx.fillStyle = '#FDFCF8';
+  ctx.fillRect(0, 0, W, H);
+
+  // Amber top stripe
+  ctx.fillStyle = '#C2692A';
+  ctx.fillRect(0, 0, W, 10);
+
+  // Soft orb decorations
+  const g1 = ctx.createRadialGradient(W * 0.9, 220, 0, W * 0.9, 220, 380);
+  g1.addColorStop(0, 'rgba(194,105,42,0.1)'); g1.addColorStop(1, 'transparent');
+  ctx.fillStyle = g1; ctx.fillRect(0, 0, W, H);
+
+  const g2 = ctx.createRadialGradient(W * 0.05, H - 180, 0, W * 0.05, H - 180, 260);
+  g2.addColorStop(0, 'rgba(194,105,42,0.07)'); g2.addColorStop(1, 'transparent');
+  ctx.fillStyle = g2; ctx.fillRect(0, 0, W, H);
+
+  // Brand wordmark
+  ctx.textAlign = 'left';
+  ctx.fillStyle = '#C2692A';
+  ctx.font = '600 38px -apple-system, PingFang SC, sans-serif';
+  ctx.fillText('AIPIWEN', 80, 108);
+  ctx.fillStyle = '#8C8580';
+  ctx.font = '300 32px -apple-system, PingFang SC, sans-serif';
+  ctx.fillText('· 重新读懂', 286, 108);
+
+  // Type label pill
+  ctx.fillStyle = '#F5EDE4';
+  canvasRoundRect(ctx, 80, 132, 220, 54, 27); ctx.fill();
+  ctx.fillStyle = '#C2692A';
+  ctx.font = '600 26px -apple-system, PingFang SC, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(data.typeLabel, 190, 168);
+
+  // Name + title line
+  ctx.textAlign = 'left';
+  ctx.font = '300 56px Georgia, serif';
+  ctx.fillStyle = '#1A1714';
+  const nameW = ctx.measureText(name).width;
+  ctx.fillText(name, 80, 294);
+  ctx.fillStyle = '#8C8580';
+  ctx.fillText('的行为理解报告', 80 + nameW, 294);
+
+  // Amber rule
+  ctx.fillStyle = '#C2692A';
+  ctx.fillRect(80, 322, 64, 4);
+
+  // Viral sentences — the hero
+  ctx.fillStyle = '#1A1714';
+  ctx.font = '300 74px Georgia, serif';
+  ctx.fillText(vs.line1, 80, 460);
+  ctx.fillStyle = '#C2692A';
+  ctx.fillText(vs.line2, 80, 556);
+
+  // Key insight excerpt
+  const excerpt = data.s1.split('\n\n')[0].replace(/\{name\}/g, name);
+  const shortExcerpt = excerpt.length > 58 ? excerpt.substring(0, 58) + '…' : excerpt;
+  ctx.fillStyle = '#4A4540';
+  ctx.font = '300 32px -apple-system, PingFang SC, sans-serif';
+  canvasWrapText(ctx, shortExcerpt, 80, 648, W - 160, 48);
+
+  // Stats pill row
+  ctx.fillStyle = '#F5F3EE';
+  canvasRoundRect(ctx, 80, 790, W - 160, 148, 20); ctx.fill();
+  const statCols = [
+    { val: '3', sub: '个行为模式', cx: 240 },
+    { val: '7', sub: '节完整报告', cx: 540 },
+    { val: '∞', sub: '种可能', cx: 840 }
+  ];
+  statCols.forEach(({ val, sub, cx }) => {
+    ctx.fillStyle = '#C2692A';
+    ctx.font = '700 60px -apple-system, PingFang SC, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(val, cx, 880);
+    ctx.fillStyle = '#8C8580';
+    ctx.font = '26px -apple-system, PingFang SC, sans-serif';
+    ctx.fillText(sub, cx, 920);
+  });
+
+  // CTA text
+  ctx.fillStyle = '#1A1714';
+  ctx.font = '600 40px -apple-system, PingFang SC, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('你也来重新读懂', W / 2, 1040);
+  ctx.fillStyle = '#8C8580';
+  ctx.font = '300 30px -apple-system, PingFang SC, sans-serif';
+  ctx.fillText('扫码生成专属于你孩子的行为理解报告', W / 2, 1090);
+
+  // QR code
+  const qrSize = 280;
+  const qrC = await generateQRCanvas(generateShareURL('family'), qrSize);
+  const qrX = (W - qrSize) / 2;
+  if (qrC) {
+    ctx.fillStyle = 'white';
+    canvasRoundRect(ctx, qrX - 14, 1112, qrSize + 28, qrSize + 28, 14); ctx.fill();
+    ctx.drawImage(qrC, qrX, 1126, qrSize, qrSize);
+  }
+
+  // Footer
+  ctx.fillStyle = '#EAE7E2';
+  ctx.fillRect(0, H - 76, W, 1);
+  ctx.fillStyle = '#8C8580';
+  ctx.font = '24px -apple-system, PingFang SC, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('AIPIWEN · 重新读懂 · aipiwen.cn', W / 2, H - 32);
+}
+
+/* ── Friend poster: dark background, invite experience ── */
+async function drawFriendPoster(canvas) {
+  const ctx = canvas.getContext('2d');
+  const W = 1080, H = 1440;
+
+  // Dark background
+  ctx.fillStyle = '#1A1714';
+  ctx.fillRect(0, 0, W, H);
+
+  // Amber orb decorations
+  const g1 = ctx.createRadialGradient(W * 0.85, 200, 0, W * 0.85, 200, 420);
+  g1.addColorStop(0, 'rgba(194,105,42,0.28)'); g1.addColorStop(1, 'transparent');
+  ctx.fillStyle = g1; ctx.fillRect(0, 0, W, H);
+
+  const g2 = ctx.createRadialGradient(W * 0.15, H * 0.72, 0, W * 0.15, H * 0.72, 340);
+  g2.addColorStop(0, 'rgba(194,105,42,0.14)'); g2.addColorStop(1, 'transparent');
+  ctx.fillStyle = g2; ctx.fillRect(0, 0, W, H);
+
+  // Amber top stripe
+  ctx.fillStyle = '#C2692A';
+  ctx.fillRect(0, 0, W, 8);
+
+  // Brand
+  ctx.textAlign = 'left';
+  ctx.fillStyle = '#C2692A';
+  ctx.font = '600 42px -apple-system, PingFang SC, sans-serif';
+  ctx.fillText('AIPIWEN', 80, 115);
+  ctx.fillStyle = 'rgba(255,255,255,0.35)';
+  ctx.font = '300 34px -apple-system, PingFang SC, sans-serif';
+  ctx.fillText('· 重新读懂', 294, 115);
+
+  // Hero headline
+  ctx.fillStyle = 'rgba(255,255,255,0.88)';
+  ctx.font = '300 96px Georgia, serif';
+  ctx.fillText('重新', 80, 308);
+  ctx.fillText('读懂', 80, 418);
+  ctx.fillStyle = '#C2692A';
+  ctx.fillText('一个人', 80, 528);
+
+  // Divider
+  ctx.fillStyle = '#C2692A';
+  ctx.fillRect(80, 560, 80, 3);
+
+  // Sub copy
+  ctx.fillStyle = 'rgba(255,255,255,0.5)';
+  ctx.font = '300 34px -apple-system, PingFang SC, sans-serif';
+  ctx.fillText('不评判，不分析对错', 80, 618);
+  ctx.fillText('把行为翻译成背后的需求', 80, 666);
+
+  // Object pills
+  const objects = ['孩子', '爱人', '父母'];
+  objects.forEach((obj, i) => {
+    const px = 80 + i * 224;
+    ctx.fillStyle = 'rgba(194,105,42,0.18)';
+    canvasRoundRect(ctx, px, 706, 204, 66, 33); ctx.fill();
+    ctx.strokeStyle = 'rgba(194,105,42,0.45)';
+    ctx.lineWidth = 1.5;
+    canvasRoundRect(ctx, px, 706, 204, 66, 33); ctx.stroke();
+    ctx.fillStyle = 'rgba(255,255,255,0.82)';
+    ctx.font = '500 30px -apple-system, PingFang SC, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(obj, px + 102, 747);
+  });
+
+  // Feature points
+  ctx.textAlign = 'left';
+  const pts = [
+    '行为是信号，不是问题',
+    '5分钟 · 自动生成专属报告',
+    '不需要注册，完全免费'
+  ];
+  pts.forEach((p, i) => {
+    ctx.fillStyle = '#C2692A';
+    ctx.font = '700 28px -apple-system, PingFang SC, sans-serif';
+    ctx.fillText('✦', 80, 830 + i * 62);
+    ctx.fillStyle = 'rgba(255,255,255,0.65)';
+    ctx.font = '300 30px -apple-system, PingFang SC, sans-serif';
+    ctx.fillText(p, 124, 830 + i * 62);
+  });
+
+  // CTA block
+  ctx.fillStyle = 'rgba(194,105,42,0.12)';
+  canvasRoundRect(ctx, 80, 1040, W - 160, 330, 20); ctx.fill();
+  ctx.strokeStyle = 'rgba(194,105,42,0.25)';
+  ctx.lineWidth = 1;
+  canvasRoundRect(ctx, 80, 1040, W - 160, 330, 20); ctx.stroke();
+
+  ctx.fillStyle = 'rgba(255,255,255,0.88)';
+  ctx.font = '600 42px -apple-system, PingFang SC, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('扫码立即体验', W / 2, 1108);
+  ctx.fillStyle = 'rgba(255,255,255,0.4)';
+  ctx.font = '300 28px -apple-system, PingFang SC, sans-serif';
+  ctx.fillText('aipiwen.cn', W / 2, 1152);
+
+  // QR code
+  const qrSize = 256;
+  const qrC = await generateQRCanvas(BASE_URL, qrSize);
+  const qrX = (W - qrSize) / 2;
+  if (qrC) {
+    ctx.fillStyle = 'white';
+    canvasRoundRect(ctx, qrX - 12, 1166, qrSize + 24, qrSize + 24, 12); ctx.fill();
+    ctx.drawImage(qrC, qrX, 1178, qrSize, qrSize);
+  }
+
+  // Footer
+  ctx.fillStyle = 'rgba(255,255,255,0.12)';
+  ctx.fillRect(0, H - 72, W, 1);
+  ctx.fillStyle = 'rgba(255,255,255,0.28)';
+  ctx.font = '22px -apple-system, PingFang SC, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('AIPIWEN · 重新读懂 · aipiwen.cn', W / 2, H - 28);
+}
+
+/* ── Poster modal controls ── */
+let _posterType = 'family';
+
+async function showPosterModal(type) {
+  _posterType = type;
+  const modal = document.getElementById('poster-modal');
+  const canvas = document.getElementById('poster-canvas');
+  const hint = document.getElementById('poster-hint');
+  modal.classList.add('open');
+  hint.textContent = '正在生成海报…';
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, 1080, 1440);
+  try {
+    if (type === 'family') { await drawReportPoster(canvas); }
+    else { await drawFriendPoster(canvas); }
+    hint.textContent = '长按海报保存到相册 · 或点击「保存图片」';
+  } catch(e) { hint.textContent = '生成失败，请重试'; }
+}
+
+function closePosterModal() {
+  document.getElementById('poster-modal').classList.remove('open');
+}
+
+function downloadPoster() {
+  const canvas = document.getElementById('poster-canvas');
+  const name = state.childName || '孩子';
+  const fn = _posterType === 'family'
+    ? 'AIPIWEN_' + name + '行为理解报告.png'
+    : 'AIPIWEN_邀请朋友.png';
+  const a = document.createElement('a');
+  a.download = fn;
+  a.href = canvas.toDataURL('image/png');
+  a.click();
+}
 function copyShare() {
   const text = document.getElementById('share-text').textContent;
   const btn = document.getElementById('copy-btn');
@@ -2724,5 +3213,22 @@ function copyShare() {
   }
 }
 </script>
+
+<!-- ═════════════════════════════════════
+     POSTER MODAL
+═════════════════════════════════════ -->
+<div id="poster-modal" class="poster-modal">
+  <div class="poster-modal-inner">
+    <div class="poster-canvas-wrap">
+      <canvas id="poster-canvas" width="1080" height="1440"></canvas>
+    </div>
+    <div class="poster-hint" id="poster-hint">长按海报保存到相册</div>
+    <div class="poster-modal-btns">
+      <button class="poster-btn-close" onclick="closePosterModal()">关闭</button>
+      <button class="poster-btn-save" onclick="downloadPoster()">保存图片</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
