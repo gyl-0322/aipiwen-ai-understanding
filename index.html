@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>孩子行为理解 · AIPIWEN</title>
+<script src="qrcode.min.js"></script>
 <style>
 /* ─────────────────────────────────────
    DESIGN TOKENS
@@ -2866,32 +2867,17 @@ function generateShareURL(type) {
     + '&label=' + encodeURIComponent(data.typeLabel || '');
 }
 
-/* ── Lightweight QR: loads qrcodejs from CDN, renders to offscreen canvas ── */
-function loadQRLib() {
-  return new Promise((resolve) => {
-    if (window.QRCode) { resolve(); return; }
-    const s = document.createElement('script');
-    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js';
-    s.onload = resolve;
-    s.onerror = resolve; // resolve even on fail; generateQRCanvas handles null
-    document.head.appendChild(s);
-  });
-}
-
-async function generateQRCanvas(text, size) {
-  await loadQRLib();
-  if (!window.QRCode) return null;
+/* ── QR canvas: uses qrcode.min.js loaded as local file (no CDN) ── */
+function generateQRCanvas(text, size) {
+  if (!window.QRCode) { console.warn('[AIPIWEN] qrcode.min.js missing'); return Promise.resolve(null); }
   return new Promise((resolve) => {
     const wrap = document.createElement('div');
     wrap.style.cssText = 'position:absolute;left:-9999px;top:-9999px;width:' + size + 'px;height:' + size + 'px;';
     document.body.appendChild(wrap);
-    try {
-      new QRCode(wrap, { text, width: size, height: size, correctLevel: QRCode.CorrectLevel.M });
-    } catch(e) { document.body.removeChild(wrap); resolve(null); return; }
-    // qrcodejs renders with a brief internal setTimeout
+    try { new QRCode(wrap, { text, width: size, height: size, correctLevel: QRCode.CorrectLevel.M }); }
+    catch(e) { document.body.removeChild(wrap); resolve(null); return; }
     setTimeout(() => {
-      const qc = wrap.querySelector('canvas');
-      const qi = wrap.querySelector('img');
+      const qc = wrap.querySelector('canvas'), qi = wrap.querySelector('img');
       const out = document.createElement('canvas');
       out.width = size; out.height = size;
       const ctx = out.getContext('2d');
