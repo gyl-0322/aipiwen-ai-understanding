@@ -3924,9 +3924,35 @@ function onFeedback(el, type) {
   }
 }
 
+function notifyNewUser() {
+  try {
+    const typeLabels = {
+      sensitive: '感受型', energetic: '精力型', social: '社交型',
+      focused: '专注型', creative: '创意型', logical: '逻辑型'
+    };
+    const source = new URLSearchParams(window.location.search).get('share') ? '朋友圈分享' : '直接访问';
+    const now = new Date();
+    const time = now.toLocaleString('zh-CN', { hour12: false });
+    const typeLabel = typeLabels[state.reportType] || state.reportType || '未知';
+    const name = state.childName || '孩子';
+    const msg = {
+      msgtype: 'text',
+      text: {
+        content: '🔔 新用户到达\n孩子：' + name + '\n行为类型：' + typeLabel + '\n来源：' + source + '\n时间：' + time
+      }
+    };
+    fetch('https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=24d481be03f11e8ab5cc13be8f00e78b32', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(msg)
+    }).catch(function(){});
+  } catch(e) {}
+}
+
 function goToWeChatFinal() {
   const name = state.childName || '孩子';
   document.getElementById('wechat-name-text').textContent = name;
+  notifyNewUser();
   navigateTo('screen-wechat');
 }
 
