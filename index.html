@@ -4274,13 +4274,13 @@ async function drawPosterA(canvas) {
   ctx.fillText('扫码生成专属于你孩子的行为理解报告', W / 2, 1090);
 
   // QR code
-  const qrSize = 280;
+  const qrSize = 240;
   const qrC = await generateQRCanvas(generateShareURL(true), qrSize);
   const qrX = (W - qrSize) / 2;
   if (qrC) {
     ctx.fillStyle = 'white';
-    canvasRoundRect(ctx, qrX - 14, 1112, qrSize + 28, qrSize + 28, 14); ctx.fill();
-    ctx.drawImage(qrC, qrX, 1126, qrSize, qrSize);
+    canvasRoundRect(ctx, qrX - 14, 1096, qrSize + 28, qrSize + 28, 14); ctx.fill();
+    ctx.drawImage(qrC, qrX, 1110, qrSize, qrSize);
   }
 
   // Footer
@@ -4374,27 +4374,27 @@ async function drawPosterB(canvas) {
 
   // CTA block
   ctx.fillStyle = 'rgba(194,105,42,0.12)';
-  canvasRoundRect(ctx, 80, 1040, W - 160, 330, 20); ctx.fill();
+  canvasRoundRect(ctx, 80, 1020, W - 160, 390, 20); ctx.fill();
   ctx.strokeStyle = 'rgba(194,105,42,0.25)';
   ctx.lineWidth = 1;
-  canvasRoundRect(ctx, 80, 1040, W - 160, 330, 20); ctx.stroke();
+  canvasRoundRect(ctx, 80, 1020, W - 160, 390, 20); ctx.stroke();
 
   ctx.fillStyle = 'rgba(255,255,255,0.88)';
   ctx.font = '600 42px -apple-system, PingFang SC, sans-serif';
   ctx.textAlign = 'center';
-  ctx.fillText('扫码立即体验', W / 2, 1108);
+  ctx.fillText('扫码立即体验', W / 2, 1082);
   ctx.fillStyle = 'rgba(255,255,255,0.4)';
   ctx.font = '300 28px -apple-system, PingFang SC, sans-serif';
-  ctx.fillText('www.aipewen.cn', W / 2, 1152);
+  ctx.fillText('www.aipewen.cn', W / 2, 1122);
 
   // QR code
-  const qrSize = 256;
+  const qrSize = 200;
   const qrC = await generateQRCanvas(BASE_URL, qrSize);
   const qrX = (W - qrSize) / 2;
   if (qrC) {
     ctx.fillStyle = 'white';
-    canvasRoundRect(ctx, qrX - 12, 1166, qrSize + 24, qrSize + 24, 12); ctx.fill();
-    ctx.drawImage(qrC, qrX, 1178, qrSize, qrSize);
+    canvasRoundRect(ctx, qrX - 12, 1140, qrSize + 24, qrSize + 24, 12); ctx.fill();
+    ctx.drawImage(qrC, qrX, 1152, qrSize, qrSize);
   }
 
   // Footer
@@ -4440,37 +4440,36 @@ async function drawPosterC(canvas) {
   ctx.fillText('从一个行为开始', 80, 680);
 
   // Body block
-  ctx.fillStyle = '#F5F3EE'; canvasRoundRect(ctx, 80, 728, W - 160, 172, 16); ctx.fill();
-  ctx.fillStyle = '#4A4540'; ctx.font = '300 30px -apple-system, PingFang SC, sans-serif';
+  ctx.fillStyle = '#F5F3EE'; canvasRoundRect(ctx, 80, 728, W - 160, 140, 16); ctx.fill();
+  ctx.fillStyle = '#4A4540'; ctx.font = '300 28px -apple-system, PingFang SC, sans-serif';
   ctx.textAlign = 'left';
-  canvasWrapText(ctx, '不是给孩子贴标签，而是从行为背后看见真实需求。帮你用一种新的语言，重新读懂孩子。', 108, 796, W - 220, 50);
+  canvasWrapText(ctx, '不是给孩子贴标签，而是从行为背后看见真实需求。帮你用一种新的语言，重新读懂孩子。', 108, 790, W - 220, 44);
 
   // Value points
   const pts = ['不评判  只翻译行为背后的需求', '5分钟   自动生成专属报告', '完全免费  不需要注册'];
   pts.forEach((p, i) => {
     ctx.fillStyle = '#C2692A'; ctx.font = '700 26px -apple-system, PingFang SC, sans-serif';
-    ctx.fillText('✦', 80, 968 + i * 66);
+    ctx.fillText('✦', 80, 910 + i * 58);
     ctx.fillStyle = '#4A4540'; ctx.font = '300 28px -apple-system, PingFang SC, sans-serif';
-    ctx.fillText(p, 118, 968 + i * 66);
+    ctx.fillText(p, 118, 910 + i * 58);
   });
 
   // Divider
-  ctx.fillStyle = '#EAE7E2'; ctx.fillRect(80, 1232, W - 160, 1);
+  ctx.fillStyle = '#EAE7E2'; ctx.fillRect(80, 1080, W - 160, 1);
 
   // QR
   ctx.fillStyle = '#1A1714'; ctx.font = '600 32px -apple-system, PingFang SC, sans-serif';
-  ctx.textAlign = 'center'; ctx.fillText('扫码体验', W / 2, 1278);
+  ctx.textAlign = 'center'; ctx.fillText('扫码体验', W / 2, 1108);
   ctx.fillStyle = '#8C8580'; ctx.font = '300 26px -apple-system, PingFang SC, sans-serif';
-  ctx.fillText('www.aipewen.cn', W / 2, 1316);
+  ctx.fillText('www.aipewen.cn', W / 2, 1148);
 
-  const qrSize = 220, qrX = (W - qrSize) / 2;
+  const qrSize = 200, qrX = (W - qrSize) / 2;
   const qrC = await generateQRCanvas(BASE_URL, qrSize);
   if (qrC) {
-    ctx.fillStyle = 'white'; canvasRoundRect(ctx, qrX - 10, 1330, qrSize + 20, qrSize + 20, 12); ctx.fill();
-    ctx.drawImage(qrC, qrX, 1340, qrSize, qrSize);
+    ctx.fillStyle = 'white'; canvasRoundRect(ctx, qrX - 10, 1172, qrSize + 20, qrSize + 20, 12); ctx.fill();
+    ctx.drawImage(qrC, qrX, 1182, qrSize, qrSize);
   }
 
-  ctx.fillStyle = '#EAE7E2'; ctx.fillRect(0, H - 68, W, 1);
   ctx.fillStyle = '#8C8580'; ctx.font = '22px -apple-system, PingFang SC, sans-serif';
   ctx.textAlign = 'center'; ctx.fillText('AIPIWEN · 重新读懂 · www.aipewen.cn', W / 2, H - 28);
 }
