@@ -3468,6 +3468,11 @@ input[type=range].slider::-moz-range-thumb {
     <p class="wechat-body">
       添加企业微信后，顾问会把<br><span id="wechat-name-text">孩子</span> 的完整报告发送给你。
     </p>
+    <div style="background:#FFF8F0;border:1px solid #EADBC8;border-radius:10px;padding:12px 16px;margin-bottom:16px;text-align:center">
+      <div style="font-size:11px;color:var(--ink-40);margin-bottom:4px">你的报告编号</div>
+      <div id="wechat-report-id" style="font-size:15px;font-weight:700;color:var(--amber);letter-spacing:.08em;font-family:monospace"></div>
+      <div style="font-size:12px;color:var(--ink-40);margin-top:4px">添加企业微信后，把这个编号发给顾问，可以快速领取完整报告</div>
+    </div>
 
     <div style="background:#F7F5F0;border-radius:12px;padding:16px 20px;margin-bottom:20px;text-align:left">
       <div style="font-size:11px;font-weight:600;letter-spacing:.1em;color:var(--ink-40);text-transform:uppercase;margin-bottom:12px">领取方式</div>
@@ -3540,9 +3545,132 @@ input[type=range].slider::-moz-range-thumb {
 // WECHAT CONFIG — update these to deploy
 // ─────────────────────────────────────
 const WECHAT_CONFIG = {
-  QR_IMAGE: 'images/wechat_qr.png',   // place QR image in images/ folder
+  QR_IMAGE: 'images/wechat_qr.png',
   WECHAT_ID: 'AIPIWEN_2026'
 };
+
+// ═══════════════════════════════════════════════════
+// v0.2 LEAD TRACKING — reportId + 数据采集 + AI线索评分
+// ═══════════════════════════════════════════════════
+
+const AIPIWEN_STORAGE_KEY = 'aipiwen_leads_v02';
+
+function generateReportId() {
+  const now = new Date();
+  const d = now.toISOString().slice(0,10).replace(/-/g,'');
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let rand = '';
+  for (let i = 0; i < 4; i++) rand += chars[Math.floor(Math.random() * chars.length)];
+  return 'AIPIWEN-' + d + '-' + rand;
+}
+
+function scoreLead(rec) {
+  let score = 0;
+  const reasons = [];
+
+  // 高分项
+  const inputLen = (rec.userInputBehavior || '').replace(/\s/g,'').length;
+  if (inputLen > 30)                     { score += 2; reasons.push('行为描述详细'); }
+  else if (inputLen > 10)                { score += 1; reasons.push('行为描述简短'); }
+  const behLen = (rec.selectedBehaviors || []).length;
+  if (behLen >= 2)                       { score += 2; reasons.push('选择了多个行为标签'); }
+  else if (behLen === 1)                 { score += 1; }
+  if (rec.feedback === 'great')          { score += 3; reasons.push('反馈"非常像"'); }
+  else if (rec.feedback === 'ok')        { score += 1; reasons.push('反馈"有点像"'); }
+  if (rec.clickedFullReport)             { score += 2; reasons.push('点击领取完整报告'); }
+  if (rec.clickedWeCom)                  { score += 2; reasons.push('进入企业微信领取页'); }
+  if (rec.clickedShareFamily)            { score += 2; reasons.push('分享给家人'); }
+  if (rec.clickedShareFriend)            { score += 1; reasons.push('邀请朋友'); }
+  if (rec.clickedShareMoments)           { score += 1; reasons.push('发朋友圈'); }
+
+  let leadScore, consultantAdvice, followupScript;
+
+  if (score >= 6) {
+    leadScore = '高意向';
+    consultantAdvice = '这个家长填写内容较具体' +
+      (rec.feedback === 'great' ? '，并且反馈"非常像"，说明已经产生信任感。' : '，有较强参与度。') +
+      '建议跟进时不要直接推销，先围绕孩子当前行为场景继续追问，再自然引导完整测评。';
+    followupScript = `我看到你刚刚生成了孩子的行为理解报告，编号是 ${rec.reportId}。` +
+      (rec.userInputBehavior ? `你填写的重点是"${rec.userInputBehavior.slice(0,30)}"。` : '') +
+      `这类情况通常不是单一的听不听话问题，可能和孩子的安全感、掌控感或表达方式有关。你可以把孩子年龄和最近一次具体场景发我，我帮你再看得更细一点。`;
+  } else if (score >= 3) {
+    leadScore = '中意向';
+    consultantAdvice = '这个家长对结果有一定兴趣，但信任还不够强。建议先发送一段补充解释，降低防备，再邀请对方补充孩子年龄和具体场景。';
+    followupScript = `你好！看到你做了孩子的行为理解报告（编号：${rec.reportId}），报告类型是${rec.generatedReportType || '行为理解'}。如果有什么疑问或者想进一步了解，随时可以告诉我孩子最近的具体表现，我们可以聊得更具体一点。`;
+  } else {
+    leadScore = '低意向';
+    consultantAdvice = '这个用户目前只是浅层体验，不建议强推服务。可以先放入低频内容触达池，后续推送有共鸣的内容再做二次激活。';
+    followupScript = `你好，你最近查看了一份孩子行为理解报告（${rec.reportId}）。如果之后遇到让你困惑的孩子行为，欢迎随时回来试试，或直接问我。`;
+  }
+
+  const leadReason = reasons.join('、') || '用户无明显互动';
+  return { leadScore, leadReason, consultantAdvice, followupScript };
+}
+
+function initRecord() {
+  const rid = generateReportId();
+  state.reportId = rid;
+  const typeLabels = {
+    sensitive:'感受型', energetic:'精力型', social:'社交型',
+    focused:'专注型', creative:'创意型', logical:'逻辑型'
+  };
+  const rec = {
+    reportId: rid,
+    createdAt: new Date().toISOString(),
+    sourceUrl: window.location.href,
+    childName: state.childName || '',
+    childAge: state.age || '',
+    parentRole: '',
+    userInputBehavior: (state.behaviors || []).join('，'),
+    selectedBehaviors: state.behaviors || [],
+    generatedReportType: typeLabels[state.reportType] || state.reportType || '',
+    freeReportSummary: '',
+    feedback: '',
+    clickedFullReport: false,
+    clickedShareFamily: false,
+    clickedShareFriend: false,
+    clickedShareMoments: false,
+    clickedWeCom: false,
+    leadScore: '低意向',
+    leadReason: '刚生成报告',
+    consultantAdvice: '',
+    followupScript: ''
+  };
+  const scored = scoreLead(rec);
+  Object.assign(rec, scored);
+  saveRecord(rec);
+  return rec;
+}
+
+function saveRecord(rec) {
+  try {
+    const all = getAllRecords();
+    const idx = all.findIndex(r => r.reportId === rec.reportId);
+    if (idx >= 0) all[idx] = rec; else all.push(rec);
+    localStorage.setItem(AIPIWEN_STORAGE_KEY, JSON.stringify(all));
+  } catch(e) {}
+}
+
+function getAllRecords() {
+  try {
+    return JSON.parse(localStorage.getItem(AIPIWEN_STORAGE_KEY) || '[]');
+  } catch(e) { return []; }
+}
+
+function getCurrentRecord() {
+  if (!state.reportId) return null;
+  return getAllRecords().find(r => r.reportId === state.reportId) || null;
+}
+
+function updateRecord(fields) {
+  const rec = getCurrentRecord();
+  if (!rec) return;
+  Object.assign(rec, fields);
+  const scored = scoreLead(rec);
+  Object.assign(rec, scored);
+  saveRecord(rec);
+}
+// ═══════════════════════════════════════════════════
 
 /* Future V5 — WeChat OAuth integration:
    - WeChat OAuth login (openid)
@@ -3562,7 +3690,8 @@ const state = {
   need: '',
   reportType: 'sensitive',
   relationTarget: 'child',
-  screenHistory: ['screen-landing']
+  screenHistory: ['screen-landing'],
+  reportId: ''
 };
 
 function showScreen(id) {
@@ -3797,8 +3926,21 @@ function buildAndShowReport() {
   const fill = str => str.replace(/\{name\}/g, name);
   const prose = str => '<p>' + fill(str).split('\n\n').join('</p><p>') + '</p>';
 
+  // v0.2 — 生成 reportId + 初始化数据记录
+  if (!state.reportId) initRecord();
+
   document.getElementById('report-title').textContent = name + '的行为理解报告';
   document.getElementById('report-meta').textContent = today + ' · ' + data.typeLabel + ' · 根据你的描述生成';
+  // 在 meta 下方显示 reportId
+  const metaEl = document.getElementById('report-meta');
+  let ridEl = document.getElementById('report-id-display');
+  if (!ridEl) {
+    ridEl = document.createElement('div');
+    ridEl.id = 'report-id-display';
+    ridEl.style.cssText = 'font-size:11px;color:var(--ink-40);margin-top:4px;letter-spacing:.04em;';
+    metaEl.parentNode.insertBefore(ridEl, metaEl.nextSibling);
+  }
+  ridEl.textContent = '报告编号：' + state.reportId;
 
   document.getElementById('report-body').innerHTML = `
     <div class="letter-section">
@@ -3925,10 +4067,11 @@ function goToWeChat() {
 function onFeedback(el, type) {
   document.querySelectorAll('.fb-btn').forEach(b => b.classList.remove('tapped'));
   el.classList.add('tapped');
+  // v0.2 追踪反馈
+  updateRecord({ feedback: type });
   if (type === 'great' || type === 'ok') {
     setTimeout(() => goToWeChat(), 600);
   } else {
-    // 不太像 — scroll back to top gently
     setTimeout(() => { document.getElementById('screen-report').scrollTop = 0; }, 300);
   }
 }
@@ -3998,6 +4141,10 @@ function goToWeChatFinal() {
   const name = state.childName || '孩子';
   document.getElementById('wechat-name-text').textContent = name;
   document.getElementById('report-url-box').textContent = generateReportURL();
+  // v0.2 显示 reportId + 追踪
+  const ridWx = document.getElementById('wechat-report-id');
+  if (ridWx) ridWx.textContent = state.reportId || '';
+  updateRecord({ clickedWeCom: true, clickedFullReport: true });
   notifyNewUser();
   navigateTo('screen-wechat');
 }
@@ -4176,7 +4323,8 @@ function generateShareURL(forFamily) {
   return BASE_URL + '?share=report'
     + '&name=' + encodeURIComponent(state.childName || '')
     + '&type=' + encodeURIComponent(state.reportType || 'sensitive')
-    + '&label=' + encodeURIComponent(data.typeLabel || '');
+    + '&label=' + encodeURIComponent(data.typeLabel || '')
+    + (state.reportId ? '&id=' + encodeURIComponent(state.reportId) : '');
 }
 
 function generateShareText(type) {
@@ -4552,6 +4700,10 @@ const _shareTitles = { family: '分享给家人', friend: '邀请朋友', moment
 
 async function showSharePanel(type) {
   _shareType = type;
+  // v0.2 追踪分享行为
+  if (type === 'family')  updateRecord({ clickedShareFamily: true });
+  if (type === 'friend')  updateRecord({ clickedShareFriend: true });
+  if (type === 'moments') updateRecord({ clickedShareMoments: true });
   const panel = document.getElementById('share-panel');
   const canvas = document.getElementById('share-canvas');
   const hintEl = document.getElementById('share-panel-hint');
@@ -4622,21 +4774,63 @@ function copyShare() {
   }
 }
 
-// ─── 已是好友: ?r= report URL handler ───
+// ─── URL 参数处理：?r= 已是好友  /  ?share=report 分享恢复 ───
 (function() {
-  try {
-    var r = new URLSearchParams(window.location.search).get('r');
-    if (!r) return;
-    var data = JSON.parse(decodeURIComponent(escape(atob(r))));
-    state.reportType = data.type || 'sensitive';
-    state.childName  = data.name || '';
-    state.parentFeeling = data.feeling || '';
-    state.need   = data.need || '';
-    state.age    = data.age || '';
-    state.gender = data.gender || '';
-    // Skip the form entirely and show the report
-    buildAndShowReport();
-  } catch(e) {}
+  var params = new URLSearchParams(window.location.search);
+
+  // 案例A：?r= 已是好友编码直链
+  var r = params.get('r');
+  if (r) {
+    try {
+      var data = JSON.parse(decodeURIComponent(escape(atob(r))));
+      state.reportType    = data.type    || 'sensitive';
+      state.childName     = data.name    || '';
+      state.parentFeeling = data.feeling || '';
+      state.need          = data.need    || '';
+      state.age           = data.age     || '';
+      state.gender        = data.gender  || '';
+      buildAndShowReport();
+    } catch(e) {}
+    return;
+  }
+
+  // 案例B：?share=report 家人分享恢复
+  var share = params.get('share');
+  if (share === 'report') {
+    var name  = decodeURIComponent(params.get('name')  || '孩子');
+    var type  = params.get('type')  || 'sensitive';
+    var label = decodeURIComponent(params.get('label') || '行为理解');
+    var rid   = params.get('id')    || '';
+
+    // 构建最小摘要屏
+    var typeLabels = {
+      sensitive:'感受型', energetic:'精力型', social:'社交型',
+      focused:'专注型', creative:'创意型', logical:'逻辑型'
+    };
+    var tLabel = typeLabels[type] || label;
+
+    var html = '<div style="min-height:100vh;background:#FDFCF8;display:flex;flex-direction:column;align-items:center;padding:48px 24px 80px;box-sizing:border-box">'
+      + '<div style="font-size:13px;font-weight:700;letter-spacing:.18em;color:#C2692A;margin-bottom:24px">AIPIWEN</div>'
+      + '<div style="font-size:12px;color:#888;margin-bottom:8px;text-align:center">这是一份分享给你的行为理解报告</div>'
+      + '<div style="font-size:22px;font-weight:700;color:#1A1714;margin-bottom:6px;text-align:center">' + name + ' 的行为理解报告</div>'
+      + '<div style="font-size:13px;color:#888;margin-bottom:4px">类型：' + tLabel + '</div>'
+      + (rid ? '<div style="font-size:12px;color:#C2692A;margin-bottom:24px;font-family:monospace">报告编号：' + rid + '</div>' : '<div style="margin-bottom:24px"></div>')
+      + '<div style="background:#FFF4E8;border-radius:12px;padding:16px 20px;max-width:380px;width:100%;text-align:left;margin-bottom:32px">'
+      + '<div style="font-size:13px;color:#888;margin-bottom:6px">完整报告内容</div>'
+      + '<div style="font-size:14px;color:#1A1714;line-height:1.7">这份报告来自一次分享，完整内容需原测试者或顾问提供。<br>你也可以从这里开始生成自己孩子的报告。</div>'
+      + '</div>'
+      + '<button onclick="window.location.href=\'https://www.aipewen.cn\'" style="width:100%;max-width:340px;padding:14px;background:#C2692A;color:white;border:none;border-radius:10px;font-size:16px;font-weight:600;cursor:pointer;margin-bottom:12px">我也想测一测 →</button>'
+      + '<button onclick="document.getElementById(\'share-wechat-btn\').scrollIntoView()" style="width:100%;max-width:340px;padding:14px;background:white;color:#C2692A;border:1.5px solid #C2692A;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer">添加企业微信领取完整报告</button>'
+      + '</div>';
+
+    document.addEventListener('DOMContentLoaded', function() {
+      // 隐藏所有屏，显示分享摘要
+      document.querySelectorAll('.screen').forEach(function(s){ s.style.display='none'; });
+      var wrap = document.createElement('div');
+      wrap.innerHTML = html;
+      document.body.prepend(wrap);
+    });
+  }
 })();
 </script>
 

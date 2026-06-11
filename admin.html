@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AIPIWEN 测试记录后台</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,PingFang SC,sans-serif;background:#F5F3EF;color:#1A1714;min-height:100vh}
+  .topbar{background:#1A1714;color:white;padding:14px 24px;display:flex;align-items:center;gap:16px}
+  .topbar-brand{font-size:15px;font-weight:700;letter-spacing:.1em;color:#C2692A}
+  .topbar-title{font-size:14px;color:#ccc}
+  .topbar-spacer{flex:1}
+  .topbar-note{font-size:12px;color:#888}
+
+  .main{max-width:1200px;margin:0 auto;padding:24px 20px}
+
+  /* Summary cards */
+  .summary{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}
+  @media(max-width:700px){.summary{grid-template-columns:repeat(2,1fr)}}
+  .card{background:white;border-radius:12px;padding:16px 20px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+  .card-num{font-size:32px;font-weight:700;color:#1A1714;line-height:1}
+  .card-label{font-size:12px;color:#888;margin-top:4px}
+  .card.high .card-num{color:#C2692A}
+  .card.mid  .card-num{color:#E8A44A}
+  .card.low  .card-num{color:#999}
+
+  /* Controls */
+  .controls{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;align-items:center}
+  .btn{padding:9px 16px;border-radius:8px;border:none;font-size:13px;font-weight:600;cursor:pointer;transition:.15s}
+  .btn-primary{background:#C2692A;color:white}
+  .btn-primary:hover{background:#A8561F}
+  .btn-outline{background:white;color:#1A1714;border:1.5px solid #DDD}
+  .btn-outline:hover{border-color:#C2692A;color:#C2692A}
+  .btn-danger{background:white;color:#e53e3e;border:1.5px solid #e53e3e}
+  .btn-danger:hover{background:#fff5f5}
+  .filter-select{padding:9px 12px;border-radius:8px;border:1.5px solid #DDD;font-size:13px;background:white;cursor:pointer}
+
+  /* Table */
+  .table-wrap{background:white;border-radius:12px;box-shadow:0 1px 4px rgba(0,0,0,.06);overflow:hidden}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th{background:#F9F7F4;padding:11px 14px;text-align:left;font-weight:600;color:#666;font-size:12px;white-space:nowrap;border-bottom:1px solid #EEE}
+  td{padding:11px 14px;border-bottom:1px solid #F0EDE8;vertical-align:top}
+  tr:last-child td{border-bottom:none}
+  tr:hover td{background:#FDFBF8}
+  .badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700}
+  .badge-high{background:#FFF0E6;color:#C2692A}
+  .badge-mid {background:#FFF8E6;color:#B07D00}
+  .badge-low {background:#F5F5F5;color:#888}
+  .badge-yes{background:#E6F4EA;color:#2E7D32;font-size:11px}
+  .badge-no {background:#F5F5F5;color:#aaa;font-size:11px}
+  .expand-btn{background:none;border:none;color:#C2692A;font-size:12px;cursor:pointer;padding:2px 0;white-space:nowrap}
+
+  /* Detail panel */
+  .detail-row td{background:#FDFAF6;padding:12px 16px}
+  .detail-panel{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media(max-width:700px){.detail-panel{grid-template-columns:1fr}}
+  .detail-block{background:white;border:1px solid #EEE;border-radius:8px;padding:12px 14px}
+  .detail-block-title{font-size:11px;font-weight:700;color:#888;letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px}
+  .detail-block-body{font-size:13px;color:#333;line-height:1.6;white-space:pre-wrap}
+  .copy-btn-sm{background:#C2692A;color:white;border:none;border-radius:6px;padding:5px 10px;font-size:11px;cursor:pointer;margin-top:6px;font-weight:600}
+  .copy-btn-sm:active{opacity:.8}
+
+  .empty{padding:48px;text-align:center;color:#aaa;font-size:14px}
+
+  /* Toast */
+  #toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:#1A1714;color:white;padding:10px 20px;border-radius:20px;font-size:13px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:999}
+  #toast.show{opacity:1}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="topbar-brand">AIPIWEN</div>
+  <div class="topbar-title">测试记录后台 v0.2</div>
+  <div class="topbar-spacer"></div>
+  <div class="topbar-note">本地 localStorage 数据 · 仅限本机查看</div>
+</div>
+
+<div class="main">
+
+  <!-- Summary -->
+  <div class="summary" id="summary-cards"></div>
+
+  <!-- Controls -->
+  <div class="controls">
+    <select class="filter-select" id="filter-score" onchange="render()">
+      <option value="">全部意向</option>
+      <option value="高意向">高意向</option>
+      <option value="中意向">中意向</option>
+      <option value="低意向">低意向</option>
+    </select>
+    <div style="flex:1"></div>
+    <button class="btn btn-outline" onclick="exportCSV()">导出 CSV</button>
+    <button class="btn btn-outline" onclick="exportJSON()">导出 JSON</button>
+    <button class="btn btn-danger" onclick="clearData()">清空测试记录</button>
+  </div>
+
+  <!-- Table -->
+  <div class="table-wrap" id="table-wrap"></div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+const KEY = 'aipiwen_leads_v02';
+
+function getAll() {
+  try { return JSON.parse(localStorage.getItem(KEY) || '[]'); } catch(e){ return []; }
+}
+
+function fmtDate(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  return d.toLocaleDateString('zh-CN') + ' ' + d.toLocaleTimeString('zh-CN', {hour:'2-digit',minute:'2-digit'});
+}
+
+function badgeScore(s) {
+  if (s === '高意向') return '<span class="badge badge-high">高意向</span>';
+  if (s === '中意向') return '<span class="badge badge-mid">中意向</span>';
+  return '<span class="badge badge-low">低意向</span>';
+}
+
+function yesNo(v) {
+  return v ? '<span class="badge badge-yes">✓</span>' : '<span class="badge badge-no">—</span>';
+}
+
+function feedbackText(f) {
+  if (f === 'great') return '非常像';
+  if (f === 'ok')    return '有点像';
+  if (f === 'miss')  return '不太像';
+  return '—';
+}
+
+function renderSummary(records) {
+  const total = records.length;
+  const high  = records.filter(r => r.leadScore === '高意向').length;
+  const mid   = records.filter(r => r.leadScore === '中意向').length;
+  const low   = records.filter(r => r.leadScore === '低意向').length;
+  document.getElementById('summary-cards').innerHTML = `
+    <div class="card"><div class="card-num">${total}</div><div class="card-label">总记录</div></div>
+    <div class="card high"><div class="card-num">${high}</div><div class="card-label">高意向</div></div>
+    <div class="card mid"><div class="card-num">${mid}</div><div class="card-label">中意向</div></div>
+    <div class="card low"><div class="card-num">${low}</div><div class="card-label">低意向</div></div>
+  `;
+}
+
+let _expanded = {};
+
+function toggleDetail(rid) {
+  _expanded[rid] = !_expanded[rid];
+  render();
+}
+
+function copyScript(rid) {
+  const rec = getAll().find(r => r.reportId === rid);
+  if (!rec) return;
+  const text = rec.followupScript || '';
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(text).then(() => showToast('跟进话术已复制 ✓'));
+  } else {
+    const ta = document.createElement('textarea');
+    ta.value = text; document.body.appendChild(ta); ta.select();
+    document.execCommand('copy'); document.body.removeChild(ta);
+    showToast('跟进话术已复制 ✓');
+  }
+}
+
+function render() {
+  const filter = document.getElementById('filter-score').value;
+  let records = getAll().slice().reverse(); // newest first
+  if (filter) records = records.filter(r => r.leadScore === filter);
+
+  renderSummary(getAll());
+
+  const wrap = document.getElementById('table-wrap');
+  if (records.length === 0) {
+    wrap.innerHTML = '<div class="empty">暂无记录<br><small>完成一次完整测试后，记录将自动出现在这里</small></div>';
+    return;
+  }
+
+  let rows = '';
+  records.forEach(function(r) {
+    const behavior = (r.userInputBehavior || '').slice(0, 24) + ((r.userInputBehavior||'').length > 24 ? '…' : '');
+    rows += `<tr>
+      <td style="font-family:monospace;font-size:12px;color:#C2692A;white-space:nowrap">${r.reportId || '—'}</td>
+      <td style="white-space:nowrap;font-size:12px">${fmtDate(r.createdAt)}</td>
+      <td>${r.childName || '—'}</td>
+      <td>${r.childAge || '—'}</td>
+      <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${r.userInputBehavior||''}">${behavior||'—'}</td>
+      <td>${feedbackText(r.feedback)}</td>
+      <td>${yesNo(r.clickedFullReport)}</td>
+      <td>${yesNo(r.clickedShareFamily || r.clickedShareFriend || r.clickedShareMoments)}</td>
+      <td>${badgeScore(r.leadScore)}</td>
+      <td style="font-size:12px;color:#666;max-width:140px">${(r.leadReason||'').slice(0,30)}</td>
+      <td><button class="expand-btn" onclick="toggleDetail('${r.reportId}')">${_expanded[r.reportId] ? '收起 ▲' : '详情 ▼'}</button></td>
+    </tr>`;
+    if (_expanded[r.reportId]) {
+      rows += `<tr class="detail-row"><td colspan="11">
+        <div class="detail-panel">
+          <div class="detail-block">
+            <div class="detail-block-title">顾问建议</div>
+            <div class="detail-block-body">${r.consultantAdvice||'—'}</div>
+          </div>
+          <div class="detail-block">
+            <div class="detail-block-title">企业微信跟进话术</div>
+            <div class="detail-block-body">${r.followupScript||'—'}</div>
+            <button class="copy-btn-sm" onclick="copyScript('${r.reportId}')">复制话术</button>
+          </div>
+          <div class="detail-block">
+            <div class="detail-block-title">行为标签（原始）</div>
+            <div class="detail-block-body">${(r.selectedBehaviors||[]).join('、')||'—'}</div>
+          </div>
+          <div class="detail-block">
+            <div class="detail-block-title">页面行为记录</div>
+            <div class="detail-block-body">分享给家人：${r.clickedShareFamily?'✓':'—'}
+邀请朋友：${r.clickedShareFriend?'✓':'—'}
+发朋友圈：${r.clickedShareMoments?'✓':'—'}
+进入微信页：${r.clickedWeCom?'✓':'—'}
+领取完整报告：${r.clickedFullReport?'✓':'—'}</div>
+          </div>
+        </div>
+      </td></tr>`;
+    }
+  });
+
+  wrap.innerHTML = `<table>
+    <thead><tr>
+      <th>报告编号</th><th>时间</th><th>孩子名</th><th>年龄</th>
+      <th>输入行为</th><th>反馈</th><th>领取</th><th>分享</th>
+      <th>意向</th><th>原因</th><th></th>
+    </tr></thead>
+    <tbody>${rows}</tbody>
+  </table>`;
+}
+
+function exportJSON() {
+  const data = getAll();
+  const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'aipiwen_leads_' + new Date().toISOString().slice(0,10) + '.json';
+  a.click();
+  showToast('JSON 已导出');
+}
+
+function exportCSV() {
+  const data = getAll();
+  if (!data.length) { showToast('暂无数据'); return; }
+  const headers = ['reportId','createdAt','childName','childAge','userInputBehavior',
+    'feedback','clickedFullReport','clickedWeCom','clickedShareFamily',
+    'clickedShareFriend','clickedShareMoments','generatedReportType',
+    'leadScore','leadReason','consultantAdvice','followupScript'];
+  const escape = v => '"' + String(v||'').replace(/"/g,'""') + '"';
+  const lines = [headers.join(',')];
+  data.forEach(function(r) {
+    lines.push(headers.map(function(h){ return escape(r[h]); }).join(','));
+  });
+  const blob = new Blob(['﻿' + lines.join('\n')], {type:'text/csv;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'aipiwen_leads_' + new Date().toISOString().slice(0,10) + '.csv';
+  a.click();
+  showToast('CSV 已导出');
+}
+
+function clearData() {
+  if (!confirm('确认清空所有本地测试记录？此操作不可撤销。')) return;
+  localStorage.removeItem(KEY);
+  _expanded = {};
+  render();
+  showToast('已清空');
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+// 初始渲染
+render();
+</script>
+</body>
+</html>
