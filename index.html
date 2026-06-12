@@ -4449,8 +4449,8 @@ function buildFeelingScreen() {
   validation.sharingTarget = '';
   validation.sharingMessage = '';
   document.querySelectorAll('#q3-btns .q3-dot-btn').forEach(b => b.classList.remove('selected'));
-  const fill = document.getElementById('q3-track-fill');
-  if (fill) fill.style.width = '0';
+  const trackFill = document.getElementById('q3-track-fill');
+  if (trackFill) trackFill.style.width = '0';
   const q3req = document.getElementById('q3-required');
   if (q3req) q3req.style.display = 'none';
 }
