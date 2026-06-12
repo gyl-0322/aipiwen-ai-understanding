@@ -2347,8 +2347,17 @@ body {
 .fr-say-chip { display: inline-block; background: #FFF3E0; border: 1px solid #EADBC8; border-radius: 6px; padding: 4px 10px; font-size: 13px; color: var(--ink-60); margin-bottom: 6px; }
 .fr-say-chip.after { background: #F0FAF0; border-color: #B8DDB8; color: #3A6B3A; }
 .fr-share-box { background: var(--cream); border: 1px dashed var(--ink-20); border-radius: 10px; padding: 14px 16px; font-size: 13px; color: var(--ink-60); line-height: 1.7; }
+.fr-score-section { background: white; border-radius: 14px; padding: 20px; margin-bottom: 16px; box-shadow: 0 1px 8px rgba(0,0,0,.05); }
+.fr-score-q { font-size: 15px; font-weight: 600; color: var(--ink); margin-bottom: 4px; line-height: 1.4; }
+.fr-score-hint { font-size: 12px; color: var(--ink-40); margin-bottom: 16px; }
+.fr-score-btns { display: flex; gap: 8px; }
+.fr-score-btn { flex: 1; padding: 10px 4px; border: 1.5px solid var(--ink-10); border-radius: 10px; background: white; cursor: pointer; text-align: center; font-size: 11px; color: var(--ink-60); line-height: 1.3; transition: all .15s; }
+.fr-score-btn .fr-score-emoji { font-size: 22px; display: block; margin-bottom: 4px; }
+.fr-score-btn.selected { border-color: var(--amber); background: #FFF8F0; color: var(--amber); font-weight: 600; }
+.fr-score-required { font-size: 12px; color: #E74C3C; text-align: center; margin-bottom: 8px; display: none; }
 .fr-cta { text-align: center; padding: 8px 0 0; }
 .fr-cta-main { width: 100%; padding: 16px; background: var(--amber); color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: 700; cursor: pointer; letter-spacing: .02em; margin-bottom: 10px; }
+.fr-cta-main:disabled { background: var(--ink-20); cursor: not-allowed; }
 .fr-cta-sub { font-size: 12px; color: var(--ink-40); }
 
 /* ═══════════════════════════════════════
@@ -3536,9 +3545,22 @@ input[type=range].slider::-moz-range-thumb {
     </div>
     <!-- 动态内容区 -->
     <div id="fr-content"></div>
+    <!-- 必选打分 -->
+    <div class="fr-score-section">
+      <div class="fr-score-q">读完完整版，你对<span id="fr-score-name">孩子</span>的理解有多少变化？</div>
+      <div class="fr-score-hint">必选一个，才能继续</div>
+      <div class="fr-score-btns">
+        <button class="fr-score-btn" onclick="selectFrScore(this,2)"><span class="fr-score-emoji">😟</span>没变化</button>
+        <button class="fr-score-btn" onclick="selectFrScore(this,4)"><span class="fr-score-emoji">😐</span>有一点</button>
+        <button class="fr-score-btn" onclick="selectFrScore(this,6)"><span class="fr-score-emoji">🤔</span>开始理解</button>
+        <button class="fr-score-btn" onclick="selectFrScore(this,8)"><span class="fr-score-emoji">😊</span>清晰多了</button>
+        <button class="fr-score-btn" onclick="selectFrScore(this,10)"><span class="fr-score-emoji">🤩</span>非常清晰</button>
+      </div>
+    </div>
+    <div class="fr-score-required" id="fr-score-required">↑ 请先选择你的理解变化，再继续</div>
     <!-- CTA -->
     <div class="fr-cta">
-      <button class="fr-cta-main" onclick="goToWeChatFinal()">联系顾问，领取进一步解读 →</button>
+      <button class="fr-cta-main" id="fr-cta-btn" onclick="submitFrScore()">联系顾问，领取进一步解读 →</button>
       <div class="fr-cta-sub">测试期间由顾问根据报告编号人工发送，请稍等</div>
     </div>
   </div>
@@ -4325,8 +4347,33 @@ function showFullReport() {
     </div>
   `;
 
+  // 重置打分区
+  window._frScore = 0;
+  document.querySelectorAll('.fr-score-btn').forEach(b => b.classList.remove('selected'));
+  document.getElementById('fr-score-required').style.display = 'none';
+  const frNameEl = document.getElementById('fr-score-name');
+  if (frNameEl) frNameEl.textContent = name;
+
   updateRecord({ clickedFullReport: true });
   navigateTo('screen-fullreport');
+}
+
+function selectFrScore(el, score) {
+  window._frScore = score;
+  document.querySelectorAll('.fr-score-btn').forEach(b => b.classList.remove('selected'));
+  el.classList.add('selected');
+  document.getElementById('fr-score-required').style.display = 'none';
+}
+
+function submitFrScore() {
+  if (!window._frScore) {
+    const req = document.getElementById('fr-score-required');
+    req.style.display = 'block';
+    req.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    return;
+  }
+  updateRecord({ reunderstandingScore: window._frScore });
+  goToWeChatFinal();
 }
 
 function goToWeChatFinal() {

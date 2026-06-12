@@ -83,6 +83,8 @@
 
   <!-- Controls -->
   <div class="controls">
+    <input type="text" id="search-input" placeholder="搜索报告编号 / 孩子名…" oninput="render()"
+      style="padding:9px 12px;border-radius:8px;border:1.5px solid #DDD;font-size:13px;width:220px;background:white">
     <select class="filter-select" id="filter-score" onchange="render()">
       <option value="">全部意向</option>
       <option value="高意向">高意向</option>
@@ -165,10 +167,44 @@ function copyScript(rid) {
   }
 }
 
+function generateFullReportURL(rec) {
+  try {
+    var data = {
+      type: rec.reportType || 'sensitive',
+      name: rec.childName || '',
+      age: rec.childAge || '',
+      gender: rec.gender || '',
+      feeling: rec.parentFeeling || ''
+    };
+    var encoded = btoa(unescape(encodeURIComponent(JSON.stringify(data))));
+    return 'https://www.aipewen.cn?r=' + encodeURIComponent(encoded);
+  } catch(e) { return 'https://www.aipewen.cn'; }
+}
+
+function copyFullLink(rid) {
+  const rec = getAll().find(r => r.reportId === rid);
+  if (!rec) return;
+  const url = generateFullReportURL(rec);
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(url).then(() => showToast('完整版链接已复制 ✓'));
+  } else {
+    const ta = document.createElement('textarea');
+    ta.value = url; document.body.appendChild(ta); ta.select();
+    document.execCommand('copy'); document.body.removeChild(ta);
+    showToast('完整版链接已复制 ✓');
+  }
+}
+
 function render() {
   const filter = document.getElementById('filter-score').value;
+  const search = (document.getElementById('search-input').value || '').toLowerCase();
   let records = getAll().slice().reverse(); // newest first
   if (filter) records = records.filter(r => r.leadScore === filter);
+  if (search) records = records.filter(r =>
+    (r.reportId||'').toLowerCase().includes(search) ||
+    (r.childName||'').toLowerCase().includes(search) ||
+    (r.userInputBehavior||'').toLowerCase().includes(search)
+  );
 
   renderSummary(getAll());
 
@@ -205,6 +241,7 @@ function render() {
             <div class="detail-block-title">企业微信跟进话术</div>
             <div class="detail-block-body">${r.followupScript||'—'}</div>
             <button class="copy-btn-sm" onclick="copyScript('${r.reportId}')">复制话术</button>
+            <button class="copy-btn-sm" onclick="copyFullLink('${r.reportId}')" style="margin-left:6px;background:#2E7D32">复制完整版链接</button>
           </div>
           <div class="detail-block">
             <div class="detail-block-title">行为标签（原始）</div>
