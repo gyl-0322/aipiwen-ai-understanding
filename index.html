@@ -2832,33 +2832,13 @@ body {
 .sentence-pill.selected {
   border-color: var(--amber); background: var(--amber-soft); color: var(--amber);
 }
-.slider-wrap { padding: 8px 0 20px; }
-.slider-labels {
-  display: flex; justify-content: space-between;
-  font-size: 12px; color: var(--ink-40); margin-bottom: 12px;
-}
-.slider-score-display {
-  text-align: center; font-family: var(--font-serif);
-  font-size: 56px; color: var(--ink); line-height: 1; margin-bottom: 4px;
-}
-.slider-score-label {
-  text-align: center; font-size: 12px; color: var(--ink-40); margin-bottom: 20px;
-}
-input[type=range].slider {
-  -webkit-appearance: none; appearance: none;
-  width: 100%; height: 3px; border-radius: 3px;
-  background: var(--ink-10); outline: none;
-}
-input[type=range].slider::-webkit-slider-thumb {
-  -webkit-appearance: none; appearance: none;
-  width: 28px; height: 28px; border-radius: 50%;
-  background: var(--dark); cursor: pointer;
-  box-shadow: 0 2px 8px rgba(0,0,0,.15);
-}
-input[type=range].slider::-moz-range-thumb {
-  width: 28px; height: 28px; border-radius: 50%;
-  background: var(--dark); cursor: pointer; border: none;
-}
+.q3-score-wrap { padding: 4px 0 8px; }
+.q3-score-prompt { text-align:center; font-size:12px; color:var(--ink-40); margin-bottom:10px; }
+.q3-score-labels { display:flex; justify-content:space-between; font-size:11px; color:var(--ink-40); margin-bottom:8px; }
+.q3-score-btns { display:grid; grid-template-columns:repeat(5,1fr); gap:8px; margin-bottom:6px; }
+.q3-score-btn { padding:13px 0; border:1.5px solid var(--ink-10); border-radius:10px; background:white; font-size:17px; font-weight:600; color:var(--ink-20); cursor:pointer; transition:all .15s; }
+.q3-score-btn.selected { border-color:var(--amber); background:#FFF8F0; color:var(--amber); transform:scale(1.06); }
+.q3-score-required { font-size:12px; color:#E74C3C; text-align:center; margin-top:6px; display:none; }
 .share-target-row { display: flex; flex-wrap: wrap; gap: 10px; }
 .share-target-pill {
   padding: 12px 20px; border-radius: 50px;
@@ -3439,11 +3419,22 @@ input[type=range].slider::-moz-range-thumb {
     <div class="vq-block">
       <div class="vq-num">Q3</div>
       <div class="vq-title">看完报告后，<br>你觉得自己重新理解孩子了吗？</div>
-      <div class="slider-wrap">
-        <div class="slider-score-display" id="q3-score-display">5</div>
-        <div class="slider-score-label">重新读懂指数</div>
-        <div class="slider-labels"><span>还没有</span><span>非常清晰</span></div>
-        <input type="range" class="slider" id="q3-slider" min="0" max="10" value="5" oninput="onSliderChange(this.value)">
+      <div class="q3-score-wrap">
+        <div class="q3-score-prompt">点一个数字评分（必填）</div>
+        <div class="q3-score-labels"><span>还没有</span><span>非常清晰</span></div>
+        <div class="q3-score-btns" id="q3-btns">
+          <button class="q3-score-btn" onclick="selectQ3Score(this,1)">1</button>
+          <button class="q3-score-btn" onclick="selectQ3Score(this,2)">2</button>
+          <button class="q3-score-btn" onclick="selectQ3Score(this,3)">3</button>
+          <button class="q3-score-btn" onclick="selectQ3Score(this,4)">4</button>
+          <button class="q3-score-btn" onclick="selectQ3Score(this,5)">5</button>
+          <button class="q3-score-btn" onclick="selectQ3Score(this,6)">6</button>
+          <button class="q3-score-btn" onclick="selectQ3Score(this,7)">7</button>
+          <button class="q3-score-btn" onclick="selectQ3Score(this,8)">8</button>
+          <button class="q3-score-btn" onclick="selectQ3Score(this,9)">9</button>
+          <button class="q3-score-btn" onclick="selectQ3Score(this,10)">10</button>
+        </div>
+        <div class="q3-score-required" id="q3-required">↑ 请先点击数字评分，再继续</div>
       </div>
     </div>
 
@@ -4192,7 +4183,7 @@ function buildAndShowReport() {
 const validation = {
   impactSentence: '',
   accurateSentences: [],
-  reunderstandingScore: 5,
+  reunderstandingScore: null,
   sharingTarget: '',
   sharingMessage: ''
 };
@@ -4448,8 +4439,12 @@ function buildFeelingScreen() {
   document.getElementById('q5-message').value = '';
   validation.impactSentence = '';
   validation.accurateSentences = [];
+  validation.reunderstandingScore = null;
   validation.sharingTarget = '';
   validation.sharingMessage = '';
+  document.querySelectorAll('#q3-btns .q3-score-btn').forEach(b => b.classList.remove('selected'));
+  const q3req = document.getElementById('q3-required');
+  if (q3req) q3req.style.display = 'none';
 }
 
 function toggleQ1Custom() {
@@ -4474,9 +4469,11 @@ function toggleQ2Pill(el) {
   validation.accurateSentences = [...document.querySelectorAll('#q2-pills .sentence-pill.selected')].map(p => p.textContent);
 }
 
-function onSliderChange(val) {
-  validation.reunderstandingScore = parseInt(val);
-  document.getElementById('q3-score-display').textContent = val;
+function selectQ3Score(el, score) {
+  validation.reunderstandingScore = score;
+  document.querySelectorAll('#q3-btns .q3-score-btn').forEach(b => b.classList.remove('selected'));
+  el.classList.add('selected');
+  document.getElementById('q3-required').style.display = 'none';
 }
 
 function selectShareTarget(el) {
@@ -4486,6 +4483,13 @@ function selectShareTarget(el) {
 }
 
 function submitFeeling() {
+  // Q3 必填校验
+  if (!validation.reunderstandingScore) {
+    const req = document.getElementById('q3-required');
+    req.style.display = 'block';
+    req.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    return;
+  }
   const q1c = document.getElementById('q1-custom').value.trim();
   if (q1c) validation.impactSentence = q1c;
   const q2c = document.getElementById('q2-custom').value.trim();
