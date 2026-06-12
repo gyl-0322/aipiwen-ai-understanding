@@ -2325,6 +2325,33 @@ body {
 .btn-sticky:active { transform: scale(.97); }
 
 /* ═══════════════════════════════════════
+   FULL REPORT PREVIEW SCREEN
+═══════════════════════════════════════ */
+#screen-fullreport { background: var(--cream); overflow-y: auto; }
+.fr-wrap { padding: 24px 24px 120px; max-width: 480px; margin: 0 auto; }
+.fr-header { text-align: center; padding: 20px 0 28px; }
+.fr-badge { display: inline-block; background: var(--amber); color: white; font-size: 10px; font-weight: 700; letter-spacing: .12em; padding: 4px 12px; border-radius: 20px; margin-bottom: 14px; }
+.fr-title { font-family: var(--font-serif); font-size: 26px; color: var(--ink); line-height: 1.3; margin-bottom: 6px; }
+.fr-title em { color: var(--amber); font-style: italic; }
+.fr-subtitle { font-size: 13px; color: var(--ink-40); line-height: 1.6; }
+.fr-notice { background: #FFF8F0; border: 1px solid #EADBC8; border-radius: 10px; padding: 12px 16px; margin-bottom: 24px; font-size: 12px; color: var(--ink-60); text-align: center; line-height: 1.6; }
+.fr-reportid { font-weight: 700; color: var(--amber); font-family: monospace; letter-spacing: .06em; }
+.fr-section { margin-bottom: 20px; background: white; border-radius: 14px; padding: 20px; box-shadow: 0 1px 8px rgba(0,0,0,.05); }
+.fr-section-label { font-size: 10px; font-weight: 700; letter-spacing: .14em; color: var(--amber); text-transform: uppercase; margin-bottom: 8px; }
+.fr-section-title { font-family: var(--font-serif); font-size: 17px; color: var(--ink); margin-bottom: 10px; line-height: 1.4; }
+.fr-section-body { font-size: 14px; color: var(--ink-60); line-height: 1.7; }
+.fr-section-body strong { color: var(--ink); }
+.fr-day-row { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 12px; }
+.fr-day-num { width: 28px; height: 28px; background: var(--amber); color: white; border-radius: 50%; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
+.fr-day-text { font-size: 14px; color: var(--ink); line-height: 1.6; }
+.fr-say-chip { display: inline-block; background: #FFF3E0; border: 1px solid #EADBC8; border-radius: 6px; padding: 4px 10px; font-size: 13px; color: var(--ink-60); margin-bottom: 6px; }
+.fr-say-chip.after { background: #F0FAF0; border-color: #B8DDB8; color: #3A6B3A; }
+.fr-share-box { background: var(--cream); border: 1px dashed var(--ink-20); border-radius: 10px; padding: 14px 16px; font-size: 13px; color: var(--ink-60); line-height: 1.7; }
+.fr-cta { text-align: center; padding: 8px 0 0; }
+.fr-cta-main { width: 100%; padding: 16px; background: var(--amber); color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: 700; cursor: pointer; letter-spacing: .02em; margin-bottom: 10px; }
+.fr-cta-sub { font-size: 12px; color: var(--ink-40); }
+
+/* ═══════════════════════════════════════
    WECHAT SCREEN
 ═══════════════════════════════════════ */
 #screen-wechat { background: var(--cream); }
@@ -3356,7 +3383,7 @@ input[type=range].slider::-moz-range-thumb {
   <div class="letter-body" id="report-body"></div>
   <div class="report-sticky">
     <div class="sticky-text">还有 <strong>4 节</strong>深度分析等你查看</div>
-    <button class="btn-sticky" onclick="goToWeChat()">免费获取 →</button>
+    <button class="btn-sticky" onclick="goToWeChat()">查看完整版 →</button>
   </div>
 </div>
 
@@ -3483,7 +3510,36 @@ input[type=range].slider::-moz-range-thumb {
       <button class="btn-share amber" onclick="showSharePanel('family')">分享给家人看这份报告</button>
       <button class="btn-share" onclick="showSharePanel('friend')" style="margin-top:8px">邀请朋友也测一测</button>
       <button class="btn-share" onclick="showSharePanel('moments')" style="margin-top:8px">生成朋友圈分享图</button>
-      <button class="btn-share" onclick="goToWeChatFinal()" style="margin-top:14px;border-color:var(--amber);color:var(--amber)">获取完整报告 →</button>
+      <button class="btn-share" onclick="showFullReport()" style="margin-top:14px;border-color:var(--amber);color:var(--amber)">查看完整版报告 →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═════════════════════════════════════
+     FULL REPORT PREVIEW
+═════════════════════════════════════ -->
+<div id="screen-fullreport" class="screen">
+  <div class="top-nav">
+    <div class="nav-back" onclick="goBack()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg> 返回</div>
+    <div class="nav-wordmark">AIPIWEN</div>
+    <div></div>
+  </div>
+  <div class="fr-wrap">
+    <div class="fr-header">
+      <div class="fr-badge">完整版报告预览</div>
+      <h2 class="fr-title" id="fr-title">关于 <em id="fr-name">孩子</em></h2>
+      <p class="fr-subtitle">这是根据你刚才填写的内容生成的完整版预览。<br>更深入的孩子人格理解与长期行为模式分析，可以联系顾问继续领取。</p>
+    </div>
+    <div class="fr-notice">
+      报告编号：<span class="fr-reportid" id="fr-reportid"></span><br>
+      <span style="font-size:11px">联系顾问时请提供此编号</span>
+    </div>
+    <!-- 动态内容区 -->
+    <div id="fr-content"></div>
+    <!-- CTA -->
+    <div class="fr-cta">
+      <button class="fr-cta-main" onclick="goToWeChatFinal()">联系顾问，领取进一步解读 →</button>
+      <div class="fr-cta-sub">测试期间由顾问根据报告编号人工发送，请稍等</div>
     </div>
   </div>
 </div>
@@ -3494,10 +3550,13 @@ input[type=range].slider::-moz-range-thumb {
 <div id="screen-wechat" class="screen">
   <div class="wechat-wrap">
     <div class="wechat-mark">✓</div>
-    <h2 class="wechat-title">报告已生成<br>添加后立即领取</h2>
+    <h2 class="wechat-title">联系顾问<br>进一步解读</h2>
     <p class="wechat-body">
-      完整报告包含：<span id="wechat-name-text">孩子</span>行为背后的具体原因、你可以换的沟通方式，以及<em>明天就能试的一步</em>。
+      顾问会根据报告编号，为<span id="wechat-name-text">孩子</span>发送更深入的人格分析与长期行为解读。
     </p>
+    <div style="background:#FFF3E0;border-radius:8px;padding:10px 14px;margin-bottom:16px;font-size:12px;color:var(--ink-60);text-align:center">
+      当前为测试期，完整解读由顾问根据报告编号人工发送。后续将升级为自动领取。
+    </div>
     <div style="background:#FFF8F0;border:1px solid #EADBC8;border-radius:10px;padding:12px 16px;margin-bottom:16px;text-align:center">
       <div style="font-size:11px;color:var(--ink-40);margin-bottom:4px">你的报告编号</div>
       <div id="wechat-report-id" style="font-size:15px;font-weight:700;color:var(--amber);letter-spacing:.08em;font-family:monospace"></div>
@@ -3517,7 +3576,7 @@ input[type=range].slider::-moz-range-thumb {
         </div>
         <div style="display:flex;align-items:flex-start;gap:10px">
           <div style="width:22px;height:22px;border-radius:50%;background:var(--amber);color:white;font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0">3</div>
-          <div style="font-size:14px;color:var(--ink);padding-top:2px">添加企业微信，领取完整报告</div>
+          <div style="font-size:14px;color:var(--ink);padding-top:2px">添加企业微信，把编号发给顾问</div>
         </div>
       </div>
       <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--ink-10);font-size:12px;color:var(--ink-40)">
@@ -3539,7 +3598,7 @@ input[type=range].slider::-moz-range-thumb {
     <!-- ─── 已是好友 section ─── -->
     <div id="friend-section" style="background:#F7F5F0;border-radius:12px;padding:16px 20px;margin-bottom:20px;text-align:left">
       <div style="font-size:11px;font-weight:600;letter-spacing:.1em;color:var(--ink-40);text-transform:uppercase;margin-bottom:8px">已是企业微信好友？</div>
-      <div style="font-size:14px;color:var(--ink);margin-bottom:12px">把下方链接发给我，我立刻把完整报告发给你</div>
+      <div style="font-size:14px;color:var(--ink);margin-bottom:12px">无需重复添加，直接把报告编号发给顾问，顾问会根据编号为你发送完整解读。</div>
       <div id="report-url-box" style="background:white;border:1px solid var(--ink-10);border-radius:8px;padding:10px 12px;font-size:12px;color:var(--ink-60);word-break:break-all;line-height:1.5;margin-bottom:10px;min-height:36px"></div>
       <button id="copy-url-btn" onclick="copyReportURL()" style="width:100%;padding:12px;background:var(--amber);color:white;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;">复制链接，发给顾问</button>
     </div>
@@ -4032,8 +4091,7 @@ function buildAndShowReport() {
     </div>
 
     <div style="padding:28px 28px 8px">
-      <button class="btn-unlock" onclick="goToWeChat()" style="font-size:16px">免费获取完整报告 →</button>
-      <div style="text-align:center;font-size:13px;color:var(--ink-40);margin-top:10px">添加企业微信，24小时内发送完整7节报告</div>
+      <button class="btn-unlock" onclick="goToWeChat()" style="font-size:16px">查看完整版报告 →</button>
     </div>
 
     <div class="observer-section">
@@ -4097,14 +4155,13 @@ function goToWeChat() {
     if (fbSection) {
       fbSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
       fbSection.classList.remove('feedback-required');
-      void fbSection.offsetWidth; // reflow 触发动画重播
+      void fbSection.offsetWidth;
       fbSection.classList.add('feedback-required');
       setTimeout(() => fbSection.classList.remove('feedback-required'), 700);
     }
     return;
   }
-  buildFeelingScreen();
-  navigateTo('screen-feeling');
+  showFullReport();
 }
 
 function onFeedback(el, type) {
@@ -4114,7 +4171,7 @@ function onFeedback(el, type) {
   // v0.2 追踪反馈
   updateRecord({ feedback: type });
   if (type === 'great' || type === 'ok') {
-    setTimeout(() => goToWeChat(), 600);
+    setTimeout(() => showFullReport(), 600);
   } else {
     // 不太像：重置并回顶
     state.feedbackGiven = false;
@@ -4181,6 +4238,95 @@ function copyReportURL() {
     btn.style.background = '#4CAF50';
     setTimeout(function(){ btn.textContent = '复制链接，发给顾问'; btn.style.background = ''; }, 3000);
   }
+}
+
+/* ── 完整版报告预览 ─────────────────────────────────────────── */
+function showFullReport() {
+  const name = state.childName || '孩子';
+  const type = state.reportType || 'sensitive';
+  const data = REPORTS[type];
+  if (!data) return;
+  const fill = s => s.replace(/\{name\}/g, name);
+
+  // 3天行动计划（按类型）
+  const DAYS = {
+    sensitive: [
+      `下次${name}情绪爆发，只说"我看到了，你现在很难受"，不给建议，不要求停下来。`,
+      `找一件${name}今天真的做到了的小事，精准说出来：不是"你很棒"，是"你刚才忍住了，我注意到了"。`,
+      `今天试着只问一个问题："你今天最难熬的一刻是什么？"然后只听，不评论，不分析。`
+    ],
+    autonomy: [
+      `把今天有一件事主动交给${name}决定："你打算怎么搞定？"然后闭嘴，真的等${name}说完。`,
+      `${name}给出方案后，不补充、不修改，哪怕你有更好的方法，今天先让${name}的方案试一次。`,
+      `在你能接受的范围里，找出一件事完全让${name}说了算——不是假选择，是真的由${name}决定。`
+    ],
+    relation: [
+      `今晚放下手机，10分钟，只和${name}待在一起。哪怕什么都不说，只是在一起。`,
+      `问${name}一个很小的具体问题："今天有没有一件事，哪怕很小，让你觉得还不错？"然后只说"嗯"。`,
+      `${name}说完任何一件事，你只回"我听到了"——不解决，不建议，不分析。今天只做这一件事。`
+    ]
+  };
+
+  // 适合转发家人的摘要（按类型）
+  const SUMMARY = {
+    sensitive: `${name}是感知力丰富的孩子。同样的一句话，${name}收到的重量是普通孩子的好几倍。${name}的情绪反应不是矫情，是神经系统在如实运转。我们需要做的不是让${name}变硬，而是帮${name}学会：我感受到了，这没有问题，我可以处理它。`,
+    autonomy: `${name}的内驱力只能从内部启动，不能从外部装进去。催得越紧，内驱力关得越快。真正有效的方法，是在你能接受的范围里，给${name}真实的选择权。${name}说了算的事，${name}才会真正去做。`,
+    relation: `${name}以关系为核心运作。和你的连接顺畅时，${name}能做到你以为不可能的事。越推${name}独立，${name}越粘。先把连接充分给到${name}，${name}才有安全感真正放开手。`
+  };
+
+  // 填充页面
+  document.getElementById('fr-name').textContent = name;
+  document.getElementById('fr-title').innerHTML = `关于 <em id="fr-name">${name}</em>`;
+  document.getElementById('fr-reportid').textContent = state.reportId || '—';
+
+  const days = DAYS[type];
+  const summary = SUMMARY[type];
+
+  document.getElementById('fr-content').innerHTML = `
+    <div class="fr-section">
+      <div class="fr-section-label">你还没发现的优势</div>
+      <div class="fr-section-title">🌟 ${name}的隐藏天赋</div>
+      <div class="fr-section-body">${fill(data.adv).replace(/\n/g,'<br>')}</div>
+    </div>
+    <div class="fr-section">
+      <div class="fr-section-label">需要注意的一件事</div>
+      <div class="fr-section-title">⚠️ 如果忽视，会有什么风险</div>
+      <div class="fr-section-body">${fill(data.risk).replace(/\n/g,'<br>')}</div>
+    </div>
+    <div class="fr-section">
+      <div class="fr-section-label">明天换一种说法</div>
+      <div class="fr-section-title">💬 把这句话换成这句</div>
+      <div style="margin-bottom:10px">
+        <div style="font-size:11px;color:var(--ink-40);margin-bottom:4px">以前你可能说</div>
+        <div class="fr-say-chip">${fill(data.say.before)}</div>
+      </div>
+      <div style="margin-bottom:10px">
+        <div style="font-size:11px;color:var(--ink-40);margin-bottom:4px">明天可以换成</div>
+        <div class="fr-say-chip after">${fill(data.say.after)}</div>
+      </div>
+      <div class="fr-section-body" style="font-size:13px;margin-top:8px">${fill(data.say.why)}</div>
+    </div>
+    <div class="fr-section">
+      <div class="fr-section-label">接下来3天可以尝试</div>
+      <div class="fr-section-title">📅 每天一个小动作</div>
+      ${days.map((d,i)=>`
+        <div class="fr-day-row">
+          <div class="fr-day-num">D${i+1}</div>
+          <div class="fr-day-text">${d}</div>
+        </div>`).join('')}
+    </div>
+    <div class="fr-section">
+      <div class="fr-section-label">❤️ ${name}最需要你给的</div>
+      <div class="fr-section-body">${fill(data.need)}</div>
+    </div>
+    <div class="fr-section">
+      <div class="fr-section-label">适合转发给家人的总结</div>
+      <div class="fr-share-box">${summary}</div>
+    </div>
+  `;
+
+  updateRecord({ clickedFullReport: true });
+  navigateTo('screen-fullreport');
 }
 
 function goToWeChatFinal() {
