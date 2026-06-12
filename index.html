@@ -4211,7 +4211,7 @@ function onFeedback(el, type) {
   // v0.2 追踪反馈
   updateRecord({ feedback: type });
   if (type === 'great' || type === 'ok') {
-    setTimeout(() => showFullReport(), 600);
+    setTimeout(() => navigateTo('screen-feeling'), 600);
   } else {
     // 不太像：重置并回顶
     state.feedbackGiven = false;
