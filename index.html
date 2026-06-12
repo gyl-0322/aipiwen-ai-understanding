@@ -2833,12 +2833,18 @@ body {
   border-color: var(--amber); background: var(--amber-soft); color: var(--amber);
 }
 .q3-score-wrap { padding: 4px 0 8px; }
-.q3-score-prompt { text-align:center; font-size:12px; color:var(--ink-40); margin-bottom:10px; }
-.q3-score-labels { display:flex; justify-content:space-between; font-size:11px; color:var(--ink-40); margin-bottom:8px; }
-.q3-score-btns { display:grid; grid-template-columns:repeat(5,1fr); gap:8px; margin-bottom:6px; }
-.q3-score-btn { padding:13px 0; border:1.5px solid var(--ink-10); border-radius:10px; background:white; font-size:17px; font-weight:600; color:var(--ink-20); cursor:pointer; transition:all .15s; }
-.q3-score-btn.selected { border-color:var(--amber); background:#FFF8F0; color:var(--amber); transform:scale(1.06); }
-.q3-score-required { font-size:12px; color:#E74C3C; text-align:center; margin-top:6px; display:none; }
+.q3-score-prompt { text-align:center; font-size:12px; color:var(--ink-40); margin-bottom:14px; }
+.q3-track-outer { position:relative; padding:10px 8px 6px; }
+.q3-track-line { position:absolute; top:20px; left:14px; right:14px; height:2px; background:var(--ink-10); border-radius:1px; }
+.q3-track-fill { height:100%; background:var(--amber); width:0; border-radius:1px; transition:width .2s ease; }
+.q3-dots-row { display:flex; justify-content:space-between; position:relative; }
+.q3-dot-btn { background:none; border:none; padding:0; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:5px; min-width:0; }
+.q3-dot { width:18px; height:18px; border-radius:50%; background:white; border:2px solid var(--ink-15); transition:all .15s; }
+.q3-dot-btn.selected .q3-dot { background:var(--amber); border-color:var(--amber); transform:scale(1.35); box-shadow:0 0 0 4px rgba(255,167,38,.15); }
+.q3-dot-num { font-size:10px; color:var(--ink-30); line-height:1; transition:color .15s; }
+.q3-dot-btn.selected .q3-dot-num { color:var(--amber); font-weight:700; }
+.q3-score-labels { display:flex; justify-content:space-between; font-size:11px; color:var(--ink-40); margin-top:10px; }
+.q3-score-required { font-size:12px; color:#E74C3C; text-align:center; margin-top:8px; display:none; }
 .share-target-row { display: flex; flex-wrap: wrap; gap: 10px; }
 .share-target-pill {
   padding: 12px 20px; border-radius: 50px;
@@ -3420,21 +3426,24 @@ body {
       <div class="vq-num">Q3</div>
       <div class="vq-title">看完报告后，<br>你觉得自己重新理解孩子了吗？</div>
       <div class="q3-score-wrap">
-        <div class="q3-score-prompt">点一个数字评分（必填）</div>
-        <div class="q3-score-labels"><span>还没有</span><span>非常清晰</span></div>
-        <div class="q3-score-btns" id="q3-btns">
-          <button class="q3-score-btn" onclick="selectQ3Score(this,1)">1</button>
-          <button class="q3-score-btn" onclick="selectQ3Score(this,2)">2</button>
-          <button class="q3-score-btn" onclick="selectQ3Score(this,3)">3</button>
-          <button class="q3-score-btn" onclick="selectQ3Score(this,4)">4</button>
-          <button class="q3-score-btn" onclick="selectQ3Score(this,5)">5</button>
-          <button class="q3-score-btn" onclick="selectQ3Score(this,6)">6</button>
-          <button class="q3-score-btn" onclick="selectQ3Score(this,7)">7</button>
-          <button class="q3-score-btn" onclick="selectQ3Score(this,8)">8</button>
-          <button class="q3-score-btn" onclick="selectQ3Score(this,9)">9</button>
-          <button class="q3-score-btn" onclick="selectQ3Score(this,10)">10</button>
+        <div class="q3-score-prompt">点一下评分（必填）</div>
+        <div class="q3-track-outer">
+          <div class="q3-track-line"><div class="q3-track-fill" id="q3-track-fill"></div></div>
+          <div class="q3-dots-row" id="q3-btns">
+            <button class="q3-dot-btn" onclick="selectQ3Score(this,1)"><div class="q3-dot"></div><div class="q3-dot-num">1</div></button>
+            <button class="q3-dot-btn" onclick="selectQ3Score(this,2)"><div class="q3-dot"></div><div class="q3-dot-num">2</div></button>
+            <button class="q3-dot-btn" onclick="selectQ3Score(this,3)"><div class="q3-dot"></div><div class="q3-dot-num">3</div></button>
+            <button class="q3-dot-btn" onclick="selectQ3Score(this,4)"><div class="q3-dot"></div><div class="q3-dot-num">4</div></button>
+            <button class="q3-dot-btn" onclick="selectQ3Score(this,5)"><div class="q3-dot"></div><div class="q3-dot-num">5</div></button>
+            <button class="q3-dot-btn" onclick="selectQ3Score(this,6)"><div class="q3-dot"></div><div class="q3-dot-num">6</div></button>
+            <button class="q3-dot-btn" onclick="selectQ3Score(this,7)"><div class="q3-dot"></div><div class="q3-dot-num">7</div></button>
+            <button class="q3-dot-btn" onclick="selectQ3Score(this,8)"><div class="q3-dot"></div><div class="q3-dot-num">8</div></button>
+            <button class="q3-dot-btn" onclick="selectQ3Score(this,9)"><div class="q3-dot"></div><div class="q3-dot-num">9</div></button>
+            <button class="q3-dot-btn" onclick="selectQ3Score(this,10)"><div class="q3-dot"></div><div class="q3-dot-num">10</div></button>
+          </div>
         </div>
-        <div class="q3-score-required" id="q3-required">↑ 请先点击数字评分，再继续</div>
+        <div class="q3-score-labels"><span>还没有</span><span>非常清晰</span></div>
+        <div class="q3-score-required" id="q3-required">↑ 请先点击评分，再继续</div>
       </div>
     </div>
 
@@ -4211,7 +4220,7 @@ function onFeedback(el, type) {
   // v0.2 追踪反馈
   updateRecord({ feedback: type });
   if (type === 'great' || type === 'ok') {
-    setTimeout(() => navigateTo('screen-feeling'), 600);
+    setTimeout(() => { buildFeelingScreen(); navigateTo('screen-feeling'); }, 600);
   } else {
     // 不太像：重置并回顶
     state.feedbackGiven = false;
@@ -4428,9 +4437,6 @@ function buildFeelingScreen() {
     `<div class="sentence-pill" data-idx="${i}" onclick="selectQ1(this)">${fill(s)}</div>`).join('');
   document.getElementById('q2-pills').innerHTML = sentences.map((s,i) =>
     `<div class="sentence-pill" data-idx="${i}" onclick="toggleQ2Pill(this)">${fill(s)}</div>`).join('');
-  document.getElementById('q3-slider').value = 5;
-  document.getElementById('q3-score-display').textContent = '5';
-  validation.reunderstandingScore = 5;
   document.querySelectorAll('.share-target-pill').forEach(p => p.classList.remove('selected'));
   document.getElementById('q1-custom').value = '';
   document.getElementById('q1-custom').style.display = 'none';
@@ -4442,7 +4448,9 @@ function buildFeelingScreen() {
   validation.reunderstandingScore = null;
   validation.sharingTarget = '';
   validation.sharingMessage = '';
-  document.querySelectorAll('#q3-btns .q3-score-btn').forEach(b => b.classList.remove('selected'));
+  document.querySelectorAll('#q3-btns .q3-dot-btn').forEach(b => b.classList.remove('selected'));
+  const fill = document.getElementById('q3-track-fill');
+  if (fill) fill.style.width = '0';
   const q3req = document.getElementById('q3-required');
   if (q3req) q3req.style.display = 'none';
 }
@@ -4471,8 +4479,10 @@ function toggleQ2Pill(el) {
 
 function selectQ3Score(el, score) {
   validation.reunderstandingScore = score;
-  document.querySelectorAll('#q3-btns .q3-score-btn').forEach(b => b.classList.remove('selected'));
+  document.querySelectorAll('#q3-btns .q3-dot-btn').forEach(b => b.classList.remove('selected'));
   el.classList.add('selected');
+  const fill = document.getElementById('q3-track-fill');
+  if (fill) fill.style.width = ((score - 1) / 9 * 100) + '%';
   document.getElementById('q3-required').style.display = 'none';
 }
 
