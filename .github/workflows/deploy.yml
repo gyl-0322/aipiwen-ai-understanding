@@ -1,0 +1,52 @@
+name: Deploy to Aliyun OSS
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'index.html'
+      - 'admin.html'
+      - 'images/**'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install ossutil
+        run: |
+          curl -L https://gosspublic.alicdn.com/ossutil/1.7.19/ossutil-v1.7.19-linux-amd64.zip -o ossutil.zip
+          unzip ossutil.zip
+          chmod +x ossutil-v1.7.19-linux-amd64/ossutil
+          sudo mv ossutil-v1.7.19-linux-amd64/ossutil /usr/local/bin/ossutil
+
+      - name: Configure ossutil
+        run: |
+          ossutil config \
+            -e oss-cn-hangzhou.aliyuncs.com \
+            -i ${{ secrets.OSS_ACCESS_KEY_ID }} \
+            -k ${{ secrets.OSS_ACCESS_KEY_SECRET }} \
+            -L CH
+
+      - name: Upload index.html
+        run: |
+          ossutil cp index.html oss://aipewen-ai-understanding/index.html \
+            --meta "Cache-Control:no-cache" -f
+
+      - name: Upload admin.html
+        run: |
+          ossutil cp admin.html oss://aipewen-ai-understanding/admin.html \
+            --meta "Cache-Control:no-cache" -f
+
+      - name: Upload images
+        run: |
+          if [ -d "images" ]; then
+            ossutil cp images/ oss://aipewen-ai-understanding/images/ -r -f
+          fi
+
+      - name: Done
+        run: echo "✅ 部署完成 $(date '+%Y-%m-%d %H:%M:%S')"
