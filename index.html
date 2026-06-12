@@ -3142,11 +3142,16 @@ input[type=range].slider::-moz-range-thumb {
       <div class="opt multi" data-val="autonomy" onclick="toggleMulti(this,'step1',3)"><div class="opt-marker"><div class="opt-marker-inner"></div></div><div class="opt-text">总顶嘴，越说越犟</div></div>
       <div class="opt multi" data-val="autonomy" onclick="toggleMulti(this,'step1',3)"><div class="opt-marker"><div class="opt-marker-inner"></div></div><div class="opt-text">不爱学习，缺少动力</div></div>
       <div class="opt multi" data-val="sensitive" onclick="toggleMulti(this,'step1',3)"><div class="opt-marker"><div class="opt-marker-inner"></div></div><div class="opt-text">注意力不集中，容易分心</div></div>
+      <div class="opt multi" data-val="sensitive" onclick="toggleMulti(this,'step1',3)"><div class="opt-marker"><div class="opt-marker-inner"></div></div><div class="opt-text">考试/上台前焦虑，手抖、肚子痛</div></div>
+      <div class="opt multi" data-val="sensitive" onclick="toggleMulti(this,'step1',3)"><div class="opt-marker"><div class="opt-marker-inner"></div></div><div class="opt-text">情绪爆发后很难平复，需要很久</div></div>
+      <div class="opt multi" data-val="autonomy" onclick="toggleMulti(this,'step1',3)"><div class="opt-marker"><div class="opt-marker-inner"></div></div><div class="opt-text">感兴趣的事超专注，不感兴趣的完全不动</div></div>
+      <div class="opt multi" data-val="autonomy" onclick="toggleMulti(this,'step1',3)"><div class="opt-marker"><div class="opt-marker-inner"></div></div><div class="opt-text">被规定时间、方式就抵触，要自己决定</div></div>
       <div class="opt multi" data-val="relation" onclick="toggleMulti(this,'step1',3)"><div class="opt-marker"><div class="opt-marker-inner"></div></div><div class="opt-text">什么都要问我，不敢自己决定</div></div>
       <div class="opt multi" data-val="relation" onclick="toggleMulti(this,'step1',3)"><div class="opt-marker"><div class="opt-marker-inner"></div></div><div class="opt-text">在家大放肆，在外面很乖</div></div>
       <div class="opt multi" data-val="relation" onclick="toggleMulti(this,'step1',3)"><div class="opt-marker"><div class="opt-marker-inner"></div></div><div class="opt-text">太心软，容易被人说服</div></div>
       <div class="opt multi" data-val="sensitive" onclick="toggleMulti(this,'step1',3)"><div class="opt-marker"><div class="opt-marker-inner"></div></div><div class="opt-text">太在意别人怎么看</div></div>
       <div class="opt multi" data-val="relation" onclick="toggleMulti(this,'step1',3)"><div class="opt-marker"><div class="opt-marker-inner"></div></div><div class="opt-text">不会拒绝别人</div></div>
+      <div class="opt multi" data-val="relation" onclick="toggleMulti(this,'step1',3)"><div class="opt-marker"><div class="opt-marker-inner"></div></div><div class="opt-text">一谈学习家里就吵架/冷战</div></div>
       <div class="opt multi" data-val="relation" onclick="toggleMulti(this,'step1',3)"><div class="opt-marker"><div class="opt-marker-inner"></div></div><div class="opt-text">和同学/朋友相处让我担心</div></div>
       <div class="opt multi" data-val="relation" onclick="toggleMulti(this,'step1',3)"><div class="opt-marker"><div class="opt-marker-inner"></div></div><div class="opt-text">我和孩子越来越说不到一起</div></div>
       <div class="opt multi" data-val="relation" onclick="toggleMulti(this,'step1',3)"><div class="opt-marker"><div class="opt-marker-inner"></div></div><div class="opt-text">其他，我想自己描述</div></div>
@@ -3844,7 +3849,7 @@ const REPORTS = {
   sensitive: {
     typeLabel: '感知力丰富型',
     s1title: '我对{name}的理解',
-    s1: `{name}是一个感知力非常丰富的孩子。外面世界的每一个温度、每一句话落下的重量、你脸上一闪而过的不耐烦——{name}都收到了，而且收到的，比你以为的要多得多。\n\n你以为你只是随口说了一句"你怎么这么磨蹭"。但{name}接收到的，是一份关于自己的判决书——"爸爸/妈妈觉得我这个人有问题"。那不是一句评论，是一个结论。一个{name}可能会悄悄存进心里，反复回放的结论。\n\n{name}不是太脆弱，也不是太敏感。{name}的神经系统的处理带宽，本来就比大多数同龄孩子宽。这意味着{name}能感受到别人感受不到的细节，也意味着同样的一句话击中{name}的力度，是普通孩子的好几倍。不是矫情，是天生如此。\n\n这份灵敏，现在让你很累，总要小心翼翼。但十年、二十年后，{name}会是那个房间里最能感受到别人需要什么的人，最能在人际关系里走得细腻、走得深的人。你现在不需要改变{name}，你需要帮{name}找到安放这份灵敏的地方。`,
+    s1: `{name}是一个感知力非常丰富的孩子。外面世界的每一个温度、每一句话落下的重量、你脸上一闪而过的不耐烦——{name}都收到了，而且收到的，比你以为的要多得多。\n\n你以为你只是随口说了一句"你怎么这么磨蹭"。但{name}接收到的，是一份关于自己的判决书——"爸爸/妈妈觉得我这个人有问题"。那不是一句评论，是一个结论。一个{name}可能会悄悄存进心里，反复回放的结论。\n\n{name}不是太脆弱，也不是太敏感。{name}的神经系统的处理带宽，本来就比大多数同龄孩子宽。这意味着{name}能感受到别人感受不到的细节，也意味着同样的一句话击中{name}的力度，是普通孩子的好几倍。不是矫情，是天生如此。\n\n你可能还注意到一件事：考试前{name}会手抖、咬指甲、肚子不舒服。这不是意志力的问题。人类的大脑有三层——本能脑、情绪脑、理性脑。情绪脑一旦被焦虑激活，理性脑就会立刻"断电"。{name}的情绪系统比别的孩子更敏感，这意味着同等压力下，{name}的理性脑更容易被淹没。那种手抖和胃痛，是{name}的身体在如实地告诉你：情绪系统正在超负荷运转。批评和要求"振作"，只会让超载的系统更难恢复。\n\n这份灵敏，现在让你很累，总要小心翼翼。但十年、二十年后，{name}会是那个房间里最能感受到别人需要什么的人，最能在人际关系里走得细腻、走得深的人。你现在不需要改变{name}，你需要帮{name}找到安放这份灵敏的地方。`,
     s2title: '你可能一直有一个误解',
     s2: `<strong>你可能认为：</strong>孩子太敏感了，要让{name}变得更坚强、更皮实，以后才能扛住这个世界。\n\n<strong>但真正发生的是：</strong>每一次你说"这点小事有什么好哭的"，{name}学到的不是坚强。{name}学到的是——我的感受是错的，我不应该有这种感受，我必须藏起来。\n\n感知力丰富的孩子，哭不是软弱，是他的情绪系统在高速运转。你批评{name}，{name}收到的信号量是你发出的三倍。他不是在小题大做，他是在处理比你想象中大得多的重量。\n\n<strong>你真正需要做的，不是让{name}变硬，而是帮{name}学会：我感受到了，这没有问题，我可以处理它。</strong>`,
     translates: [
@@ -3859,7 +3864,7 @@ const REPORTS = {
   autonomy: {
     typeLabel: '自主驱动型',
     s1title: '我对{name}的理解',
-    s1: `{name}是一个对"自己说了算"有强烈需求的孩子。这不是任性，也不是教养问题——是{name}的神经系统需要感到"我的世界是我在掌控的"，才能安心运作。\n\n当你改变了已经说好的事、或者要求{name}按你的方式来，{name}体验到的不是"只是换一种方法"，而是"我的控制感被拿走了"。那个当下的烦躁、抵抗、甚至爆发——不是{name}不懂事，是神经系统的自动防御反应，不受意志控制。\n\n你可能发现，当{name}自己决定要做一件事，完全不用催，执行力惊人。但一旦变成"你应该做这个"，{name}就像被抽走了所有动力。这不是两面性，这是同一件事：{name}的驱动力，只能从内部启动。\n\n这份对自主的坚持，现在让你很头疼。但这恰恰是未来最稀缺的能力之一：不依赖外部驱动，自己找到方向，自己走下去。`,
+    s1: `{name}是一个对"自己说了算"有强烈需求的孩子。这不是任性，也不是教养问题——是{name}的神经系统需要感到"我的世界是我在掌控的"，才能安心运作。\n\n当你改变了已经说好的事、或者要求{name}按你的方式来，{name}体验到的不是"只是换一种方法"，而是"我的控制感被拿走了"。那个当下的烦躁、抵抗、甚至爆发——不是{name}不懂事，是神经系统的自动防御反应，不受意志控制。\n\n你可能发现，当{name}自己决定要做一件事，完全不用催，执行力惊人。但一旦变成"你应该做这个"，{name}就像被抽走了所有动力。这不是两面性，这是同一件事：{name}的内驱力，只能从内部启动，从来不能从外部装进去。\n\n研究发现，孩子的内驱力由三件事构成：对这件事真实的兴趣、做成功了的成就感、以及犯了错误不被严厉惩罚的安全感。缺了任何一个，内驱力都不会稳固。对{name}来说，"被批评错误"对内驱力的破坏最大——{name}不是受不了批评，是{name}的整个"想做"的意愿，在被否定的那一刻就关机了。\n\n这份对自主的坚持，现在让你很头疼。但这恰恰是未来最稀缺的能力之一：不依赖外部驱动，自己找到方向，自己走下去。`,
     s2title: '你可能一直有一个误解',
     s2: `<strong>你可能认为：</strong>孩子太固执了，不懂变通，这样长大了在社会上会吃亏。必须让{name}学会服从规则，学会配合别人。\n\n<strong>但真正发生的是：</strong>"被迫改变"和"自己决定改变"，对{name}来说是完全不同的两件事。前者是剥夺，后者是成长。\n\n你替{name}做决定，你以为是在帮{name}。但{name}感受到的，是"我的控制感被拿走了"。越强行要求{name}顺从，{name}的抵抗就越强——不是对抗你这个人，是神经系统在保护自己仅剩的那点自主感。\n\n<strong>真正有效的路，不是压制{name}的固执，而是把决定权交还给{name}，在你能接受的范围里，让{name}说了算。</strong>`,
     translates: [
@@ -3874,7 +3879,7 @@ const REPORTS = {
   relation: {
     typeLabel: '关系连接型',
     s1title: '我对{name}的理解',
-    s1: `{name}是一个以关系为核心运作的孩子。{name}的状态好不好——愿不愿意学习、有没有安全感、情绪稳不稳——直接取决于和你之间连接的质量。\n\n当你们的关系是顺畅的、温暖的，{name}能做到你觉得不可能的事。当连接断了或者不稳了，其他什么都会跟着出问题——不是{name}的问题，是{name}没有办法在"关系不安全"的状态下正常运作。\n\n{name}问你问题、粘着你、需要你在场——这不是依赖，这是{name}在做一件非常重要的事：检测关系还在不在。就像手机需要信号才能运作，{name}需要"和你的连接"才能安心生长。\n\n你对{name}来说，是整个世界的锚点。这句话不是比喻。是字面意义上的，{name}用来校准自己是否安全的那个坐标。`,
+    s1: `{name}是一个以关系为核心运作的孩子。{name}的状态好不好——愿不愿意学习、有没有安全感、情绪稳不稳——直接取决于和你之间连接的质量。\n\n当你们的关系是顺畅的、温暖的，{name}能做到你觉得不可能的事。当连接断了或者不稳了，其他什么都会跟着出问题——不是{name}的问题，是{name}没有办法在"关系不安全"的状态下正常运作。\n\n{name}问你问题、粘着你、需要你在场——这不是依赖，这是{name}在做一件非常重要的事：检测关系还在不在。就像手机需要信号才能运作，{name}需要"和你的连接"才能安心生长。\n\n有一件很多父母不知道的事：你对{name}说话的方式，决定了{name}有没有意愿把内心世界打开给你。每一次{name}想说什么，{name}都在心里先问一个问题："如果我说了，会有什么结果？"如果以前的经验是——你给了建议、纠正了{name}的想法、或者说"这有什么大不了的"——{name}就学会了：说了也没用。那扇门，是一次一次这样关上的。\n\n青春期来临之前，这扇门还没有锁死。你现在做的每一次"只是听，不评判"，都是在把门留住一道缝。等到青春期真的来了，{name}寻找倾诉的方向是谁，取决于你现在是什么样的倾听者。`,
     s2title: '你可能一直有一个误解',
     s2: `<strong>你可能认为：</strong>孩子太依赖了，什么都要找我，不能独立。要让{name}学会自己处理事情，不能总是跟着我转。\n\n<strong>但真正发生的是：</strong>{name}内心有一个"关系稳不稳"的雷达，一直开着，24小时不关机。你越急着推{name}独立，那个雷达越焦虑，需要更频繁地确认——"妈妈/爸爸还在不在？还爱不爱我？"\n\n越推，越粘。越要求独立，越做不到独立。不是{name}故意的，是神经系统的自动反应。\n\n<strong>有效的路，正好反过来：先把连接充分地给到{name}，让{name}的"关系雷达"真正平静下来，{name}才有安全感去真正独立，去真正放开你的手。</strong>`,
     translates: [
