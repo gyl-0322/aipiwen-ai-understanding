@@ -3301,7 +3301,7 @@ input[type=range].slider::-moz-range-thumb {
     </div>
   </div>
   <div class="bottom-bar">
-    <button class="btn-primary" id="btn-step4" disabled onclick="goToStep(5)">生成<span class="btn-name"></span>的报告 →</button>
+    <button class="btn-primary" id="btn-step4" disabled onclick="goToLoading()">生成<span class="btn-name"></span>的报告 →</button>
   </div>
 </div>
 
@@ -3519,7 +3519,7 @@ input[type=range].slider::-moz-range-thumb {
       <button class="btn-share amber" onclick="showSharePanel('family')">分享给家人看这份报告</button>
       <button class="btn-share" onclick="showSharePanel('friend')" style="margin-top:8px">邀请朋友也测一测</button>
       <button class="btn-share" onclick="showSharePanel('moments')" style="margin-top:8px">生成朋友圈分享图</button>
-      <button class="btn-share" onclick="showFullReport()" style="margin-top:14px;border-color:var(--amber);color:var(--amber)">查看完整版报告 →</button>
+      <button class="btn-share" onclick="goToWeChatFinal()" style="margin-top:14px;background:var(--amber);color:white;border-color:var(--amber);font-weight:600">领取完整版报告 →</button>
     </div>
   </div>
 </div>
@@ -3919,6 +3919,12 @@ function needLabel(val) {
           action:'明天可以做点不一样的',normal:'确认这是不是正常的',all:'都想要'}[val] || '已记录';
 }
 
+function goToLoading() {
+  syncNames();
+  buildSummary(); // 设置 reportType，必须在 startLoading 前调用
+  startLoading();
+}
+
 function startLoading() {
   const name = state.childName || '孩子';
   // Brand mark is pure CSS — no emoji needed
@@ -3931,10 +3937,10 @@ function startLoading() {
       const el = document.getElementById(id);
       el.classList.add('vis');
       const status = el.querySelector('.ls-status');
-      setTimeout(() => { el.classList.add('done'); if(status) status.textContent = '完成'; }, 700);
-    }, i * 2800 + 400);
+      setTimeout(() => { el.classList.add('done'); if(status) status.textContent = '完成'; }, 500);
+    }, i * 1600 + 400);
   });
-  setTimeout(() => buildAndShowReport(), 9500);
+  setTimeout(() => buildAndShowReport(), 5800);
 }
 
 /* ── Report data ── */
@@ -4372,8 +4378,9 @@ function submitFrScore() {
     req.scrollIntoView({ behavior: 'smooth', block: 'center' });
     return;
   }
+  validation.reunderstandingScore = window._frScore;
   updateRecord({ reunderstandingScore: window._frScore });
-  goToWeChatFinal();
+  buildAndShowShareCard();
 }
 
 function goToWeChatFinal() {
