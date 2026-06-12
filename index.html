@@ -3537,7 +3537,7 @@ input[type=range].slider::-moz-range-thumb {
     <div class="fr-header">
       <div class="fr-badge">完整版报告预览</div>
       <h2 class="fr-title" id="fr-title">关于 <em id="fr-name">孩子</em></h2>
-      <p class="fr-subtitle">这是根据你刚才填写的内容生成的完整版预览。<br>更深入的孩子人格理解与长期行为模式分析，可以联系顾问继续领取。</p>
+      <p class="fr-subtitle" id="fr-subtitle">读完之后，你会知道明天可以做什么不一样的事。</p>
     </div>
     <div class="fr-notice">
       报告编号：<span class="fr-reportid" id="fr-reportid"></span><br>
@@ -4036,6 +4036,28 @@ const REPORT_SENTENCES = {
   ]
 };
 
+/* ── Type-specific locked item teasers ── */
+const LOCKED_ITEMS = {
+  sensitive: [
+    ['🌟', '{name}有一个你从没发现的天赋', '感知力丰富的孩子，有一种大多数人终生学不会的能力——你可能从没意识到'],
+    ['⚠️', '现在正在发生一件危险的事', '{name}在把你给的评价，慢慢变成自己的定义。这扇窗口，现在还开着'],
+    ['💬', '换一句话，感受立刻不同', '把「这有什么好哭的」换成这一句——让{name}感到被接住，而不是被评判'],
+    ['❤️', '{name}最需要的，不是鼓励', '是这件很多父母从没做过的事，做了之后{name}会记一辈子']
+  ],
+  autonomy: [
+    ['🌟', '这份固执，是最稀缺的竞争力', '当{name}真正想做一件事，那种专注和执行力，是很多孩子做不到的'],
+    ['⚠️', '继续推，{name}会学会另一件事', '不是服从——是「在你面前表演听话，背后按自己来」'],
+    ['💬', '一句话，让{name}主动开始', '把「你必须完成」换成这一句——控制感还给{name}，事情反而做成了'],
+    ['❤️', '{name}不需要更多管理', '在你能接受的范围里，给这一样东西——比讲道理有效100倍']
+  ],
+  relation: [
+    ['🌟', '{name}懂关系的方式，大多数人没有', '以关系为核心运作的孩子，长大后是最懂得经营人际关系的人'],
+    ['⚠️', '如果找不到连接，{name}会去别处找', '那扇门现在还开着。等青春期来了，你才会知道{name}去哪里找到了连接'],
+    ['💬', '一句话，让{name}愿意开口', '把「去自己待着」换成这一句——{name}说了什么，你都能接得住'],
+    ['❤️', '10分钟，只需要10分钟', '放下手机，完全在场——这是{name}现在最需要的，也是你能给的']
+  ]
+};
+
 function buildAndShowReport() {
   const name = state.childName || '孩子';
   const data = REPORTS[state.reportType] || REPORTS.sensitive;
@@ -4083,7 +4105,7 @@ function buildAndShowReport() {
         </div>`).join('')}
       <div style="height:14px"></div>
       <div class="section-lock">
-        <div class="section-lock-blur">${fill(data.translates[0].text)} ···· 还有更多内容等待解锁 ···· 理解{name}的完整行为翻译</div>
+        <div class="section-lock-blur">${fill(data.translates[0].text)} ···· ${{sensitive:`${name}的隐藏天赋 · 一件正在发生的风险 · 明天就能说的一句话`,autonomy:`固执里藏的天赋 · 继续推的后果 · 让${name}主动开始的话`,relation:`为什么${name}需要你在场 · 那扇门还开多久 · 让${name}愿意开口的做法`}[state.reportType] || '更多深度内容等待解锁'}</div>
         <div class="section-lock-chip"><div class="lock-chip-inner">🔒 完整内容，免费获取</div></div>
       </div>
     </div>
@@ -4102,18 +4124,14 @@ function buildAndShowReport() {
       <div class="unlock-block-orb"></div>
       <div class="unlock-kicker">当前免费解读已生成</div>
       <div class="unlock-title" style="font-size:20px">以下为完整版深度分析</div>
-      <div class="unlock-body">你已经看到 ${name} 当前行为背后的核心解释。<br>更多优势、风险和可执行话术，已整理在完整报告中。</div>
+      <div class="unlock-body">${{sensitive:`你刚才看到的，是${name}行为背后的核心解释。<br>完整版包含：${name}的隐藏天赋、正在发生的风险、以及让${name}感到被接住的具体说法。`,autonomy:`你刚才看到的，是${name}行为背后的核心解释。<br>完整版包含：固执里藏的天赋、继续推会发生什么、以及让${name}主动开始的那句话。`,relation:`你刚才看到的，是${name}行为背后的核心解释。<br>完整版包含：${name}理解关系的天赋、连接断了会发生什么、以及让${name}愿意开口的具体做法。`}[state.reportType] || `你已经看到${name}行为背后的核心解释，完整版还有更多。`}</div>
     </div>
 
     <div class="locked-items">
-      ${[['🌟','你还没发现的优势','从问题行为中提炼出的隐藏天赋'],
-         ['⚠️','需要注意的一件事','如果处理不好，会影响长远的风险'],
-         ['💬','明天换一种说法','含具体句子，明天就能用'],
-         ['❤️','他最需要你给的','让你读完想立刻去做的那一件事']
-      ].map(([icon,title,desc])=>`
+      ${(LOCKED_ITEMS[state.reportType] || LOCKED_ITEMS.sensitive).map(([icon,title,desc])=>`
         <div class="locked-item">
           <div class="locked-glyph">${icon}</div>
-          <div class="locked-info"><div class="locked-info-title">${title}</div><div class="locked-info-desc">${desc}</div></div>
+          <div class="locked-info"><div class="locked-info-title">${fill(title)}</div><div class="locked-info-desc">${fill(desc)}</div></div>
           <div class="locked-icon">🔒</div>
         </div>`).join('')}
     </div>
@@ -4305,6 +4323,7 @@ function showFullReport() {
   // 填充页面
   document.getElementById('fr-name').textContent = name;
   document.getElementById('fr-title').innerHTML = `关于 <em id="fr-name">${name}</em>`;
+  document.getElementById('fr-subtitle').textContent = `读完之后，你会知道明天和${name}说什么、做什么。`;
   document.getElementById('fr-reportid').textContent = state.reportId || '—';
 
   const days = DAYS[type];
