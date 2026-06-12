@@ -1,0 +1,23 @@
+{
+  "version": 2,
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "/api/$1"
+    },
+    {
+      "src": "/admin.html",
+      "dest": "/admin.html"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
+    }
+  ],
+  "functions": {
+    "api/wechat.js": {
+      "runtime": "nodejs18.x",
+      "maxDuration": 10
+    }
+  }
+}
