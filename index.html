@@ -3576,29 +3576,45 @@ body {
     <p class="wechat-body">
       顾问会根据报告编号，为<span id="wechat-name-text">孩子</span>发送更深入的人格分析与长期行为解读。
     </p>
-    <div style="background:#FFF8F0;border:1px solid #EADBC8;border-radius:10px;padding:12px 16px;margin-bottom:20px;text-align:center">
+    <div style="background:#FFF3E0;border-radius:8px;padding:10px 14px;margin-bottom:16px;font-size:12px;color:var(--ink-60);text-align:center">
+      当前为测试期，完整解读由顾问根据报告编号人工发送。后续将升级为自动领取。
+    </div>
+    <div style="background:#FFF8F0;border:1px solid #EADBC8;border-radius:10px;padding:12px 16px;margin-bottom:16px;text-align:center">
       <div style="font-size:11px;color:var(--ink-40);margin-bottom:4px">你的报告编号</div>
       <div id="wechat-report-id" style="font-size:15px;font-weight:700;color:var(--amber);letter-spacing:.08em;font-family:monospace"></div>
-      <div style="font-size:12px;color:var(--ink-40);margin-top:4px">进入客服后把这个编号发给顾问，即可领取完整报告</div>
+      <div style="font-size:12px;color:var(--ink-40);margin-top:4px">添加企业微信后，把这个编号发给顾问，可以快速领取完整报告</div>
     </div>
 
-    <!-- 微信内：直接点击进入客服 -->
-    <a id="kf-direct-link" href="https://work.weixin.qq.com/kfid/kfc6ce446e6e057c683"
-       style="display:block;width:100%;padding:15px 0;background:var(--amber);color:white;border:none;border-radius:12px;font-size:16px;font-weight:700;text-align:center;text-decoration:none;margin-bottom:14px;box-sizing:border-box">
-      点击联系顾问，领取完整报告 →
-    </a>
-
-    <div class="qr-card" style="margin-bottom:20px">
-      <div style="font-size:12px;color:var(--ink-40);text-align:center;margin-bottom:10px">💻 电脑端？用手机微信「扫一扫」扫码</div>
-      <div class="qr-frame" id="qr-frame-wrap">
-        <canvas id="qr-canvas" style="width:140px;height:140px;border-radius:6px;display:none"></canvas>
-        <img id="qr-img" alt="企业微信客服二维码" style="width:140px;height:140px;border-radius:8px;display:none">
-        <div id="qr-placeholder" style="display:flex;flex-direction:column;align-items:center;gap:8px">
-          <div class="qr-icon">⬛</div>
-          <div style="font-size:13px;color:var(--ink-40)">生成中…</div>
+    <div style="background:#F7F5F0;border-radius:12px;padding:16px 20px;margin-bottom:20px;text-align:left">
+      <div style="font-size:11px;font-weight:600;letter-spacing:.1em;color:var(--ink-40);text-transform:uppercase;margin-bottom:12px">领取方式</div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div style="display:flex;align-items:flex-start;gap:10px">
+          <div style="width:22px;height:22px;border-radius:50%;background:var(--amber);color:white;font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0">1</div>
+          <div style="font-size:14px;color:var(--ink);padding-top:2px">手机长按下方二维码</div>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:10px">
+          <div style="width:22px;height:22px;border-radius:50%;background:var(--amber);color:white;font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0">2</div>
+          <div style="font-size:14px;color:var(--ink);padding-top:2px">选择「识别图中二维码」</div>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:10px">
+          <div style="width:22px;height:22px;border-radius:50%;background:var(--amber);color:white;font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0">3</div>
+          <div style="font-size:14px;color:var(--ink);padding-top:2px">添加企业微信，把编号发给顾问</div>
         </div>
       </div>
-      <div class="qr-label">长按二维码 → 识别图中二维码 → 进入客服</div>
+      <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--ink-10);font-size:12px;color:var(--ink-40)">
+        💻 电脑端请用手机微信「扫一扫」，扫描屏幕上的二维码。
+      </div>
+    </div>
+
+    <div class="qr-card">
+      <div class="qr-frame" id="qr-frame-wrap">
+        <img id="qr-img" alt="企业微信二维码" style="width:140px;height:140px;border-radius:8px;display:none" onerror="this.style.display='none';document.getElementById('qr-placeholder').style.display='flex'">
+        <div id="qr-placeholder" style="display:flex;flex-direction:column;align-items:center;gap:8px">
+          <div class="qr-icon">⬛</div>
+          <div style="font-size:13px;color:var(--ink-40)">企业微信二维码</div>
+        </div>
+      </div>
+      <div class="qr-label">长按二维码识别，添加企业微信</div>
     </div>
 
     <!-- ─── 已是好友 section ─── -->
@@ -3641,8 +3657,7 @@ body {
 // ─────────────────────────────────────
 const WECHAT_CONFIG = {
   QR_IMAGE: 'images/wechat_qr.png',
-  WECHAT_ID: 'AIPIWEN_2026',
-  KFID_URL: 'https://work.weixin.qq.com/kfid/kfc6ce446e6e057c683'
+  WECHAT_ID: 'AIPIWEN_2026'
 };
 
 // ═══════════════════════════════════════════════════
@@ -4412,17 +4427,6 @@ function goToWeChatFinal() {
   updateRecord({ clickedWeCom: true, clickedFullReport: true });
   notifyNewUser();
   navigateTo('screen-wechat');
-  // 生成客服二维码
-  generateQRCanvas(WECHAT_CONFIG.KFID_URL, 280).then(function(canvas) {
-    var c = document.getElementById('qr-canvas');
-    if (c) {
-      c.width = canvas.width; c.height = canvas.height;
-      c.style.width = '140px'; c.style.height = '140px';
-      c.getContext('2d').drawImage(canvas, 0, 0);
-      c.style.display = 'block';
-      document.getElementById('qr-placeholder').style.display = 'none';
-    }
-  }).catch(function() {});
 }
 
 function buildFeelingScreen() {
