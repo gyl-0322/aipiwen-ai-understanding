@@ -2833,18 +2833,12 @@ body {
   border-color: var(--amber); background: var(--amber-soft); color: var(--amber);
 }
 .q3-score-wrap { padding: 4px 0 8px; }
-.q3-score-prompt { text-align:center; font-size:12px; color:var(--ink-40); margin-bottom:14px; }
-.q3-track-outer { position:relative; padding:10px 8px 6px; }
-.q3-track-line { position:absolute; top:20px; left:14px; right:14px; height:2px; background:var(--ink-10); border-radius:1px; }
-.q3-track-fill { height:100%; background:var(--amber); width:0; border-radius:1px; transition:width .2s ease; }
-.q3-dots-row { display:flex; justify-content:space-between; position:relative; }
-.q3-dot-btn { background:none; border:none; padding:0; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:5px; min-width:0; }
-.q3-dot { width:18px; height:18px; border-radius:50%; background:white; border:2px solid var(--ink-15); transition:all .15s; }
-.q3-dot-btn.selected .q3-dot { background:var(--amber); border-color:var(--amber); transform:scale(1.35); box-shadow:0 0 0 4px rgba(255,167,38,.15); }
-.q3-dot-num { font-size:10px; color:var(--ink-30); line-height:1; transition:color .15s; }
-.q3-dot-btn.selected .q3-dot-num { color:var(--amber); font-weight:700; }
-.q3-score-labels { display:flex; justify-content:space-between; font-size:11px; color:var(--ink-40); margin-top:10px; }
-.q3-score-required { font-size:12px; color:#E74C3C; text-align:center; margin-top:8px; display:none; }
+.q3-score-prompt { text-align:center; font-size:12px; color:var(--ink-40); margin-bottom:10px; }
+.q3-score-labels { display:flex; justify-content:space-between; font-size:11px; color:var(--ink-40); margin-bottom:8px; }
+.q3-score-btns { display:grid; grid-template-columns:repeat(5,1fr); gap:8px; margin-bottom:6px; }
+.q3-score-btn { padding:13px 0; border:1.5px solid var(--ink-10); border-radius:10px; background:white; font-size:17px; font-weight:600; color:var(--ink-20); cursor:pointer; transition:all .15s; }
+.q3-score-btn.selected { border-color:var(--amber); background:#FFF8F0; color:var(--amber); transform:scale(1.06); }
+.q3-score-required { font-size:12px; color:#E74C3C; text-align:center; margin-top:6px; display:none; }
 .share-target-row { display: flex; flex-wrap: wrap; gap: 10px; }
 .share-target-pill {
   padding: 12px 20px; border-radius: 50px;
@@ -3426,24 +3420,21 @@ body {
       <div class="vq-num">Q3</div>
       <div class="vq-title">看完报告后，<br>你觉得自己重新理解孩子了吗？</div>
       <div class="q3-score-wrap">
-        <div class="q3-score-prompt">点一下评分（必填）</div>
-        <div class="q3-track-outer">
-          <div class="q3-track-line"><div class="q3-track-fill" id="q3-track-fill"></div></div>
-          <div class="q3-dots-row" id="q3-btns">
-            <button class="q3-dot-btn" onclick="selectQ3Score(this,1)"><div class="q3-dot"></div><div class="q3-dot-num">1</div></button>
-            <button class="q3-dot-btn" onclick="selectQ3Score(this,2)"><div class="q3-dot"></div><div class="q3-dot-num">2</div></button>
-            <button class="q3-dot-btn" onclick="selectQ3Score(this,3)"><div class="q3-dot"></div><div class="q3-dot-num">3</div></button>
-            <button class="q3-dot-btn" onclick="selectQ3Score(this,4)"><div class="q3-dot"></div><div class="q3-dot-num">4</div></button>
-            <button class="q3-dot-btn" onclick="selectQ3Score(this,5)"><div class="q3-dot"></div><div class="q3-dot-num">5</div></button>
-            <button class="q3-dot-btn" onclick="selectQ3Score(this,6)"><div class="q3-dot"></div><div class="q3-dot-num">6</div></button>
-            <button class="q3-dot-btn" onclick="selectQ3Score(this,7)"><div class="q3-dot"></div><div class="q3-dot-num">7</div></button>
-            <button class="q3-dot-btn" onclick="selectQ3Score(this,8)"><div class="q3-dot"></div><div class="q3-dot-num">8</div></button>
-            <button class="q3-dot-btn" onclick="selectQ3Score(this,9)"><div class="q3-dot"></div><div class="q3-dot-num">9</div></button>
-            <button class="q3-dot-btn" onclick="selectQ3Score(this,10)"><div class="q3-dot"></div><div class="q3-dot-num">10</div></button>
-          </div>
-        </div>
+        <div class="q3-score-prompt">点一个数字评分（必填）</div>
         <div class="q3-score-labels"><span>还没有</span><span>非常清晰</span></div>
-        <div class="q3-score-required" id="q3-required">↑ 请先点击评分，再继续</div>
+        <div class="q3-score-btns" id="q3-btns">
+          <button class="q3-score-btn" onclick="selectQ3Score(this,1)">1</button>
+          <button class="q3-score-btn" onclick="selectQ3Score(this,2)">2</button>
+          <button class="q3-score-btn" onclick="selectQ3Score(this,3)">3</button>
+          <button class="q3-score-btn" onclick="selectQ3Score(this,4)">4</button>
+          <button class="q3-score-btn" onclick="selectQ3Score(this,5)">5</button>
+          <button class="q3-score-btn" onclick="selectQ3Score(this,6)">6</button>
+          <button class="q3-score-btn" onclick="selectQ3Score(this,7)">7</button>
+          <button class="q3-score-btn" onclick="selectQ3Score(this,8)">8</button>
+          <button class="q3-score-btn" onclick="selectQ3Score(this,9)">9</button>
+          <button class="q3-score-btn" onclick="selectQ3Score(this,10)">10</button>
+        </div>
+        <div class="q3-score-required" id="q3-required">↑ 请先点击数字评分，再继续</div>
       </div>
     </div>
 
@@ -3576,29 +3567,45 @@ body {
     <p class="wechat-body">
       顾问会根据报告编号，为<span id="wechat-name-text">孩子</span>发送更深入的人格分析与长期行为解读。
     </p>
-    <div style="background:#FFF8F0;border:1px solid #EADBC8;border-radius:10px;padding:12px 16px;margin-bottom:20px;text-align:center">
+    <div style="background:#FFF3E0;border-radius:8px;padding:10px 14px;margin-bottom:16px;font-size:12px;color:var(--ink-60);text-align:center">
+      当前为测试期，完整解读由顾问根据报告编号人工发送。后续将升级为自动领取。
+    </div>
+    <div style="background:#FFF8F0;border:1px solid #EADBC8;border-radius:10px;padding:12px 16px;margin-bottom:16px;text-align:center">
       <div style="font-size:11px;color:var(--ink-40);margin-bottom:4px">你的报告编号</div>
       <div id="wechat-report-id" style="font-size:15px;font-weight:700;color:var(--amber);letter-spacing:.08em;font-family:monospace"></div>
-      <div style="font-size:12px;color:var(--ink-40);margin-top:4px">进入客服后把这个编号发给顾问，即可领取完整报告</div>
+      <div style="font-size:12px;color:var(--ink-40);margin-top:4px">添加企业微信后，把这个编号发给顾问，可以快速领取完整报告</div>
     </div>
 
-    <!-- 微信内：直接点击进入客服 -->
-    <a id="kf-direct-link" href="https://work.weixin.qq.com/kfid/kfc6ce446e6e057c683"
-       style="display:block;width:100%;padding:15px 0;background:var(--amber);color:white;border:none;border-radius:12px;font-size:16px;font-weight:700;text-align:center;text-decoration:none;margin-bottom:14px;box-sizing:border-box">
-      点击联系顾问，领取完整报告 →
-    </a>
-
-    <div class="qr-card" style="margin-bottom:20px">
-      <div style="font-size:12px;color:var(--ink-40);text-align:center;margin-bottom:10px">💻 电脑端？用手机微信「扫一扫」扫码</div>
-      <div class="qr-frame" id="qr-frame-wrap">
-        <canvas id="qr-canvas" style="width:140px;height:140px;border-radius:6px;display:none"></canvas>
-        <img id="qr-img" alt="企业微信客服二维码" style="width:140px;height:140px;border-radius:8px;display:none">
-        <div id="qr-placeholder" style="display:flex;flex-direction:column;align-items:center;gap:8px">
-          <div class="qr-icon">⬛</div>
-          <div style="font-size:13px;color:var(--ink-40)">生成中…</div>
+    <div style="background:#F7F5F0;border-radius:12px;padding:16px 20px;margin-bottom:20px;text-align:left">
+      <div style="font-size:11px;font-weight:600;letter-spacing:.1em;color:var(--ink-40);text-transform:uppercase;margin-bottom:12px">领取方式</div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div style="display:flex;align-items:flex-start;gap:10px">
+          <div style="width:22px;height:22px;border-radius:50%;background:var(--amber);color:white;font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0">1</div>
+          <div style="font-size:14px;color:var(--ink);padding-top:2px">手机长按下方二维码</div>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:10px">
+          <div style="width:22px;height:22px;border-radius:50%;background:var(--amber);color:white;font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0">2</div>
+          <div style="font-size:14px;color:var(--ink);padding-top:2px">选择「识别图中二维码」</div>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:10px">
+          <div style="width:22px;height:22px;border-radius:50%;background:var(--amber);color:white;font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0">3</div>
+          <div style="font-size:14px;color:var(--ink);padding-top:2px">添加企业微信，把编号发给顾问</div>
         </div>
       </div>
-      <div class="qr-label">长按二维码 → 识别图中二维码 → 进入客服</div>
+      <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--ink-10);font-size:12px;color:var(--ink-40)">
+        💻 电脑端请用手机微信「扫一扫」，扫描屏幕上的二维码。
+      </div>
+    </div>
+
+    <div class="qr-card">
+      <div class="qr-frame" id="qr-frame-wrap">
+        <img id="qr-img" alt="企业微信二维码" style="width:140px;height:140px;border-radius:8px;display:none" onerror="this.style.display='none';document.getElementById('qr-placeholder').style.display='flex'">
+        <div id="qr-placeholder" style="display:flex;flex-direction:column;align-items:center;gap:8px">
+          <div class="qr-icon">⬛</div>
+          <div style="font-size:13px;color:var(--ink-40)">企业微信二维码</div>
+        </div>
+      </div>
+      <div class="qr-label">长按二维码识别，添加企业微信</div>
     </div>
 
     <!-- ─── 已是好友 section ─── -->
@@ -3641,8 +3648,7 @@ body {
 // ─────────────────────────────────────
 const WECHAT_CONFIG = {
   QR_IMAGE: 'images/wechat_qr.png',
-  WECHAT_ID: 'AIPIWEN_2026',
-  KFID_URL: 'https://work.weixin.qq.com/kfid/kfc6ce446e6e057c683'
+  WECHAT_ID: 'AIPIWEN_2026'
 };
 
 // ═══════════════════════════════════════════════════
@@ -4205,7 +4211,7 @@ function onFeedback(el, type) {
   // v0.2 追踪反馈
   updateRecord({ feedback: type });
   if (type === 'great' || type === 'ok') {
-    setTimeout(() => { buildFeelingScreen(); navigateTo('screen-feeling'); }, 600);
+    setTimeout(() => navigateTo('screen-feeling'), 600);
   } else {
     // 不太像：重置并回顶
     state.feedbackGiven = false;
@@ -4412,17 +4418,6 @@ function goToWeChatFinal() {
   updateRecord({ clickedWeCom: true, clickedFullReport: true });
   notifyNewUser();
   navigateTo('screen-wechat');
-  // 生成客服二维码
-  generateQRCanvas(WECHAT_CONFIG.KFID_URL, 280).then(function(canvas) {
-    var c = document.getElementById('qr-canvas');
-    if (c) {
-      c.width = canvas.width; c.height = canvas.height;
-      c.style.width = '140px'; c.style.height = '140px';
-      c.getContext('2d').drawImage(canvas, 0, 0);
-      c.style.display = 'block';
-      document.getElementById('qr-placeholder').style.display = 'none';
-    }
-  }).catch(function() {});
 }
 
 function buildFeelingScreen() {
@@ -4433,6 +4428,9 @@ function buildFeelingScreen() {
     `<div class="sentence-pill" data-idx="${i}" onclick="selectQ1(this)">${fill(s)}</div>`).join('');
   document.getElementById('q2-pills').innerHTML = sentences.map((s,i) =>
     `<div class="sentence-pill" data-idx="${i}" onclick="toggleQ2Pill(this)">${fill(s)}</div>`).join('');
+  document.getElementById('q3-slider').value = 5;
+  document.getElementById('q3-score-display').textContent = '5';
+  validation.reunderstandingScore = 5;
   document.querySelectorAll('.share-target-pill').forEach(p => p.classList.remove('selected'));
   document.getElementById('q1-custom').value = '';
   document.getElementById('q1-custom').style.display = 'none';
@@ -4444,9 +4442,7 @@ function buildFeelingScreen() {
   validation.reunderstandingScore = null;
   validation.sharingTarget = '';
   validation.sharingMessage = '';
-  document.querySelectorAll('#q3-btns .q3-dot-btn').forEach(b => b.classList.remove('selected'));
-  const trackFill = document.getElementById('q3-track-fill');
-  if (trackFill) trackFill.style.width = '0';
+  document.querySelectorAll('#q3-btns .q3-score-btn').forEach(b => b.classList.remove('selected'));
   const q3req = document.getElementById('q3-required');
   if (q3req) q3req.style.display = 'none';
 }
@@ -4475,10 +4471,8 @@ function toggleQ2Pill(el) {
 
 function selectQ3Score(el, score) {
   validation.reunderstandingScore = score;
-  document.querySelectorAll('#q3-btns .q3-dot-btn').forEach(b => b.classList.remove('selected'));
+  document.querySelectorAll('#q3-btns .q3-score-btn').forEach(b => b.classList.remove('selected'));
   el.classList.add('selected');
-  const fill = document.getElementById('q3-track-fill');
-  if (fill) fill.style.width = ((score - 1) / 9 * 100) + '%';
   document.getElementById('q3-required').style.display = 'none';
 }
 
