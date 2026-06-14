@@ -1623,107 +1623,91 @@ function s7None() {
 function classify() {
   const d = state.data;
 
-  // Rl anywhere → 逆思型
-  if (d.rlFingers.size > 0) {
+  // ── Rule 1: Any Rl → 逆思型 ─────────────────────────────
+  if (d.rlFingers.size > 0)
     return { mainType: '逆思型 R', tagline: '逆向思考 · 创意非凡 · 与众不同', key: 'rl' };
-  }
 
   const rt = d.rtThumb, lt = d.ltThumb;
-  const rtIsW   = IS_W(rt);
-  const ltIsW   = IS_W(lt);
-  const rtIsLu  = d.luFingers.has(0);
-  const ltIsLu  = d.luFingers.has(5);
-  const rtIsArc = d.xFingers.has(0) || d.xnFingers.has(0);
-  const ltIsArc = d.xFingers.has(5) || d.xnFingers.has(5);
-
+  const rtIsW = IS_W(rt), ltIsW = IS_W(lt);
   const totalW   = (rtIsW ? 1 : 0) + (ltIsW ? 1 : 0) + d.wOtherFingers.size;
   const totalLu  = d.luFingers.size;
   const totalArc = d.xFingers.size + d.xnFingers.size;
 
-  // Whorl subtype helpers
-  const isSpiral  = t => t === 'Ws';
   const isDouble  = t => t === 'Wd' || t === 'Wc';
   const isPeacock = t => t === 'We' || t === 'Wpe';
-  function wLabel(t) {
-    if (isDouble(t))  return '整合';
-    if (isPeacock(t)) return '完美';
-    return '认知';   // Ws, Wt, Wsp, Wsp-r, or any other W
+
+  // 拇指个性标签（用于 Rule 3 食指弧修饰 & Rule 5）
+  function thumbLabel(isRight) {
+    const t  = isRight ? rt : lt;
+    const fi = isRight ? 0  : 5;
+    if (IS_W(t)) {
+      if (isDouble(t))  return '整合';
+      if (isPeacock(t)) return '完美';
+      return '认知';
+    }
+    if (d.luFingers.has(fi)  || t === 'Lu')                          return '模仿';
+    if (d.xFingers.has(fi)   || d.xnFingers.has(fi) ||
+        t === 'X'            || t === 'Xn')                           return '开放';
+    return '认知';
   }
 
-  // Index finger (食指) arc: right index = fi 1, left index = fi 6
-  const hasIndexArc = d.xFingers.has(1) || d.xnFingers.has(1) ||
-                      d.xFingers.has(6) || d.xnFingers.has(6);
-
-  // ── TEN WHORL ────────────────────────────────────────────
+  // ── Rule 2: 十指全斗 → 超级认知 A / B / C ────────────────
   if (totalW >= 10) {
-    if (isSpiral(rt)  && isSpiral(lt))  return { mainType: '超级认知A · 螺旋领袖', tagline: '天生领袖 · 主见极强 · 目标必达 · 王者之气', key: 'super_w_a' };
-    if (isDouble(rt)  && isDouble(lt))  return { mainType: '超级认知B · 双核整合', tagline: '领袖气质 · 全局整合 · 多维并行 · 跨界高手', key: 'super_w_b' };
-    if (isPeacock(rt) && isPeacock(lt)) return { mainType: '超级认知C · 孔雀完美', tagline: '领袖气质 · 极致审美 · 完美追求 · 卓越标准', key: 'super_w_c' };
-    // Any other mixed ten-whorl → 超级认知A
+    // 双斗 + 孔雀眼 混合：左手拇指优先决定
+    if ((isDouble(rt) && isPeacock(lt)) || (isPeacock(rt) && isDouble(lt)))
+      return isDouble(lt)
+        ? { mainType: '超级认知B · 双核整合', tagline: '领袖气质 · 全局整合 · 多维并行 · 跨界高手', key: 'super_w_b' }
+        : { mainType: '超级认知C · 孔雀完美', tagline: '领袖气质 · 极致审美 · 完美追求 · 卓越标准', key: 'super_w_c' };
+    // 任意拇指有双斗 → B
+    if (isDouble(rt)  || isDouble(lt))
+      return { mainType: '超级认知B · 双核整合', tagline: '领袖气质 · 全局整合 · 多维并行 · 跨界高手', key: 'super_w_b' };
+    // 任意拇指有孔雀眼 → C
+    if (isPeacock(rt) || isPeacock(lt))
+      return { mainType: '超级认知C · 孔雀完美', tagline: '领袖气质 · 极致审美 · 完美追求 · 卓越标准', key: 'super_w_c' };
+    // 其余（螺旋斗或其他斗纹） → A
     return { mainType: '超级认知A · 螺旋领袖', tagline: '天生领袖 · 主见极强 · 目标必达 · 王者之气', key: 'super_w_a' };
   }
 
-  // ── BOTH THUMBS W ────────────────────────────────────────
-  if (rtIsW && ltIsW) {
-    const lrt = wLabel(rt), llt = wLabel(lt);
-    if (lrt !== llt) {
-      // Different W subtypes → 兼型 (认知兼整合 / 认知兼完美 / 整合兼完美)
-      const ORDER = ['认知', '整合', '完美'];
-      const [a, b] = [lrt, llt].sort((x, y) => ORDER.indexOf(x) - ORDER.indexOf(y));
-      return { mainType: `${a}兼${b}型`, tagline: `${a}主导 · ${b}加持 · 多元认知天赋`, key: 'combo_w' };
-    }
-    // Same W subtype — check index-finger arc special rule
-    const lbl = lrt;
-    if (hasIndexArc && !rtIsArc && !ltIsArc) {
+  // ── Rule 3: 弧形纹检查 ───────────────────────────────────
+  // 双手弧形纹（简单弧 + 帐篷弧）合计 ≥ 6 → 开放型
+  if (totalArc >= 6)
+    return { mainType: '开放型', tagline: '海绵学习 · 踏实肯干 · 简单极致', key: 'x' };
+
+  // 食指（右食指 fi=1，左食指 fi=6）有弧形纹 → [拇指类型]兼开放型
+  const hasIndexArc = d.xFingers.has(1) || d.xnFingers.has(1) ||
+                      d.xFingers.has(6) || d.xnFingers.has(6);
+  if (hasIndexArc) {
+    const ltLbl = thumbLabel(false), rtLbl = thumbLabel(true);
+    // 左手拇指优先，若左手拇指本身是开放则用右手
+    const lbl = ltLbl !== '开放' ? ltLbl : rtLbl;
+    if (lbl !== '开放')
       return { mainType: `${lbl}兼开放型`, tagline: `${lbl}主导 · 开放加持 · 吸收力强`, key: 'combo_open' };
-    }
-    // Pure same-subtype W
-    if (lbl === '整合') {
-      if (totalW >= 6) return { mainType: '整合型 W', tagline: '双核思维 · 多维整合 · 灵活高手', key: 'wc' };
-      return { mainType: '整合倾向 W', tagline: '双核思维倾向 · 灵活适应 · 多维思考', key: 'wc' };
-    }
-    if (lbl === '完美') {
-      if (totalW >= 6) return { mainType: '完美型 W', tagline: '极致标准 · 审美卓越 · 追求完美', key: 'super_w_c' };
-      return { mainType: '完美倾向 W', tagline: '高标准 · 审美敏感 · 追求完美', key: 'super_w_c' };
-    }
-    // 认知 (Ws or other W types)
-    if (totalW >= 6) return { mainType: '认知型 W',   tagline: '主见权威 · 好奇心强 · 探索型',   key: 'w' };
-    return             { mainType: '认知倾向 W', tagline: '有主见 · 好奇心 · 探索倾向',     key: 'w_mild' };
   }
 
-  // ── BOTH THUMBS Lu ───────────────────────────────────────
-  if (rtIsLu && ltIsLu) {
-    if (totalLu >= 10) return { mainType: '超级模仿型 L', tagline: '敞开接纳 · 大公无私 · 奉献型', key: 'super_l' };
-    if (hasIndexArc)   return { mainType: '模仿兼开放型', tagline: '模仿主导 · 开放加持 · 超强吸收力', key: 'combo_open' };
-    if (totalLu >= 6)  return { mainType: '模仿型 L',     tagline: '善于模仿 · 适应力强 · 服务型',   key: 'l' };
-    return               { mainType: '模仿倾向 L',   tagline: '适应力强 · 善于学习 · 配合型',     key: 'l_mild' };
+  // ── Rule 4: 十指全正箕纹 → 超级模仿型 ───────────────────
+  if (totalLu >= 10)
+    return { mainType: '超级模仿型', tagline: '敞开接纳 · 大公无私 · 奉献型', key: 'super_l' };
+
+  // ── Rule 5: 通用规则 — 只看大拇指 ────────────────────────
+  const rtLbl = thumbLabel(true), ltLbl = thumbLabel(false);
+
+  if (rtLbl === ltLbl) {
+    // 两拇指相同 → 直接输出该类型
+    const SINGLE = {
+      '认知': { mainType: '认知型', tagline: '独立思考 · 主见权威 · 探索求知', key: 'w'         },
+      '整合': { mainType: '整合型', tagline: '双核思维 · 多维整合 · 灵活高手', key: 'wc'        },
+      '完美': { mainType: '完美型', tagline: '极致标准 · 审美卓越 · 追求完美', key: 'perfect_w' },
+      '模仿': { mainType: '模仿型', tagline: '善于模仿 · 适应力强 · 服务型',   key: 'l'         },
+      '开放': { mainType: '开放型', tagline: '海绵学习 · 踏实肯干 · 简单极致', key: 'x'         },
+    };
+    return SINGLE[rtLbl] || { mainType: '认知型', tagline: '独立思考 · 主见权威 · 探索求知', key: 'w' };
   }
 
-  // ── BOTH THUMBS ARC ──────────────────────────────────────
-  if (rtIsArc && ltIsArc) return { mainType: '开放型 X', tagline: '海绵学习 · 踏实肯干 · 简单极致', key: 'x' };
-  if (totalArc >= 6)       return { mainType: '开放型 X', tagline: '海绵学习 · 踏实肯干 · 简单极致', key: 'x' };
-
-  // ── MIXED THUMB TYPES ────────────────────────────────────
-  // One W + one Lu → 认知/整合/完美 兼模仿
-  if ((rtIsW && ltIsLu) || (rtIsLu && ltIsW)) {
-    const lbl = wLabel(rtIsW ? rt : lt);
-    return { mainType: `${lbl}兼模仿型`, tagline: `${lbl}主导 · 模仿加持 · 多元天赋`, key: 'combo_w_l' };
-  }
-  // One W + one Arc thumb → 认知/整合/完美 兼开放
-  if ((rtIsW && ltIsArc) || (rtIsArc && ltIsW)) {
-    const lbl = wLabel(rtIsW ? rt : lt);
-    return { mainType: `${lbl}兼开放型`, tagline: `${lbl}主导 · 开放加持 · 吸收力强`, key: 'combo_open' };
-  }
-  // One Lu + one Arc thumb → 模仿兼开放
-  if ((rtIsLu && ltIsArc) || (rtIsArc && ltIsLu))
-    return { mainType: '模仿兼开放型', tagline: '模仿主导 · 开放加持 · 超强吸收力', key: 'combo_open' };
-
-  // Fallback: classify by dominant count
-  if (totalW >= totalLu && totalW >= totalArc)
-    return { mainType: '认知型 W', tagline: '主见权威 · 好奇心强 · 探索型', key: 'w' };
-  if (totalLu >= totalArc)
-    return { mainType: '模仿型 L', tagline: '善于模仿 · 适应力强 · 服务型', key: 'l' };
-  return { mainType: '开放型 X', tagline: '海绵学习 · 踏实肯干 · 简单极致', key: 'x' };
+  // 两拇指不同 → 写两种都兼上（层级：认知 > 整合 > 完美 > 模仿 > 开放）
+  const ORDER = ['认知', '整合', '完美', '模仿', '开放'];
+  const [a, b] = [rtLbl, ltLbl].sort((x, y) => ORDER.indexOf(x) - ORDER.indexOf(y));
+  const comboKey = b === '开放' ? 'combo_open' : b === '模仿' ? 'combo_w_l' : 'combo_w';
+  return { mainType: `${a}兼${b}型`, tagline: `${a}主导 · ${b}加持 · 多元天赋`, key: comboKey };
 }
 
 /* ═══════════════════════════════════════════════
@@ -1787,6 +1771,12 @@ function generateReport(result) {
     learning = '<p><strong>跨领域连接式学习</strong>最适合你：把不同领域的知识"接起来"发现规律。<strong>多线并行</strong>：你不怕同时推进多个任务，反而在多线中效率更高。学习时主动问"这和我已知的哪些知识有关联？"</p>';
     career = '<p><strong>推荐方向：</strong>战略咨询顾问、跨职能项目经理、产品经理、商业谈判专家、自媒体创作者。这些角色需要整合多方资源、驾驭复杂局面，正是你的舞台。</p>';
     advice = '<p><strong>给家长的建议：</strong>整合型孩子在"复杂"中才能发挥最大价值。不要给过于单一的任务，适当出题——比如"这个问题可以从哪两个角度解决？"培养全局观，鼓励在不同兴趣之间建立连接。</p>';
+  } else if (key === 'perfect_w') {
+    talents = '极致标准 · 审美敏感 · 追求完美 · 卓越品质';
+    advantage = '<p>两个大拇指都是孔雀眼纹型，代表你有<strong>天然的完美主义倾向</strong>。你对细节、质量、美感的敏感度远超常人——眼睛里存在内置的"质量检测仪"，能看到别人注意不到的问题和美。</p><p>这不是挑剔，而是你对卓越的本能追求。你做出的事情往往比别人更精致、更有品质感，因为你无法接受"差不多"。</p>';
+    learning = '<p><strong>精深式学习</strong>最适合你：宁愿把一件事做到极致，也不愿浅尝多件。<strong>高标准驱动</strong>：给自己设定"比上次更好"的目标，才能激发真正的动力。学习环境、工具、材料的质量会直接影响你的状态。</p>';
+    career = '<p><strong>推荐方向：</strong>产品/UI/建筑设计师、医疗精密领域、质检总监、艺术总监、高端品牌策划、精英律师。这些角色都要求近乎完美的标准，与你的天赋高度匹配。</p>';
+    advice = '<p><strong>给家长的建议：</strong>保护这个孩子对"好"的敏感，但注意引导区分"追求卓越"和"因不完美而焦虑"的边界。允许过程中的不完美，同时肯定对高标准的坚持。<strong>给他/她做真正有意义的事的机会</strong>，他/她不甘平庸。</p>';
   } else if (key === 'combo_w') {
     talents = '多维认知 · 双重天赋叠加 · 主见 + 兼容并蓄 · 跨类型高手';
     advantage = '<p>你的两个大拇指属于<strong>不同的斗形纹子类型</strong>——这是"双重认知天赋叠加"的组合。斗形纹本身代表强烈的主见和目标感，而两拇指不同的子类型又赋予你跨维度的视角。</p><p>不同子类型各有侧重：螺旋斗偏"自我主导"，双斗偏"整合多元"，孔雀眼偏"追求完美"。两种特质同时在线，让你既有清晰的核心方向，又具备多维度思考的灵活性。</p>';
