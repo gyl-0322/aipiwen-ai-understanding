@@ -410,6 +410,18 @@ html,body { font-family: var(--font-sans); background: var(--cream); color: var(
       <p class="section-body" id="r-struct-body"></p>
     </div>
 
+    <!-- V2: 为什么会这样（Why Layer）-->
+    <div class="section-card" id="r-why-section" style="display:none;">
+      <div class="section-eyebrow">为什么会这样</div>
+      <h2 class="section-heading">行为背后的真实原因</h2>
+      <div id="r-why-reasons" style="font-size:14px; line-height:1.85; color:var(--ink-70); margin-bottom:14px;"></div>
+      <div id="r-why-chain" style="font-size:13px; color:var(--ink-40); background:var(--cream-deep); border-radius:10px; padding:12px 14px; margin-bottom:10px;"></div>
+      <div id="r-why-family" style="display:none; margin-top:10px;">
+        <div style="font-size:11px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:var(--amber); margin-bottom:8px;">值得留意的家庭因素</div>
+        <ul id="r-why-family-list" style="list-style:none; padding:0; font-size:13px; color:var(--ink-70); line-height:1.75;"></ul>
+      </div>
+    </div>
+
     <!-- S2: 家长误区 -->
     <div class="section-card">
       <div class="section-eyebrow">家长常见误区</div>
@@ -422,6 +434,12 @@ html,body { font-family: var(--font-sans); background: var(--cream); color: var(
       <div class="section-eyebrow">三条可执行建议</div>
       <h2 class="section-heading">从明天开始可以做的事</h2>
       <div class="advice-list" id="r-advice-list"></div>
+    </div>
+
+    <!-- V2: 多次用户模式总结 -->
+    <div id="r-pattern-summary-section" style="display:none; background:var(--amber-soft); border:1px solid rgba(194,105,42,.25); border-radius:16px; padding:22px 20px; margin-bottom:16px;">
+      <div style="font-size:10px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:var(--amber); margin-bottom:10px;">行为模式总结</div>
+      <div id="r-pattern-summary-text" style="font-size:15px; line-height:1.8; color:var(--ink-70);"></div>
     </div>
 
     <!-- ═══ 行为变化趋势模块 ═══ -->
@@ -668,6 +686,39 @@ function buildReport(reportId, behavior, type) {
         </div>
       </div>`;
   });
+
+  // ── V2：为什么会这样（Why Layer）──
+  if (c.whyData) {
+    const reasons = c.whyData.reason_hypothesis || [];
+    const chain = c.whyData.trigger_chain || [];
+    const factors = c.whyData.family_factors || [];
+    if (reasons.length) {
+      let html = '';
+      reasons.slice(0, 3).forEach((r, i) => {
+        html += `<p style="margin-bottom:${i < reasons.length-1 ? '10px' : '0'}">${i === 0 ? '<strong>' + r + '</strong>' : r}</p>`;
+      });
+      document.getElementById('r-why-reasons').innerHTML = html;
+      document.getElementById('r-why-chain').textContent = '触发链：' + chain.join(' → ');
+      if (factors.length) {
+        const ul = document.getElementById('r-why-family-list');
+        ul.innerHTML = '';
+        factors.slice(0, 3).forEach(f => {
+          ul.innerHTML += `<li style="padding:4px 0; padding-left:12px; position:relative;">· ${f}</li>`;
+        });
+        document.getElementById('r-why-family').style.display = 'block';
+      }
+      document.getElementById('r-why-section').style.display = 'block';
+    }
+  }
+
+  // ── V2：模式总结（多次用户）──
+  try {
+    const trendResult = AIPIWEN.TrendAnalyzer.analyze(user.user_id);
+    if (trendResult && trendResult.patternSummary) {
+      document.getElementById('r-pattern-summary-text').textContent = trendResult.patternSummary;
+      document.getElementById('r-pattern-summary-section').style.display = 'block';
+    }
+  } catch(e) {}
 
   // ── 分享卡片（个性化文案）──
   document.getElementById('sc-insight').textContent  = c.shareSummary;

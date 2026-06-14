@@ -197,6 +197,17 @@ html,body { font-family: var(--font-sans); background: var(--cream); color: var(
       border-radius: 14px; padding: 14px 18px; margin-bottom: 4px;
       font-size: 13px; color: var(--amber); line-height: 1.7;"></div>
 
+    <!-- V2：为什么会这样（Why Layer 卡片）-->
+    <div id="why-card" style="display:none; background: white; border: 1px solid var(--ink-10); border-radius: 16px; padding: 22px 20px; margin-bottom: 16px;">
+      <div style="font-size: 10px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--amber); margin-bottom: 8px;">为什么会这样</div>
+      <div style="font-family: var(--font-serif); font-size: 17px; color: var(--ink); margin-bottom: 12px;" id="why-main-reason"></div>
+      <div id="why-chain" style="font-size: 13px; color: var(--ink-40); line-height: 1.7; padding: 10px 14px; background: var(--cream-deep); border-radius: 10px; margin-bottom: 10px;"></div>
+      <div id="why-second-reason" style="font-size: 13px; color: var(--ink-70); line-height: 1.75; display:none;"></div>
+    </div>
+
+    <!-- V2：趋势提示（多次用户显示）-->
+    <div id="trend-card" style="display:none; background: var(--amber-soft); border: 1px solid rgba(194,105,42,.25); border-radius: 14px; padding: 14px 18px; margin-bottom: 4px; font-size: 13px; color: var(--amber); line-height: 1.7;"></div>
+
     <!-- 一句话总结 -->
     <div class="summary-card">
       <div class="summary-eyebrow">AI 洞察</div>
@@ -297,6 +308,29 @@ function showReport(behavior, reportId, userId) {
     noteEl.textContent = content.historyNote;
     noteEl.style.display = 'block';
   }
+
+  // V2：Why Layer 卡片
+  if (content.whyParagraph) {
+    const wp = content.whyParagraph;
+    document.getElementById('why-main-reason').textContent = wp.mainReason;
+    document.getElementById('why-chain').textContent = '触发链：' + wp.chainText;
+    if (wp.secondReason) {
+      const el = document.getElementById('why-second-reason');
+      el.textContent = '还有一个常见原因：' + wp.secondReason;
+      el.style.display = 'block';
+    }
+    document.getElementById('why-card').style.display = 'block';
+  }
+
+  // V2：趋势卡片（多次用户）
+  try {
+    const trendResult = AIPIWEN.TrendAnalyzer.analyze(userId);
+    if (trendResult && trendResult.trendText && trendResult.totalSessions >= 2) {
+      const trendEl = document.getElementById('trend-card');
+      trendEl.textContent = trendResult.trendText;
+      trendEl.style.display = 'block';
+    }
+  } catch(e) {}
 
   // CTA 链接
   document.getElementById('cta-link').href = 'full-report.html?id=' + encodeURIComponent(reportId);

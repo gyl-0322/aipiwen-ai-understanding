@@ -101,6 +101,34 @@ const MemorySystem = {
       pattern_freq: freq,
       is_returning: all.length > 1
     };
+  },
+
+  // V2：检测最近 N 条是否有重复行为模式
+  detectRepeatPattern(userId, windowSize) {
+    windowSize = windowSize || 3;
+    const all = this.getAll(userId);
+    if (all.length < 2) return { detected: false, pattern: null, count: 0 };
+    const recent = all.slice(-windowSize).map(m => m.analysis && m.analysis.primary).filter(Boolean);
+    if (recent.length < 2) return { detected: false, pattern: null, count: 0 };
+    const counts = {};
+    recent.forEach(p => { counts[p] = (counts[p] || 0) + 1; });
+    const top = Object.entries(counts).sort((a, b) => b[1] - a[1])[0];
+    return {
+      detected: top[1] >= 2,
+      pattern: top[0],
+      count: top[1],
+      windowSize: recent.length
+    };
+  },
+
+  // V2：生成行为时间线（用于趋势展示）
+  getTimeline(userId) {
+    return this.getAll(userId).map(m => ({
+      date: m.timestamp ? m.timestamp.slice(0, 10) : '?',
+      pattern: m.analysis && m.analysis.primary,
+      label: m.tags && m.tags[0] || '',
+      input_preview: (m.input || '').slice(0, 30)
+    }));
   }
 };
 
@@ -325,6 +353,234 @@ const AnalysisEngine = {
 };
 
 /* ================================================================
+   行为推理引擎 V2 — Why Layer（增量新增，不替换任何现有逻辑）
+================================================================ */
+const BehaviorReasoningEngine = {
+
+  // 12类行为的深层原因数据库
+  WHY_LAYER: {
+    emotional_explosion: {
+      reason_hypothesis: [
+        '情绪调节能力的发育滞后于情绪感知能力——孩子感受到了，但还没有足够的工具来处理这种强度',
+        '当天的情绪爆发通常不是因为眼前这件事，而是多个压力积累后的"最后一根稻草"',
+        '催促、否定、比较等特定语言模式会显著压低孩子的情绪承受阈值',
+        '身体状态（疲劳、饥饿、睡眠不足）会大幅削弱情绪调节能力'
+      ],
+      trigger_chain: ['感受到压力或被否定', '情绪强度超过当前承受上限', '前额叶调节功能临时关闭', '以外化爆发释放内部积压'],
+      family_factors: [
+        '家庭中"催促-评判-比较"语言的使用密度',
+        '孩子是否有安全的空间来表达不舒服的感受',
+        '家长在孩子爆发时自身的情绪稳定程度'
+      ]
+    },
+    emotional_sensitive: {
+      reason_hypothesis: [
+        '神经系统天生对情绪信号更敏锐——同样的刺激，他感受到的强度可能是同龄人的两三倍',
+        '敏感孩子的共情能力通常很强，但情绪调节资源消耗也快',
+        '长期感到"感受不被理解"，会让已有的情绪更难消化'
+      ],
+      trigger_chain: ['接收到情绪刺激', '感受强度显著高于普通孩子', '情绪调节系统超载', '以哭泣或情绪化反应释放'],
+      family_factors: ['家庭成员对孩子情绪表达的接受程度', '孩子的感受是否经常被认可或被否定', '家庭气氛的整体情绪安全感']
+    },
+    homework_conflict: {
+      reason_hypothesis: [
+        '孩子把"作业"和"被控制"画上了等号——抵抗的是被掌控的感觉，不是作业本身',
+        '频繁催促制造了"外部控制"模式，孩子无法发展出内在自驱力',
+        '可能在某个科目遭遇了真实的学习困难，但还没有被识别和支持到',
+        '缺乏对"为什么要做作业"的内在意义感，只有外部压力在推动'
+      ],
+      trigger_chain: ['被要求做作业', '感受到"必须做"的控制压力', '自主需求被压制，产生抵触', '以拖延或发脾气作为抵抗策略'],
+      family_factors: ['关于学习的沟通模式（命令式 vs 对话式）', '孩子在学习中获得的成就感和正向反馈是否充足', '作业是否成为家庭冲突的主要战场']
+    },
+    autonomy_resist: {
+      reason_hypothesis: [
+        '孩子正处于发展独立意志的关键发育期，对控制的敏感度自然升高',
+        '长期过度管控积累的自主需求缺口，以对抗方式集中释放',
+        '孩子发现"对抗"是唯一能让成人看见自己意志的有效方式'
+      ],
+      trigger_chain: ['接收到指令或否定', '自主需求被压制', '感受到主体性的丧失', '以对抗行为重建主体感'],
+      family_factors: ['家庭决策中孩子的参与程度', '家长给予的选择权和自主空间', '"孩子应该听话"的隐性信念是否主导日常互动']
+    },
+    phone_addiction: {
+      reason_hypothesis: [
+        '现实生活中获得即时成就感和掌控感的渠道不足，屏幕填补了这个空缺',
+        '游戏或视频提供了现实中稀缺的三样东西：即时反馈、明确规则、可控结果',
+        '可能在用屏幕回避某种现实中的困难或情绪',
+        '线上社交满足了部分同伴关系需求，说明现实社交有未被满足的部分'
+      ],
+      trigger_chain: ['现实中成就感/掌控感/社交满足不足', '发现屏幕能即时满足这些需求', '大脑形成强烈的"屏幕=奖赏"连接', '任何打断都被感知为剥夺，引发抵抗'],
+      family_factors: ['现实活动中孩子成就感的来源是否充足', '亲子共同活动的质量和频率', '家长自身的屏幕使用习惯（模仿效应）']
+    },
+    withdrawal: {
+      reason_hypothesis: [
+        '内心承受的压力已超过可以表达的上限，沉默是唯一可用的保护策略',
+        '过去表达感受的尝试没有得到安全的回应，所以选择不再尝试',
+        '可能在学校或社交环境中遭遇了不知道如何处理的事情',
+        '青春期前后孩子会自然增加内在世界的保护意识，这是发育的正常阶段'
+      ],
+      trigger_chain: ['遭遇无法处理的压力或情绪', '评估表达是不安全的或无效的', '启动自我保护机制', '以沉默和回避管理内部状态'],
+      family_factors: ['家庭中情绪表达是否真的安全', '孩子过去开口时是否得到过被真正听见的体验', '家长是否有"追问"习惯，让孩子更倾向于封闭']
+    },
+    aggression: {
+      reason_hypothesis: [
+        '攻击是孩子当前情绪调节能力范围内最直接的释放方式，不是选择，是能力边界',
+        '可能观察到家庭或环境中的攻击性行为模式，进行了无意识的模仿',
+        '被欺负或被不公平对待，没有得到支持，愤怒转化为向外攻击',
+        '缺乏用语言表达强烈感受的词汇和技能，身体成了唯一的表达渠道'
+      ],
+      trigger_chain: ['遭遇强烈负面情绪（愤怒、委屈、嫉妒）', '没有合适的情绪表达工具', '情绪积累到临界点', '以身体攻击作为最直接的释放出口'],
+      family_factors: ['家庭中是否存在惩罚性体罚或情绪化处理方式', '孩子在家庭中学到的"愤怒应对"模型', '对孩子强烈情绪表达的接纳程度']
+    },
+    lying: {
+      reason_hypothesis: [
+        '说实话的预期后果（批评、惩罚、失望）在孩子评估中代价太大',
+        '孩子正在测试"谎言能否奏效"，这是认知发展的一个正常阶段',
+        '可能存在对某件事的羞耻感，谎言是保护这种羞耻感不被暴露的屏障',
+        '撒谎是孩子在有限能力范围内管理关系期待的一种策略'
+      ],
+      trigger_chain: ['预期说真话会引发不希望的后果', '评估撒谎的代价小于说真话', '选择谎言作为保护策略', '被发现后诚实的空间进一步缩小，谎言的频率可能升高'],
+      family_factors: ['家庭对失败和错误的容忍度', '孩子承认错误后通常得到的反应', '家庭中是否存在"说真话很危险"的隐性规则']
+    },
+    school_refusal: {
+      reason_hypothesis: [
+        '在学校持续经历负面体验（学业压力、同伴关系困难、被批评），已超过承受上限',
+        '分离焦虑：担心离开家后家里会发生什么',
+        '学业上已经严重跟不上，上学等于每天面对失败的感觉',
+        '被同伴排斥或霸凌，但还没有开口告诉任何大人'
+      ],
+      trigger_chain: ['在学校遭遇持续的痛苦体验', '痛苦超过可承受的阈值', '身体产生焦虑躯体化症状（肚子痛、头痛）', '以拒绝上学来回避痛苦来源'],
+      family_factors: ['家庭对孩子学业表现的期待压力', '孩子是否有过把学校困难告诉家长并得到帮助的经历', '亲子沟通渠道是否足够畅通和安全']
+    },
+    anxiety_worry: {
+      reason_hypothesis: [
+        '大脑的警觉系统对潜在危险过于敏感，对实际上安全的事也发出过度警报',
+        '可能在过去经历了某个失控的事件，形成了"坏事随时会发生"的焦虑模式',
+        '家庭氛围中的不确定性或持续紧张感被孩子内化',
+        '高成就期待带来的持续表现焦虑'
+      ],
+      trigger_chain: ['感知到（真实或想象的）潜在威胁', '大脑过度激活警觉系统', '身体产生焦虑生理反应', '通过反复问、回避或无法入睡来尝试控制焦虑'],
+      family_factors: ['家庭中对不确定性和失败的整体态度', '孩子是否感受到足够的安全感和稳定感', '家长自身的焦虑水平（焦虑有代际传递效应）']
+    },
+    attention_issues: {
+      reason_hypothesis: [
+        '大脑执行功能（注意力调节、冲动控制）的发育差异——不是意志力问题，是神经层面的不同',
+        '学习内容与孩子的认知风格不匹配，导致无法维持兴趣和专注',
+        '睡眠不足、饮食不规律等身体因素在持续影响注意力质量',
+        '焦虑或情绪问题正在消耗大量认知资源，所以"没有多余的注意力"用于专注'
+      ],
+      trigger_chain: ['面对需要持续注意力的任务', '大脑执行功能无法维持足够专注', '注意力被内部或外部刺激劫持', '表现为开小差、坐不住或任务无法完成'],
+      family_factors: ['学习环境的感官干扰程度', '任务结构是否适合孩子的注意力模式', '家庭对孩子注意力问题的理解方式（懒 vs 神经差异）']
+    },
+    sibling_conflict: {
+      reason_hypothesis: [
+        '父母的注意力和情感资源被孩子感知为"有限且在竞争中"，争夺是本能反应',
+        '老大的地位感在二宝出生后受到冲击，这个情感变化可能从未被充分处理',
+        '孩子之间的冲突有时是对家庭中其他关系紧张的间接反应',
+        '兄弟姐妹间解决冲突所需的谈判和妥协技能，孩子还在学习中'
+      ],
+      trigger_chain: ['感到父母注意力/资源/公平感受到威胁', '通过冲突向父母"展示"需求或获取关注', '或通过攻击释放积累的嫉妒和委屈', '父母介入强化了"冲突能带来关注"的模式'],
+      family_factors: ['父母的时间和关注如何在孩子之间分配', '每个孩子是否有足够的"独有时间"', '家庭的"公平"叙事是否真正符合各自的需求']
+    }
+  },
+
+  // 生成可读的"为什么会这样"段落
+  generateWhyParagraph(primary, keyPhrase) {
+    const data = this.WHY_LAYER[primary];
+    if (!data) return null;
+    const reasons = data.reason_hypothesis.slice(0, 2);
+    const chainText = data.trigger_chain.join(' → ');
+    return {
+      mainReason: reasons[0],
+      secondReason: reasons[1] || null,
+      chainText,
+      familyFactors: data.family_factors.slice(0, 2)
+    };
+  },
+
+  // 完整原因数据（用于 full-report）
+  getFullWhyData(primary) {
+    return this.WHY_LAYER[primary] || this.WHY_LAYER.emotional_explosion;
+  }
+};
+
+/* ================================================================
+   趋势分析器 V2 — 基于 MemorySystem（增量新增）
+================================================================ */
+const TrendAnalyzer = {
+
+  analyze(userId) {
+    const all = MemorySystem.getAll(userId);
+    if (!all.length) return null;
+
+    // 频率统计
+    const freq = {};
+    all.forEach(m => {
+      const p = m.analysis && m.analysis.primary;
+      if (p) freq[p] = (freq[p] || 0) + 1;
+    });
+    const sorted = Object.entries(freq).sort((a, b) => b[1] - a[1]);
+    const dominant = sorted[0] ? sorted[0][0] : null;
+    const dominantCount = sorted[0] ? sorted[0][1] : 0;
+
+    // 检测最近3条是否重复
+    const repeat = MemorySystem.detectRepeatPattern(userId, 3);
+
+    // 风险等级
+    let riskLevel = 'low';
+    if (all.length >= 3 && repeat.detected) riskLevel = 'medium';
+    if (all.length >= 5 && repeat.detected && dominantCount >= 3) riskLevel = 'high';
+
+    // 趋势判断
+    let trend = 'new';
+    let trendText = '';
+    const dominantLabel = dominant && AnalysisEngine.PATTERNS[dominant]
+      ? AnalysisEngine.PATTERNS[dominant].label : '';
+
+    if (all.length < 2) {
+      trend = 'new';
+      trendText = '';
+    } else if (repeat.detected) {
+      trend = 'recurring';
+      trendText = `最近的记录里，「${dominantLabel}」反复出现了 ${repeat.count} 次——这不再是偶发事件，而是一个孩子固定的应对模式。`;
+    } else if (dominantCount >= 2 && sorted.length >= 1) {
+      trend = 'concentrated';
+      trendText = `在 ${all.length} 次记录中，「${dominantLabel}」出现最多（${dominantCount}次），这是孩子目前最主要的应对方式。`;
+    } else {
+      trend = 'varied';
+      trendText = `孩子的行为模式比较多样，没有明显单一的重复倾向——每次都在用不同的方式应对当下的处境。`;
+    }
+
+    // 模式总结（仅多次用户）
+    const patternSummary = this._buildPatternSummary(all, dominant, dominantCount, repeat, dominantLabel);
+
+    return {
+      trend,
+      trendText,
+      dominantPattern: dominant,
+      dominantCount,
+      repeatPatternDetected: repeat.detected,
+      riskLevel,
+      patternSummary,
+      totalSessions: all.length,
+      behaviorTrend: trend
+    };
+  },
+
+  _buildPatternSummary(all, dominant, dominantCount, repeat, dominantLabel) {
+    const n = all.length;
+    if (n <= 1) return null;
+
+    if (repeat.detected) {
+      return `在最近 ${n} 次的记录里，孩子持续出现「${dominantLabel}」类行为。这不是单次偶发，而是一个固定的应对模式——说明背后可能有某种长期未被解决的深层需求，单次的"处理"很难根本改变这个模式。`;
+    }
+    if (dominantCount >= 2) {
+      return `在 ${n} 次记录中，「${dominantLabel}」出现了 ${dominantCount} 次，是最主要的行为模式。孩子在面对压力时有相对固定的应对倾向，这个模式是理解他的重要线索。`;
+    }
+    return `在 ${n} 次记录中，孩子展现了多种不同的行为模式——说明他在用不同的方式应对不同的情境，没有明显单一的固定应对倾向。`;
+  }
+};
+
+/* ================================================================
    内容库 (Content Library)
 ================================================================ */
 const ContentLibrary = {
@@ -353,13 +609,19 @@ const ContentLibrary = {
       historyNote = `结合你之前描述的情况来看，今天这个行为有它自己的背景。`;
     }
 
+    // V2：行为原因段落（Why Layer）
+    const whyParagraph = (typeof BehaviorReasoningEngine !== 'undefined')
+      ? BehaviorReasoningEngine.generateWhyParagraph(primary, keyPhrase)
+      : null;
+
     return {
       heading,
       body: db.body,
       insight,
       historyNote,
       label: patternMeta ? patternMeta.label : '行为分析',
-      category: patternMeta ? patternMeta.category : 'emotional'
+      category: patternMeta ? patternMeta.category : 'emotional',
+      whyParagraph  // V2 新增
     };
   },
 
@@ -384,6 +646,11 @@ const ContentLibrary = {
       }
     }
 
+    // V2：完整 Why Layer 数据
+    const whyData = (typeof BehaviorReasoningEngine !== 'undefined')
+      ? BehaviorReasoningEngine.getFullWhyData(primary)
+      : null;
+
     return {
       structHeading: db.struct_heading,
       structBody,
@@ -394,7 +661,8 @@ const ContentLibrary = {
       })),
       historyIntro,
       label: patternMeta ? patternMeta.label : '行为分析',
-      shareSummary: db.share_summary.replace(/\$\{keyPhrase\}/g, keyPhrase)
+      shareSummary: db.share_summary.replace(/\$\{keyPhrase\}/g, keyPhrase),
+      whyData  // V2 新增
     };
   },
 
@@ -784,6 +1052,8 @@ const LeadSystem = {
   create(userId, reportId, analysis, input) {
     try {
       const all = JSON.parse(localStorage.getItem(this.KEY) || '[]');
+      // V2：趋势数据（如可用）
+      const trendResult = (typeof TrendAnalyzer !== 'undefined') ? TrendAnalyzer.analyze(userId) : null;
       const lead = {
         reportId,
         createdAt: new Date().toISOString(),
@@ -797,6 +1067,10 @@ const LeadSystem = {
         leadScore: '低意向',
         leadReason: '轻报告生成',
         interest_level: 'unknown',
+        // V2 新增字段
+        behaviorTrend: trendResult ? trendResult.trend : 'new',
+        riskLevel: trendResult ? trendResult.riskLevel : 'low',
+        repeatPatternDetected: trendResult ? trendResult.repeatPatternDetected : false,
         // 预留企业微信字段（暂不接入）
         future_wecom_status: 'pending',
         wecom_contact_at: null,
@@ -839,6 +1113,347 @@ function truncate(str, n) {
 }
 
 /* ================================================================
+   V3-A：AI 咨询智能体 Agent Layer
+   增量新增——不替换、不修改任何 V2 逻辑
+================================================================ */
+
+/* ── 咨询会话存储 ── */
+const ConsultingSessionStore = {
+  KEY_PREFIX: 'aipiwen_consult_v1_',
+
+  newSession(userId) {
+    return {
+      session_id: 'cs_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+      user_id: userId,
+      stage: 'intake',   // intake → exploration → analysis → recommendation → complete
+      turns: [],         // [{role:'user'|'agent', text:'', ts:''}]
+      collected_info: {
+        behavior_raw: '',   // 原始行为描述（拼接多轮）
+        frequency: null,    // 频率
+        trigger: null,      // 触发因素
+        context: null,      // 发生场景
+        duration: null,     // 持续时长
+        child_age: null     // 孩子年龄
+      },
+      missing_info: [],
+      analysis_result: null,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+  },
+
+  get(userId) {
+    try {
+      const raw = localStorage.getItem(this.KEY_PREFIX + userId);
+      return raw ? JSON.parse(raw) : null;
+    } catch(e) { return null; }
+  },
+
+  save(session) {
+    try {
+      session.updated_at = new Date().toISOString();
+      localStorage.setItem(this.KEY_PREFIX + session.user_id, JSON.stringify(session));
+    } catch(e) {}
+    return session;
+  },
+
+  addTurn(session, role, text) {
+    session.turns.push({ role, text, ts: new Date().toISOString() });
+    return session;
+  },
+
+  reset(userId) {
+    try { localStorage.removeItem(this.KEY_PREFIX + userId); } catch(e) {}
+  }
+};
+
+/* ── 信息充分性评估器 ── */
+const InformationSufficiencyEvaluator = {
+
+  // 模糊描述检测
+  isVague(text) {
+    if (!text || text.length < 8) return true;
+    const vagueOnly = ['很叛逆', '不听话', '有问题', '不好', '出问题', '不正常', '不对劲', '变了', '不乖', '很烦', '让我担心'];
+    const matches = vagueOnly.filter(p => text.includes(p));
+    if (matches.length > 0 && text.length < 25) return true;
+    return false;
+  },
+
+  // 从文本中提取信息字段
+  extractFields(text) {
+    const fields = {};
+    if (/总是|每天|经常|有时|偶尔|一直|天天|时不时|一次|几次|这几天|这周|上周/.test(text)) {
+      fields.frequency = true;
+    }
+    if (/一[说催问提叫喊]就|当[我他她]|因为|被催|在[家学校]|放学|写作业|吃饭|睡觉|玩手机/.test(text)) {
+      fields.trigger = true;
+    }
+    if (/在家|在学校|放学后|晚上|早上|吃饭|睡觉前|开学|考试|最近|这段时间/.test(text)) {
+      fields.context = true;
+    }
+    const durMatch = text.match(/([一两三四五六七八九十\d]+)[天周个月年]/);
+    if (durMatch) fields.duration = durMatch[0];
+    const ageMatch = text.match(/(\d+)岁/);
+    if (ageMatch) fields.child_age = ageMatch[1];
+    return fields;
+  },
+
+  // 评估信息充分性
+  evaluate(collectedInfo, userTurnCount) {
+    const { behavior_raw, frequency, trigger, context } = collectedInfo;
+
+    if (!behavior_raw || behavior_raw.length < 8) {
+      return { sufficient: false, confidence: 0, nextQuestion: 'initial' };
+    }
+    if (this.isVague(behavior_raw)) {
+      return { sufficient: false, confidence: 0.2, nextQuestion: 'specifics' };
+    }
+
+    let score = 0.4;
+    if (frequency) score += 0.2;
+    if (trigger) score += 0.2;
+    if (context) score += 0.2;
+
+    // 已经有过追问轮次 → 可以进入分析
+    if (userTurnCount >= 2) {
+      return { sufficient: true, confidence: Math.max(score, 0.6), nextQuestion: null };
+    }
+    if (score >= 0.8) {
+      return { sufficient: true, confidence: score, nextQuestion: null };
+    }
+
+    let nextQuestion = 'frequency';
+    if (frequency && !trigger) nextQuestion = 'trigger';
+    else if (trigger && !context) nextQuestion = 'context';
+
+    return { sufficient: false, confidence: score, nextQuestion };
+  }
+};
+
+/* ── Agent 回复生成器 ── */
+const AgentResponseGenerator = {
+
+  greeting(historyCtx) {
+    if (historyCtx && historyCtx.sessions > 0) {
+      return `你好，我们又见面了。上次你记录过孩子的一些情况，今天又遇到什么困惑了吗？直接跟我说就好。`;
+    }
+    return `你好，我是 AIPIWEN 育儿顾问。你可以把让你困惑的孩子行为告诉我——我会帮你理解背后的原因，不只是"说说而已"，而是给你真正可以用的应对方式。`;
+  },
+
+  followUp(questionType, collectedInfo) {
+    const beh = (collectedInfo.behavior_raw || '').slice(0, 22);
+    const map = {
+      specifics: [
+        `我想更具体地了解一下——「${beh}」，能描述一个最近发生的具体场景吗？比如当时在哪里，孩子做了什么，你们之间发生了什么？`,
+        `「${beh}」——我需要再了解几个细节才能判断背后的原因。能说说最近一次发生时，具体是什么情形？`
+      ],
+      frequency: [
+        `这种情况多久会发生一次？是每天都有，还是偶尔？最近有变得更频繁吗？`,
+        `「${beh}」这种情况，大概一周会出现几次？还是每天都会有？`
+      ],
+      trigger: [
+        `通常在什么情况下会这样？有没有一些特定的事情会触发这个行为？`,
+        `这种情况有没有规律——是总在某个时间点、或者某件事之后发生？`
+      ],
+      context: [
+        `这种情况大概是什么时候开始的？最近家里或学校有没有什么变化？`,
+        `这个行为出现多久了？最近有什么让你感觉特别明显的事情吗？`
+      ],
+      initial: [
+        `能告诉我，孩子最近让你困惑的是什么行为吗？尽量具体一点，越详细越容易分析。`
+      ]
+    };
+    const options = map[questionType] || map.specifics;
+    return options[Math.floor(Math.random() * options.length)];
+  },
+
+  transitionToAnalysis(collectedInfo) {
+    const beh = (collectedInfo.behavior_raw || '').slice(0, 25);
+    return `好，我已经对情况有了基本了解。让我来分析一下「${beh}」背后的原因……`;
+  },
+
+  analysisResponse(analysis, whyParagraph, trendResult, collectedInfo) {
+    const patternMeta = AnalysisEngine.PATTERNS[analysis.primary];
+    const label = patternMeta ? patternMeta.label : '行为模式';
+    const kp = analysis.keyPhrase || (collectedInfo.behavior_raw || '').slice(0, 20);
+    const c = ContentLibrary.lightReport(analysis);
+
+    let lines = [];
+
+    // 共情
+    lines.push(`从你描述的情况来看，「${kp}」这类情况确实容易让家长感到无力，因为越用力越好像没用。`);
+    lines.push('');
+
+    // 核心判断
+    lines.push(`**我的判断：这属于「${label}」类行为模式。**`);
+    lines.push('');
+
+    // 洞察
+    lines.push(c.insight);
+    lines.push('');
+
+    // Why Layer
+    if (whyParagraph && whyParagraph.mainReason) {
+      lines.push(`**为什么会这样：**`);
+      lines.push(whyParagraph.mainReason);
+      if (whyParagraph.secondReason) {
+        lines.push('');
+        lines.push(`还有一个常被忽略的原因：${whyParagraph.secondReason}`);
+      }
+      lines.push('');
+    }
+
+    // 趋势（回访用户）
+    if (trendResult && trendResult.trendText && trendResult.totalSessions >= 2) {
+      lines.push(`**从你的历史记录来看：**`);
+      lines.push(trendResult.trendText);
+      lines.push('');
+    }
+
+    lines.push(`接下来我有三条具体建议，你想继续听吗？`);
+
+    return lines.join('\n');
+  },
+
+  recommendationResponse(advice, analysis) {
+    const kp = analysis.keyPhrase || '';
+    let lines = [`针对「${kp}」，这是三条你明天就可以用的具体方式：`, ''];
+    advice.forEach((a, i) => {
+      lines.push(`**${i + 1}. ${a.tag}**`);
+      lines.push(a.text);
+      if (a.example) lines.push(`› 参考说法：「${a.example}」`);
+      lines.push('');
+    });
+    lines.push(`还有想深入了解的地方吗？我在这里。`);
+    return lines.join('\n');
+  }
+};
+
+/* ── 核心：AI咨询智能体 V3-A ── */
+const AIPIWENConsultingAgent = {
+
+  processInput(userId, userText, existingSession) {
+    let session = existingSession
+      || ConsultingSessionStore.get(userId)
+      || ConsultingSessionStore.newSession(userId);
+
+    const history    = MemorySystem.getRecent(userId, 5);
+    ConsultingSessionStore.addTurn(session, 'user', userText);
+
+    let response = '';
+    let action   = '';
+    let analysisResult = null;
+
+    const userTurns = session.turns.filter(t => t.role === 'user').length;
+
+    if (session.stage === 'intake') {
+      // 收集初始描述
+      session.collected_info.behavior_raw = userText;
+      const extracted = InformationSufficiencyEvaluator.extractFields(userText);
+      Object.assign(session.collected_info, extracted);
+
+      const ev = InformationSufficiencyEvaluator.evaluate(session.collected_info, userTurns);
+
+      if (ev.sufficient) {
+        session.stage = 'analysis';
+        const r = this._runAnalysis(userId, session, history);
+        response = r.response; action = 'analyze';
+        session.analysis_result = r.analysis; analysisResult = r.analysis;
+        session.stage = 'recommendation';
+      } else {
+        session.stage = 'exploration';
+        session.missing_info = [ev.nextQuestion];
+        response = AgentResponseGenerator.followUp(ev.nextQuestion, session.collected_info);
+        action = 'ask';
+      }
+
+    } else if (session.stage === 'exploration') {
+      // 补充追问回答 → 合并信息
+      const extracted = InformationSufficiencyEvaluator.extractFields(userText);
+      if (!session.collected_info.frequency && extracted.frequency) session.collected_info.frequency = true;
+      if (!session.collected_info.trigger   && extracted.trigger)   session.collected_info.trigger   = true;
+      if (!session.collected_info.context   && extracted.context)   session.collected_info.context   = true;
+      if (!session.collected_info.child_age && extracted.child_age) session.collected_info.child_age = extracted.child_age;
+      // 补充信息拼接进 behavior_raw
+      session.collected_info.behavior_raw += '；' + userText;
+
+      const ev = InformationSufficiencyEvaluator.evaluate(
+        session.collected_info,
+        session.turns.filter(t => t.role === 'user').length
+      );
+
+      if (ev.sufficient || userTurns >= 3) {
+        const transition = AgentResponseGenerator.transitionToAnalysis(session.collected_info);
+        const r = this._runAnalysis(userId, session, history);
+        response = transition + '\n\n' + r.response; action = 'analyze';
+        session.analysis_result = r.analysis; analysisResult = r.analysis;
+        session.stage = 'recommendation';
+      } else {
+        session.missing_info = [ev.nextQuestion];
+        response = AgentResponseGenerator.followUp(ev.nextQuestion, session.collected_info);
+        action = 'ask';
+      }
+
+    } else if (session.stage === 'recommendation') {
+      // 用户回复"想继续" → 输出建议
+      if (session.analysis_result) {
+        const c = ContentLibrary.fullReport(session.analysis_result);
+        response = AgentResponseGenerator.recommendationResponse(c.advice, session.analysis_result);
+        analysisResult = session.analysis_result;
+        session.stage = 'complete';
+        action = 'recommend';
+      } else {
+        response = '你还有什么想了解的？我可以继续解答。';
+        action = 'chat';
+      }
+
+    } else {
+      // complete → 自由对话
+      response = '你还有其他想聊的吗？随时可以描述新的行为，我来帮你分析。';
+      action = 'chat';
+    }
+
+    ConsultingSessionStore.addTurn(session, 'agent', response);
+    ConsultingSessionStore.save(session);
+
+    return { response, action, session, stage: session.stage, analysisResult };
+  },
+
+  // V2 分析管道（必须调用所有 V2 模块）
+  _runAnalysis(userId, session, history) {
+    const behavior = session.collected_info.behavior_raw;
+    const analysis = AnalysisEngine.analyze(behavior, history);
+    const whyParagraph = BehaviorReasoningEngine.generateWhyParagraph(analysis.primary, analysis.keyPhrase);
+    const trendResult  = TrendAnalyzer.analyze(userId);
+
+    // 写入 V2 记忆系统
+    MemorySystem.add(userId, {
+      input: behavior,
+      analysis: { primary: analysis.primary, secondary: analysis.secondary, legacyType: analysis.legacyType },
+      tags: analysis.tags,
+      report_id: 'consult_' + session.session_id
+    });
+
+    const reportId = generateReportId();
+    LeadSystem.create(userId, reportId, analysis, behavior);
+
+    const response = AgentResponseGenerator.analysisResponse(analysis, whyParagraph, trendResult, session.collected_info);
+    return { response, analysis, whyParagraph, trendResult, reportId };
+  },
+
+  // 开始新会话 → 返回 greeting
+  startSession(userId) {
+    const historyCtx = MemorySystem.getContext(userId);
+    ConsultingSessionStore.reset(userId);
+    const session  = ConsultingSessionStore.newSession(userId);
+    const greeting = AgentResponseGenerator.greeting(historyCtx);
+    ConsultingSessionStore.addTurn(session, 'agent', greeting);
+    ConsultingSessionStore.save(session);
+    return { greeting, session };
+  }
+};
+
+/* ================================================================
    挂载到全局
 ================================================================ */
 window.AIPIWEN = {
@@ -847,6 +1462,12 @@ window.AIPIWEN = {
   AnalysisEngine,
   ContentLibrary,
   LeadSystem,
+  BehaviorReasoningEngine,
+  TrendAnalyzer,
+  ConsultingSessionStore,
+  InformationSufficiencyEvaluator,
+  AgentResponseGenerator,
+  AIPIWENConsultingAgent,
   generateReportId,
   truncate
 };
