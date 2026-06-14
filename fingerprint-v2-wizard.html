@@ -547,41 +547,151 @@ body {
 .poster-bg {
   width: 375px;
   background: #1A1714;
-  padding: 44px 32px 36px;
   display: flex;
   flex-direction: column;
   position: relative;
   overflow: hidden;
 }
-/* Amber glow orbs */
+/* Subtle corner warmth — no harsh flare */
 .poster-bg::before {
   content: '';
   position: absolute;
-  top: -60px; right: -60px;
-  width: 180px; height: 180px;
-  background: radial-gradient(circle, rgba(194,105,42,.35) 0%, transparent 70%);
-  border-radius: 50%;
+  top: 0; right: 0;
+  width: 220px; height: 220px;
+  background: radial-gradient(circle at top right, rgba(194,105,42,.18) 0%, transparent 65%);
+  pointer-events: none;
 }
 .poster-bg::after {
   content: '';
   position: absolute;
-  bottom: -40px; left: -40px;
-  width: 140px; height: 140px;
-  background: radial-gradient(circle, rgba(194,105,42,.2) 0%, transparent 70%);
-  border-radius: 50%;
+  bottom: 0; left: 0;
+  width: 160px; height: 160px;
+  background: radial-gradient(circle at bottom left, rgba(194,105,42,.1) 0%, transparent 65%);
+  pointer-events: none;
 }
-.poster-logo { font-size: 10px; color: rgba(253,252,248,.35); letter-spacing: .35em; margin-bottom: 24px; text-align: center; font-family: var(--font-sans); }
-.poster-type { font-family: var(--font-serif); font-size: 30px; font-weight: normal; margin-bottom: 8px; color: #FDFCF8; text-align: center; }
-.poster-tagline { font-size: 12px; color: rgba(253,252,248,.55); line-height: 1.6; letter-spacing: .1em; text-align: center; margin-bottom: 28px; }
-.poster-mid { background: rgba(255,255,255,.07); border-radius: 14px; padding: 18px; margin-bottom: 22px; border: 1px solid rgba(194,105,42,.3); }
-.poster-mid-label { font-size: 10px; color: var(--amber); letter-spacing: .25em; margin-bottom: 12px; text-align: center; text-transform: uppercase; }
-.poster-tags { display: flex; flex-wrap: wrap; gap: 7px; justify-content: center; }
-.poster-tag { background: rgba(194,105,42,.18); color: #E8A44A; padding: 5px 13px; border-radius: 20px; font-size: 12px; border: 1px solid rgba(194,105,42,.35); }
-.poster-footer { display: flex; align-items: center; gap: 14px; background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.1); border-radius: 12px; padding: 16px; }
-.poster-qr-wrap { flex-shrink: 0; background: white; border-radius: 8px; padding: 4px; }
-.poster-qr-wrap img { width: 64px; height: 64px; border-radius: 5px; display: block; }
-.poster-cta { font-size: 13px; font-weight: 600; color: #FDFCF8; margin-bottom: 3px; }
-.poster-url { font-size: 11px; color: var(--amber); letter-spacing: .05em; }
+/* ── Top accent bar ── */
+.poster-accent-bar {
+  height: 3px;
+  background: linear-gradient(90deg, #C2692A 0%, rgba(194,105,42,.4) 60%, transparent 100%);
+  flex-shrink: 0;
+}
+/* ── Brand header ── */
+.poster-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 28px 14px;
+  flex-shrink: 0;
+}
+.poster-brand { font-size: 9px; color: rgba(253,252,248,.28); letter-spacing: .45em; }
+.poster-brand-mark { font-size: 11px; color: rgba(194,105,42,.45); }
+.poster-header-rule {
+  height: 1px;
+  background: rgba(255,255,255,.07);
+  margin: 0 28px;
+  flex-shrink: 0;
+}
+/* ── Type hero area ── */
+.poster-hero {
+  padding: 34px 32px 30px;
+  text-align: center;
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.poster-eyebrow {
+  font-size: 9px;
+  color: rgba(194,105,42,.6);
+  letter-spacing: .5em;
+  margin-bottom: 20px;
+}
+.poster-type {
+  font-family: var(--font-serif);
+  font-size: 38px;
+  font-weight: normal;
+  color: #FDFCF8;
+  line-height: 1.25;
+  margin-bottom: 18px;
+  letter-spacing: .02em;
+}
+.poster-tagline {
+  font-size: 11px;
+  color: rgba(253,252,248,.35);
+  letter-spacing: .2em;
+  line-height: 2.2;
+}
+/* ── Section divider ── */
+.poster-divider {
+  display: flex;
+  align-items: center;
+  margin: 0 24px 20px;
+  flex-shrink: 0;
+}
+.poster-divider::before {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(194,105,42,.4));
+}
+.poster-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(270deg, transparent, rgba(194,105,42,.4));
+}
+.poster-divider-label {
+  font-size: 9px;
+  color: rgba(194,105,42,.55);
+  letter-spacing: .45em;
+  padding: 0 14px;
+  white-space: nowrap;
+}
+/* ── Talents grid — clean text, no pill BG ── */
+.poster-talents {
+  padding: 0 36px 28px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 1;
+}
+.poster-talent {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: rgba(253,252,248,.65);
+  letter-spacing: .05em;
+}
+.poster-talent::before {
+  content: '◆';
+  font-size: 5px;
+  color: #C2692A;
+  flex-shrink: 0;
+}
+/* ── Footer / QR ── */
+.poster-footer {
+  margin: 0 20px 22px;
+  border: 1px solid rgba(194,105,42,.22);
+  border-radius: 10px;
+  padding: 13px 16px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: rgba(255,255,255,.03);
+  flex-shrink: 0;
+  position: relative;
+  z-index: 1;
+}
+.poster-qr-wrap { flex-shrink: 0; background: #FDFCF8; border-radius: 7px; padding: 4px; }
+.poster-qr-wrap img { width: 60px; height: 60px; display: block; }
+.poster-cta { font-size: 12px; font-weight: 600; color: rgba(253,252,248,.85); margin-bottom: 5px; line-height: 1.4; }
+.poster-url { font-size: 10px; color: #C2692A; letter-spacing: .12em; }
 
 /* ─── THUMB CONFIRM (step 6) ─── */
 .thumb-confirm {
@@ -1204,13 +1314,21 @@ body {
 <!-- POSTER TEMPLATE (off-screen) -->
 <div id="posterTemplate">
   <div class="poster-bg">
-    <div class="poster-logo">AI PIWEN · 皮纹天赋</div>
-    <div class="poster-type" id="pType"></div>
-    <div class="poster-tagline" id="pTagline"></div>
-    <div class="poster-mid">
-      <div class="poster-mid-label">核心天赋</div>
-      <div class="poster-tags" id="pTags"></div>
+    <div class="poster-accent-bar"></div>
+    <div class="poster-header">
+      <span class="poster-brand">AI PIWEN · 皮纹天赋</span>
+      <span class="poster-brand-mark">✦</span>
     </div>
+    <div class="poster-header-rule"></div>
+    <div class="poster-hero">
+      <div class="poster-eyebrow">天 赋 类 型 报 告</div>
+      <div class="poster-type" id="pType"></div>
+      <div class="poster-tagline" id="pTagline"></div>
+    </div>
+    <div class="poster-divider">
+      <span class="poster-divider-label">核 心 天 赋</span>
+    </div>
+    <div class="poster-talents" id="pTags"></div>
     <div class="poster-footer">
       <div class="poster-qr-wrap">
         <img id="posterQR" src="" alt="QR">
@@ -1838,7 +1956,7 @@ async function generatePoster() {
   document.getElementById('pTagline').textContent = result.tagline;
 
   const tags = document.querySelectorAll('.advantage-tags .tag');
-  document.getElementById('pTags').innerHTML = Array.from(tags).map(t => `<span class="poster-tag">${t.textContent}</span>`).join('');
+  document.getElementById('pTags').innerHTML = Array.from(tags).map(t => `<div class="poster-talent">${t.textContent.trim()}</div>`).join('');
 
   let qrDataUrl = '';
   await new Promise(resolve => {
@@ -1861,7 +1979,7 @@ async function generatePoster() {
   try {
     const tpl = document.getElementById('posterTemplate');
     const canvas = await html2canvas(tpl.querySelector('.poster-bg'), {
-      width:375, scale:2, backgroundColor:'#FDFCF8',
+      width:375, scale:2, backgroundColor:'#1A1714',
       useCORS:true, allowTaint:true, logging:false
     });
     preview.innerHTML = `<img src="${canvas.toDataURL('image/png')}" style="max-width:100%;border-radius:12px;box-shadow:0 4px 16px rgba(0,0,0,.12);" alt="分享海报">`;
