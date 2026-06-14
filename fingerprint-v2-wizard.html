@@ -542,6 +542,21 @@ body {
   margin-top: -4px;
 }
 
+/* ─── POSTER MODAL: dark card, no white border ─── */
+#posterModal .modal-card {
+  background: #1A1714;
+  padding: 20px 20px 24px;
+}
+#posterModal .modal-title {
+  color: rgba(253,252,248,.8);
+}
+#posterModal .modal-close {
+  color: rgba(253,252,248,.35);
+}
+#posterModal .poster-hint {
+  color: rgba(253,252,248,.32);
+}
+
 /* ─── POSTER TEMPLATE (hidden) ─── */
 #posterTemplate { position: fixed; left: -9999px; top: -9999px; }
 .poster-bg {
@@ -1345,7 +1360,7 @@ body {
 <div class="modal" id="posterModal">
   <div class="modal-card">
     <div class="modal-title">分享海报 <button class="modal-close" onclick="closePoster()">×</button></div>
-    <p style="font-size:12px;color:var(--ink-40);text-align:center;margin-bottom:14px;">长按图片保存，分享给朋友</p>
+    <p class="poster-hint" style="font-size:12px;text-align:center;margin-bottom:14px;">长按图片保存，分享给朋友</p>
     <div id="posterPreview"></div>
   </div>
 </div>
@@ -1775,13 +1790,13 @@ function classify() {
     if ((isDouble(rt) && isPeacock(lt)) || (isPeacock(rt) && isDouble(lt)))
       return isDouble(lt)
         ? { mainType: '超级认知B · 双核整合', tagline: '领袖气质 · 全局整合 · 多维并行 · 跨界高手', key: 'super_w_b' }
-        : { mainType: '超级认知C · 孔雀完美', tagline: '领袖气质 · 极致审美 · 完美追求 · 卓越标准', key: 'super_w_c' };
+        : { mainType: '超级认知C · 完美特质', tagline: '领袖气质 · 极致审美 · 完美追求 · 卓越标准', key: 'super_w_c' };
     // 任意拇指有双斗 → B
     if (isDouble(rt)  || isDouble(lt))
       return { mainType: '超级认知B · 双核整合', tagline: '领袖气质 · 全局整合 · 多维并行 · 跨界高手', key: 'super_w_b' };
     // 任意拇指有孔雀眼 → C
     if (isPeacock(rt) || isPeacock(lt))
-      return { mainType: '超级认知C · 孔雀完美', tagline: '领袖气质 · 极致审美 · 完美追求 · 卓越标准', key: 'super_w_c' };
+      return { mainType: '超级认知C · 完美特质', tagline: '领袖气质 · 极致审美 · 完美追求 · 卓越标准', key: 'super_w_c' };
     // 其余（螺旋斗或其他斗纹） → A
     return { mainType: '超级认知A · 螺旋领袖', tagline: '天生领袖 · 主见极强 · 目标必达 · 王者之气', key: 'super_w_a' };
   }
