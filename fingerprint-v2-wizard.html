@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>皮纹天赋速测 · AIPIWEN</title>
+<style>
+:root {
+  --cream:      #FDFCF8;
+  --cream-deep: #F5F3EE;
+  --ink:        #1A1714;
+  --ink-70:     #4A4540;
+  --ink-40:     #8C8580;
+  --ink-20:     #C8C3BC;
+  --ink-10:     #EAE7E2;
+  --amber:      #C2692A;
+  --amber-soft: #F5EDE4;
+  --ok:         #3A7D5E;
+  --ok-soft:    #EAF3EE;
+  --font-serif: Georgia,'Noto Serif SC',serif;
+  --font-sans:  -apple-system,'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif;
+}
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+body {
+  font-family:var(--font-sans); background:var(--cream); color:var(--ink);
+  -webkit-font-smoothing:antialiased; min-height:100vh;
+}
+
+/* ── HEADER ── */
+.top-nav {
+  position:sticky; top:0; z-index:50;
+  background:rgba(253,252,248,.95); backdrop-filter:blur(10px);
+  border-bottom:1px solid var(--ink-10);
+  padding:14px 20px;
+  display:flex; align-items:center; justify-content:space-between;
+  max-width:520px; margin:0 auto;
+}
+.nav-back {
+  display:flex; align-items:center; gap:4px;
+  font-size:14px; color:var(--ink-40); text-decoration:none;
+  background:none; border:none; cursor:pointer;
+}
+.nav-back svg { width:18px; height:18px; }
+.nav-wordmark { font-size:13px; font-weight:800; letter-spacing:.14em; color:var(--ink); }
+
+/* ── PROGRESS ── */
+.progress-wrap {
+  max-width:520px; margin:0 auto;
+  padding:14px 20px 0;
+  display:flex; gap:5px; align-items:center;
+}
+.ps {
+  flex:1; height:3px; border-radius:2px;
+  background:var(--ink-10); transition:background .3s;
+}
+.ps.done   { background:var(--amber); }
+.ps.active { background:var(--amber); opacity:.55; }
+.prog-label {
+  max-width:520px; margin:0 auto;
+  padding:4px 20px 0; text-align:right;
+  font-size:11px; color:var(--ink-40);
+}
+
+/* ── STEP CONTENT ── */
+.step-wrap {
+  max-width:520px; margin:0 auto;
+  padding:28px 20px 140px;
+}
+.step-eyebrow {
+  font-size:11px; font-weight:600; letter-spacing:.12em;
+  text-transform:uppercase; color:var(--amber); margin-bottom:10px;
+}
+.step-title {
+  font-family:var(--font-serif); font-size:24px; line-height:1.3;
+  letter-spacing:-.2px; font-weight:normal; margin-bottom:10px;
+}
+.step-title em { font-style:italic; color:var(--amber); }
+.step-desc {
+  font-size:14px; line-height:1.75; color:var(--ink-70); margin-bottom:28px;
+}
+
+/* ── FINGER GRID ── */
+.hand-section  { margin-bottom:18px; }
+.hand-label    { font-size:11px; font-weight:600; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-40); margin-bottom:8px; }
+.finger-row    { display:flex; gap:7px; }
+.finger-btn {
+  flex:1; min-height:72px;
+  display:flex; flex-direction:column; align-items:center; justify-content:flex-end;
+  padding:8px 2px;
+  background:white; border:1.5px solid var(--ink-10); border-radius:36px 36px 10px 10px;
+  cursor:pointer; font-size:11px; color:var(--ink-70); text-align:center; line-height:1.3;
+  transition:all .15s; user-select:none;
+}
+.f-dot { width:10px; height:10px; border-radius:50%; background:var(--ink-10); margin-bottom:7px; transition:background .15s; }
+.finger-btn.selected { background:var(--amber-soft); border-color:var(--amber); color:var(--amber); }
+.finger-btn.selected .f-dot { background:var(--amber); }
+.finger-btn.disabled { opacity:.32; cursor:not-allowed; pointer-events:none; }
+.finger-btn:active:not(.disabled) { transform:scale(.95); }
+
+/* ── REFERENCE PAGE (S2) ── */
+.ref-hero { text-align:center; padding:20px 0 24px; }
+.ref-hero-icon { font-size:48px; margin-bottom:12px; }
+.ref-card {
+  background:white; border:1px solid var(--ink-10);
+  border-radius:16px; padding:20px; margin-bottom:14px;
+}
+.ref-card-title {
+  font-size:15px; font-weight:600; margin-bottom:10px;
+  display:flex; align-items:center; gap:8px;
+}
+.ref-badge {
+  font-size:11px; font-weight:600; letter-spacing:.08em;
+  background:var(--amber-soft); color:var(--amber); border-radius:10px; padding:2px 8px;
+}
+.ref-card p { font-size:13px; line-height:1.75; color:var(--ink-70); }
+.ref-list { list-style:none; margin-top:10px; display:flex; flex-direction:column; gap:7px; }
+.ref-list li { font-size:13px; line-height:1.6; color:var(--ink-70); display:flex; gap:8px; }
+.ref-list li::before { content:'·'; color:var(--amber); font-weight:bold; flex-shrink:0; }
+.ref-note {
+  margin-top:14px; padding:12px 14px;
+  background:var(--cream-deep); border-radius:10px;
+  font-size:12px; color:var(--ink-40); line-height:1.6;
+}
+
+/* ── THUMB TYPES (S6) ── */
+.thumb-section { margin-bottom:28px; }
+.thumb-section-title {
+  font-size:14px; font-weight:600; color:var(--ink);
+  margin-bottom:12px; display:flex; align-items:center; gap:10px;
+}
+.thumb-icon {
+  width:30px; height:30px; border-radius:50%;
+  background:var(--amber-soft); display:flex; align-items:center; justify-content:center;
+  font-size:16px; flex-shrink:0;
+}
+.type-grid { display:flex; flex-wrap:wrap; gap:8px; }
+.type-btn {
+  flex:1; min-width:80px;
+  padding:11px 6px; text-align:center;
+  background:white; border:1.5px solid var(--ink-10); border-radius:12px;
+  cursor:pointer; font-size:13px; color:var(--ink-70);
+  font-family:var(--font-sans); transition:all .15s;
+}
+.type-btn.selected { background:var(--amber-soft); border-color:var(--amber); color:var(--amber); font-weight:600; }
+.type-btn:active { transform:scale(.97); }
+
+.subtype-wrap { overflow:hidden; max-height:0; transition:max-height .3s ease; margin-top:0; }
+.subtype-wrap.open { max-height:200px; margin-top:10px; }
+.subtype-label { font-size:12px; color:var(--ink-40); margin-bottom:8px; }
+.subtype-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; }
+.subtype-btn {
+  padding:9px 4px; text-align:center;
+  background:white; border:1.5px solid var(--ink-10); border-radius:10px;
+  cursor:pointer; font-size:11px; color:var(--ink-70);
+  font-family:var(--font-sans); transition:all .15s; line-height:1.4;
+}
+.subtype-btn.selected { background:var(--ok-soft); border-color:var(--ok); color:var(--ok); font-weight:600; }
+.subtype-btn:active { transform:scale(.96); }
+
+/* ── BOTTOM NAV ── */
+.bottom-nav {
+  position:fixed; bottom:0; left:50%; transform:translateX(-50%);
+  width:100%; max-width:520px;
+  padding:14px 20px calc(14px + env(safe-area-inset-bottom));
+  background:rgba(253,252,248,.96); backdrop-filter:blur(12px);
+  border-top:1px solid var(--ink-10);
+  display:flex; gap:10px; z-index:40;
+}
+.btn-back {
+  flex:1; padding:15px; border-radius:13px;
+  border:1.5px solid var(--ink-10); background:white; color:var(--ink-70);
+  font-size:15px; font-weight:600; cursor:pointer; font-family:var(--font-sans);
+  transition:background .15s;
+}
+.btn-back:active { background:var(--cream-deep); }
+.btn-next {
+  flex:2; padding:15px; border-radius:13px;
+  border:none; background:var(--ink); color:white;
+  font-size:15px; font-weight:700; cursor:pointer; font-family:var(--font-sans);
+  box-shadow:0 4px 14px rgba(26,23,20,.2); transition:background .15s;
+}
+.btn-next:active { background:#3A3530; }
+.btn-next.amber-btn { background:var(--amber); box-shadow:0 4px 14px rgba(194,105,42,.3); }
+.btn-next.amber-btn:active { background:#A85822; }
+
+/* ── RESULT ── */
+.result-wrap { max-width:520px; margin:0 auto; padding:36px 20px 140px; }
+.result-check {
+  width:64px; height:64px; border-radius:50%;
+  background:var(--ok-soft); margin:0 auto 20px;
+  display:flex; align-items:center; justify-content:center; font-size:28px;
+}
+.result-title { font-family:var(--font-serif); font-size:26px; text-align:center; font-weight:normal; margin-bottom:8px; }
+.result-sub   { font-size:14px; color:var(--ink-40); text-align:center; margin-bottom:32px; }
+.result-section-label {
+  font-size:11px; font-weight:600; letter-spacing:.1em; text-transform:uppercase;
+  color:var(--ink-40); margin-bottom:10px; margin-top:24px;
+}
+.result-table {
+  background:white; border:1px solid var(--ink-10);
+  border-radius:14px; overflow:hidden;
+}
+.result-row {
+  display:flex; align-items:center;
+  padding:12px 16px; border-bottom:1px solid var(--ink-10);
+  gap:10px;
+}
+.result-row:last-child { border-bottom:none; }
+.result-type { font-size:14px; font-weight:500; flex:1; }
+.result-fnames { font-size:12px; color:var(--ink-40); flex:2; }
+.result-badge {
+  width:28px; height:28px; border-radius:50%; flex-shrink:0;
+  background:var(--amber-soft); color:var(--amber);
+  font-size:13px; font-weight:700;
+  display:flex; align-items:center; justify-content:center;
+}
+.result-cta {
+  display:block; margin-top:28px; padding:18px;
+  background:var(--amber); color:white; border-radius:14px;
+  text-align:center; font-size:15px; font-weight:700;
+  text-decoration:none; box-shadow:0 4px 16px rgba(194,105,42,.3);
+}
+.result-note { text-align:center; font-size:12px; color:var(--ink-40); margin-top:12px; line-height:1.6; }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <nav class="top-nav">
+    <button class="nav-back" onclick="goBack()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+      返回
+    </button>
+    <span class="nav-wordmark">AIPIWEN</span>
+    <div style="width:52px"></div>
+  </nav>
+  <div class="progress-wrap">
+    <div class="ps" id="ps1"></div>
+    <div class="ps" id="ps2"></div>
+    <div class="ps" id="ps3"></div>
+    <div class="ps" id="ps4"></div>
+    <div class="ps" id="ps5"></div>
+    <div class="ps" id="ps6"></div>
+    <div class="ps" id="ps7"></div>
+  </div>
+  <div class="prog-label" id="prog-label"></div>
+</header>
+
+<main id="main"></main>
+
+<div class="bottom-nav" id="bottom-nav">
+  <button class="btn-back" id="btn-back" onclick="prevStep()">上一步</button>
+  <button class="btn-next" id="btn-next" onclick="nextStep()">下一步</button>
+</div>
+
+<script>
+// ── CONSTANTS ──────────────────────────────────────────────────────────
+const FINGERS_ALL = ['LT','LI','LM','LR','LL','RT','RI','RM','RR','RL'];
+const FINGERS_8   = ['LI','LM','LR','LL','RI','RM','RR','RL'];
+const F_SHORT = {LT:'拇',LI:'食',LM:'中',LR:'无名',LL:'小',RT:'拇',RI:'食',RM:'中',RR:'无名',RL:'小'};
+const F_FULL  = {
+  LT:'左拇',LI:'左食',LM:'左中',LR:'左无名',LL:'左小',
+  RT:'右拇',RI:'右食',RM:'右中',RR:'右无名',RL:'右小'
+};
+const TYPE_LABEL = {rl:'反箕 Rl',x:'简单弧 X',xn:'帐篷弧 Xn',lu:'大正箕 Lu',dou:'斗形纹',lr:'正箕 Lr'};
+const DOU_SUBTYPES = ['正旋斗','反旋斗','双箕斗','囊形斗','杂形斗','螺旋斗','开放斗','偶发斗'];
+const THUMB_TYPES  = [
+  {id:'rl', label:'反箕'},
+  {id:'lu', label:'大正箕'},
+  {id:'x',  label:'简单弧'},
+  {id:'xn', label:'帐篷弧'},
+  {id:'dou',label:'斗形纹'},
+];
+const TOTAL_STEPS = 7;
+
+// ── STATE ──────────────────────────────────────────────────────────────
+const S = {
+  step:       1,
+  rlFingers:  new Set(),   // S1 反箕
+  xFingers:   new Set(),   // S3 简单弧
+  xnFingers:  new Set(),   // S4 帐篷弧
+  luFingers:  new Set(),   // S5 大正箕
+  douFingers: new Set(),   // S7 斗形纹（非拇指）
+  thumbL: { type:null, douSubtype:null },
+  thumbR: { type:null, douSubtype:null },
+};
+
+// ── THUMB HELPERS ──────────────────────────────────────────────────────
+function setThumbType(side, typeId) {
+  const fid = side==='L'?'LT':'RT';
+  [S.rlFingers,S.xFingers,S.xnFingers,S.luFingers,S.douFingers].forEach(s=>s.delete(fid));
+  if(side==='L'){S.thumbL.type=typeId; if(typeId!=='dou')S.thumbL.douSubtype=null;}
+  else          {S.thumbR.type=typeId; if(typeId!=='dou')S.thumbR.douSubtype=null;}
+  // Sync back
+  if(typeId==='rl')       S.rlFingers.add(fid);
+  else if(typeId==='x')   S.xFingers.add(fid);
+  else if(typeId==='xn')  S.xnFingers.add(fid);
+  else if(typeId==='lu')  S.luFingers.add(fid);
+  else if(typeId==='dou') S.douFingers.add(fid);
+}
+function setThumbSubtype(side, sub) {
+  if(side==='L') S.thumbL.douSubtype=sub;
+  else           S.thumbR.douSubtype=sub;
+}
+
+// ── FINAL TYPE ─────────────────────────────────────────────────────────
+function getFinalType(fid) {
+  if(fid==='LT') return S.thumbL.type||'lr';
+  if(fid==='RT') return S.thumbR.type||'lr';
+  if(S.rlFingers.has(fid))  return 'rl';
+  if(S.xFingers.has(fid))   return 'x';
+  if(S.xnFingers.has(fid))  return 'xn';
+  if(S.luFingers.has(fid))  return 'lu';
+  if(S.douFingers.has(fid)) return 'dou';
+  return 'lr';
+}
+
+// ── FINGER GRID BUILDER ────────────────────────────────────────────────
+function buildFingerGrid(fingers, activeSet, disabledSet, toggleFn) {
+  const leftF  = fingers.filter(f=>f.startsWith('L'));
+  const rightF = fingers.filter(f=>f.startsWith('R'));
+
+  function makeHand(list, label) {
+    const section = document.createElement('div');
+    section.className = 'hand-section';
+    section.innerHTML = `<div class="hand-label">${label}</div>`;
+    const row = document.createElement('div');
+    row.className = 'finger-row';
+    list.forEach(f => {
+      const btn = document.createElement('button');
+      btn.className = 'finger-btn';
+      if(activeSet.has(f))   btn.classList.add('selected');
+      if(disabledSet.has(f)) btn.classList.add('disabled');
+      btn.innerHTML = `<div class="f-dot"></div>${F_SHORT[f]}`;
+      if(!disabledSet.has(f)) btn.onclick = () => toggleFn(f);
+      row.appendChild(btn);
+    });
+    section.appendChild(row);
+    return section;
+  }
+
+  const wrap = document.createElement('div');
+  if(leftF.length)  wrap.appendChild(makeHand(leftF,  '左手'));
+  if(rightF.length) wrap.appendChild(makeHand(rightF, '右手'));
+  return wrap;
+}
+
+// ── STEP RENDERS ───────────────────────────────────────────────────────
+
+function renderS1() {
+  const el = document.createElement('div');
+  el.className = 'step-wrap';
+  el.innerHTML = `
+    <div class="step-eyebrow">S1 · 反箕识别</div>
+    <h2 class="step-title">哪些手指是<em>反箕</em>？</h2>
+    <p class="step-desc">反箕（Rl）开口朝向拇指侧，纹路中心向桡骨方向倾斜。点击选择有反箕的手指，没有则直接下一步。</p>`;
+  el.appendChild(buildFingerGrid(
+    FINGERS_ALL, S.rlFingers, new Set(),
+    fid => { S.rlFingers.has(fid)?S.rlFingers.delete(fid):S.rlFingers.add(fid); render(); }
+  ));
+  document.getElementById('main').replaceChildren(el);
+}
+
+function renderS2() {
+  const el = document.createElement('div');
+  el.className = 'step-wrap';
+  el.innerHTML = `
+    <div class="step-eyebrow">S2 · 参考页（只看不选）</div>
+    <h2 class="step-title"><em>斗形纹</em>识别指南</h2>
+    <p class="step-desc">下一步将识别弧形纹。在此之前，请先了解斗形纹的特征，以便后续区分。</p>
+    <div class="ref-hero"><div class="ref-hero-icon">🌀</div></div>
+    <div class="ref-card">
+      <div class="ref-card-title">斗形纹 <span class="ref-badge">Whorl</span></div>
+      <p>斗形纹是最容易辨认的指纹类型，纹路呈封闭环形，围绕一个中心点旋转。</p>
+      <ul class="ref-list">
+        <li>有完整封闭的圆心，纹路围绕中心旋转</li>
+        <li>至少出现两个三叉点（三角区）</li>
+        <li>常见形态：螺旋形、同心圆形、双箕对称形</li>
+        <li>辨别要点：纹路"转起来了"，能看到中心旋涡</li>
+      </ul>
+    </div>
+    <div class="ref-card">
+      <div class="ref-card-title">与箕形纹的区别</div>
+      <ul class="ref-list">
+        <li>箕形纹有开口，纹路从一侧进、同侧出</li>
+        <li>斗形纹完全封闭，没有开口</li>
+        <li>弧形纹（X）最简单，没有中心点，也没有开口，整体像弓形</li>
+      </ul>
+    </div>
+    <div class="ref-note">📌 此页仅供参考，无需操作，点击「下一步」继续识别简单弧。</div>`;
+  document.getElementById('main').replaceChildren(el);
+}
+
+function renderS3() {
+  const el = document.createElement('div');
+  el.className = 'step-wrap';
+  el.innerHTML = `
+    <div class="step-eyebrow">S3 · 简单弧识别</div>
+    <h2 class="step-title">哪些手指是<em>简单弧</em>？</h2>
+    <p class="step-desc">简单弧（X）纹路整体呈弓形，无中心旋涡，无三叉点，是最"平"的指纹。没有则直接下一步。</p>`;
+  el.appendChild(buildFingerGrid(
+    FINGERS_ALL, S.xFingers, new Set(),
+    fid => { S.xFingers.has(fid)?S.xFingers.delete(fid):S.xFingers.add(fid); render(); }
+  ));
+  document.getElementById('main').replaceChildren(el);
+}
+
+function renderS4() {
+  // Disabled: fingers already in xFingers
+  const el = document.createElement('div');
+  el.className = 'step-wrap';
+  el.innerHTML = `
+    <div class="step-eyebrow">S4 · 帐篷弧识别</div>
+    <h2 class="step-title">哪些手指是<em>帐篷弧</em>？</h2>
+    <p class="step-desc">帐篷弧（Xn）像一顶帐篷，有一根垂直轴线，弓形较高、尖锐。已选简单弧的手指已灰掉。</p>`;
+  el.appendChild(buildFingerGrid(
+    FINGERS_ALL, S.xnFingers, S.xFingers,
+    fid => { S.xnFingers.has(fid)?S.xnFingers.delete(fid):S.xnFingers.add(fid); render(); }
+  ));
+  document.getElementById('main').replaceChildren(el);
+}
+
+function renderS5() {
+  // Disabled: Rl ∪ X ∪ Xn
+  const disabled = new Set([...S.rlFingers, ...S.xFingers, ...S.xnFingers]);
+  const el = document.createElement('div');
+  el.className = 'step-wrap';
+  el.innerHTML = `
+    <div class="step-eyebrow">S5 · 大正箕识别</div>
+    <h2 class="step-title">哪些手指是<em>大正箕</em>？</h2>
+    <p class="step-desc">大正箕（Lu）开口朝向小指侧，纹路宽松、圈数较少。反箕/简单弧/帐篷弧已排除，变灰不可选。</p>`;
+  el.appendChild(buildFingerGrid(
+    FINGERS_ALL, S.luFingers, disabled,
+    fid => { S.luFingers.has(fid)?S.luFingers.delete(fid):S.luFingers.add(fid); render(); }
+  ));
+  document.getElementById('main').replaceChildren(el);
+}
+
+function renderS6() {
+  const el = document.createElement('div');
+  el.className = 'step-wrap';
+  el.innerHTML = `
+    <div class="step-eyebrow">S6 · 两个拇指类型</div>
+    <h2 class="step-title">确认<em>大拇指</em>具体类型</h2>
+    <p class="step-desc">拇指比较特殊，在此单独确认。选择斗形纹后会展开8种子类型。</p>`;
+
+  ['L','R'].forEach(side => {
+    const fid    = side==='L'?'LT':'RT';
+    const tstate = side==='L'?S.thumbL:S.thumbR;
+    const section = document.createElement('div');
+    section.className = 'thumb-section';
+    section.innerHTML = `<div class="thumb-section-title">
+      <div class="thumb-icon">${side==='L'?'👈':'👉'}</div>
+      ${side==='L'?'左手拇指':'右手拇指'}
+    </div>`;
+
+    const typeGrid = document.createElement('div');
+    typeGrid.className = 'type-grid';
+    THUMB_TYPES.forEach(t => {
+      const btn = document.createElement('button');
+      btn.className = 'type-btn' + (tstate.type===t.id?' selected':'');
+      btn.textContent = t.label;
+      btn.onclick = () => { setThumbType(side, t.id); render(); };
+      typeGrid.appendChild(btn);
+    });
+    section.appendChild(typeGrid);
+
+    // Subtype expand for 斗
+    const subtypeWrap = document.createElement('div');
+    subtypeWrap.className = 'subtype-wrap' + (tstate.type==='dou'?' open':'');
+    subtypeWrap.innerHTML = `<div class="subtype-label">选择斗形纹子类型：</div>
+      <div class="subtype-grid">
+        ${DOU_SUBTYPES.map((sub,i)=>
+          `<button class="subtype-btn${tstate.douSubtype===sub?' selected':''}"
+            onclick="setThumbSubtype('${side}','${sub}');render()">${sub}</button>`
+        ).join('')}
+      </div>`;
+    section.appendChild(subtypeWrap);
+    el.appendChild(section);
+  });
+
+  document.getElementById('main').replaceChildren(el);
+}
+
+function renderS7() {
+  // Show 8 non-thumb fingers. Gray: already in Rl/X/Xn/Lu
+  const disabled = new Set([...S.rlFingers,...S.xFingers,...S.xnFingers,...S.luFingers].filter(f=>f!=='LT'&&f!=='RT'));
+  const el = document.createElement('div');
+  el.className = 'step-wrap';
+  el.innerHTML = `
+    <div class="step-eyebrow">S7 · 斗形纹识别</div>
+    <h2 class="step-title">食指至小指中，哪些是<em>斗形纹</em>？</h2>
+    <p class="step-desc">大拇指已在上一步处理。请从剩余8根手指中，选出斗形纹。已有其他分类的手指已灰掉。</p>`;
+  el.appendChild(buildFingerGrid(
+    FINGERS_8, S.douFingers, disabled,
+    fid => { S.douFingers.has(fid)?S.douFingers.delete(fid):S.douFingers.add(fid); render(); }
+  ));
+  document.getElementById('main').replaceChildren(el);
+}
+
+function renderResult() {
+  // Compute type groups
+  const groups = {rl:[],x:[],xn:[],lu:[],dou:[],lr:[]};
+  FINGERS_ALL.forEach(f => {
+    const t = getFinalType(f);
+    groups[t].push(F_FULL[f]);
+  });
+  const totalDou = groups.dou.length;
+
+  const el = document.createElement('div');
+  el.className = 'result-wrap';
+  el.innerHTML = `
+    <div class="result-check">✓</div>
+    <h2 class="result-title">采集完成</h2>
+    <p class="result-sub">共识别 10 指，以下是你填写的皮纹分布</p>
+    <div class="result-section-label">皮纹分布汇总</div>
+    <div class="result-table">
+      ${Object.entries(groups).filter(([,v])=>v.length>0).map(([type,fingers])=>`
+        <div class="result-row">
+          <span class="result-type">${TYPE_LABEL[type]}</span>
+          <span class="result-fnames">${fingers.join('、')}</span>
+          <span class="result-badge">${fingers.length}</span>
+        </div>`).join('')}
+    </div>
+    <p style="font-size:13px;line-height:1.75;color:var(--ink-70);margin-top:20px;">
+      你的孩子共有 <strong style="color:var(--amber)">${totalDou} 个斗形纹</strong>，
+      加上各类箕形纹分布，顾问将为你解读十大脑区的先天优势与发展方向。
+    </p>
+    <a class="result-cta" href="https://work.weixin.qq.com/kfid/kfc6ce446e6e057c683">
+      联系顾问获取完整天赋解读 →
+    </a>
+    <p class="result-note">顾问会在收到信息后24小时内联系你</p>`;
+
+  document.getElementById('main').replaceChildren(el);
+  document.getElementById('bottom-nav').style.display = 'none';
+  document.querySelector('.progress-wrap').style.display = 'none';
+  document.getElementById('prog-label').style.display = 'none';
+}
+
+// ── NAVIGATION ─────────────────────────────────────────────────────────
+function render() {
+  updateProgress();
+  const step = S.step;
+  if(step===1) renderS1();
+  else if(step===2) renderS2();
+  else if(step===3) renderS3();
+  else if(step===4) renderS4();
+  else if(step===5) renderS5();
+  else if(step===6) renderS6();
+  else if(step===7) renderS7();
+  else renderResult();
+}
+
+function updateProgress() {
+  for(let i=1;i<=7;i++){
+    const el=document.getElementById('ps'+i);
+    if(!el) continue;
+    el.className='ps';
+    if(i<S.step) el.classList.add('done');
+    else if(i===S.step) el.classList.add('active');
+  }
+  const lbl=document.getElementById('prog-label');
+  if(lbl && S.step<=7) lbl.textContent=`第 ${S.step} 步 / 共 ${TOTAL_STEPS} 步`;
+
+  const backBtn=document.getElementById('btn-back');
+  const nextBtn=document.getElementById('btn-next');
+  if(backBtn) backBtn.style.display = S.step===1 ? 'none' : '';
+  if(nextBtn){
+    nextBtn.className='btn-next'+(S.step===7?' amber-btn':'');
+    nextBtn.textContent = S.step===7 ? '查看结果' : '下一步';
+  }
+}
+
+function nextStep() {
+  if(S.step<7){ S.step++; render(); window.scrollTo(0,0); }
+  else { S.step=8; renderResult(); window.scrollTo(0,0); }
+}
+function prevStep() {
+  if(S.step>1){ S.step--; render(); window.scrollTo(0,0); }
+}
+function goBack() {
+  if(S.step>1){ prevStep(); } else { window.location.href='homepage.html'; }
+}
+
+// ── INIT ───────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', render);
+</script>
+</body>
+</html>
