@@ -186,10 +186,16 @@ html,body { font-family: var(--font-sans); background: var(--cream); color: var(
 
     <!-- 初步分类 -->
     <div class="insight-section">
-      <div class="insight-eyebrow">初步分类</div>
+      <div class="insight-eyebrow">行为模式识别</div>
       <div class="type-badge-wrap" id="type-badges"></div>
       <p class="insight-body" style="margin-top:12px" id="type-desc"></p>
     </div>
+
+    <!-- 历史感知提示（回访用户显示）-->
+    <div id="history-note-card" style="display:none;
+      background: var(--amber-soft); border: 1px solid rgba(194,105,42,.25);
+      border-radius: 14px; padding: 14px 18px; margin-bottom: 4px;
+      font-size: 13px; color: var(--amber); line-height: 1.7;"></div>
 
     <!-- 一句话总结 -->
     <div class="summary-card">
@@ -206,90 +212,23 @@ html,body { font-family: var(--font-sans); background: var(--cream); color: var(
   </div>
 </div>
 
+<script src="js/aipiwen-core.js"></script>
 <script>
 const STORAGE_KEY = 'aipiwen_behavior_input';
-const LEADS_KEY   = 'aipiwen_leads_v02';
 
-// ── Report content by type ─────────────────────────
-const REPORT_CONTENT = {
-  emotional: {
-    label: '情绪敏感',
-    heading: '孩子的激烈反应，是他还没学会用语言表达感受',
-    body: '当孩子情绪爆发时，他不是在"无理取闹"，而是他的感受已经超过了他目前能承受的边界。孩子的神经系统比大人更敏感，情绪调节能力还在发育中——他需要的不是被压制，而是被看见。',
-    summary: '你看到的是情绪失控，但孩子在说：我需要你理解我，而不是要求我立刻停下来。'
-  },
-  control: {
-    label: '自主冲突',
-    heading: '孩子的抵抗，是他在争取被尊重的感觉',
-    body: '孩子"不听话"的背后，往往是自主感需求被长期压制的反应。他不是在对抗你这个人，他是在争取对自己生活的控制权。这是成长过程中正常且健康的信号，说明他开始有了独立意志。',
-    summary: '你看到的是不服从，但孩子在说：我需要有权利做一些自己的决定。'
-  },
-  avoidance: {
-    label: '压力回避',
-    heading: '沉默或逃避是孩子在保护自己，说明压力已经超载',
-    body: '当孩子选择沉默、沉迷手机或逃避沟通时，这不是冷漠，而是一种自我保护机制。他正在用能力范围内唯一可行的方式来调节超过承载极限的压力。强行拉回对话可能会让他更封闭。',
-    summary: '你看到的是逃避和冷漠，但孩子在说：我现在没有能力处理更多了，让我先喘口气。'
-  }
-};
-
-// ── Classify behavior ──────────────────────────────
-function classifyBehavior(text) {
-  const t = text;
-  if (/发脾气|哭|情绪|崩溃|大叫|暴躁|烦躁|委屈|难过|难受|敏感/.test(t)) return 'emotional';
-  if (/不写作业|不听|叛逆|顶嘴|对抗|抵抗|不服从|反抗|固执|争执/.test(t)) return 'control';
-  if (/沉默|不说话|沉迷手机|沉迷游戏|躲避|回避|逃避|不回应|关门|不出门/.test(t)) return 'avoidance';
-  // fallback heuristic
-  if (/作业|学习|上学|功课/.test(t)) return 'control';
-  if (/手机|游戏|电视|网络/.test(t)) return 'avoidance';
-  return 'emotional';
-}
-
-// ── Generate reportId ──────────────────────────────
-function generateReportId() {
-  const now = new Date();
-  const d = now.toISOString().slice(0,10).replace(/-/g,'');
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  let rand = '';
-  for (let i = 0; i < 4; i++) rand += chars[Math.floor(Math.random() * chars.length)];
-  return 'AIPIWEN-' + d + '-' + rand;
-}
-
-// ── Save to leads ──────────────────────────────────
-function saveLead(reportId, behavior, type) {
-  try {
-    const all = JSON.parse(localStorage.getItem(LEADS_KEY) || '[]');
-    const rec = {
-      reportId,
-      createdAt: new Date().toISOString(),
-      sourceUrl: window.location.href,
-      userInputBehavior: behavior,
-      behaviorType: type,
-      fromLightReport: true,
-      leadScore: '低意向',
-      leadReason: '轻报告生成'
-    };
-    const idx = all.findIndex(r => r.reportId === reportId);
-    if (idx >= 0) all[idx] = rec; else all.push(rec);
-    localStorage.setItem(LEADS_KEY, JSON.stringify(all));
-  } catch(e) {}
-}
-
-// ── Loading animation ──────────────────────────────
+// ── 加载动画 ───────────────────────────────────────
 const STEPS = [
   '读取孩子行为描述…',
   '识别行为背后的需求信号…',
-  '比对亲子关系模式库…',
-  '生成理解报告…'
+  '比对心理模式数据库…',
+  '生成个性化理解报告…'
 ];
 
 function runLoading(callback) {
   const container = document.getElementById('loading-steps');
   let i = 0;
   function addStep() {
-    if (i >= STEPS.length) {
-      setTimeout(callback, 400);
-      return;
-    }
+    if (i >= STEPS.length) { setTimeout(callback, 400); return; }
     const el = document.createElement('div');
     el.className = 'loading-step';
     el.style.animationDelay = (i * 0.1) + 's';
@@ -302,65 +241,90 @@ function runLoading(callback) {
   addStep();
 }
 
-// ── Build and show report ──────────────────────────
-function showReport(behavior, reportId) {
-  const type = classifyBehavior(behavior);
-  const content = REPORT_CONTENT[type];
+// ── 渲染报告 ───────────────────────────────────────
+function showReport(behavior, reportId, userId) {
+  // 读取历史记忆（给分析引擎上下文）
+  const history = AIPIWEN.MemorySystem.getRecent(userId, 5);
 
-  // Save to localStorage
-  saveLead(reportId, behavior, type);
+  // 分析
+  const analysis = AIPIWEN.AnalysisEngine.analyze(behavior, history);
 
-  // Set report DOM
-  document.getElementById('behavior-quote').textContent = behavior;
-  document.getElementById('insight-heading-1').textContent = content.heading;
-  document.getElementById('insight-body-1').textContent   = content.body;
-  document.getElementById('summary-text').textContent     = content.summary;
+  // 生成内容（个性化，含用户原话）
+  const content = AIPIWEN.ContentLibrary.lightReport(analysis);
 
-  // Type badges
-  const allTypes = [
-    { key:'emotional', label:'情绪敏感' },
-    { key:'control',   label:'自主冲突' },
-    { key:'avoidance', label:'压力回避' }
-  ];
-  const badgeWrap = document.getElementById('type-badges');
-  allTypes.forEach(t => {
-    const b = document.createElement('div');
-    b.className = 'type-badge ' + (t.key === type ? 'active' : 'inactive');
-    b.textContent = t.label;
-    badgeWrap.appendChild(b);
+  // 写入 Lead 系统
+  AIPIWEN.LeadSystem.create(userId, reportId, analysis, behavior);
+
+  // 写入记忆系统
+  AIPIWEN.MemorySystem.add(userId, {
+    input: behavior,
+    analysis: { primary: analysis.primary, secondary: analysis.secondary, legacyType: analysis.legacyType },
+    tags: analysis.tags,
+    report_id: reportId
   });
-  document.getElementById('type-desc').textContent =
-    `AI 初步判断：这个行为模式属于「${content.label}」类型。完整报告会提供更详细的分析。`;
 
-  // CTA link
+  // 填充 DOM
+  document.getElementById('behavior-quote').textContent      = behavior;
+  document.getElementById('insight-heading-1').textContent   = content.heading;
+  document.getElementById('insight-body-1').textContent      = content.body;
+  document.getElementById('summary-text').textContent        = content.insight;
+
+  // 行为模式徽章（新12类系统：主要 + 次要）
+  const badgeWrap = document.getElementById('type-badges');
+  badgeWrap.innerHTML = '';
+  const primaryMeta = AIPIWEN.AnalysisEngine.PATTERNS[analysis.primary];
+  if (primaryMeta) {
+    const b1 = document.createElement('div');
+    b1.className = 'type-badge active';
+    b1.textContent = primaryMeta.label;
+    badgeWrap.appendChild(b1);
+  }
+  if (analysis.secondary) {
+    const secMeta = AIPIWEN.AnalysisEngine.PATTERNS[analysis.secondary];
+    if (secMeta) {
+      const b2 = document.createElement('div');
+      b2.className = 'type-badge inactive';
+      b2.textContent = secMeta.label;
+      badgeWrap.appendChild(b2);
+    }
+  }
+  document.getElementById('type-desc').textContent =
+    `AI 识别：这个行为模式主要属于「${content.label}」。完整报告包含行为结构分析、家长常见误区和三条可执行建议。`;
+
+  // 历史感知提示
+  if (content.historyNote) {
+    const noteEl = document.getElementById('history-note-card');
+    noteEl.textContent = content.historyNote;
+    noteEl.style.display = 'block';
+  }
+
+  // CTA 链接
   document.getElementById('cta-link').href = 'full-report.html?id=' + encodeURIComponent(reportId);
 
-  // Show report screen
+  // 切换屏幕
   document.getElementById('screen-loading').style.display = 'none';
   document.getElementById('screen-report').style.display  = 'block';
 }
 
-// ── Init ───────────────────────────────────────────
+// ── 初始化 ─────────────────────────────────────────
 window.addEventListener('DOMContentLoaded', function() {
-  // Read behavior from localStorage
   let behavior = '';
+  let userId = 'u_anon';
   try {
     const stored = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
     behavior = stored.behavior || '';
+    userId   = stored.user_id  || AIPIWEN.UserSystem.getOrCreate().user_id;
   } catch(e) {}
 
   if (!behavior) {
-    // No behavior stored — redirect back
     window.location.href = 'behavior-input.html';
     return;
   }
 
-  // Generate reportId
-  const reportId = generateReportId();
+  const reportId = AIPIWEN.generateReportId();
 
-  // Run loading animation then show report
   runLoading(function() {
-    showReport(behavior, reportId);
+    showReport(behavior, reportId, userId);
   });
 });
 </script>

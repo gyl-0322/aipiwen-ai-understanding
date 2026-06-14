@@ -388,6 +388,12 @@ html,body { font-family: var(--font-sans); background: var(--cream); color: var(
       </div>
     </div>
 
+    <!-- 历史感知开场（回访用户才显示）-->
+    <div id="r-history-intro" style="display:none;
+      background: var(--amber-soft); border: 1px solid rgba(194,105,42,.25);
+      border-radius: 14px; padding: 16px 18px; margin-bottom: 16px;
+      font-size: 14px; color: var(--amber); line-height: 1.75;"></div>
+
     <!-- S1: 行为结构 -->
     <div class="section-card">
       <div class="section-eyebrow">行为结构分析</div>
@@ -558,6 +564,8 @@ html,body { font-family: var(--font-sans); background: var(--cream); color: var(
 
 <!-- html2canvas -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<!-- AIPIWEN 核心引擎 -->
+<script src="js/aipiwen-core.js"></script>
 <script>
 // ── Config ─────────────────────────────────────────
 const KFID_URL   = 'https://work.weixin.qq.com/kfid/kfc6ce446e6e057c683';
@@ -569,87 +577,7 @@ let gReportId = '';
 let gBehavior = '';
 let gType     = '';
 
-// ── Report content ─────────────────────────────────
-const CONTENT = {
-  emotional: {
-    structHeading: '情绪反应是孩子最真实的语言',
-    structBody: '孩子激烈的情绪反应，是一个「情绪触发 → 感受累积 → 超过承载 → 外化表现」的过程。环境中的某个触发点（催促、否定、对比）引发了强烈感受，而他还没有发展出足够的工具来调节这种感受，所以"爆炸"了。这不是道德问题，是神经发育阶段的正常现象。',
-    misconceptions: [
-      { wrong: '他是故意激怒我', right: '孩子的情绪爆发不是针对你，他只是找不到更好的出口' },
-      { wrong: '他太脆弱了，应该被锻炼', right: '情绪敏感是特质，不是弱点；强制压制会让他更难调节情绪' },
-      { wrong: '道歉之后就没事了', right: '情绪的根本触发点没有被处理，下次还会再发生' }
-    ],
-    advice: [
-      {
-        tag: '怎么说',
-        text: '在孩子情绪激动时，不要试图讲道理。先说：「我看到你很难受了」——确认感受，而不是评判行为。',
-        example: '"你现在一定很难受，我陪着你。"'
-      },
-      {
-        tag: '怎么做',
-        text: '等情绪平复后（15-30分钟）再讨论事情。情绪激动时大脑的前额叶是关闭的，没法真正"听进去"任何内容。',
-        example: '找一个孩子平静的时刻，坐下来聊，不是在爆发的当场。'
-      },
-      {
-        tag: '调整环境',
-        text: '减少容易触发情绪的"催促-评判-比较"语言模式。用"你来决定什么时候开始"代替"快去写作业"。',
-        example: '"作业今晚要完成，你想几点开始？"'
-      }
-    ]
-  },
-  control: {
-    structHeading: '对抗背后是「我需要被当作一个人来尊重」',
-    structBody: '孩子"不听话"的背后是自主需求的强烈信号。他正处于发展独立意志的关键期，频繁被否定、被替代决策，会积累挫败感，最终以对抗形式爆发。这不是叛逆，这是他在说：「我也是一个有想法的人」。',
-    misconceptions: [
-      { wrong: '他就是懒，不想努力', right: '抵抗往往发生在孩子感到被掌控、没有选择权的时候' },
-      { wrong: '他叛逆，要更严管', right: '更严的管控通常带来更强的抵抗，关键是建立"共同决定"' },
-      { wrong: '说了不听，就是对抗我', right: '孩子在对抗的是"被强迫"的感觉，不是在对抗你这个人' }
-    ],
-    advice: [
-      {
-        tag: '怎么说',
-        text: '把命令句变成选择题。让孩子感受到他对自己的生活有一定控制权，抵触会大幅降低。',
-        example: '"作业今天要完成，你想先做语文还是数学？"'
-      },
-      {
-        tag: '怎么做',
-        text: '在不危及安全的范围内，给孩子更多自主权——让他自己选怎么做，而不是只告诉他做什么。失败也是他的学习。',
-        example: '让他决定今晚的作业顺序、用什么笔、坐在哪里做。'
-      },
-      {
-        tag: '调整环境',
-        text: '减少家庭中的"命令密度"。数一数一天中你给孩子几个指令，尝试减少30%，换成问句和邀请。',
-        example: '少说"去做"，多问"你怎么想"。'
-      }
-    ]
-  },
-  avoidance: {
-    structHeading: '回避是孩子在保护自己，说明压力已经超载',
-    structBody: '当孩子用沉默、沉迷或回避来应对时，他是在用能力范围内唯一可行的方式处理超过承载极限的压力。这种状态下，孩子内心通常同时存在强烈的羞耻感和无助感。强行拉回对话，会进一步关闭他的沟通意愿。',
-    misconceptions: [
-      { wrong: '他是在逃避责任', right: '他是在管理一种他还不知道怎么面对的感受或压力' },
-      { wrong: '玩手机就是懒散没出息', right: '沉浸在可控的数字世界，是他在现实压力下的临时庇护所' },
-      { wrong: '不说话就是没事', right: '越沉默越需要关注——他可能已经在内心撑了很久了' }
-    ],
-    advice: [
-      {
-        tag: '怎么说',
-        text: '不要追问"你为什么不说话"或"到底怎么了"。这会让他更封闭。改用开放式、低压力的表达。',
-        example: '"我就在这里，你准备好了随时可以说，我不急。"'
-      },
-      {
-        tag: '怎么做',
-        text: '建立"并肩时光"：做饭、散步、一起看他喜欢的视频。不谈正事，只是在一起。孩子通常在低压活动中更容易开口。',
-        example: '一周挑一次，和孩子一起做他喜欢的事，不提作业学习。'
-      },
-      {
-        tag: '调整环境',
-        text: '检查孩子面对的压力源：学业期待、对比、家庭氛围。减少一个压力源，比增加十次谈话更有效。',
-        example: '和孩子的老师谈谈，了解他在学校的状态。'
-      }
-    ]
-  }
-};
+// ── 报告内容由 aipiwen-core.js 的 ContentLibrary 提供 ──
 
 // ── Screen control ─────────────────────────────────
 function showScreen(id) {
@@ -681,19 +609,41 @@ function updateLead(fields) {
   } catch(e) {}
 }
 
-// ── Build report ───────────────────────────────────
+// ── Build report (新版：个性化 + 历史感知) ──────────
 function buildReport(reportId, behavior, type) {
-  const c = CONTENT[type] || CONTENT.emotional;
+  // 从 AIPIWEN 核心系统读取用户 + 历史
+  const user    = AIPIWEN.UserSystem.getOrCreate();
+  const history = AIPIWEN.MemorySystem.getRecent(user.user_id, 5);
 
-  // Header
+  // 运行分析引擎（12类行为识别）
+  const analysis = AIPIWEN.AnalysisEngine.analyze(behavior, history);
+
+  // 更新 Lead 系统的 behaviorPattern 字段
+  AIPIWEN.LeadSystem.update(reportId, {
+    behaviorPattern: analysis.primary,
+    behaviorTags: analysis.tags
+  });
+
+  // 生成个性化内容（含用户原话）
+  const c = AIPIWEN.ContentLibrary.fullReport(analysis);
+
+  // ── Header ──
   document.getElementById('r-reportid').textContent = reportId;
 
-  // Structure
+  // ── 历史感知开场白 ──
+  if (c.historyIntro) {
+    const introEl = document.getElementById('r-history-intro');
+    introEl.textContent = c.historyIntro;
+    introEl.style.display = 'block';
+  }
+
+  // ── 行为结构分析 ──
   document.getElementById('r-struct-heading').textContent = c.structHeading;
   document.getElementById('r-struct-body').textContent    = c.structBody;
 
-  // Misconceptions
+  // ── 家长误区 ──
   const mList = document.getElementById('r-misconceptions');
+  mList.innerHTML = '';
   c.misconceptions.forEach(m => {
     mList.innerHTML += `
       <div class="misconception-item">
@@ -705,9 +655,10 @@ function buildReport(reportId, behavior, type) {
       </div>`;
   });
 
-  // Advice
+  // ── 三条建议 ──
   const aList = document.getElementById('r-advice-list');
-  c.advice.forEach((a, i) => {
+  aList.innerHTML = '';
+  c.advice.forEach(a => {
     aList.innerHTML += `
       <div class="advice-item">
         <div>
@@ -718,18 +669,13 @@ function buildReport(reportId, behavior, type) {
       </div>`;
   });
 
-  // Share card
-  const summaries = {
-    emotional: '你看到的是情绪崩溃，但孩子在说：我需要被看见，不是被评判。',
-    control:   '你看到的是不服从，但孩子在说：我需要有权决定自己的事。',
-    avoidance: '你看到的是逃避，但孩子在说：我现在承受不了更多了，让我先缓缓。'
-  };
-  document.getElementById('sc-insight').textContent  = summaries[type] || summaries.emotional;
+  // ── 分享卡片（个性化文案）──
+  document.getElementById('sc-insight').textContent  = c.shareSummary;
   document.getElementById('sc-reportid').textContent = reportId;
 
-  // WeChat screen
-  document.getElementById('wx-reportid').textContent    = reportId;
-  document.getElementById('wx-rid-inline').textContent  = reportId;
+  // ── 微信页面 ──
+  document.getElementById('wx-reportid').textContent   = reportId;
+  document.getElementById('wx-rid-inline').textContent = reportId;
 }
 
 // ── Share functions ────────────────────────────────

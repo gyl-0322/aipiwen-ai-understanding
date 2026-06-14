@@ -232,15 +232,18 @@ function fillExample(text, el) {
 function goNext() {
   const behavior = document.getElementById('behavior-input').value.trim();
   if (!behavior || behavior.length < 4) return;
-  // Store in localStorage
+  // 初始化用户系统
+  const user = (typeof AIPIWEN !== 'undefined') ? AIPIWEN.UserSystem.incrementSession() : { user_id: 'u_anon' };
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify({
       behavior,
-      inputAt: new Date().toISOString()
+      inputAt: new Date().toISOString(),
+      user_id: user.user_id
     }));
   } catch(e) {}
   window.location.href = 'light-report.html';
 }
 </script>
+<script src="js/aipiwen-core.js"></script>
 </body>
 </html>
