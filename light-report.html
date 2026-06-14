@@ -254,25 +254,35 @@ function runLoading(callback) {
 
 // ── 渲染报告 ───────────────────────────────────────
 function showReport(behavior, reportId, userId) {
-  // 读取历史记忆（给分析引擎上下文）
-  const history = AIPIWEN.MemorySystem.getRecent(userId, 5);
+  let history = [], analysis = null, content = null;
 
-  // 分析
-  const analysis = AIPIWEN.AnalysisEngine.analyze(behavior, history);
+  try {
+    history  = AIPIWEN.MemorySystem.getRecent(userId, 5);
+    analysis = AIPIWEN.AnalysisEngine.analyze(behavior, history);
+    content  = AIPIWEN.ContentLibrary.lightReport(analysis);
+  } catch(e) {
+    console.error('[AIPIWEN] 分析引擎错误:', e);
+    // 回退：直接显示基础报告界面
+    document.getElementById('screen-loading').style.display = 'none';
+    document.getElementById('screen-report').style.display  = 'block';
+    document.getElementById('behavior-quote').textContent = behavior;
+    document.getElementById('insight-heading-1').textContent = '孩子的行为背后有他自己的逻辑';
+    document.getElementById('insight-body-1').textContent = '每个行为都是孩子在表达某种需求——AI 分析需要稍后再试。';
+    document.getElementById('summary-text').textContent = '请稍后刷新重试，或从首页重新描述行为。';
+    document.getElementById('cta-link').href = 'behavior-input.html';
+    return;
+  }
 
-  // 生成内容（个性化，含用户原话）
-  const content = AIPIWEN.ContentLibrary.lightReport(analysis);
-
-  // 写入 Lead 系统
-  AIPIWEN.LeadSystem.create(userId, reportId, analysis, behavior);
-
-  // 写入记忆系统
-  AIPIWEN.MemorySystem.add(userId, {
-    input: behavior,
-    analysis: { primary: analysis.primary, secondary: analysis.secondary, legacyType: analysis.legacyType },
-    tags: analysis.tags,
-    report_id: reportId
-  });
+  // 写入 Lead + 记忆（静默失败不阻断报告显示）
+  try { AIPIWEN.LeadSystem.create(userId, reportId, analysis, behavior); } catch(e) {}
+  try {
+    AIPIWEN.MemorySystem.add(userId, {
+      input: behavior,
+      analysis: { primary: analysis.primary, secondary: analysis.secondary, legacyType: analysis.legacyType },
+      tags: analysis.tags,
+      report_id: reportId
+    });
+  } catch(e) {}
 
   // 填充 DOM
   document.getElementById('behavior-quote').textContent      = behavior;
@@ -355,10 +365,24 @@ window.addEventListener('DOMContentLoaded', function() {
     return;
   }
 
-  const reportId = AIPIWEN.generateReportId();
+  // 防御：AIPIWEN 加载失败时回退到输入页
+  if (typeof AIPIWEN === 'undefined' || typeof AIPIWEN.generateReportId !== 'function') {
+    window.location.href = 'behavior-input.html';
+    return;
+  }
+
+  let reportId;
+  try { reportId = AIPIWEN.generateReportId(); }
+  catch(e) { window.location.href = 'behavior-input.html'; return; }
 
   runLoading(function() {
-    showReport(behavior, reportId, userId);
+    try {
+      showReport(behavior, reportId, userId);
+    } catch(e) {
+      console.error('showReport error:', e);
+      document.getElementById('screen-loading').style.display = 'none';
+      document.getElementById('screen-report').style.display = 'block';
+    }
   });
 });
 </script>
