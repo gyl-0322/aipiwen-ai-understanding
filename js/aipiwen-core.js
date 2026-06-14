@@ -1329,7 +1329,300 @@ const AgentResponseGenerator = {
   }
 };
 
-/* ── 核心：AI咨询智能体 V3-A ── */
+/* ================================================================
+   V3-B：咨询洞察系统 — Insight Layer
+   增量新增，不替换任何 V3-A / V2 逻辑
+================================================================ */
+
+/* ── V3-B 模块1：咨询洞察引擎（三层问题解构）── */
+const ConsultingInsightEngine = {
+
+  // 结构层：家庭动态分类
+  STRUCTURAL_PATTERNS: {
+    control_dynamic: {
+      label: '控制与自主冲突',
+      keywords: /催促|要求|必须|应该|强迫|不听|叛逆|对抗|反抗|凭什么|你管我/,
+      description: '家长控制需求 vs 孩子自主需求之间的张力'
+    },
+    attachment_anxiety: {
+      label: '依附与分离焦虑',
+      keywords: /哭|分离|黏|不离开|妈妈走|害怕|担心|不放心|焦虑|不安全/,
+      description: '孩子的安全依附需求未被充分满足'
+    },
+    performance_pressure: {
+      label: '成就压力结构',
+      keywords: /成绩|学习|考试|名次|分数|比较|同学|别人家|落后|差|优秀/,
+      description: '成就期待带来的持续压力积累'
+    },
+    communication_block: {
+      label: '沟通阻断模式',
+      keywords: /不说话|沉默|不回应|关门|回避|什么都不说|打游戏|手机|逃避/,
+      description: '沟通渠道已经关闭，孩子以回避代替表达'
+    },
+    sibling_competition: {
+      label: '手足竞争结构',
+      keywords: /弟弟|妹妹|哥哥|姐姐|二宝|老大|老二|公平|偏心|更爱/,
+      description: '资源竞争引发的手足间争夺行为'
+    },
+    transition_stress: {
+      label: '转折期适应压力',
+      keywords: /升学|换学校|转班|离婚|搬家|换老师|开学|假期|变化|最近突然/,
+      description: '重大生活变化触发的适应性压力反应'
+    }
+  },
+
+  analyze(input, history, collectedInfo) {
+    const text = input || '';
+    const surface    = this._extractSurface(text);
+    const behaviorHint = this._getBehaviorHint(text);
+    const structural = this._getStructuralPattern(text, history);
+    const primary_focus = this._decidePrimaryFocus(surface, behaviorHint, structural, text);
+    return {
+      surface,
+      behavior: behaviorHint.description,
+      behavior_pattern: behaviorHint.pattern,
+      structure: structural.description,
+      structural_key: structural.key,
+      primary_focus,
+      has_history: !!(history && history.length > 0)
+    };
+  },
+
+  _extractSurface(text) {
+    const t = text.trim();
+    if (t.length <= 30) return t;
+    const breakIdx = t.search(/[，。！？,!?\n]/);
+    if (breakIdx > 4 && breakIdx < 40) return t.slice(0, breakIdx);
+    return t.slice(0, 35) + '…';
+  },
+
+  _getBehaviorHint(text) {
+    const patterns = AnalysisEngine.PATTERNS;
+    let topPattern = 'emotional_explosion';
+    let topScore   = 0;
+    Object.keys(patterns).forEach(function(key) {
+      const p = patterns[key];
+      let score = 0;
+      (p.keywords || []).forEach(function(kw) {
+        if (kw && kw.test && kw.test(text)) score += (p.weight || 1);
+      });
+      if (score > topScore) { topScore = score; topPattern = key; }
+    });
+    const meta = patterns[topPattern];
+    return {
+      pattern: topPattern,
+      label: meta ? meta.label : '行为模式',
+      description: meta ? ('表现为「' + meta.label + '」类行为') : '行为模式待确认',
+      confidence: topScore > 0 ? 'high' : 'low'
+    };
+  },
+
+  _getStructuralPattern(text, history) {
+    const patterns = this.STRUCTURAL_PATTERNS;
+    let topKey   = null;
+    let topScore = 0;
+    Object.keys(patterns).forEach(function(key) {
+      const score = patterns[key].keywords.test(text) ? 1 : 0;
+      if (score > topScore) { topScore = score; topKey = key; }
+    });
+    if (!topKey && history && history.length >= 2) {
+      topKey = 'communication_block';
+    }
+    if (!topKey) return { key: null, label: '结构待分析', description: '需要更多信息来判断家庭互动结构' };
+    const p = patterns[topKey];
+    return { key: topKey, label: p.label, description: p.description };
+  },
+
+  _decidePrimaryFocus(surface, behaviorHint, structural, text) {
+    if (structural.key && text.length > 20) {
+      return structural.label + '——这是当前需要优先理解的核心结构';
+    }
+    if (behaviorHint.confidence === 'high') {
+      return behaviorHint.label + '——当前行为表现的主要模式';
+    }
+    return surface + '——这是目前描述的表层现象';
+  }
+};
+
+/* ── V3-B 模块2：矛盾识别器 ── */
+const ContradictionDetector = {
+
+  CONTRADICTION_PAIRS: [
+    {
+      type: 'frequency',
+      signalA: /总是|每次|天天|一直|每天|无时无刻/,
+      signalB: /偶尔|有时|一次|最近一次|有一次/,
+      interpretation: '描述中同时出现了"总是"和"偶尔"——频率描述有矛盾，这可能影响判断的准确性'
+    },
+    {
+      type: 'severity',
+      signalA: /非常严重|很严重|极端|受不了|崩溃了|没办法了/,
+      signalB: /还好|不算太|不是很|还行|其实也|问题不大/,
+      interpretation: '描述的严重程度前后有矛盾——孩子的情况可能比描述的更复杂'
+    },
+    {
+      type: 'temporal',
+      signalA: /从来|从小|一直都|本来就/,
+      signalB: /最近|突然|忽然|这段时间|这学期|开学后/,
+      interpretation: '既说"一直如此"又说"最近才有"——这个行为的起点值得深入了解'
+    },
+    {
+      type: 'parental_stance',
+      signalA: /我没有|我从不|我一直很|我已经很/,
+      signalB: /他还是|但他|仍然|就是不|无论如何/,
+      interpretation: '家长描述自己已经做了很多，但孩子没有变化——这个"努力-无效"循环本身是重要信息'
+    }
+  ],
+
+  detect(input, history, collectedInfo) {
+    const text   = (input || '') + ' ' + ((collectedInfo && collectedInfo.behavior_raw) || '');
+    const points = [];
+    this.CONTRADICTION_PAIRS.forEach(function(pair) {
+      if (pair.signalA.test(text) && pair.signalB.test(text)) {
+        points.push({ type: pair.type, interpretation: pair.interpretation });
+      }
+    });
+    // 历史模式偏移矛盾
+    if (history && history.length >= 1 && collectedInfo && collectedInfo.behavior_raw) {
+      const lastPrimary = history[history.length - 1].analysis && history[history.length - 1].analysis.primary;
+      if (lastPrimary) {
+        const currentHint = ConsultingInsightEngine._getBehaviorHint(collectedInfo.behavior_raw);
+        if (lastPrimary !== currentHint.pattern && currentHint.confidence === 'high') {
+          const lastMeta = AnalysisEngine.PATTERNS[lastPrimary];
+          points.push({
+            type: 'pattern_shift',
+            interpretation: '上次你描述的是「' + (lastMeta ? lastMeta.label : lastPrimary) + '」类问题，这次描述的情况有所不同——孩子的行为模式在变化，还是问题本身是多层的？'
+          });
+        }
+      }
+    }
+    return {
+      contradiction_points: points,
+      has_contradictions: points.length > 0,
+      interpretation: points.length > 0 ? points[0].interpretation : null
+    };
+  }
+};
+
+/* ── V3-B 模块3：高信息密度问题选择器 ── */
+const PriorityQuestionSelector = {
+
+  select(insightResult, collectedInfo, contradictions) {
+    const beh = (insightResult && insightResult.surface) || '这种情况';
+
+    // 优先级1：有矛盾 → 直接问矛盾
+    if (contradictions && contradictions.has_contradictions && contradictions.interpretation) {
+      return {
+        selected_question: contradictions.interpretation + '\n\n你怎么看这个矛盾？',
+        reason: '用户描述中存在矛盾，询问矛盾能获得最高信息量',
+        type: 'contradiction',
+        gain: 10
+      };
+    }
+
+    // 优先级2：结构层未知 → 问家庭动态
+    if (!insightResult || !insightResult.structural_key) {
+      return {
+        selected_question: '「' + beh + '」这种情况发生时，家里通常是什么气氛？家庭成员对这件事的看法一致吗？',
+        reason: '结构层信息空白，家庭动态是理解行为的关键',
+        type: 'structure',
+        gain: 8
+      };
+    }
+
+    // 优先级3：时间线不清楚 → 问轨迹
+    if (!(collectedInfo && collectedInfo.duration)) {
+      return {
+        selected_question: '「' + beh + '」是什么时候开始明显变化的？在那之前，孩子有没有什么不同？',
+        reason: '行为轨迹能区分阶段性问题和结构性问题',
+        type: 'structure',
+        gain: 8
+      };
+    }
+
+    // 优先级4：触发器不清楚 → 问具体场景
+    if (!(collectedInfo && collectedInfo.trigger)) {
+      return {
+        selected_question: '「' + beh + '」——最近一次发生时，你和孩子之间说了什么、做了什么？越具体越好。',
+        reason: '具体触发场景能揭示行为的真实逻辑',
+        type: 'behavior',
+        gain: 6
+      };
+    }
+
+    // 优先级5：孩子视角缺失
+    return {
+      selected_question: '当这种情况发生时，你觉得孩子自己是什么感受？他有没有解释过自己为什么这样做？',
+      reason: '孩子视角是最常被忽略的关键信息维度',
+      type: 'behavior',
+      gain: 6
+    };
+  }
+};
+
+/* ── V3-B 模块4：咨询路径规划器 ── */
+const ConsultingPathPlanner = {
+
+  PHASES: {
+    phase1: { label: '问题识别',     desc: '理解表层现象，提炼核心问题' },
+    phase2: { label: '行为模式确认', desc: '锁定行为类型，理解触发逻辑' },
+    phase3: { label: '关系结构分析', desc: '分析家庭互动模式，定位结构性原因' },
+    phase4: { label: '干预建议',     desc: '生成具体可执行的应对方案' }
+  },
+
+  plan(userId, insightResult, analysis, trendResult, userTurnsCount) {
+    const userTurns = userTurnsCount || 0;
+
+    // 判断当前阶段
+    let currentPhase = 'phase1';
+    if (analysis && userTurns >= 2) {
+      currentPhase = 'phase3';
+    } else if (analysis) {
+      currentPhase = 'phase2';
+    } else if (insightResult && insightResult.structural_key) {
+      currentPhase = 'phase2';
+    }
+    const currentPhaseLabel = this.PHASES[currentPhase].label;
+
+    const nextMap = {
+      phase1: '进入「行为模式确认」——锁定这个行为背后的心理模式',
+      phase2: '进入「关系结构分析」——理解家庭互动中的结构性原因',
+      phase3: '进入「干预建议」——生成具体可执行的应对方式',
+      phase4: '进入持续追踪——观察干预后的行为变化'
+    };
+    const nextDirection = nextMap[currentPhase];
+
+    // 路径摘要
+    const summaryLines = [];
+    if (insightResult && insightResult.primary_focus) {
+      summaryLines.push('**当前理解：**' + insightResult.primary_focus);
+    }
+    if (analysis) {
+      const meta = AnalysisEngine.PATTERNS[analysis.primary];
+      if (meta) summaryLines.push('**行为模式：**「' + meta.label + '」');
+    }
+    if (trendResult && trendResult.trendText && trendResult.totalSessions >= 2) {
+      summaryLines.push('**历史趋势：**' + trendResult.trendText);
+    }
+    if (insightResult && insightResult.structural_key && insightResult.structure) {
+      summaryLines.push('**结构因素：**' + insightResult.structure);
+    }
+
+    const recommendedActions = (currentPhase === 'phase3' || currentPhase === 'phase4')
+      ? ['观察这个行为在不同场合（家/学校）的差异', '注意行为发生前的家庭情绪气氛', '记录最近一周的触发点和频率']
+      : ['继续提供孩子行为的具体细节', '回想最近一次发生时的完整过程'];
+
+    return {
+      current_phase: currentPhase,
+      current_phase_label: currentPhaseLabel,
+      next_direction: nextDirection,
+      path_summary: summaryLines.join('\n'),
+      recommended_actions: recommendedActions
+    };
+  }
+};
+
+/* ── 核心：AI咨询智能体 V3-A（升级至 V3-B 洞察管道）── */
 const AIPIWENConsultingAgent = {
 
   processInput(userId, userText, existingSession) {
@@ -1337,14 +1630,20 @@ const AIPIWENConsultingAgent = {
       || ConsultingSessionStore.get(userId)
       || ConsultingSessionStore.newSession(userId);
 
-    const history    = MemorySystem.getRecent(userId, 5);
+    const history = MemorySystem.getRecent(userId, 5);
     ConsultingSessionStore.addTurn(session, 'user', userText);
+
+    // ══ V3-B 洞察管道（每轮都运行）══
+    const insight       = ConsultingInsightEngine.analyze(userText, history, session.collected_info);
+    const contradictions = ContradictionDetector.detect(userText, history, session.collected_info);
+    session.last_insight        = insight;
+    session.last_contradictions = contradictions.has_contradictions ? contradictions : (session.last_contradictions || null);
 
     let response = '';
     let action   = '';
     let analysisResult = null;
 
-    const userTurns = session.turns.filter(t => t.role === 'user').length;
+    const userTurns = session.turns.filter(function(t) { return t.role === 'user'; }).length;
 
     if (session.stage === 'intake') {
       // 收集初始描述
@@ -1356,14 +1655,16 @@ const AIPIWENConsultingAgent = {
 
       if (ev.sufficient) {
         session.stage = 'analysis';
-        const r = this._runAnalysis(userId, session, history);
+        const r = this._runAnalysis(userId, session, history, insight);
         response = r.response; action = 'analyze';
         session.analysis_result = r.analysis; analysisResult = r.analysis;
         session.stage = 'recommendation';
       } else {
         session.stage = 'exploration';
-        session.missing_info = [ev.nextQuestion];
-        response = AgentResponseGenerator.followUp(ev.nextQuestion, session.collected_info);
+        // V3-B：PriorityQuestionSelector 替代通用 followUp
+        const pq = PriorityQuestionSelector.select(insight, session.collected_info, contradictions);
+        session.missing_info = [pq.type];
+        response = pq.selected_question;
         action = 'ask';
       }
 
@@ -1374,31 +1675,47 @@ const AIPIWENConsultingAgent = {
       if (!session.collected_info.trigger   && extracted.trigger)   session.collected_info.trigger   = true;
       if (!session.collected_info.context   && extracted.context)   session.collected_info.context   = true;
       if (!session.collected_info.child_age && extracted.child_age) session.collected_info.child_age = extracted.child_age;
-      // 补充信息拼接进 behavior_raw
       session.collected_info.behavior_raw += '；' + userText;
+
+      // V3-B：用合并后的完整信息重新运行洞察
+      const updatedInsight = ConsultingInsightEngine.analyze(
+        session.collected_info.behavior_raw, history, session.collected_info
+      );
+      session.last_insight = updatedInsight;
 
       const ev = InformationSufficiencyEvaluator.evaluate(
         session.collected_info,
-        session.turns.filter(t => t.role === 'user').length
+        session.turns.filter(function(t) { return t.role === 'user'; }).length
       );
 
       if (ev.sufficient || userTurns >= 3) {
         const transition = AgentResponseGenerator.transitionToAnalysis(session.collected_info);
-        const r = this._runAnalysis(userId, session, history);
+        const r = this._runAnalysis(userId, session, history, updatedInsight);
         response = transition + '\n\n' + r.response; action = 'analyze';
         session.analysis_result = r.analysis; analysisResult = r.analysis;
         session.stage = 'recommendation';
       } else {
-        session.missing_info = [ev.nextQuestion];
-        response = AgentResponseGenerator.followUp(ev.nextQuestion, session.collected_info);
+        // V3-B：再次选取高信息密度问题
+        const updatedContradictions = ContradictionDetector.detect(
+          session.collected_info.behavior_raw, history, session.collected_info
+        );
+        const pq = PriorityQuestionSelector.select(updatedInsight, session.collected_info, updatedContradictions);
+        session.missing_info = [pq.type];
+        response = pq.selected_question;
         action = 'ask';
       }
 
     } else if (session.stage === 'recommendation') {
-      // 用户回复"想继续" → 输出建议
+      // 用户回复"想继续" → 输出带路径感知的建议
       if (session.analysis_result) {
         const c = ContentLibrary.fullReport(session.analysis_result);
-        response = AgentResponseGenerator.recommendationResponse(c.advice, session.analysis_result);
+        // V3-B：路径感知建议输出
+        const path = ConsultingPathPlanner.plan(
+          userId, session.last_insight, session.analysis_result,
+          TrendAnalyzer.analyze(userId),
+          session.turns.filter(function(t) { return t.role === 'user'; }).length
+        );
+        response = this._buildRecommendationWithPath(c, session.analysis_result, path);
         analysisResult = session.analysis_result;
         session.stage = 'complete';
         action = 'recommend';
@@ -1419,12 +1736,18 @@ const AIPIWENConsultingAgent = {
     return { response, action, session, stage: session.stage, analysisResult };
   },
 
-  // V2 分析管道（必须调用所有 V2 模块）
-  _runAnalysis(userId, session, history) {
-    const behavior = session.collected_info.behavior_raw;
-    const analysis = AnalysisEngine.analyze(behavior, history);
+  // V3-B 升级：分析管道整合洞察结果
+  _runAnalysis(userId, session, history, insight) {
+    const behavior    = session.collected_info.behavior_raw;
+    const analysis    = AnalysisEngine.analyze(behavior, history);
     const whyParagraph = BehaviorReasoningEngine.generateWhyParagraph(analysis.primary, analysis.keyPhrase);
     const trendResult  = TrendAnalyzer.analyze(userId);
+
+    // V3-B：路径规划
+    const path = ConsultingPathPlanner.plan(
+      userId, insight, analysis, trendResult,
+      session.turns.filter(function(t) { return t.role === 'user'; }).length
+    );
 
     // 写入 V2 记忆系统
     MemorySystem.add(userId, {
@@ -1437,11 +1760,94 @@ const AIPIWENConsultingAgent = {
     const reportId = generateReportId();
     LeadSystem.create(userId, reportId, analysis, behavior);
 
-    const response = AgentResponseGenerator.analysisResponse(analysis, whyParagraph, trendResult, session.collected_info);
-    return { response, analysis, whyParagraph, trendResult, reportId };
+    // V3-B：带洞察层的分析回复
+    const response = this._buildAnalysisWithInsight(
+      analysis, whyParagraph, trendResult, insight, path, session.collected_info
+    );
+    return { response, analysis, whyParagraph, trendResult, reportId, path };
   },
 
-  // 开始新会话 → 返回 greeting
+  // V3-B：整合三层洞察的分析回复
+  _buildAnalysisWithInsight(analysis, whyParagraph, trendResult, insight, path, collectedInfo) {
+    const patternMeta = AnalysisEngine.PATTERNS[analysis.primary];
+    const label = patternMeta ? patternMeta.label : '行为模式';
+    const kp    = analysis.keyPhrase || (collectedInfo.behavior_raw || '').slice(0, 20);
+    const c     = ContentLibrary.lightReport(analysis);
+    const lines = [];
+
+    // 1. 共情
+    lines.push('从你描述的情况来看，「' + kp + '」这类情况确实容易让家长感到无力——越用力，好像越没用。');
+    lines.push('');
+
+    // 2. 三层洞察（V3-B 新增）
+    if (insight && insight.surface) {
+      lines.push('**我对这个问题的理解是这样的：**');
+      lines.push('- **表层现象：**' + insight.surface);
+      lines.push('- **行为层：**' + insight.behavior);
+      if (insight.structural_key && insight.structure) {
+        lines.push('- **深层结构：**' + insight.structure);
+      }
+      lines.push('');
+    }
+
+    // 3. 核心判断
+    lines.push('**AI 判断：这属于「' + label + '」类行为模式。**');
+    lines.push(c.insight);
+    lines.push('');
+
+    // 4. Why Layer（V2 保留）
+    if (whyParagraph && whyParagraph.mainReason) {
+      lines.push('**为什么会这样：**');
+      lines.push(whyParagraph.mainReason);
+      if (whyParagraph.secondReason) {
+        lines.push('');
+        lines.push('另一个常被忽略的原因：' + whyParagraph.secondReason);
+      }
+      lines.push('');
+    }
+
+    // 5. 趋势（V2 保留，回访用户专属）
+    if (trendResult && trendResult.trendText && trendResult.totalSessions >= 2) {
+      lines.push('**从你的历史记录看：**');
+      lines.push(trendResult.trendText);
+      lines.push('');
+    }
+
+    // 6. 咨询路径提示（V3-B 新增）
+    if (path) {
+      lines.push('**当前咨询阶段：**' + path.current_phase_label);
+      lines.push('下一步：' + path.next_direction);
+      lines.push('');
+    }
+
+    lines.push('你准备好听具体的应对建议了吗？');
+    return lines.join('\n');
+  },
+
+  // V3-B：带路径感知的建议输出
+  _buildRecommendationWithPath(c, analysis, path) {
+    const kp    = analysis.keyPhrase || '';
+    const lines = ['针对「' + kp + '」，这是三条可以从今天开始用的方式：', ''];
+
+    c.advice.forEach(function(a, i) {
+      lines.push('**' + (i + 1) + '. ' + a.tag + '**');
+      lines.push(a.text);
+      if (a.example) lines.push('› 参考说法：「' + a.example + '」');
+      lines.push('');
+    });
+
+    // V3-B：路径行动指引
+    if (path && path.recommended_actions && path.recommended_actions.length > 0) {
+      lines.push('**接下来建议你做：**');
+      path.recommended_actions.forEach(function(act) { lines.push('› ' + act); });
+      lines.push('');
+    }
+
+    lines.push('如果有任何一条想深入聊，或者尝试后有新的情况，随时告诉我。');
+    return lines.join('\n');
+  },
+
+  // 开始新会话 → 返回 greeting（V3-A 原有逻辑保留）
   startSession(userId) {
     const historyCtx = MemorySystem.getContext(userId);
     ConsultingSessionStore.reset(userId);
@@ -1467,6 +1873,10 @@ window.AIPIWEN = {
   ConsultingSessionStore,
   InformationSufficiencyEvaluator,
   AgentResponseGenerator,
+  ConsultingInsightEngine,
+  ContradictionDetector,
+  PriorityQuestionSelector,
+  ConsultingPathPlanner,
   AIPIWENConsultingAgent,
   generateReportId,
   truncate
