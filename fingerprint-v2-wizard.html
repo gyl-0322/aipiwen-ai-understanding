@@ -1628,51 +1628,97 @@ function classify() {
     return { mainType: '逆思型 R', tagline: '逆向思考 · 创意非凡 · 与众不同', key: 'rl' };
   }
 
-  const rtIsW  = IS_W(d.rtThumb);
-  const ltIsW  = IS_W(d.ltThumb);
-  const rtIsLu = d.luFingers.has(0);
-  const ltIsLu = d.luFingers.has(5);
+  const rt = d.rtThumb, lt = d.ltThumb;
+  const rtIsW   = IS_W(rt);
+  const ltIsW   = IS_W(lt);
+  const rtIsLu  = d.luFingers.has(0);
+  const ltIsLu  = d.luFingers.has(5);
   const rtIsArc = d.xFingers.has(0) || d.xnFingers.has(0);
   const ltIsArc = d.xFingers.has(5) || d.xnFingers.has(5);
 
-  // Total counts
   const totalW   = (rtIsW ? 1 : 0) + (ltIsW ? 1 : 0) + d.wOtherFingers.size;
   const totalLu  = d.luFingers.size;
   const totalArc = d.xFingers.size + d.xnFingers.size;
 
-  // Both thumbs W → cognitive family
-  if (rtIsW && ltIsW) {
-    if (totalW >= 10) {
-      // Subtype by thumb pattern
-      const rt = d.rtThumb, lt = d.ltThumb;
-      const isSpiral  = t => t === 'Ws';
-      const isDouble  = t => t === 'Wd' || t === 'Wc';
-      const isPeacock = t => t === 'We' || t === 'Wpe';
-      if (isSpiral(rt)  && isSpiral(lt))  return { mainType: '超级认知A · 螺旋领袖', tagline: '天生领袖 · 主见极强 · 目标必达 · 王者之气', key: 'super_w_a' };
-      if (isDouble(rt)  && isDouble(lt))  return { mainType: '超级认知B · 双核整合', tagline: '领袖气质 · 全局整合 · 多维并行 · 跨界高手', key: 'super_w_b' };
-      if (isPeacock(rt) && isPeacock(lt)) return { mainType: '超级认知C · 孔雀完美', tagline: '领袖气质 · 极致审美 · 完美追求 · 卓越标准', key: 'super_w_c' };
-      return { mainType: '超级认知型 W', tagline: '唯我独尊 · 领袖风范 · 王者之气', key: 'super_w' };
-    }
-    if (totalW >= 6)  return { mainType: '认知型 W',     tagline: '主见权威 · 好奇心强 · 探索型',     key: 'w' };
-    return               { mainType: '认知倾向 W',   tagline: '有主见 · 好奇心 · 探索倾向',       key: 'w_mild' };
+  // Whorl subtype helpers
+  const isSpiral  = t => t === 'Ws';
+  const isDouble  = t => t === 'Wd' || t === 'Wc';
+  const isPeacock = t => t === 'We' || t === 'Wpe';
+  function wLabel(t) {
+    if (isDouble(t))  return '整合';
+    if (isPeacock(t)) return '完美';
+    return '认知';   // Ws, Wt, Wsp, Wsp-r, or any other W
   }
 
-  // Both thumbs Lu → mimicry family
+  // Index finger (食指) arc: right index = fi 1, left index = fi 6
+  const hasIndexArc = d.xFingers.has(1) || d.xnFingers.has(1) ||
+                      d.xFingers.has(6) || d.xnFingers.has(6);
+
+  // ── TEN WHORL ────────────────────────────────────────────
+  if (totalW >= 10) {
+    if (isSpiral(rt)  && isSpiral(lt))  return { mainType: '超级认知A · 螺旋领袖', tagline: '天生领袖 · 主见极强 · 目标必达 · 王者之气', key: 'super_w_a' };
+    if (isDouble(rt)  && isDouble(lt))  return { mainType: '超级认知B · 双核整合', tagline: '领袖气质 · 全局整合 · 多维并行 · 跨界高手', key: 'super_w_b' };
+    if (isPeacock(rt) && isPeacock(lt)) return { mainType: '超级认知C · 孔雀完美', tagline: '领袖气质 · 极致审美 · 完美追求 · 卓越标准', key: 'super_w_c' };
+    // Any other mixed ten-whorl → 超级认知A
+    return { mainType: '超级认知A · 螺旋领袖', tagline: '天生领袖 · 主见极强 · 目标必达 · 王者之气', key: 'super_w_a' };
+  }
+
+  // ── BOTH THUMBS W ────────────────────────────────────────
+  if (rtIsW && ltIsW) {
+    const lrt = wLabel(rt), llt = wLabel(lt);
+    if (lrt !== llt) {
+      // Different W subtypes → 兼型 (认知兼整合 / 认知兼完美 / 整合兼完美)
+      const ORDER = ['认知', '整合', '完美'];
+      const [a, b] = [lrt, llt].sort((x, y) => ORDER.indexOf(x) - ORDER.indexOf(y));
+      return { mainType: `${a}兼${b}型`, tagline: `${a}主导 · ${b}加持 · 多元认知天赋`, key: 'combo_w' };
+    }
+    // Same W subtype — check index-finger arc special rule
+    const lbl = lrt;
+    if (hasIndexArc && !rtIsArc && !ltIsArc) {
+      return { mainType: `${lbl}兼开放型`, tagline: `${lbl}主导 · 开放加持 · 吸收力强`, key: 'combo_open' };
+    }
+    // Pure same-subtype W
+    if (lbl === '整合') {
+      if (totalW >= 6) return { mainType: '整合型 W', tagline: '双核思维 · 多维整合 · 灵活高手', key: 'wc' };
+      return { mainType: '整合倾向 W', tagline: '双核思维倾向 · 灵活适应 · 多维思考', key: 'wc' };
+    }
+    if (lbl === '完美') {
+      if (totalW >= 6) return { mainType: '完美型 W', tagline: '极致标准 · 审美卓越 · 追求完美', key: 'super_w_c' };
+      return { mainType: '完美倾向 W', tagline: '高标准 · 审美敏感 · 追求完美', key: 'super_w_c' };
+    }
+    // 认知 (Ws or other W types)
+    if (totalW >= 6) return { mainType: '认知型 W',   tagline: '主见权威 · 好奇心强 · 探索型',   key: 'w' };
+    return             { mainType: '认知倾向 W', tagline: '有主见 · 好奇心 · 探索倾向',     key: 'w_mild' };
+  }
+
+  // ── BOTH THUMBS Lu ───────────────────────────────────────
   if (rtIsLu && ltIsLu) {
-    if (totalLu >= 10) return { mainType: '超级模仿型 L', tagline: '敞开接纳 · 大公无私 · 奉献型',   key: 'super_l' };
+    if (totalLu >= 10) return { mainType: '超级模仿型 L', tagline: '敞开接纳 · 大公无私 · 奉献型', key: 'super_l' };
+    if (hasIndexArc)   return { mainType: '模仿兼开放型', tagline: '模仿主导 · 开放加持 · 超强吸收力', key: 'combo_open' };
     if (totalLu >= 6)  return { mainType: '模仿型 L',     tagline: '善于模仿 · 适应力强 · 服务型',   key: 'l' };
     return               { mainType: '模仿倾向 L',   tagline: '适应力强 · 善于学习 · 配合型',     key: 'l_mild' };
   }
 
-  // Both thumbs arc → open type
-  if (rtIsArc && ltIsArc)  return { mainType: '开放型 X', tagline: '海绵学习 · 踏实肯干 · 简单极致', key: 'x' };
-  if (totalArc >= 6)        return { mainType: '开放型 X', tagline: '海绵学习 · 踏实肯干 · 简单极致', key: 'x' };
+  // ── BOTH THUMBS ARC ──────────────────────────────────────
+  if (rtIsArc && ltIsArc) return { mainType: '开放型 X', tagline: '海绵学习 · 踏实肯干 · 简单极致', key: 'x' };
+  if (totalArc >= 6)       return { mainType: '开放型 X', tagline: '海绵学习 · 踏实肯干 · 简单极致', key: 'x' };
 
-  // One W + one Lu → integrator
-  if ((rtIsW && ltIsLu) || (rtIsLu && ltIsW))
-    return { mainType: '整合型 WC', tagline: '灵活善变 · 价值思维 · 多面高手', key: 'wc' };
+  // ── MIXED THUMB TYPES ────────────────────────────────────
+  // One W + one Lu → 认知/整合/完美 兼模仿
+  if ((rtIsW && ltIsLu) || (rtIsLu && ltIsW)) {
+    const lbl = wLabel(rtIsW ? rt : lt);
+    return { mainType: `${lbl}兼模仿型`, tagline: `${lbl}主导 · 模仿加持 · 多元天赋`, key: 'combo_w_l' };
+  }
+  // One W + one Arc thumb → 认知/整合/完美 兼开放
+  if ((rtIsW && ltIsArc) || (rtIsArc && ltIsW)) {
+    const lbl = wLabel(rtIsW ? rt : lt);
+    return { mainType: `${lbl}兼开放型`, tagline: `${lbl}主导 · 开放加持 · 吸收力强`, key: 'combo_open' };
+  }
+  // One Lu + one Arc thumb → 模仿兼开放
+  if ((rtIsLu && ltIsArc) || (rtIsArc && ltIsLu))
+    return { mainType: '模仿兼开放型', tagline: '模仿主导 · 开放加持 · 超强吸收力', key: 'combo_open' };
 
-  // Fallback: combo
+  // Fallback
   return { mainType: '组合型', tagline: '多元特质 · 灵活应变 · 综合型', key: 'combo' };
 }
 
@@ -1707,12 +1753,6 @@ function generateReport(result) {
     learning = '<p><strong>精深式学习</strong>最适合你：宁愿把一件事做到极致，也不愿意浅尝多件。<strong>高标准驱动</strong>：给自己设定"比上次更好"的目标，才能激发真正的动力。<strong>审美和品质感</strong>很重要——学习环境、工具、材料的质量会影响你的状态。</p>';
     career = '<p><strong>推荐方向：</strong>建筑师、高端产品设计师、医疗精密领域（心外科、显微外科）、艺术总监、奢侈品牌策略、顶级律师。这些角色都要求"近乎完美"的标准——你与生俱来。</p>';
     advice = '<p><strong>给家长的建议：</strong>保护这个孩子对"好"的敏感，但注意引导他/她区分"追求卓越"和"无法接受不完美"的边界。允许过程中的不完美，同时肯定他/她对高标准的坚持。<strong>给他/她做"真正有意义的事"的机会</strong>，他/她不甘平庸。</p>';
-  } else if (key === 'super_w') {
-    talents = '领袖气质 · 主见坚定 · 目标导向 · 王者之气';
-    advantage = '<p>你是天生的领导者，10个手指都是斗形纹，意味着极强的<strong>自我意识和主见</strong>。"我知道我要什么"是你的人生信条。你不是在跟随潮流，而是在定义方向。</p><p>斗形纹代表目标感和掌控力。在团队中，你往往自然成为那个"拿主意的人"。这不是傲慢，而是与生俱来的领导力。</p>';
-    learning = '<p><strong>目标驱动式学习</strong>最有效。先明确"学这个有什么用"，动力就会爆棚。<strong>挑战性任务</strong>比重复练习更适合——需要感受到"我在征服难题"。<strong>给予决策权</strong>：让自己制定学习计划，甚至可以选择跳过已掌握的内容。</p>';
-    career = '<p><strong>推荐方向：</strong>CEO/创始人、技术负责人、项目经理、律师、外科医生、投资经理。这些角色需要强大的决断力和目标感，与天赋完美匹配。</p>';
-    advice = '<p><strong>给家长的建议：</strong>超级认知型的孩子需要"尊重"多于"管教"。给选择权和决策空间，哪怕是小事。<strong>讲道理比下命令有效</strong>——这类孩子需要理解"为什么"，而不是被告知"做什么"。</p>';
   } else if (key === 'w' || key === 'w_mild') {
     talents = '好奇心强 · 主见权威 · 探索欲旺 · 自我驱动';
     advantage = '<p>斗形纹居多意味着你有<strong>强烈的好奇心和主见</strong>。"为什么"是你的口头禅，你不满足于表面答案，总想探究事物的本质。在讨论中，你不是为了赢，而是为了接近真理。</p>';
@@ -1738,11 +1778,29 @@ function generateReport(result) {
     career = '<p><strong>推荐方向：</strong>会计师、质检工程师、运营专员、图书馆员、行政主管、技术文档工程师。这些角色需要细致、耐心和执行力，与天赋完美匹配。</p>';
     advice = '<p><strong>给家长的建议：</strong>开放型的孩子需要<strong>稳定的环境</strong>和<strong>明确的规则</strong>。不要突然改变计划或规则。早期建立良好的生活和学习习惯至关重要，因为这些习惯会伴随终身。</p>';
   } else if (key === 'wc') {
-    talents = '灵活善变 · 资源整合 · 多面手 · 适应力MAX';
-    advantage = '<p>一斗一箕的组合赋予你<strong>极强的灵活性和适应力</strong>。你能在不同场景中切换模式，像变色龙一样融入各种环境。你可以同时理解不同立场的人，在不同领域都有涉猎。</p>';
-    learning = '<p><strong>多样化输入</strong>最适合你。不要局限于一种学习方式——看书、看视频、动手做、讨论、教学他人，轮着来。<strong>跨学科学习</strong>：把不同领域的知识连接起来，你会产生独特的洞见。</p>';
-    career = '<p><strong>推荐方向：</strong>产品经理、咨询顾问、自媒体创作者、活动策划、创业联合创始人。这些角色需要整合多方资源、应对多变场景，正是你的舞台。</p>';
-    advice = '<p><strong>给家长的建议：</strong>整合型的孩子可能看起来"三分钟热度"——这不一定是坏事，他/她是在探索自己的可能性。<strong>支持探索但引导深入</strong>：允许尝试多种兴趣，但当找到真正喜欢的时，鼓励坚持下去。</p>';
+    talents = '双核思维 · 多维整合 · 灵活切换 · 跨界高手';
+    advantage = '<p>两个大拇指都是双斗纹型，赋予你<strong>双核处理器式的整合能力</strong>。你的大脑能同时运行两套逻辑，在不同视角间灵活切换，将看似矛盾的信息整合为统一方案。</p><p>整合型的你天生是"桥梁建造者"：能理解多方立场、找到共识，将不同资源和观点整合为有价值的结果。在团队中你是最擅长"把各方拉到一起"的人。</p>';
+    learning = '<p><strong>跨领域连接式学习</strong>最适合你：把不同领域的知识"接起来"发现规律。<strong>多线并行</strong>：你不怕同时推进多个任务，反而在多线中效率更高。学习时主动问"这和我已知的哪些知识有关联？"</p>';
+    career = '<p><strong>推荐方向：</strong>战略咨询顾问、跨职能项目经理、产品经理、商业谈判专家、自媒体创作者。这些角色需要整合多方资源、驾驭复杂局面，正是你的舞台。</p>';
+    advice = '<p><strong>给家长的建议：</strong>整合型孩子在"复杂"中才能发挥最大价值。不要给过于单一的任务，适当出题——比如"这个问题可以从哪两个角度解决？"培养全局观，鼓励在不同兴趣之间建立连接。</p>';
+  } else if (key === 'combo_w') {
+    talents = '多维认知 · 双重天赋叠加 · 主见 + 兼容并蓄 · 跨类型高手';
+    advantage = '<p>你的两个大拇指属于<strong>不同的斗形纹子类型</strong>——这是"双重认知天赋叠加"的组合。斗形纹本身代表强烈的主见和目标感，而两拇指不同的子类型又赋予你跨维度的视角。</p><p>不同子类型各有侧重：螺旋斗偏"自我主导"，双斗偏"整合多元"，孔雀眼偏"追求完美"。两种特质同时在线，让你既有清晰的核心方向，又具备多维度思考的灵活性。</p>';
+    learning = '<p><strong>目标驱动 + 多维连接</strong>是你的最佳模式：先设定清晰目标（来自认知型特质），再在不同知识间建立跨领域联系（来自整合/完美型特质）。<strong>深度与广度并举</strong>——不只是深挖一个方向，而是在多个方向上找到规律和关联。</p>';
+    career = '<p><strong>推荐方向：</strong>战略咨询师、产品负责人、企业创始人、跨职能团队领导、研究型管理者。你的多维天赋让你在需要"既有主见又能整合"的角色中大放异彩。</p>';
+    advice = '<p><strong>给家长的建议：</strong>这个孩子有两种认知特质叠加，需要多样化的挑战来激活潜能。<strong>同时给深度和广度的学习机会</strong>，观察他/她在哪个维度上展现更大热情，然后重点培养。</p>';
+  } else if (key === 'combo_w_l') {
+    talents = '认知与模仿双驱动 · 灵活善变 · 主见 + 共情 · 多面高手';
+    advantage = '<p>一斗一箕的大拇指组合，赋予你<strong>认知力与模仿力的双重天赋</strong>。你既有斗形纹的主见和目标感，又有箕形纹的适应力和共情能力。</p><p>这让你成为天然的"桥梁人物"：能独立思考、坚持主见，同时也善于感知他人、适应环境。在团队中你既可以定方向，也可以凝聚人心——两种能力都是真实存在的。</p>';
+    learning = '<p><strong>主动探索 + 榜样学习</strong>交替使用效果最佳。发挥认知型特质去独立探究，再发挥模仿型特质跟随优秀榜样吸收方法。<strong>找到一位好导师</strong>，在引领下发挥你的主见，事半功倍。</p>';
+    career = '<p><strong>推荐方向：</strong>产品经理、咨询顾问、团队领导、自媒体创作者、活动策划、创业联合创始人。整合多方资源、适应多变场景——正是你的舞台。</p>';
+    advice = '<p><strong>给家长的建议：</strong>这个孩子需要"尊重 + 引导"并重。他/她有自己的想法（斗纹特质），同时高度依赖榜样（箕纹特质）。<strong>以身作则 + 尊重孩子意见</strong>，双管齐下效果最好。</p>';
+  } else if (key === 'combo_open') {
+    talents = '主导天赋 + 海绵吸收力 · 踏实肯干 · 主见与执行兼备';
+    advantage = '<p>你的主导纹型（大拇指）决定了核心天赋方向，而弧形纹出现在食指（或其他手指）上，赋予了你<strong>额外的开放性和落地执行力</strong>。</p><p>弧形纹代表"海绵特质"——高度开放、踏实肯干、乐于吸收。与主导天赋结合，让你既有方向感和主见，又能认真落地执行。这是"想得到 + 做得到"的组合，在实战中极为稀缺。</p>';
+    learning = '<p><strong>先思考后执行</strong>是你的最佳节奏：先发挥主导天赋设定方向，再发挥开放型特质认真落地。<strong>结构化练习</strong>对你很有效（来自弧形纹特质），同时要设定有意义的目标激发主导天赋。</p>';
+    career = '<p><strong>推荐方向：</strong>技术负责人、项目执行经理、独立开发者、工程师、医疗专业人才、法务专员。在需要"既有主见又能踏实执行"的角色中你最能发光。</p>';
+    advice = '<p><strong>给家长的建议：</strong>这个孩子既有方向感，又愿意踏实去做——是难得的品质组合。<strong>给清晰的目标 + 稳定的执行环境</strong>，不要频繁打断他/她的专注状态。培养把"想法"转化为"行动"的能力。</p>';
   } else {
     talents = '多元特质 · 综合发展 · 灵活应变 · 平衡发展';
     advantage = '<p>你的指纹纹型分布非常均衡，这意味着你拥有<strong>多元化的天赋组合</strong>。你不是单一类型的典型代表，而是多种特质的融合体，在不同场合展现不同优势。</p>';
