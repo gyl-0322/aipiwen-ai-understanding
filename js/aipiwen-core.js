@@ -2061,6 +2061,19 @@ const AIPIWENConsultingAgent = {
     ConsultingSessionStore.addTurn(session, 'agent', response);
     ConsultingSessionStore.save(session);
 
+    // ── 埋点：processInput 各阶段行为 ──────────────────────────
+    ProductAnalyticsTracker.track(userId, 'user_input', 'session', 'interacted',
+      { session_id: session.session_id, stage: session.stage, action: action });
+    if (action === 'analyze') {
+      ProductAnalyticsTracker.track(userId, 'generate_report', 'report', 'executed',
+        { session_id: session.session_id });
+    }
+    if (action === 'recommend') {
+      ProductAnalyticsTracker.track(userId, 'accept_intervention', 'intervention', 'executed',
+        { session_id: session.session_id });
+    }
+    // ────────────────────────────────────────────────────────────
+
     // ══ Product Layer：每次响应后更新习惯循环 + 面板 ══
     const productUpdate = ProductLayer.onResponseComplete(userId, session.session_id, session.stage);
 
@@ -2446,6 +2459,23 @@ const AIPIWENConsultingAgent = {
 
     // Product Layer：每日洞察 + 面板 + 习惯提醒
     const productData = ProductLayer.onSessionStart(userId);
+
+    // ── 埋点：open_session / return_visit ──────────────────────
+    const _isReturn = historyCtx.sessionCount >= 1;
+    ProductAnalyticsTracker.track(userId,
+      _isReturn ? 'return_visit' : 'open_session',
+      'session', 'viewed',
+      { session_id: session.session_id, is_return: _isReturn, session_count: historyCtx.sessionCount }
+    );
+    if (productData.daily) {
+      ProductAnalyticsTracker.track(userId, 'view_daily_insight', 'insight', 'viewed',
+        { session_id: session.session_id });
+    }
+    if (productData.pending && productData.pending.is_due) {
+      ProductAnalyticsTracker.track(userId, 'behavior_loop', 'followup', 'viewed',
+        { session_id: session.session_id, trigger: 'habit_due' });
+    }
+    // ────────────────────────────────────────────────────────────
 
     let greeting = AgentResponseGenerator.greeting(historyCtx);
 
@@ -3087,7 +3117,226 @@ const ProductLayer = {
 
   // 每7天调用一次 — 生成周报
   getWeeklyReport(userId) {
+    ProductAnalyticsTracker.track(userId, 'weekly_report', 'dashboard', 'viewed', {});
     return WeeklyFamilyReport.generate(userId);
+  }
+};
+
+/* ================================================================
+   产品验证 + 留存分析系统 V1
+   ProductAnalyticsTracker · RetentionAnalyzer · BehaviorEngagementEngine
+================================================================ */
+
+/* ── ProductAnalyticsTracker（行为埋点系统）── */
+const ProductAnalyticsTracker = {
+  KEY: 'aipiwen_analytics_v1_',
+  DAY_MS: 86400000,
+
+  _load: function(userId) {
+    try { return JSON.parse(localStorage.getItem(this.KEY + userId) || '[]'); } catch(e) { return []; }
+  },
+
+  _save: function(userId, events) {
+    try {
+      if (events.length > 500) events = events.slice(-500);
+      localStorage.setItem(this.KEY + userId, JSON.stringify(events));
+    } catch(e) {}
+  },
+
+  // 核心埋点入口
+  track: function(userId, actionType, module, depthLevel, extra) {
+    if (!userId) return;
+    var events = this._load(userId);
+    events.push({
+      user_id:     userId,
+      session_id:  extra && extra.session_id ? extra.session_id : '',
+      timestamp:   Date.now(),
+      action_type: actionType,   // open_session / return_visit / view_daily_insight / generate_report / accept_intervention / ignore_intervention / user_input / behavior_loop / weekly_report
+      module:      module,       // session / insight / report / intervention / dashboard / followup
+      depth_level: depthLevel,   // viewed / interacted / executed
+      extra:       extra || {}
+    });
+    this._save(userId, events);
+  },
+
+  getEvents: function(userId) { return this._load(userId); },
+
+  // 首次 open_session 时间戳
+  getFirstSessionTime: function(userId) {
+    var events = this._load(userId);
+    var first = null;
+    for (var i = 0; i < events.length; i++) {
+      if (events[i].action_type === 'open_session' || events[i].action_type === 'return_visit') {
+        first = events[i]; break;
+      }
+    }
+    return first ? first.timestamp : null;
+  },
+
+  // 指定时间窗口内是否有事件
+  _hasEventInWindow: function(events, start, end) {
+    for (var i = 0; i < events.length; i++) {
+      if (events[i].timestamp >= start && events[i].timestamp < end) return true;
+    }
+    return false;
+  }
+};
+
+/* ── RetentionAnalyzer（留存分析系统）── */
+const RetentionAnalyzer = {
+  analyze: function(userId) {
+    var events  = ProductAnalyticsTracker.getEvents(userId);
+    var firstTs = ProductAnalyticsTracker.getFirstSessionTime(userId);
+    var empty   = { d1_retention: false, d3_retention: false, d7_retention: false,
+                    avg_session_per_user: 0, dependency_score: 'low',
+                    total_sessions: 0, active_days: 0, last_active_days_ago: null };
+    if (!firstTs || events.length === 0) return empty;
+
+    var DAY = ProductAnalyticsTracker.DAY_MS;
+    var now = Date.now();
+
+    // 活跃天数
+    var dayBuckets = {};
+    for (var i = 0; i < events.length; i++) {
+      var dk = Math.floor(events[i].timestamp / DAY);
+      dayBuckets[dk] = (dayBuckets[dk] || 0) + 1;
+    }
+    var activeDays = Object.keys(dayBuckets).length;
+
+    // 最后活跃
+    var lastTs = 0;
+    for (var j = 0; j < events.length; j++) { if (events[j].timestamp > lastTs) lastTs = events[j].timestamp; }
+    var lastActiveDaysAgo = Math.floor((now - lastTs) / DAY);
+
+    // D1 / D3 / D7 留存
+    var d1 = ProductAnalyticsTracker._hasEventInWindow(events, firstTs + DAY,     firstTs + 2 * DAY);
+    var d3 = ProductAnalyticsTracker._hasEventInWindow(events, firstTs + 3 * DAY, firstTs + 4 * DAY);
+    var d7 = ProductAnalyticsTracker._hasEventInWindow(events, firstTs + 7 * DAY, firstTs + 8 * DAY);
+
+    // 总会话数
+    var totalSessions = events.filter(function(e) {
+      return e.action_type === 'open_session' || e.action_type === 'return_visit';
+    }).length;
+
+    // 依赖度
+    var depScore = 'low';
+    if (activeDays >= 14 || (d7 && totalSessions >= 5))        depScore = 'high';
+    else if (activeDays >= 4 || d3 || totalSessions >= 3)       depScore = 'medium';
+
+    return {
+      d1_retention:         d1,
+      d3_retention:         d3,
+      d7_retention:         d7,
+      avg_session_per_user: totalSessions,
+      dependency_score:     depScore,
+      total_sessions:       totalSessions,
+      active_days:          activeDays,
+      last_active_days_ago: lastActiveDaysAgo
+    };
+  }
+};
+
+/* ── BehaviorEngagementEngine（行为依赖引擎）── */
+const BehaviorEngagementEngine = {
+  evaluate: function(userId) {
+    var events    = ProductAnalyticsTracker.getEvents(userId);
+    var retention = RetentionAnalyzer.analyze(userId);
+
+    if (events.length === 0) {
+      return { engagement_type: 'cold', trigger_source: 'manual',
+               behavior_loops_detected: [], risk_of_churn: 'high' };
+    }
+
+    // 来源统计
+    var sources = { daily: 0, weekly: 0, intervention: 0, manual: 0 };
+    for (var i = 0; i < events.length; i++) {
+      var et = events[i].action_type;
+      if (et === 'view_daily_insight')    sources.daily++;
+      else if (et === 'weekly_report')    sources.weekly++;
+      else if (et === 'accept_intervention') sources.intervention++;
+      else if (et === 'open_session' || et === 'return_visit') sources.manual++;
+    }
+
+    // 主触发源
+    var triggerSource = 'manual';
+    var maxCount = -1;
+    var keys = Object.keys(sources);
+    for (var k = 0; k < keys.length; k++) {
+      if (sources[keys[k]] > maxCount) { maxCount = sources[keys[k]]; triggerSource = keys[k]; }
+    }
+
+    // 行为循环检测
+    var loops = [];
+    if (sources.daily >= 3)              loops.push('daily_insight_habit');
+    if (sources.weekly >= 2)             loops.push('weekly_report_habit');
+    if (sources.intervention >= 2)       loops.push('intervention_execution_habit');
+    if (retention.total_sessions >= 5)   loops.push('multi_session_pattern');
+
+    // 参与类型
+    var engType = 'cold';
+    if (retention.dependency_score === 'high' && loops.length >= 2) engType = 'addicted';
+    else if (retention.dependency_score === 'medium' || loops.length >= 1) engType = 'warm';
+    else if (retention.last_active_days_ago !== null && retention.last_active_days_ago > 30) engType = 'inactive';
+
+    // 流失风险
+    var churn = 'low';
+    if (retention.last_active_days_ago === null || retention.last_active_days_ago > 14) churn = 'high';
+    else if (retention.last_active_days_ago > 7 || engType === 'cold') churn = 'medium';
+
+    return {
+      engagement_type:         engType,       // cold / warm / addicted / inactive
+      trigger_source:          triggerSource, // daily / weekly / intervention / manual
+      behavior_loops_detected: loops,
+      risk_of_churn:           churn
+    };
+  },
+
+  // 内部留存面板（供 admin 调用）
+  getDashboard: function(userId) {
+    var retention  = RetentionAnalyzer.analyze(userId);
+    var engagement = this.evaluate(userId);
+    var events     = ProductAnalyticsTracker.getEvents(userId);
+
+    // 功能使用热力图
+    var moduleUsage = {};
+    for (var i = 0; i < events.length; i++) {
+      var m = events[i].module || 'unknown';
+      moduleUsage[m] = (moduleUsage[m] || 0) + 1;
+    }
+
+    // 7天活跃曲线
+    var DAY = ProductAnalyticsTracker.DAY_MS;
+    var now = Date.now();
+    var weekly_curve = [];
+    for (var d = 6; d >= 0; d--) {
+      var dayStart = now - (d + 1) * DAY;
+      var dayEnd   = now - d * DAY;
+      var label    = new Date(dayStart).toLocaleDateString('zh-CN', { month: 'numeric', day: 'numeric' });
+      var count    = events.filter(function(e) { return e.timestamp >= dayStart && e.timestamp < dayEnd; }).length;
+      weekly_curve.push({ label: label, count: count });
+    }
+
+    // 为什么回来 / 为什么不回来
+    var why_return  = [];
+    var why_churn   = [];
+    if (moduleUsage['insight'] > 0)      why_return.push('今日洞察触发回访');
+    if (moduleUsage['report'] > 0)       why_return.push('报告生成带来留存');
+    if (moduleUsage['intervention'] > 0) why_return.push('干预计划执行带来依赖');
+    if (engagement.risk_of_churn === 'high') {
+      if (!retention.d1_retention) why_churn.push('D1 未回访，初次体验未绑定');
+      if (moduleUsage['insight'] === undefined) why_churn.push('每日洞察未使用');
+      if (moduleUsage['intervention'] === undefined) why_churn.push('未执行任何建议，无行为闭环');
+    }
+
+    return {
+      retention:    retention,
+      engagement:   engagement,
+      module_usage: moduleUsage,
+      weekly_curve: weekly_curve,
+      total_events: events.length,
+      why_return:   why_return,
+      why_churn:    why_churn
+    };
   }
 };
 
@@ -3131,6 +3380,10 @@ window.AIPIWEN = {
   BehaviorHabitLoop,
   FamilyProgressDashboard,
   ProductLayer,
+  // 产品验证 + 留存分析系统 V1
+  ProductAnalyticsTracker,
+  RetentionAnalyzer,
+  BehaviorEngagementEngine,
   // Unified Agent
   AIPIWENConsultingAgent,
   generateReportId,
