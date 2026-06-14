@@ -2027,14 +2027,19 @@ const AIPIWENConsultingAgent = {
       }
 
     } else if (session.stage === 'recommendation') {
-      // V3-C：输出行为改变计划（不只是建议，而是干预路径）
+      // V4：输出完整 Day1→Day7→30天 行为改变计划
       if (session.analysis_result) {
-        const intervention = BehaviorInterventionEngine.generate(session.analysis_result, session.last_insight);
-        const plan         = BehaviorChangePlanGenerator.generate(intervention, session.analysis_result, dynamicResult);
-        response = this._buildV3CChangePlan(session.analysis_result, intervention, plan, dynamicResult);
+        const intervention  = BehaviorInterventionEngine.generate(session.analysis_result, session.last_insight);
+        const plan3c        = BehaviorChangePlanGenerator.generate(intervention, session.analysis_result, dynamicResult);
+        const familyStruct  = session.family_structure || FamilyStructureAnalyzer.analyze(
+          session.collected_info.behavior_raw, history, session.analysis_result
+        );
+        const v4plan        = BehaviorChangePlanner.plan(familyStruct, session.analysis_result, intervention, plan3c);
+        response = this._buildV4FullPlan(session.analysis_result, intervention, plan3c, v4plan, familyStruct, dynamicResult);
         analysisResult = session.analysis_result;
         session.last_intervention = intervention;
-        session.last_plan         = plan;
+        session.last_plan         = plan3c;
+        session.v4_plan           = v4plan;
         session.stage = 'complete';
         action = 'recommend';
       } else {
@@ -2043,8 +2048,13 @@ const AIPIWENConsultingAgent = {
       }
 
     } else {
-      // complete → 自由对话（V3-C：可继续追踪执行情况）
-      response = '你有没有尝试过上面的方法？如果遇到新的情况，随时告诉我，我们可以继续调整。';
+      // complete → 闭环自由对话（记录反馈，持续优化）
+      const fbEval = FeedbackLoopSystem.evaluate(userId);
+      if (fbEval.message) {
+        response = fbEval.message + '\n\n你有没有尝试过上面的方法？有什么新的情况，随时告诉我。';
+      } else {
+        response = '你有没有尝试过上面的方法？如果遇到新的情况，随时告诉我，我们可以继续调整。';
+      }
       action = 'chat';
     }
 
@@ -2054,7 +2064,7 @@ const AIPIWENConsultingAgent = {
     return { response, action, session, stage: session.stage, analysisResult };
   },
 
-  // V3-C 升级：完整分析管道（V2 + V3-B + V3-C）
+  // V3-D + V4 统一管道（保留 V2 + V3-B + V3-C，叠加关系理解 + 行为成长）
   _runAnalysis(userId, session, history, insight) {
     const behavior     = session.collected_info.behavior_raw;
     const analysis     = AnalysisEngine.analyze(behavior, history);
@@ -2067,28 +2077,45 @@ const AIPIWENConsultingAgent = {
       session.turns.filter(function(t) { return t.role === 'user'; }).length
     );
 
-    // ══ V3-C 干预管道 ══
+    // V3-C 干预管道
     const dynamicResult  = FamilyDynamicTracker.track(userId, history, analysis);
     const intervention   = BehaviorInterventionEngine.generate(analysis, insight);
-    session.family_dynamic    = dynamicResult;
-    session.last_intervention = intervention;
 
-    // 写入 V2 记忆系统
+    // ══ V3-D：关系结构分析 ══
+    const allUserText  = session.turns.filter(function(t) { return t.role === 'user'; }).map(function(t) { return t.content; }).join(' ');
+    const familyStruct = FamilyStructureAnalyzer.analyze(allUserText, history, analysis);
+
+    // ══ V4：行为成长系统 ══
+    const plan3c   = BehaviorChangePlanGenerator.generate(intervention, analysis, dynamicResult);
+    const growth   = BehaviorGrowthEngine.generate(familyStruct, analysis, intervention);
+    const v4plan   = BehaviorChangePlanner.plan(familyStruct, analysis, intervention, plan3c);
+    const feedback = FeedbackLoopSystem.evaluate(userId);
+
+    // 写入会话状态
+    session.family_dynamic      = dynamicResult;
+    session.last_intervention   = intervention;
+    session.family_structure    = familyStruct;
+    session.growth_engine       = growth;
+    session.v4_plan             = v4plan;
+
+    // 写入 V2 记忆系统（闭环）
     MemorySystem.add(userId, {
-      input: behavior,
-      analysis: { primary: analysis.primary, secondary: analysis.secondary, legacyType: analysis.legacyType },
-      tags: analysis.tags,
-      report_id: 'consult_' + session.session_id
+      input:      behavior,
+      analysis:   { primary: analysis.primary, secondary: analysis.secondary, legacyType: analysis.legacyType },
+      tags:       analysis.tags,
+      report_id:  'consult_' + session.session_id,
+      rel_type:   familyStruct.relationship_type
     });
 
     const reportId = generateReportId();
     LeadSystem.create(userId, reportId, analysis, behavior);
 
-    // V3-C：整合分析 + 干预目标的完整回复
-    const response = this._buildV3CAnalysisResponse(
-      analysis, whyParagraph, trendResult, insight, path, dynamicResult, intervention, session.collected_info
+    // ══ 统一响应：关系理解优先，行为建议其次，闭环收尾 ══
+    const response = this._buildUnifiedResponse(
+      analysis, whyParagraph, trendResult, insight, path,
+      dynamicResult, intervention, familyStruct, growth, v4plan, feedback, session.collected_info
     );
-    return { response, analysis, whyParagraph, trendResult, reportId, path, dynamicResult, intervention };
+    return { response, analysis, whyParagraph, trendResult, reportId, path, dynamicResult, intervention, familyStruct, growth, v4plan };
   },
 
   // V3-B 保留：三层洞察分析回复（供外部调用）
@@ -2193,6 +2220,84 @@ const AIPIWENConsultingAgent = {
     return lines.join('\n');
   },
 
+  // ══ V3-D + V4 统一响应构建器（规则1：理解优先 规则2：可执行 规则3：闭环 规则4：引用历史）══
+  _buildUnifiedResponse(analysis, whyParagraph, trendResult, insight, path, dynamicResult, intervention, familyStruct, growth, v4plan, feedback, collectedInfo) {
+    const patternMeta = AnalysisEngine.PATTERNS[analysis.primary];
+    const label = patternMeta ? patternMeta.label : '行为模式';
+    const kp    = analysis.keyPhrase || (collectedInfo.behavior_raw || '').slice(0, 20);
+    const c     = ContentLibrary.lightReport(analysis);
+    const lines = [];
+
+    // ── 1. 共情 ──
+    lines.push('从你描述的「' + kp + '」来看，这不是偶然，背后有一个可以理解的家庭动态在运转。');
+    lines.push('');
+
+    // ── 2. V3-D：关系结构（理解优先原则）──
+    if (familyStruct && familyStruct.relationship_label) {
+      lines.push('**【家庭关系结构】** → ' + familyStruct.relationship_label);
+      lines.push(familyStruct.structure_model);
+      lines.push('');
+      lines.push('**行为循环模型：**');
+      if (familyStruct.behavior_loops && familyStruct.behavior_loops.length > 0) {
+        familyStruct.behavior_loops.forEach(function(loop) { lines.push('› ' + loop); });
+      }
+      lines.push('');
+      lines.push('**情绪动态：**' + (familyStruct.emotional_dynamics ? familyStruct.emotional_dynamics[0] : ''));
+      lines.push('');
+    }
+
+    // ── 3. V3-B 三层洞察 ──
+    if (insight && insight.surface) {
+      lines.push('**【三层分析】**');
+      lines.push('- **表层：**' + insight.surface);
+      lines.push('- **行为层：**' + insight.behavior);
+      if (insight.structural_key) lines.push('- **结构层：**' + (insight.structure || ''));
+      lines.push('');
+    }
+
+    // ── 4. V2 模式判断 + WHY ──
+    lines.push('**AI判断：「' + label + '」模式** — ' + c.insight);
+    if (whyParagraph && whyParagraph.mainReason) {
+      lines.push('**为什么：**' + whyParagraph.mainReason);
+      if (whyParagraph.secondReason) lines.push('另一个原因：' + whyParagraph.secondReason);
+    }
+    lines.push('');
+
+    // ── 5. V4 今日可执行行动（行为必须可执行原则）──
+    lines.push('**【今天可以做的】**');
+    if (growth && growth.today_action && growth.today_action.length > 0) {
+      growth.today_action.forEach(function(a) { lines.push('› ' + a); });
+    }
+    lines.push('');
+    if (growth && growth.comm_strategy) {
+      lines.push('**沟通调整：**' + growth.comm_strategy);
+      lines.push('');
+    }
+
+    // ── 6. V3-C 干预目标 ──
+    if (intervention && intervention.intervention_goal) {
+      lines.push('**干预目标：**' + intervention.intervention_goal);
+      if (intervention.risk_warning) lines.push('⚠ ' + intervention.risk_warning);
+      lines.push('');
+    }
+
+    // ── 7. V2 趋势（历史引用原则，回访专属）──
+    if (trendResult && trendResult.trendText && trendResult.totalSessions >= 2) {
+      lines.push('**从你的历史记录：**' + trendResult.trendText);
+      lines.push('');
+    }
+
+    // ── 8. FeedbackLoop（闭环原则）──
+    if (feedback && feedback.message) {
+      lines.push('**上次反馈：**' + feedback.message);
+      lines.push('');
+    }
+
+    // ── 9. 下一步路径（闭环收尾）──
+    lines.push('想要完整的 **Day 1→Day 7→30天** 家庭改善计划吗？告诉我，我马上给你。');
+    return lines.join('\n');
+  },
+
   // V3-C NEW：行为改变计划完整输出
   _buildV3CChangePlan(analysis, intervention, plan, dynamicResult) {
     const kp    = (analysis && analysis.keyPhrase) || '';
@@ -2257,6 +2362,65 @@ const AIPIWENConsultingAgent = {
     return lines.join('\n');
   },
 
+  // V4 完整计划输出：Day1-3 + Day4-7 + 30天路径 + 关系结构提示
+  _buildV4FullPlan(analysis, intervention, plan3c, v4plan, familyStruct, dynamicResult) {
+    const kp   = (analysis && analysis.keyPhrase) || '';
+    const rt   = familyStruct ? familyStruct.relationship_label : '';
+    const lines = [];
+
+    lines.push('**针对「' + kp + '」的完整行为改变路径：**');
+    if (rt) lines.push('（基于你家的关系模型：**' + rt + '**）');
+    lines.push('');
+
+    // 干预目标
+    if (intervention && intervention.intervention_goal) {
+      lines.push('**目标：**' + intervention.intervention_goal);
+      lines.push('');
+    }
+
+    // Day 1-3（V3-C + V4 合并）
+    lines.push('**Day 1–3（立即行动）：**');
+    (v4plan.day3_plan || plan3c.day1to3 || []).forEach(function(item) { lines.push('› ' + item); });
+    lines.push('');
+
+    // Day 4-7（V4 新增）
+    lines.push('**Day 4–7（建立新模式）：**');
+    (v4plan.day7_plan || plan3c.week1to2 || []).forEach(function(item) { lines.push('› ' + item); });
+    lines.push('');
+
+    // 30天路径（V4 新增）
+    lines.push('**30天家庭改善路径：**');
+    (v4plan.day30_plan || plan3c.long_term || []).forEach(function(item) { lines.push('› ' + item); });
+    lines.push('');
+
+    // 风险提醒
+    if (intervention && intervention.risk_warning) {
+      lines.push('**⚠ 注意：**' + intervention.risk_warning);
+      lines.push('');
+    }
+
+    // 家庭动态
+    if (dynamicResult && dynamicResult.escalation_risk === 'high') {
+      lines.push('**家庭关系提醒：**当前同时存在多个压力点——建议整体来看，而不是逐一处理行为。');
+      lines.push('');
+    }
+
+    // 关系结构下一步（闭环）
+    if (familyStruct && familyStruct.relationship_type) {
+      const nextSteps = {
+        control_dynamic:       '核心转变：从"管理孩子行为"→"和孩子一起设计规则"，这是最根本的结构改变。',
+        anxious_attachment:    '核心转变：从"保护孩子"→"相信孩子"，每次忍住不帮，就是在给孩子建立能力感。',
+        conflict_loop:         '核心转变：从"谁赢得争论"→"双方都被看见"，冲突不需要分胜负。',
+        emotional_suppression: '核心转变：从"问题行为管理"→"情绪表达合法化"，让情绪有出口，行为问题自然减少。'
+      };
+      const ns = nextSteps[familyStruct.relationship_type];
+      if (ns) { lines.push('**长期方向：**' + ns); lines.push(''); }
+    }
+
+    lines.push('尝试第一步后，回来告诉我结果——我会根据你的反馈调整下一步路径。');
+    return lines.join('\n');
+  },
+
   // V3-C 升级：开始新会话 — 复访用户触发 ConsultationFollowUpSystem
   startSession(userId) {
     const historyCtx = MemorySystem.getContext(userId);
@@ -2281,9 +2445,274 @@ const AIPIWENConsultingAgent = {
 };
 
 /* ================================================================
+   V3-D：Relationship OS（关系理解层）
+================================================================ */
+
+const RelationshipStructureEngine = {
+  TYPES: {
+    control_dynamic: {
+      label: '控制型家庭',
+      description: '父母通过高控制、高期望维持家庭秩序，孩子通过叛逆或顺从来应对',
+      triggers: ['不听话', '叛逆', '不让', '必须', '要求', '规定', '管', '控制', '不允许', '自己决定', '命令'],
+      behavior_loop: '父母要求 → 孩子抵抗 → 父母加压 → 孩子爆发或退缩 → 表面服从，内部积累',
+      emotional_dynamic: '父母：焦虑→控制 / 孩子：压抑→爆发'
+    },
+    anxious_attachment: {
+      label: '焦虑依附型',
+      description: '亲子关系中存在情感过度依赖，分离焦虑或过度保护',
+      triggers: ['黏', '分离', '焦虑', '担心', '害怕', '保护', '不放心', '离不开', '太依赖', '依赖'],
+      behavior_loop: '孩子依赖→父母回应→孩子更依赖 / 父母过保护→孩子退缩→父母更担心',
+      emotional_dynamic: '父母：担忧→过度介入 / 孩子：不安→寻求确认'
+    },
+    conflict_loop: {
+      label: '冲突循环型',
+      description: '家庭中存在重复性冲突模式，双方互相激化',
+      triggers: ['吵架', '冲突', '发脾气', '大哭', '顶嘴', '骂', '打', '又', '每次', '总是', '循环', '反复'],
+      behavior_loop: '触发事件 → 情绪升级 → 冲突爆发 → 短暂平静 → 再次触发',
+      emotional_dynamic: '双方均处于高唤起状态，理性通道关闭'
+    },
+    emotional_suppression: {
+      label: '情绪压抑型',
+      description: '家庭中情绪不被允许表达，孩子通过沉默或身体化症状应对',
+      triggers: ['不说话', '沉默', '不表达', '不哭', '压着', '忍着', '内向', '封闭', '不沟通', '什么都不说'],
+      behavior_loop: '情绪发生 → 压抑不表达 → 行为问题或躯体化 → 父母困惑 → 追问→更封闭',
+      emotional_dynamic: '父母：回避情绪 / 孩子：隐藏真实感受'
+    }
+  },
+
+  classify(input, history) {
+    const text = (input + ' ' + (history || []).map(function(m) { return m.content || ''; }).join(' ')).toLowerCase();
+    const scores = {};
+    const self = this;
+    Object.keys(this.TYPES).forEach(function(key) {
+      scores[key] = self.TYPES[key].triggers.filter(function(kw) { return text.indexOf(kw) >= 0; }).length;
+    });
+    let best = 'conflict_loop', bestScore = -1;
+    Object.keys(scores).forEach(function(k) { if (scores[k] > bestScore) { bestScore = scores[k]; best = k; } });
+    return {
+      type_key:   best,
+      type_data:  this.TYPES[best],
+      all_scores: scores,
+      confidence: bestScore >= 2 ? 'high' : bestScore === 1 ? 'medium' : 'low'
+    };
+  }
+};
+
+const BehaviorPatternGraph = {
+  SPECIFIC_LOOPS: {
+    emotional_explosion: '孩子感到被忽视→情绪爆发→父母镇压→孩子更不被理解→下次爆发更强',
+    homework_conflict:   '父母催促→孩子抵抗→双方升级→冲突爆发→作业依然未完成→第二天循环',
+    phone_addiction:     '孩子使用手机→父母制止→孩子隐瞒→父母发现→规则升级→孩子更偷用',
+    withdrawal:          '孩子遭遇压力→退缩不说→父母追问→孩子更封闭→误解加深',
+    autonomy_resist:     '孩子主张自主→父母否定→孩子反抗→父母加控制→孩子更对抗',
+    school_refusal:      '学校压力→回避上学→父母强制→焦虑增加→更不想去',
+    aggression:          '孩子挫败→攻击行为→惩罚→孩子羞耻→下次更激烈',
+    anxiety_worry:       '压力事件→孩子焦虑→安慰/忽视→焦虑未消解→泛化到新领域',
+    sibling_conflict:    '资源竞争/关注不均→兄弟姐妹冲突→父母裁判→一方感到不公→冲突升级',
+    lying:               '孩子担心惩罚→说谎→父母发现→严厉惩罚→孩子更擅长说谎',
+    attention_issues:    '环境干扰多→注意力分散→批评→孩子自我怀疑→更难集中'
+  },
+
+  CONFLICT_CHAINS: {
+    control_dynamic:       ['父母提出要求', '孩子不满/抵抗', '父母加大压力', '孩子爆发或顺从性退缩', '表面平静，内部积累'],
+    anxious_attachment:    ['孩子遇到压力', '父母过度介入', '孩子失去锻炼机会', '依赖增加', '父母更担心'],
+    conflict_loop:         ['日常触发事件', '双方情绪升温', '语言/行为升级', '冲突高峰', '疲惫和解', '触发事件重复'],
+    emotional_suppression: ['情绪事件发生', '孩子压抑不表达', '行为问题出现', '父母看到行为', '追问→更封闭']
+  },
+
+  build(relationshipResult, primaryBehavior) {
+    const rt   = relationshipResult.type_key;
+    const loop = this.SPECIFIC_LOOPS[primaryBehavior] || '行为触发 → 亲子反应 → 模式固化 → 问题反复';
+    return {
+      relationship_type:      rt,
+      parent_child_loop:      relationshipResult.type_data.behavior_loop,
+      behavior_specific_loop: loop,
+      conflict_chain:         this.CONFLICT_CHAINS[rt] || ['行为出现', '双方反应', '模式固化'],
+      behavior_loops:         [relationshipResult.type_data.behavior_loop, loop]
+    };
+  }
+};
+
+const FamilyStructureAnalyzer = {
+  analyze(input, history, behaviorAnalysis) {
+    const relResult    = RelationshipStructureEngine.classify(input, history);
+    const primary      = behaviorAnalysis ? behaviorAnalysis.primary : 'emotional_explosion';
+    const patternGraph = BehaviorPatternGraph.build(relResult, primary);
+
+    return {
+      relationship_type:  relResult.type_key,
+      relationship_label: relResult.type_data.label,
+      structure_model:    relResult.type_data.description,
+      behavior_loops:     patternGraph.behavior_loops,
+      conflict_chain:     patternGraph.conflict_chain,
+      emotional_dynamics: [relResult.type_data.emotional_dynamic],
+      confidence:         relResult.confidence,
+      pattern_graph:      patternGraph,
+      // 规格输出格式
+      relationship_output: {
+        relationship_type:  relResult.type_key,
+        structure_model:    relResult.type_data.description,
+        behavior_loops:     patternGraph.behavior_loops,
+        emotional_dynamics: [relResult.type_data.emotional_dynamic]
+      }
+    };
+  }
+};
+
+/* ================================================================
+   V4：Behavior Growth System（行为成长层）
+================================================================ */
+
+const BehaviorGrowthEngine = {
+  TODAY_ACTIONS: {
+    control_dynamic:       '今天只提一次要求，不重复催促，观察孩子的自主反应',
+    anxious_attachment:    '今天给孩子15分钟"不被打扰"的时间，不问、不看、不干预',
+    conflict_loop:         '今天当冲突苗头出现时，先说"我们停一下"，给双方3分钟冷却',
+    emotional_suppression: '今天主动分享你自己的一个感受，给孩子示范情绪可以被说出来'
+  },
+  COMM_STRATEGIES: {
+    control_dynamic:       '从"你必须"换成"我们来决定"——让孩子参与规则制定，减少权力对抗',
+    anxious_attachment:    '用"我相信你能处理"替代"让我来帮你"——传递信心而非保护',
+    conflict_loop:         '冲突升温前主动降温：放低声音、蹲下来、用"我"开头而不是"你总是"',
+    emotional_suppression: '创造"情绪合法"的时刻：今晚饭桌上问"今天有什么难受的事吗？"'
+  },
+  CONFLICT_METHODS: {
+    control_dynamic:       '当孩子反抗时：停止争执，5分钟后再谈，用"我看到你想要…"开始',
+    anxious_attachment:    '当孩子退缩时：坐在旁边不说话，用陪伴代替建议',
+    conflict_loop:         '当冲突爆发时：让自己离开现场60秒，回来时换一种语调重新开始',
+    emotional_suppression: '当孩子沉默时：不追问，而是做一件孩子喜欢的事，让关系温度先升上来'
+  },
+
+  generate(familyStructure, behaviorAnalysis, intervention) {
+    const rt = familyStructure ? familyStructure.relationship_type : 'conflict_loop';
+    const base_today = intervention && intervention.steps[0] ? [intervention.steps[0]] : [];
+    const rt_today   = this.TODAY_ACTIONS[rt] ? [this.TODAY_ACTIONS[rt]] : [];
+    const today_action = base_today.concat(rt_today).filter(function(x, i, a) { return a.indexOf(x) === i; }).slice(0, 3);
+
+    return {
+      today_action:    today_action,
+      comm_strategy:   this.COMM_STRATEGIES[rt]   || '先理解再回应，听完孩子说完再开口',
+      conflict_method: this.CONFLICT_METHODS[rt]  || '情绪高峰时暂停，平静后再沟通',
+      relationship_type: rt,
+      // 规格输出格式（short/long_term 由 BehaviorChangePlanner 填充）
+      growth_output: {
+        today_action:    today_action,
+        short_term_plan: [],
+        long_term_plan:  [],
+        risk_warning:    intervention ? (intervention.risk_warning || '') : ''
+      }
+    };
+  }
+};
+
+const BehaviorChangePlanner = {
+  DAY7_PLANS: {
+    control_dynamic: [
+      '第4天：和孩子一起制定本周一件事的规则，孩子说，你记录',
+      '第5天：当孩子做到约定事项时，说"我注意到你…"而不是"终于"',
+      '第7天：回顾——有几次你没有重复催促？孩子的反应有什么不同？'
+    ],
+    anxious_attachment: [
+      '第4天：让孩子独立完成一件你之前会帮的事，你在同一房间但不介入',
+      '第5天：孩子来求助时，先问"你有没有先试过？"再决定是否帮',
+      '第7天：记录孩子这周自己解决了几件事'
+    ],
+    conflict_loop: [
+      '第4天：找一个"非冲突"时间谈上次冲突——不评判，只描述你的感受',
+      '第5天：和孩子一起制定"家庭冲突暂停协议"（双方同意的暂停信号）',
+      '第7天：回顾——这周冲突频率有没有变化？触发点有什么规律？'
+    ],
+    emotional_suppression: [
+      '第4天：睡前和孩子各说一件今天"有点难受的事"，建立情绪分享习惯',
+      '第5天：孩子有情绪时，先点名情绪"你看起来有点委屈"，再等待',
+      '第7天：孩子有没有主动说过一次自己的感受？'
+    ]
+  },
+  DAY30_PLANS: {
+    control_dynamic:       ['建立月度家庭会议，孩子有投票权', '孩子自主空间扩大——从作业到日常决策', '父母从"管理者"转型为"顾问"角色'],
+    anxious_attachment:    ['孩子独立完成3件以前依赖父母的事', '父母减少主动介入频率', '建立孩子"能力记录本"：记录每次独立成功'],
+    conflict_loop:         ['家庭冲突频率减少60%', '建立"冲突后修复"习惯：24小时内主动和解', '孩子学会说"我需要时间冷静"'],
+    emotional_suppression: ['家庭建立每周1次情绪分享时间', '孩子可以说出3种以上不同的感受词', '父母用"情绪命名"回应孩子成为习惯']
+  },
+
+  plan(familyStructure, behaviorAnalysis, intervention, plan3c) {
+    const rt   = familyStructure ? familyStructure.relationship_type : 'conflict_loop';
+    const base = plan3c ? (plan3c.day1to3 || []) : [];
+    const extra_day3 = { control_dynamic: ['第2天：观察孩子有没有主动来找你，不主动上前'], anxious_attachment: ['第2天：记录下你几次想介入但忍住了的时刻'], conflict_loop: ['第2天：冲突前说出感受"我现在也很紧张"，而不是评价'], emotional_suppression: ['第2天：在孩子面前读一篇关于情绪的小故事'] };
+    const day3  = base.concat(extra_day3[rt] || []).slice(0, 4);
+    const day7  = this.DAY7_PLANS[rt]  || ['第4-7天：持续实践，记录变化，不追求立刻见效'];
+    const day30 = this.DAY30_PLANS[rt] || ['30天内建立家庭沟通新模式', '孩子行为问题频率显著降低'];
+
+    return {
+      day3_plan:  day3,
+      day7_plan:  day7,
+      day30_plan: day30,
+      total_duration: '30天家庭改善路径',
+      risk_level: plan3c ? plan3c.risk_level : 'medium',
+      // 规格输出格式
+      growth_output: {
+        today_action:    day3.slice(0, 1),
+        short_term_plan: day3.concat(day7),
+        long_term_plan:  day30,
+        risk_warning:    intervention ? (intervention.risk_warning || '') : ''
+      }
+    };
+  }
+};
+
+const FeedbackLoopSystem = {
+  KEY: 'aipiwen_feedback_v1_',
+
+  record(userId, sessionId, feedbackType, content) {
+    // feedbackType: 'tried' | 'not_tried' | 'improved' | 'no_change' | 'worse'
+    try {
+      const key  = this.KEY + userId;
+      const data = JSON.parse(localStorage.getItem(key) || '[]');
+      data.push({ session_id: sessionId, feedback_type: feedbackType, content: content || '', recorded_at: new Date().toISOString() });
+      if (data.length > 20) data.splice(0, data.length - 20);
+      localStorage.setItem(key, JSON.stringify(data));
+      return { ok: true };
+    } catch(e) { return { ok: false }; }
+  },
+
+  trackChange(userId) {
+    try {
+      const key  = this.KEY + userId;
+      const data = JSON.parse(localStorage.getItem(key) || '[]');
+      if (!data.length) return { has_feedback: false, trend: 'no_data', improvement_rate: 0 };
+      const improved = data.filter(function(d) { return d.feedback_type === 'improved'; }).length;
+      const tried    = data.filter(function(d) { return d.feedback_type === 'tried' || d.feedback_type === 'improved'; }).length;
+      const rate     = Math.round(improved / data.length * 100);
+      return {
+        has_feedback:     true,
+        total_feedback:   data.length,
+        tried_count:      tried,
+        improved_count:   improved,
+        improvement_rate: rate,
+        trend:            rate >= 60 ? 'improving' : rate >= 30 ? 'partial' : 'stuck',
+        last_feedback:    data[data.length - 1]
+      };
+    } catch(e) { return { has_feedback: false, trend: 'no_data', improvement_rate: 0 }; }
+  },
+
+  evaluate(userId) {
+    const change = this.trackChange(userId);
+    if (!change.has_feedback) return { message: null, needs_adjustment: false };
+    if (change.trend === 'improving') {
+      return { message: '从你的反馈来看，这些方法对你家是有效的——继续保持，变化在2-4周后更明显。', needs_adjustment: false, next_step: '深化现有方法' };
+    } else if (change.trend === 'partial') {
+      return { message: '你已经在尝试了，部分有效——下一步找到哪个具体步骤阻力最大，我们来调整。', needs_adjustment: true, next_step: '调整阻力最大的环节' };
+    } else {
+      return { message: '如果已经尝试但没有变化，说明需要从关系结构而不是行为表面来理解问题。', needs_adjustment: true, next_step: '回到关系结构分析' };
+    }
+  }
+};
+
+/* ================================================================
    挂载到全局
 ================================================================ */
 window.AIPIWEN = {
+  // Core (V1 + V2)
   UserSystem,
   MemorySystem,
   AnalysisEngine,
@@ -2291,19 +2720,29 @@ window.AIPIWEN = {
   LeadSystem,
   BehaviorReasoningEngine,
   TrendAnalyzer,
+  // Agent Layer (V3-A)
   ConsultingSessionStore,
   InformationSufficiencyEvaluator,
   AgentResponseGenerator,
-  // V3-B
+  // Insight Layer (V3-B)
   ConsultingInsightEngine,
   ContradictionDetector,
   PriorityQuestionSelector,
   ConsultingPathPlanner,
-  // V3-C
+  // Intervention Layer (V3-C)
   BehaviorInterventionEngine,
   FamilyDynamicTracker,
   ConsultationFollowUpSystem,
   BehaviorChangePlanGenerator,
+  // Relationship OS (V3-D)
+  RelationshipStructureEngine,
+  BehaviorPatternGraph,
+  FamilyStructureAnalyzer,
+  // Behavior Growth System (V4)
+  BehaviorGrowthEngine,
+  BehaviorChangePlanner,
+  FeedbackLoopSystem,
+  // Unified Agent
   AIPIWENConsultingAgent,
   generateReportId,
   truncate
