@@ -834,7 +834,14 @@ body {
       接下来我们先排除弧形纹和箕形纹，最后再回来确认哪些手指有斗形纹。
     </div>
 
-    <button class="btn-primary" onclick="showScreen('s3')">明白了，继续</button>
+    <!-- 十斗快速通道 -->
+    <div style="border:1.5px solid var(--amber);border-radius:14px;padding:14px 16px;margin-bottom:14px;background:white;">
+      <div style="font-size:12px;font-weight:700;letter-spacing:.06em;color:var(--amber);margin-bottom:6px;">✦ 十斗快速通道</div>
+      <div style="font-size:13px;color:var(--ink-70);line-height:1.6;margin-bottom:12px;">如果你已经看完十根手指，感觉<strong>全都是斗形纹</strong>，可以直接跳到关键一步——确认大拇指类型，3步出结果。</div>
+      <button class="btn-primary" onclick="s2AllWhorls()" style="width:100%;">十根全是斗 → 直接跳到大拇指</button>
+    </div>
+
+    <button class="btn-primary" onclick="showScreen('s3')" style="background:var(--ink-20);color:var(--ink);">有些不确定，逐步排查</button>
   </div>
 
   <!-- ══════════════════════════════════════
@@ -1532,9 +1539,26 @@ function s6Back() {
   showScreen('s5');
 }
 
+function s2AllWhorls() {
+  // Mark all 8 non-thumb fingers as W, skip s3/s4/s5/s7
+  state.data.xFingers.clear();
+  state.data.xnFingers.clear();
+  state.data.luFingers.clear();
+  state.data.wOtherFingers.clear();
+  [1,2,3,4,6,7,8,9].forEach(i => state.data.wOtherFingers.add(i));
+  state.allTenWhorls = true;
+  s6Init();
+  showScreen('s6');
+}
+
 function s6Next() {
-  s7Init();
-  showScreen('s7');
+  if (state.allTenWhorls) {
+    // Came from 十斗快速通道 — skip s7, go straight to result
+    showResult();
+  } else {
+    s7Init();
+    showScreen('s7');
+  }
 }
 
 /* ═══════════════════════════════════════════════
@@ -1603,7 +1627,17 @@ function classify() {
 
   // Both thumbs W → cognitive family
   if (rtIsW && ltIsW) {
-    if (totalW >= 10) return { mainType: '超级认知型 W', tagline: '唯我独尊 · 领袖风范 · 王者之气', key: 'super_w' };
+    if (totalW >= 10) {
+      // Subtype by thumb pattern
+      const rt = d.rtThumb, lt = d.ltThumb;
+      const isSpiral  = t => t === 'Ws';
+      const isDouble  = t => t === 'Wd' || t === 'Wc';
+      const isPeacock = t => t === 'We' || t === 'Wpe';
+      if (isSpiral(rt)  && isSpiral(lt))  return { mainType: '超级认知A · 螺旋领袖', tagline: '天生领袖 · 主见极强 · 目标必达 · 王者之气', key: 'super_w_a' };
+      if (isDouble(rt)  && isDouble(lt))  return { mainType: '超级认知B · 双核整合', tagline: '领袖气质 · 全局整合 · 多维并行 · 跨界高手', key: 'super_w_b' };
+      if (isPeacock(rt) && isPeacock(lt)) return { mainType: '超级认知C · 孔雀完美', tagline: '领袖气质 · 极致审美 · 完美追求 · 卓越标准', key: 'super_w_c' };
+      return { mainType: '超级认知型 W', tagline: '唯我独尊 · 领袖风范 · 王者之气', key: 'super_w' };
+    }
     if (totalW >= 6)  return { mainType: '认知型 W',     tagline: '主见权威 · 好奇心强 · 探索型',     key: 'w' };
     return               { mainType: '认知倾向 W',   tagline: '有主见 · 好奇心 · 探索倾向',       key: 'w_mild' };
   }
@@ -1640,6 +1674,24 @@ function generateReport(result) {
     learning = '<p><strong>项目式学习</strong>最适合你。与其按部就班听课，不如直接上手做项目——编程、设计、写作、实验都行。<strong>允许质疑</strong>：当你问"为什么要这样做"时，这是在深度学习，不是捣乱。<strong>给选择权</strong>：让自己决定学习顺序和方式，效果远超被动接受。</p>';
     career = '<p><strong>推荐方向：</strong>产品经理、UI/UX设计师、独立开发者、创意总监、数据科学家、创业者。这些角色都需要"看到别人看不到的"能力，正是你的核心优势。</p>';
     advice = '<p><strong>给家长的建议：</strong>请珍惜这份独特性！当孩子总是问"为什么"、总是想"反过来试试"时，不要急着纠正。<strong>保护好奇心 > 强调服从</strong>。给他/她一个可以自由探索的空间，你会发现惊喜。逆思型的孩子需要的是"对话者"而不是"管理者"。</p>';
+  } else if (key === 'super_w_a') {
+    talents = '天生领袖 · 主见极强 · 目标必达 · 王者之气';
+    advantage = '<p>你是十指全斗、两拇指螺旋的极稀有组合——<strong>超级认知A型</strong>。螺旋斗代表最纯粹的"自我驱动"，你天生知道自己要什么，不需要外部认可，只需要结果。</p><p>你的大脑像一台高精度导航仪：锁定目标→规划路径→排除障碍→到达终点。这不是执念，这是天赋。你在团队中自然成为方向定义者，而不是方向执行者。</p>';
+    learning = '<p><strong>目标倒推式学习</strong>最有效：先定"我要达到什么成果"，再反推学什么、怎么学。<strong>挑战驱动</strong>：无聊的重复会让你失去动力，需要感受到"这是在征服难题"。<strong>自主决策权</strong>：给你制定学习路径的权力，效果会超乎意料。</p>';
+    career = '<p><strong>推荐方向：</strong>创始人/CEO、律师、外科医生、军事指挥、投资决策。这些角色都需要极强的方向感和决断力——你天生具备。</p>';
+    advice = '<p><strong>给家长的建议：</strong>不要试图"管"这个孩子，试着"合作"。他/她需要知道"为什么"才愿意行动。<strong>给选择权 > 下命令</strong>——哪怕是小事，让孩子自己决定。培养自律，而不是他律。</p>';
+  } else if (key === 'super_w_b') {
+    talents = '领袖气质 · 全局整合 · 多维并行 · 跨界高手';
+    advantage = '<p><strong>超级认知B型</strong>：十指全斗 + 双拇指双斗，是"领袖力"与"整合力"的叠加。你不仅有极强的主见和目标感（来自超级认知A的基础），还同时具备在不同视角之间灵活切换的能力。</p><p>双斗代表"双核处理器"——你能在脑子里同时跑两套逻辑，看到别人只看到一个面时，你看到了两面。这让你在复杂决策、跨部门协调、战略规划中有独特优势。</p>';
+    learning = '<p><strong>跨领域连接式学习</strong>最适合你：喜欢把不同领域的知识"接起来"看规律。<strong>目标驱动</strong>同样有效（继承超级认知A特质）。<strong>同时给多条线</strong>：你不怕多任务，反而在多线并行中效率更高。</p>';
+    career = '<p><strong>推荐方向：</strong>战略咨询顾问、跨国项目总监、创业合伙人/联合创始人、政策制定者、商业谈判专家。这些角色需要同时驾驭宏观战略与微观执行——正是你的舞台。</p>';
+    advice = '<p><strong>给家长的建议：</strong>这个孩子在"复杂"中才能发挥最大价值。不要给他/她过于单一的任务，可以适当"出题"——比如"你来想想这个问题可以怎么解决"。培养全局观，鼓励他/她在不同兴趣之间建立连接。</p>';
+  } else if (key === 'super_w_c') {
+    talents = '领袖气质 · 极致审美 · 完美追求 · 卓越标准';
+    advantage = '<p><strong>超级认知C型</strong>：十指全斗 + 双拇指孔雀眼，是极其罕见的"领袖力"与"完美力"的组合。你有超级认知A型全部的主见与目标感，同时内置一套极高的标准系统——你的眼睛里容不下"差不多"。</p><p>孔雀眼代表对细节、美感、精度的天然敏感。你看到别人看不出问题的地方，你觉得"还差一点"。这不是挑剔，这是你对卓越的本能追求。</p>';
+    learning = '<p><strong>精深式学习</strong>最适合你：宁愿把一件事做到极致，也不愿意浅尝多件。<strong>高标准驱动</strong>：给自己设定"比上次更好"的目标，才能激发真正的动力。<strong>审美和品质感</strong>很重要——学习环境、工具、材料的质量会影响你的状态。</p>';
+    career = '<p><strong>推荐方向：</strong>建筑师、高端产品设计师、医疗精密领域（心外科、显微外科）、艺术总监、奢侈品牌策略、顶级律师。这些角色都要求"近乎完美"的标准——你与生俱来。</p>';
+    advice = '<p><strong>给家长的建议：</strong>保护这个孩子对"好"的敏感，但注意引导他/她区分"追求卓越"和"无法接受不完美"的边界。允许过程中的不完美，同时肯定他/她对高标准的坚持。<strong>给他/她做"真正有意义的事"的机会</strong>，他/她不甘平庸。</p>';
   } else if (key === 'super_w') {
     talents = '领袖气质 · 主见坚定 · 目标导向 · 王者之气';
     advantage = '<p>你是天生的领导者，10个手指都是斗形纹，意味着极强的<strong>自我意识和主见</strong>。"我知道我要什么"是你的人生信条。你不是在跟随潮流，而是在定义方向。</p><p>斗形纹代表目标感和掌控力。在团队中，你往往自然成为那个"拿主意的人"。这不是傲慢，而是与生俱来的领导力。</p>';
@@ -1782,6 +1834,7 @@ function resetWizard() {
   document.getElementById('s1-picker').style.display = 'none';
   document.getElementById('s1-confirm').disabled = true;
   document.getElementById('s6-btn').disabled = true;
+  state.allTenWhorls = false;
 
   showScreen('s1');
 }
