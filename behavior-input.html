@@ -116,6 +116,7 @@ html,body {
 }
 .example-chip:active,
 .example-chip:hover { background: var(--amber-soft); border-color: var(--amber); color: var(--amber); }
+.example-chip.selected { background: var(--amber); border-color: var(--amber); color: white; }
 
 /* CTA */
 .cta-btn {
@@ -182,12 +183,12 @@ html,body {
 
   <div class="examples-label">常见场景，点击填入</div>
   <div class="example-chips">
-    <div class="example-chip" onclick="fillExample('不写作业，一催就发脾气')">不写作业，一催就发脾气</div>
-    <div class="example-chip" onclick="fillExample('情绪容易崩溃，一点小事就哭')">情绪容易崩溃，一点小事就哭</div>
-    <div class="example-chip" onclick="fillExample('沉迷手机，怎么说都不听')">沉迷手机，怎么说都不听</div>
-    <div class="example-chip" onclick="fillExample('回家就沉默，什么都不说')">回家就沉默，什么都不说</div>
-    <div class="example-chip" onclick="fillExample('在学校跟同学起冲突')">在学校跟同学起冲突</div>
-    <div class="example-chip" onclick="fillExample('半夜睡不着，总是焦虑')">半夜睡不着，总是焦虑</div>
+    <div class="example-chip" onclick="fillExample('不写作业，一催就发脾气',this)">不写作业，一催就发脾气</div>
+    <div class="example-chip" onclick="fillExample('情绪容易崩溃，一点小事就哭',this)">情绪容易崩溃，一点小事就哭</div>
+    <div class="example-chip" onclick="fillExample('沉迷手机，怎么说都不听',this)">沉迷手机，怎么说都不听</div>
+    <div class="example-chip" onclick="fillExample('回家就沉默，什么都不说',this)">回家就沉默，什么都不说</div>
+    <div class="example-chip" onclick="fillExample('在学校跟同学起冲突',this)">在学校跟同学起冲突</div>
+    <div class="example-chip" onclick="fillExample('半夜睡不着，总是焦虑',this)">半夜睡不着，总是焦虑</div>
   </div>
 
   <button class="cta-btn" id="submit-btn" onclick="goNext()" disabled>
@@ -209,11 +210,23 @@ function onInput(el) {
   document.getElementById('submit-btn').disabled = val.trim().length < 4;
 }
 
-function fillExample(text) {
+// 已选中的chip文本集合
+const selectedChips = new Set();
+
+function fillExample(text, el) {
   const ta = document.getElementById('behavior-input');
-  ta.value = text;
+  if (selectedChips.has(text)) {
+    // 取消选中：从集合和文本框移除
+    selectedChips.delete(text);
+    el.classList.remove('selected');
+  } else {
+    // 选中：追加到集合
+    selectedChips.add(text);
+    el.classList.add('selected');
+  }
+  // 重新拼接所有选中chip + 用户自己输入的部分（去掉之前chip的内容）
+  ta.value = Array.from(selectedChips).join('，');
   ta.dispatchEvent(new Event('input'));
-  ta.focus();
 }
 
 function goNext() {
