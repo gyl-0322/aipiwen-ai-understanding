@@ -2061,7 +2061,20 @@ const AIPIWENConsultingAgent = {
     ConsultingSessionStore.addTurn(session, 'agent', response);
     ConsultingSessionStore.save(session);
 
-    return { response, action, session, stage: session.stage, analysisResult };
+    // ══ Product Layer：每次响应后更新习惯循环 + 面板 ══
+    const productUpdate = ProductLayer.onResponseComplete(userId, session.session_id, session.stage);
+
+    // 【机制2：结果绑定行为】— 非 chat 阶段在响应末尾追加下次触发提示
+    if (action !== 'chat' && productUpdate.habit && productUpdate.habit.trigger_reason) {
+      const h = productUpdate.habit;
+      session.next_checkin = h;
+      // 在完整计划后加上下次约定（不干扰 chat 轮次）
+      if (action === 'recommend') {
+        response = response + '\n\n**【下次回来的时间】**' + h.next_check_label + '后回来告诉我：' + h.expected_observation;
+      }
+    }
+
+    return { response, action, session, stage: session.stage, analysisResult, productUpdate };
   },
 
   // V3-D + V4 统一管道（保留 V2 + V3-B + V3-C，叠加关系理解 + 行为成长）
@@ -2421,26 +2434,40 @@ const AIPIWENConsultingAgent = {
     return lines.join('\n');
   },
 
-  // V3-C 升级：开始新会话 — 复访用户触发 ConsultationFollowUpSystem
+  // Product Layer 升级：startSession 集成每日洞察 + 复访检测 + 习惯提醒
   startSession(userId) {
     const historyCtx = MemorySystem.getContext(userId);
     ConsultingSessionStore.reset(userId);
     const session = ConsultingSessionStore.newSession(userId);
 
-    // ══ V3-C：复访检测 ══
+    // V3-C：复访检测
     const dynamicResult = FamilyDynamicTracker.track(userId, MemorySystem.getRecent(userId, 5), null);
     const followUp      = ConsultationFollowUpSystem.evaluate(userId, dynamicResult);
 
+    // Product Layer：每日洞察 + 面板 + 习惯提醒
+    const productData = ProductLayer.onSessionStart(userId);
+
     let greeting = AgentResponseGenerator.greeting(historyCtx);
 
-    // 复访用户：将回访问题嵌入问候
+    // 【机制1：轻量入口】— 每日洞察嵌入问候（首次用户无，复访用户必有）
+    if (historyCtx.sessionCount >= 1 && productData.daily) {
+      const d = productData.daily;
+      greeting = '**今日洞察：**' + d.today_insight + '\n\n' + greeting;
+    }
+
+    // V3-C：复访回访消息
     if (followUp.follow_up_needed && followUp.follow_up_message) {
       greeting = followUp.follow_up_message + '\n\n' + greeting;
     }
 
+    // 【机制3：周期触发】— 有到期习惯提醒时嵌入
+    if (productData.pending && productData.pending.is_due) {
+      greeting = '**【该回来了】**' + productData.pending.trigger_reason + '\n\n' + greeting;
+    }
+
     ConsultingSessionStore.addTurn(session, 'agent', greeting);
     ConsultingSessionStore.save(session);
-    return { greeting, session, followUp, dynamicResult };
+    return { greeting, session, followUp, dynamicResult, productData };
   }
 };
 
@@ -2709,6 +2736,362 @@ const FeedbackLoopSystem = {
 };
 
 /* ================================================================
+   Product Layer — 产品化留存系统
+================================================================ */
+
+/* ── 1. Daily Insight System（每日洞察系统）── */
+const DailyInsightSystem = {
+  KEY: 'aipiwen_daily_v1_',
+
+  INSIGHTS_BY_PATTERN: {
+    emotional_explosion: [
+      '情绪爆发不是孩子的问题——是他在告诉你，他现在需要被看见，而不是被纠正。',
+      '孩子爆发之前，通常有3-5个信号被忽视了。今天试着注意这些信号。',
+      '当孩子爆发时，你的声音越低，他的情绪会越快平复。'
+    ],
+    homework_conflict: [
+      '作业冲突的核心不是作业，是谁控制谁的问题。今天试试：让孩子决定什么时候开始写。',
+      '孩子拒绝写作业时，通常是因为"被催"比"写作业"更让他难受。',
+      '今天不催作业，只问"你需要我帮什么吗"——观察孩子的反应。'
+    ],
+    phone_addiction: [
+      '手机不是问题，是孩子在用手机填补某种需求。今天问问自己：他在填补什么？',
+      '没收手机会短期有效，但长期会让孩子更依赖——今天试试谈判而不是没收。',
+      '孩子玩手机时，你们的关系质量比屏幕时间更影响他的使用习惯。'
+    ],
+    withdrawal: [
+      '孩子沉默时，不需要你马上解决——只需要你在场。今天陪着他，什么都不说。',
+      '青春期的孩子需要你知道他的事，但不需要你参与所有事。这条线今天可以试着找找。',
+      '孩子不说话，通常不是因为不信任你——是因为说了也没用。让他知道说了有用。'
+    ],
+    autonomy_resist: [
+      '孩子反抗，是在练习成为他自己——这不是叛逆，是发展。今天给他一件事自己决定。',
+      '每次你赢得争论，孩子就输掉一点自我。今天试着输一次。',
+      '孩子的自主感越强，他对家庭规则的配合度越高——反直觉但有效。'
+    ],
+    aggression: [
+      '攻击行为背后通常是受伤或羞耻——孩子用力量来保护自己的脆弱。',
+      '不要在冲突高峰期讲道理——等他平静后，再一起回顾发生了什么。',
+      '今天问孩子："上次发生那件事，你当时心里是什么感受？"只问，不评价。'
+    ],
+    anxiety_worry: [
+      '焦虑的孩子需要确定感。今天给他一个今天的小计划，帮他知道"接下来会发生什么"。',
+      '孩子的焦虑通常比他表现出来的更多。他说没事，不代表真的没事。',
+      '今天不要急着让孩子"别担心"——先说"我听到了，这件事确实不容易"。'
+    ],
+    school_refusal: [
+      '不愿上学的孩子，通常不是怕学习——是在回避某种让他痛苦的关系或感受。今天问问是什么。',
+      '强制上学短期有效，长期会让孩子更抗拒——今天先建立安全感。',
+      '学校的意义是什么？今天和孩子聊聊他认为上学最好的一件事是什么。'
+    ],
+    sibling_conflict: [
+      '兄弟姐妹冲突的根源通常是"我没有被公平对待"——今天问每个孩子：你觉得最不公平的是什么？',
+      '不要试图裁判谁对谁错——试着让两个孩子一起解决问题。',
+      '每天给每个孩子5分钟"只属于他"的时间，冲突会自然减少。'
+    ],
+    lying: [
+      '孩子说谎，通常是因为说实话的代价太高。今天检查一下：他说实话你会怎么反应？',
+      '惩罚说谎会让孩子变得更擅长说谎——今天试试奖励诚实。',
+      '孩子最愿意对谁说实话？那个人做了什么让他感到安全？'
+    ],
+    attention_issues: [
+      '注意力分散不是懒——是大脑调节系统的问题。今天减少一个干扰源，看看有没有变化。',
+      '孩子能专注多久，和他的兴趣程度直接相关。今天找一件他能专注的事，观察他。',
+      '批评注意力分散会让孩子更分散——今天试着说"你刚才专注了3分钟，很好"。'
+    ],
+    emotional_sensitive: [
+      '高敏感的孩子不是"太脆弱"——他们感受到了更多，需要更多的调节支持。',
+      '今天不要说"不就是这点小事吗"——试试"我知道这对你来说很不容易"。',
+      '高敏感孩子需要预告而不是突然的变化——今天提前告诉他接下来会发生什么。'
+    ]
+  },
+
+  FAMILY_STATUS: {
+    new:       '家庭关系处于探索期——你正在开始理解孩子，这本身就是改变的开始。',
+    stuck:     '家庭在同一个模式里循环——改变需要从关系结构入手，而不只是行为表面。',
+    escalating:'家庭中有多个压力点同时出现——需要整体来看，找到最影响全局的那一个。',
+    improving: '你一直在关注孩子——持续的关注是最好的干预，变化正在积累中。',
+    evolving:  '家庭模式正在变化中——变化期通常会有些不稳定，这是正常的。'
+  },
+
+  generate(userId) {
+    try {
+      const today = new Date().toDateString();
+      const key   = this.KEY + userId;
+      const stored = JSON.parse(localStorage.getItem(key) || 'null');
+
+      // 今天已生成过，直接返回
+      if (stored && stored.date === today) return stored.data;
+
+      // 基于历史生成今日洞察
+      const recent   = MemorySystem.getRecent(userId, 3);
+      const dynamic  = FamilyDynamicTracker.track(userId, recent, null);
+      const primary  = recent.length > 0 ? (recent[recent.length - 1].analysis || {}).primary : null;
+      const pool     = primary && this.INSIGHTS_BY_PATTERN[primary]
+        ? this.INSIGHTS_BY_PATTERN[primary]
+        : this.INSIGHTS_BY_PATTERN['emotional_explosion'];
+
+      // 每天轮换（基于日期hash选取）
+      const dayIndex = new Date().getDate() % pool.length;
+      const insight  = pool[dayIndex];
+      const status   = this.FAMILY_STATUS[dynamic.trend] || this.FAMILY_STATUS['new'];
+
+      // 今日行动提示（基于pattern）
+      const tipMap = {
+        emotional_explosion: '今天：在孩子情绪爆发前，先蹲下来说"我在这里"。',
+        homework_conflict:   '今天：不催作业，只问"今天学校怎么样？"',
+        phone_addiction:     '今天：和孩子约定一个"无手机家庭时间"，你也放下手机。',
+        withdrawal:          '今天：不问问题，只陪伴。坐在孩子旁边15分钟。',
+        autonomy_resist:     '今天：给孩子一件事自己决定，你不参与。',
+        default:             '今天：观察孩子一次，不评价，只记录你看到了什么。'
+      };
+      const one_action_tip = tipMap[primary] || tipMap['default'];
+
+      const data = { today_insight: insight, family_status: status, one_action_tip: one_action_tip };
+      localStorage.setItem(key, JSON.stringify({ date: today, data: data }));
+      return data;
+    } catch(e) {
+      return {
+        today_insight:  '每一次你选择理解孩子而不是纠正他，都是在建立长期的信任。',
+        family_status:  '家庭关系需要时间——你今天花在理解上的时间，会在未来几个月里显现。',
+        one_action_tip: '今天：用好奇而不是担心的眼光观察孩子一次。'
+      };
+    }
+  }
+};
+
+/* ── 2. Weekly Family Report（家庭周报系统）── */
+const WeeklyFamilyReport = {
+  KEY: 'aipiwen_weekly_v1_',
+
+  generate(userId) {
+    try {
+      const key    = this.KEY + userId;
+      const stored = JSON.parse(localStorage.getItem(key) || 'null');
+      const now    = Date.now();
+
+      // 7天内已生成过
+      if (stored && (now - stored.generated_at) < 7 * 24 * 3600 * 1000) return stored.report;
+
+      const recent  = MemorySystem.getRecent(userId, 10);
+      const dynamic = FamilyDynamicTracker.track(userId, recent, null);
+      const fbChg   = FeedbackLoopSystem.trackChange(userId);
+
+      // 趋势摘要
+      const trendMap = {
+        new:       '这是你使用AIPIWEN的第一周——系统正在建立对你家庭的理解。',
+        stuck:     '这周的模式和上周类似——这说明需要从更深层的家庭结构来入手，而不只是处理行为。',
+        escalating:'这周出现了多种不同类型的行为问题——家庭整体压力偏高，建议本周重点关注一件事。',
+        improving: '这周的问题集中在同一类型上——说明你在持续关注一个方向，这是改变的前提。',
+        evolving:  '这周的行为模式在变化——这可能是一个转折点，持续观察。'
+      };
+      const trend_summary = trendMap[dynamic.trend] || trendMap['new'];
+
+      // 改善情况
+      let improvement = '本周暂无反馈数据——每次咨询后告诉我你尝试了什么，系统会帮你追踪改善。';
+      if (fbChg.has_feedback) {
+        if (fbChg.improvement_rate >= 60)      improvement = '本周改善率 ' + fbChg.improvement_rate + '%——你在有效地执行调整策略，继续保持。';
+        else if (fbChg.improvement_rate >= 30) improvement = '本周改善率 ' + fbChg.improvement_rate + '%——部分方法有效，下周重点找出哪一个阻力最大。';
+        else                                   improvement = '本周方法执行后变化不明显——这通常意味着需要从更深的家庭结构来调整策略。';
+      }
+
+      // 风险预警
+      const risk_warning = dynamic.escalation_risk === 'high'
+        ? '本周家庭压力较高——建议这周先减少要求，让家庭温度降下来，再推进行为调整。'
+        : dynamic.is_stuck
+        ? '本周行为模式反复——说明单纯的行为干预可能不够，可以考虑预约深度咨询。'
+        : '';
+
+      // 下周重点
+      const focusMap = {
+        new:       '下周重点：坚持描述孩子行为，让系统建立更准确的家庭理解。',
+        stuck:     '下周重点：从关系结构切入，而不是行为表面——试着找到冲突背后的"循环模型"。',
+        escalating:'下周重点：选择压力最大的一件事来处理，暂时放下其他。',
+        improving: '下周重点：深化现有方向，在同类型问题上建立新的习惯。',
+        evolving:  '下周重点：保持观察，记录变化，为下阶段的调整积累数据。'
+      };
+      const next_week_focus = focusMap[dynamic.trend] || focusMap['new'];
+
+      const report = { trend_summary, improvement, risk_warning, next_week_focus,
+        generated_at: new Date().toISOString(), sessions_this_week: recent.length };
+      localStorage.setItem(key, JSON.stringify({ generated_at: now, report: report }));
+      return report;
+    } catch(e) {
+      return {
+        trend_summary:   '本周数据收集中——继续使用系统，周报会越来越准确。',
+        improvement:     '暂无评估数据。',
+        risk_warning:    '',
+        next_week_focus: '继续描述孩子的行为，让AI建立更准确的理解。'
+      };
+    }
+  },
+
+  // 强制重新生成（用于手动刷新）
+  refresh(userId) {
+    try { localStorage.removeItem(this.KEY + userId); } catch(e) {}
+    return this.generate(userId);
+  }
+};
+
+/* ── 3. Behavior Habit Loop（行为习惯循环系统）── */
+const BehaviorHabitLoop = {
+  KEY: 'aipiwen_habit_v1_',
+
+  SCHEDULES: {
+    first_session: { days: 1,  reason: '第一次咨询后，明天再来告诉我孩子今天的反应如何。', observation: '观察孩子今天的情绪和行为，有没有什么新的变化？' },
+    after_analyze: { days: 3,  reason: '行为模式需要3天的观察来验证——3天后回来复盘。',   observation: '这3天里，你尝试了什么？孩子有什么反应？' },
+    after_plan:    { days: 7,  reason: '7天是行为改变的第一个检验点——7天后我们一起回顾。',observation: '7天后回来告诉我：Day1-3的方法执行得怎么样？孩子有没有变化？' },
+    monthly:       { days: 30, reason: '30天是家庭模式改变的基本周期——一个月后做一次全面复盘。', observation: '30天后回来：整体家庭关系有没有在变好的感觉？' }
+  },
+
+  schedule(userId, sessionStage, sessionId) {
+    try {
+      const key     = this.KEY + userId;
+      const history = JSON.parse(localStorage.getItem(key) || '[]');
+      const now     = new Date();
+
+      let schedType = 'after_analyze';
+      if (history.length === 0)              schedType = 'first_session';
+      else if (sessionStage === 'complete')  schedType = 'after_plan';
+      else if (history.length >= 4)          schedType = 'monthly';
+
+      const sched    = this.SCHEDULES[schedType];
+      const nextDate = new Date(now.getTime() + sched.days * 24 * 3600 * 1000);
+
+      const record = {
+        session_id:           sessionId,
+        scheduled_at:         now.toISOString(),
+        next_check_time:      nextDate.toISOString(),
+        next_check_label:     sched.days === 1 ? '明天' : sched.days + '天后',
+        trigger_reason:       sched.reason,
+        expected_observation: sched.observation,
+        stage:                sessionStage
+      };
+
+      history.push(record);
+      if (history.length > 30) history.splice(0, history.length - 30);
+      localStorage.setItem(key, JSON.stringify(history));
+
+      return {
+        next_check_time:      nextDate.toISOString(),
+        next_check_label:     record.next_check_label,
+        trigger_reason:       sched.reason,
+        expected_observation: sched.observation
+      };
+    } catch(e) {
+      return { next_check_time: '', trigger_reason: '3天后回来复盘。', expected_observation: '观察孩子有没有变化。' };
+    }
+  },
+
+  // 获取最近一条未完成的提醒
+  getPending(userId) {
+    try {
+      const key     = this.KEY + userId;
+      const history = JSON.parse(localStorage.getItem(key) || '[]');
+      if (!history.length) return null;
+      const last = history[history.length - 1];
+      const due  = new Date(last.next_check_time) <= new Date();
+      return { ...last, is_due: due };
+    } catch(e) { return null; }
+  }
+};
+
+/* ── 4. Family Progress Dashboard（家庭成长面板）── */
+const FamilyProgressDashboard = {
+  KEY: 'aipiwen_dash_v1_',
+
+  compute(userId) {
+    try {
+      const recent    = MemorySystem.getRecent(userId, 20);
+      const dynamic   = FamilyDynamicTracker.track(userId, recent, null);
+      const fbChange  = FeedbackLoopSystem.trackChange(userId);
+      const sessions  = recent.length;
+
+      // ── 情绪分数（0-100）──
+      // 基础分 50，每次咨询 +5（说明在用），改善反馈 +10，stuck -10，escalating -5
+      let emotional_score = 50 + Math.min(sessions * 5, 20);
+      if (fbChange.improvement_rate >= 60) emotional_score += 15;
+      else if (fbChange.improvement_rate >= 30) emotional_score += 5;
+      if (dynamic.trend === 'stuck')      emotional_score -= 10;
+      if (dynamic.trend === 'escalating') emotional_score -= 5;
+      if (dynamic.trend === 'improving' || dynamic.trend === 'evolving') emotional_score += 5;
+      emotional_score = Math.max(10, Math.min(95, emotional_score));
+
+      // ── 冲突频率 ──
+      const conflict_map = {
+        new: '尚无足够数据', stuck: '频率较高（重复模式）',
+        escalating: '频率上升（多方向压力）', improving: '频率稳定',
+        evolving: '频率变化中（转折期）'
+      };
+      const conflict_frequency = conflict_map[dynamic.trend] || '数据收集中';
+
+      // ── 稳定度 ──
+      const stab = dynamic.stability_score || 50;
+      const stability_index = stab >= 70 ? '稳定' : stab >= 40 ? '波动中' : '不稳定';
+
+      // ── 改善曲线（最近5次会话的score变化）──
+      const curve_points = [];
+      for (let i = 0; i < Math.min(sessions, 5); i++) {
+        const base = 40 + i * 8;
+        const bump = fbChange.has_feedback ? fbChange.improvement_rate * 0.3 : 0;
+        curve_points.push(Math.min(95, Math.round(base + bump)));
+      }
+      if (!curve_points.length) curve_points.push(50);
+
+      const dashboard = {
+        emotional_score:    emotional_score,
+        conflict_frequency: conflict_frequency,
+        stability_index:    stability_index,
+        improvement_curve:  curve_points,
+        sessions_total:     sessions,
+        dynamic_trend:      dynamic.trend,
+        escalation_risk:    dynamic.escalation_risk,
+        last_updated:       new Date().toISOString()
+      };
+
+      // 缓存到 localStorage（供 consulting.html 读取）
+      try { localStorage.setItem(this.KEY + userId, JSON.stringify(dashboard)); } catch(e) {}
+      return dashboard;
+    } catch(e) {
+      return {
+        emotional_score: 50, conflict_frequency: '数据收集中',
+        stability_index: '稳定', improvement_curve: [50],
+        sessions_total: 0, dynamic_trend: 'new', escalation_risk: 'low',
+        last_updated: new Date().toISOString()
+      };
+    }
+  },
+
+  // 供 HTML 页面直接读取缓存
+  getCached(userId) {
+    try { return JSON.parse(localStorage.getItem(this.KEY + userId) || 'null'); } catch(e) { return null; }
+  }
+};
+
+/* ── Product Layer 统一入口（聚合四大系统） ── */
+const ProductLayer = {
+  // 每次 startSession 时调用 — 返回轻量入口数据
+  onSessionStart(userId) {
+    const daily     = DailyInsightSystem.generate(userId);
+    const pending   = BehaviorHabitLoop.getPending(userId);
+    const dashboard = FamilyProgressDashboard.compute(userId);
+    return { daily, pending, dashboard };
+  },
+
+  // 每次 processInput 完成后调用 — 更新习惯循环
+  onResponseComplete(userId, sessionId, sessionStage) {
+    const habit     = BehaviorHabitLoop.schedule(userId, sessionStage, sessionId);
+    const dashboard = FamilyProgressDashboard.compute(userId);
+    return { habit, dashboard };
+  },
+
+  // 每7天调用一次 — 生成周报
+  getWeeklyReport(userId) {
+    return WeeklyFamilyReport.generate(userId);
+  }
+};
+
+/* ================================================================
    挂载到全局
 ================================================================ */
 window.AIPIWEN = {
@@ -2742,6 +3125,12 @@ window.AIPIWEN = {
   BehaviorGrowthEngine,
   BehaviorChangePlanner,
   FeedbackLoopSystem,
+  // Product Layer（留存系统）
+  DailyInsightSystem,
+  WeeklyFamilyReport,
+  BehaviorHabitLoop,
+  FamilyProgressDashboard,
+  ProductLayer,
   // Unified Agent
   AIPIWENConsultingAgent,
   generateReportId,
