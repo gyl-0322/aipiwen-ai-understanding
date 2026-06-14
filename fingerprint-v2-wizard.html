@@ -1718,8 +1718,12 @@ function classify() {
   if ((rtIsLu && ltIsArc) || (rtIsArc && ltIsLu))
     return { mainType: '模仿兼开放型', tagline: '模仿主导 · 开放加持 · 超强吸收力', key: 'combo_open' };
 
-  // Fallback
-  return { mainType: '组合型', tagline: '多元特质 · 灵活应变 · 综合型', key: 'combo' };
+  // Fallback: classify by dominant count
+  if (totalW >= totalLu && totalW >= totalArc)
+    return { mainType: '认知型 W', tagline: '主见权威 · 好奇心强 · 探索型', key: 'w' };
+  if (totalLu >= totalArc)
+    return { mainType: '模仿型 L', tagline: '善于模仿 · 适应力强 · 服务型', key: 'l' };
+  return { mainType: '开放型 X', tagline: '海绵学习 · 踏实肯干 · 简单极致', key: 'x' };
 }
 
 /* ═══════════════════════════════════════════════
