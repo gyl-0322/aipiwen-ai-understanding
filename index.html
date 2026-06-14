@@ -2235,6 +2235,19 @@ body {
 .locked-icon { color: var(--ink-20); font-size: 14px; }
 
 /* Feedback — upgraded module */
+@keyframes feedbackShake {
+  0%,100%{transform:translateX(0)}
+  15%{transform:translateX(-7px)}
+  35%{transform:translateX(7px)}
+  55%{transform:translateX(-5px)}
+  75%{transform:translateX(5px)}
+}
+.feedback-required {
+  animation: feedbackShake 0.55s ease;
+  outline: 2px solid var(--amber);
+  outline-offset: 4px;
+  border-radius: 12px;
+}
 .feedback-section {
   padding: 32px 24px 28px;
   background: var(--cream);
@@ -2310,6 +2323,42 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 .btn-sticky:active { transform: scale(.97); }
+
+/* ═══════════════════════════════════════
+   FULL REPORT PREVIEW SCREEN
+═══════════════════════════════════════ */
+#screen-fullreport { background: var(--cream); overflow-y: auto; }
+.fr-wrap { padding: 24px 24px 120px; max-width: 480px; margin: 0 auto; }
+.fr-header { text-align: center; padding: 20px 0 28px; }
+.fr-badge { display: inline-block; background: var(--amber); color: white; font-size: 10px; font-weight: 700; letter-spacing: .12em; padding: 4px 12px; border-radius: 20px; margin-bottom: 14px; }
+.fr-title { font-family: var(--font-serif); font-size: 26px; color: var(--ink); line-height: 1.3; margin-bottom: 6px; }
+.fr-title em { color: var(--amber); font-style: italic; }
+.fr-subtitle { font-size: 13px; color: var(--ink-40); line-height: 1.6; }
+.fr-notice { background: #FFF8F0; border: 1px solid #EADBC8; border-radius: 10px; padding: 12px 16px; margin-bottom: 24px; font-size: 12px; color: var(--ink-60); text-align: center; line-height: 1.6; }
+.fr-reportid { font-weight: 700; color: var(--amber); font-family: monospace; letter-spacing: .06em; }
+.fr-section { margin-bottom: 20px; background: white; border-radius: 14px; padding: 20px; box-shadow: 0 1px 8px rgba(0,0,0,.05); }
+.fr-section-label { font-size: 10px; font-weight: 700; letter-spacing: .14em; color: var(--amber); text-transform: uppercase; margin-bottom: 8px; }
+.fr-section-title { font-family: var(--font-serif); font-size: 17px; color: var(--ink); margin-bottom: 10px; line-height: 1.4; }
+.fr-section-body { font-size: 14px; color: var(--ink-60); line-height: 1.7; }
+.fr-section-body strong { color: var(--ink); }
+.fr-day-row { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 12px; }
+.fr-day-num { width: 28px; height: 28px; background: var(--amber); color: white; border-radius: 50%; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
+.fr-day-text { font-size: 14px; color: var(--ink); line-height: 1.6; }
+.fr-say-chip { display: inline-block; background: #FFF3E0; border: 1px solid #EADBC8; border-radius: 6px; padding: 4px 10px; font-size: 13px; color: var(--ink-60); margin-bottom: 6px; }
+.fr-say-chip.after { background: #F0FAF0; border-color: #B8DDB8; color: #3A6B3A; }
+.fr-share-box { background: var(--cream); border: 1px dashed var(--ink-20); border-radius: 10px; padding: 14px 16px; font-size: 13px; color: var(--ink-60); line-height: 1.7; }
+.fr-score-section { background: white; border-radius: 14px; padding: 20px; margin-bottom: 16px; box-shadow: 0 1px 8px rgba(0,0,0,.05); }
+.fr-score-q { font-size: 15px; font-weight: 600; color: var(--ink); margin-bottom: 4px; line-height: 1.4; }
+.fr-score-hint { font-size: 12px; color: var(--ink-40); margin-bottom: 16px; }
+.fr-score-btns { display: flex; gap: 8px; }
+.fr-score-btn { flex: 1; padding: 10px 4px; border: 1.5px solid var(--ink-10); border-radius: 10px; background: white; cursor: pointer; text-align: center; font-size: 11px; color: var(--ink-60); line-height: 1.3; transition: all .15s; }
+.fr-score-btn .fr-score-emoji { font-size: 22px; display: block; margin-bottom: 4px; }
+.fr-score-btn.selected { border-color: var(--amber); background: #FFF8F0; color: var(--amber); font-weight: 600; }
+.fr-score-required { font-size: 12px; color: #E74C3C; text-align: center; margin-bottom: 8px; display: none; }
+.fr-cta { text-align: center; padding: 8px 0 0; }
+.fr-cta-main { width: 100%; padding: 16px; background: var(--amber); color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: 700; cursor: pointer; letter-spacing: .02em; margin-bottom: 10px; }
+.fr-cta-main:disabled { background: var(--ink-20); cursor: not-allowed; }
+.fr-cta-sub { font-size: 12px; color: var(--ink-40); }
 
 /* ═══════════════════════════════════════
    WECHAT SCREEN
@@ -2517,6 +2566,8 @@ body {
 .ex-pair:nth-child(1) { animation-delay: .1s; }
 .ex-pair:nth-child(2) { animation-delay: .25s; }
 .ex-pair:nth-child(3) { animation-delay: .4s; }
+.ex-pair:nth-child(4) { animation-delay: .55s; }
+.ex-pair:nth-child(5) { animation-delay: .7s; }
 .ex-before {
   font-size: 14px;
   color: var(--ink-40);
@@ -2781,33 +2832,19 @@ body {
 .sentence-pill.selected {
   border-color: var(--amber); background: var(--amber-soft); color: var(--amber);
 }
-.slider-wrap { padding: 8px 0 20px; }
-.slider-labels {
-  display: flex; justify-content: space-between;
-  font-size: 12px; color: var(--ink-40); margin-bottom: 12px;
-}
-.slider-score-display {
-  text-align: center; font-family: var(--font-serif);
-  font-size: 56px; color: var(--ink); line-height: 1; margin-bottom: 4px;
-}
-.slider-score-label {
-  text-align: center; font-size: 12px; color: var(--ink-40); margin-bottom: 20px;
-}
-input[type=range].slider {
-  -webkit-appearance: none; appearance: none;
-  width: 100%; height: 3px; border-radius: 3px;
-  background: var(--ink-10); outline: none;
-}
-input[type=range].slider::-webkit-slider-thumb {
-  -webkit-appearance: none; appearance: none;
-  width: 28px; height: 28px; border-radius: 50%;
-  background: var(--dark); cursor: pointer;
-  box-shadow: 0 2px 8px rgba(0,0,0,.15);
-}
-input[type=range].slider::-moz-range-thumb {
-  width: 28px; height: 28px; border-radius: 50%;
-  background: var(--dark); cursor: pointer; border: none;
-}
+.q3-score-wrap { padding: 4px 0 8px; }
+.q3-score-prompt { text-align:center; font-size:12px; color:var(--ink-40); margin-bottom:14px; }
+.q3-track-outer { position:relative; padding:10px 8px 6px; }
+.q3-track-line { position:absolute; top:20px; left:14px; right:14px; height:2px; background:var(--ink-10); border-radius:1px; }
+.q3-track-fill { height:100%; background:var(--amber); width:0; border-radius:1px; transition:width .2s ease; }
+.q3-dots-row { display:flex; justify-content:space-between; position:relative; }
+.q3-dot-btn { background:none; border:none; padding:0; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:5px; min-width:0; }
+.q3-dot { width:18px; height:18px; border-radius:50%; background:white; border:2px solid var(--ink-15); transition:all .15s; }
+.q3-dot-btn.selected .q3-dot { background:var(--amber); border-color:var(--amber); transform:scale(1.35); box-shadow:0 0 0 4px rgba(255,167,38,.15); }
+.q3-dot-num { font-size:10px; color:var(--ink-30); line-height:1; transition:color .15s; }
+.q3-dot-btn.selected .q3-dot-num { color:var(--amber); font-weight:700; }
+.q3-score-labels { display:flex; justify-content:space-between; font-size:11px; color:var(--ink-40); margin-top:10px; }
+.q3-score-required { font-size:12px; color:#E74C3C; text-align:center; margin-top:8px; display:none; }
 .share-target-row { display: flex; flex-wrap: wrap; gap: 10px; }
 .share-target-pill {
   padding: 12px 20px; border-radius: 50px;
@@ -2997,6 +3034,14 @@ input[type=range].slider::-moz-range-thumb {
         <div class="ex-before">她太粘人</div>
         <div class="ex-after">她是在<em>确认你还在</em></div>
       </div>
+      <div class="ex-pair">
+        <div class="ex-before">他说不想上学</div>
+        <div class="ex-after">他在说<em>有件事让他很害怕</em></div>
+      </div>
+      <div class="ex-pair">
+        <div class="ex-before">游戏停不下来</div>
+        <div class="ex-after">那里是他<em>唯一说了算的地方</em></div>
+      </div>
     </div>
 
     <!-- Relationship target choice -->
@@ -3129,11 +3174,16 @@ input[type=range].slider::-moz-range-thumb {
       <div class="opt multi" data-val="autonomy" onclick="toggleMulti(this,'step1',3)"><div class="opt-marker"><div class="opt-marker-inner"></div></div><div class="opt-text">总顶嘴，越说越犟</div></div>
       <div class="opt multi" data-val="autonomy" onclick="toggleMulti(this,'step1',3)"><div class="opt-marker"><div class="opt-marker-inner"></div></div><div class="opt-text">不爱学习，缺少动力</div></div>
       <div class="opt multi" data-val="sensitive" onclick="toggleMulti(this,'step1',3)"><div class="opt-marker"><div class="opt-marker-inner"></div></div><div class="opt-text">注意力不集中，容易分心</div></div>
+      <div class="opt multi" data-val="sensitive" onclick="toggleMulti(this,'step1',3)"><div class="opt-marker"><div class="opt-marker-inner"></div></div><div class="opt-text">考试/上台前焦虑，手抖、肚子痛</div></div>
+      <div class="opt multi" data-val="sensitive" onclick="toggleMulti(this,'step1',3)"><div class="opt-marker"><div class="opt-marker-inner"></div></div><div class="opt-text">情绪爆发后很难平复，需要很久</div></div>
+      <div class="opt multi" data-val="autonomy" onclick="toggleMulti(this,'step1',3)"><div class="opt-marker"><div class="opt-marker-inner"></div></div><div class="opt-text">感兴趣的事超专注，不感兴趣的完全不动</div></div>
+      <div class="opt multi" data-val="autonomy" onclick="toggleMulti(this,'step1',3)"><div class="opt-marker"><div class="opt-marker-inner"></div></div><div class="opt-text">被规定时间、方式就抵触，要自己决定</div></div>
       <div class="opt multi" data-val="relation" onclick="toggleMulti(this,'step1',3)"><div class="opt-marker"><div class="opt-marker-inner"></div></div><div class="opt-text">什么都要问我，不敢自己决定</div></div>
       <div class="opt multi" data-val="relation" onclick="toggleMulti(this,'step1',3)"><div class="opt-marker"><div class="opt-marker-inner"></div></div><div class="opt-text">在家大放肆，在外面很乖</div></div>
       <div class="opt multi" data-val="relation" onclick="toggleMulti(this,'step1',3)"><div class="opt-marker"><div class="opt-marker-inner"></div></div><div class="opt-text">太心软，容易被人说服</div></div>
       <div class="opt multi" data-val="sensitive" onclick="toggleMulti(this,'step1',3)"><div class="opt-marker"><div class="opt-marker-inner"></div></div><div class="opt-text">太在意别人怎么看</div></div>
       <div class="opt multi" data-val="relation" onclick="toggleMulti(this,'step1',3)"><div class="opt-marker"><div class="opt-marker-inner"></div></div><div class="opt-text">不会拒绝别人</div></div>
+      <div class="opt multi" data-val="relation" onclick="toggleMulti(this,'step1',3)"><div class="opt-marker"><div class="opt-marker-inner"></div></div><div class="opt-text">一谈学习家里就吵架/冷战</div></div>
       <div class="opt multi" data-val="relation" onclick="toggleMulti(this,'step1',3)"><div class="opt-marker"><div class="opt-marker-inner"></div></div><div class="opt-text">和同学/朋友相处让我担心</div></div>
       <div class="opt multi" data-val="relation" onclick="toggleMulti(this,'step1',3)"><div class="opt-marker"><div class="opt-marker-inner"></div></div><div class="opt-text">我和孩子越来越说不到一起</div></div>
       <div class="opt multi" data-val="relation" onclick="toggleMulti(this,'step1',3)"><div class="opt-marker"><div class="opt-marker-inner"></div></div><div class="opt-text">其他，我想自己描述</div></div>
@@ -3162,7 +3212,7 @@ input[type=range].slider::-moz-range-thumb {
     <div class="q-head">
       <div class="q-label">你的感受</div>
       <h2 class="q-title">当<span id="s2-name" class="child-name">孩子</span>出现这个行为<br>你第一个感受是什么？</h2>
-      <p class="q-sub">这帮我们更准确地理解行为背后的原因</p>
+      <p class="q-sub">你的感受是重要的数据——帮我们更准确读懂行为背后的原因</p>
     </div>
     <div class="options" id="step2-options">
       <div class="opt" data-val="attention" onclick="selectSingle(this,'step2')"><div class="opt-marker"><div class="opt-marker-inner"></div></div><div class="opt-text">烦躁 / 不耐烦</div></div>
@@ -3170,6 +3220,7 @@ input[type=range].slider::-moz-range-thumb {
       <div class="opt" data-val="safety" onclick="selectSingle(this,'step2')"><div class="opt-marker"><div class="opt-marker-inner"></div></div><div class="opt-text">心疼 / 很担心</div></div>
       <div class="opt" data-val="helpless" onclick="selectSingle(this,'step2')"><div class="opt-marker"><div class="opt-marker-inner"></div></div><div class="opt-text">无奈 / 不知道怎么办</div></div>
       <div class="opt" data-val="hurt" onclick="selectSingle(this,'step2')"><div class="opt-marker"><div class="opt-marker-inner"></div></div><div class="opt-text">受伤 / 觉得孩子不在乎你</div></div>
+      <div class="opt" data-val="anxiety" onclick="selectSingle(this,'step2')"><div class="opt-marker"><div class="opt-marker-inner"></div></div><div class="opt-text">焦虑 / 担心这样下去会出问题</div></div>
     </div>
   </div>
   <div class="bottom-bar">
@@ -3230,12 +3281,13 @@ input[type=range].slider::-moz-range-thumb {
       <div class="opt" data-val="understand" onclick="selectSingle(this,'step4')"><div class="opt-marker"><div class="opt-marker-inner"></div></div><div class="opt-text">理解为什么孩子会这样</div></div>
       <div class="opt" data-val="mistake" onclick="selectSingle(this,'step4')"><div class="opt-marker"><div class="opt-marker-inner"></div></div><div class="opt-text">知道我说错了什么</div></div>
       <div class="opt" data-val="action" onclick="selectSingle(this,'step4')"><div class="opt-marker"><div class="opt-marker-inner"></div></div><div class="opt-text">明天可以做点不一样的</div></div>
+      <div class="opt" data-val="connect" onclick="selectSingle(this,'step4')"><div class="opt-marker"><div class="opt-marker-inner"></div></div><div class="opt-text">改善我们之间的沟通方式</div></div>
       <div class="opt" data-val="normal" onclick="selectSingle(this,'step4')"><div class="opt-marker"><div class="opt-marker-inner"></div></div><div class="opt-text">确认这是不是正常的</div></div>
       <div class="opt" data-val="all" onclick="selectSingle(this,'step4')"><div class="opt-marker"><div class="opt-marker-inner"></div></div><div class="opt-text">都想要</div></div>
     </div>
   </div>
   <div class="bottom-bar">
-    <button class="btn-primary" id="btn-step4" disabled onclick="goToStep(5)">生成<span class="btn-name"></span>的报告 →</button>
+    <button class="btn-primary" id="btn-step4" disabled onclick="goToLoading()">生成<span class="btn-name"></span>的报告 →</button>
   </div>
 </div>
 
@@ -3326,7 +3378,7 @@ input[type=range].slider::-moz-range-thumb {
   <div class="letter-body" id="report-body"></div>
   <div class="report-sticky">
     <div class="sticky-text">还有 <strong>4 节</strong>深度分析等你查看</div>
-    <button class="btn-sticky" onclick="goToWeChat()">免费获取 →</button>
+    <button class="btn-sticky" onclick="goToWeChat()">查看完整版 →</button>
   </div>
 </div>
 
@@ -3373,11 +3425,25 @@ input[type=range].slider::-moz-range-thumb {
     <div class="vq-block">
       <div class="vq-num">Q3</div>
       <div class="vq-title">看完报告后，<br>你觉得自己重新理解孩子了吗？</div>
-      <div class="slider-wrap">
-        <div class="slider-score-display" id="q3-score-display">5</div>
-        <div class="slider-score-label">重新读懂指数</div>
-        <div class="slider-labels"><span>还没有</span><span>非常清晰</span></div>
-        <input type="range" class="slider" id="q3-slider" min="0" max="10" value="5" oninput="onSliderChange(this.value)">
+      <div class="q3-score-wrap">
+        <div class="q3-score-prompt">点一下评分（必填）</div>
+        <div class="q3-track-outer">
+          <div class="q3-track-line"><div class="q3-track-fill" id="q3-track-fill"></div></div>
+          <div class="q3-dots-row" id="q3-btns">
+            <button class="q3-dot-btn" onclick="selectQ3Score(this,1)"><div class="q3-dot"></div><div class="q3-dot-num">1</div></button>
+            <button class="q3-dot-btn" onclick="selectQ3Score(this,2)"><div class="q3-dot"></div><div class="q3-dot-num">2</div></button>
+            <button class="q3-dot-btn" onclick="selectQ3Score(this,3)"><div class="q3-dot"></div><div class="q3-dot-num">3</div></button>
+            <button class="q3-dot-btn" onclick="selectQ3Score(this,4)"><div class="q3-dot"></div><div class="q3-dot-num">4</div></button>
+            <button class="q3-dot-btn" onclick="selectQ3Score(this,5)"><div class="q3-dot"></div><div class="q3-dot-num">5</div></button>
+            <button class="q3-dot-btn" onclick="selectQ3Score(this,6)"><div class="q3-dot"></div><div class="q3-dot-num">6</div></button>
+            <button class="q3-dot-btn" onclick="selectQ3Score(this,7)"><div class="q3-dot"></div><div class="q3-dot-num">7</div></button>
+            <button class="q3-dot-btn" onclick="selectQ3Score(this,8)"><div class="q3-dot"></div><div class="q3-dot-num">8</div></button>
+            <button class="q3-dot-btn" onclick="selectQ3Score(this,9)"><div class="q3-dot"></div><div class="q3-dot-num">9</div></button>
+            <button class="q3-dot-btn" onclick="selectQ3Score(this,10)"><div class="q3-dot"></div><div class="q3-dot-num">10</div></button>
+          </div>
+        </div>
+        <div class="q3-score-labels"><span>还没有</span><span>非常清晰</span></div>
+        <div class="q3-score-required" id="q3-required">↑ 请先点击评分，再继续</div>
       </div>
     </div>
 
@@ -3453,7 +3519,49 @@ input[type=range].slider::-moz-range-thumb {
       <button class="btn-share amber" onclick="showSharePanel('family')">分享给家人看这份报告</button>
       <button class="btn-share" onclick="showSharePanel('friend')" style="margin-top:8px">邀请朋友也测一测</button>
       <button class="btn-share" onclick="showSharePanel('moments')" style="margin-top:8px">生成朋友圈分享图</button>
-      <button class="btn-share" onclick="goToWeChatFinal()" style="margin-top:14px;border-color:var(--amber);color:var(--amber)">获取完整报告 →</button>
+      <button class="btn-share" onclick="goToWeChatFinal()" style="margin-top:14px;background:var(--amber);color:white;border-color:var(--amber);font-weight:600">领取完整版报告 →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═════════════════════════════════════
+     FULL REPORT PREVIEW
+═════════════════════════════════════ -->
+<div id="screen-fullreport" class="screen">
+  <div class="top-nav">
+    <div class="nav-back" onclick="goBack()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg> 返回</div>
+    <div class="nav-wordmark">AIPIWEN</div>
+    <div></div>
+  </div>
+  <div class="fr-wrap">
+    <div class="fr-header">
+      <div class="fr-badge">完整版报告预览</div>
+      <h2 class="fr-title" id="fr-title">关于 <em id="fr-name">孩子</em></h2>
+      <p class="fr-subtitle" id="fr-subtitle">读完之后，你会知道明天可以做什么不一样的事。</p>
+    </div>
+    <div class="fr-notice">
+      报告编号：<span class="fr-reportid" id="fr-reportid"></span><br>
+      <span style="font-size:11px">联系顾问时请提供此编号</span>
+    </div>
+    <!-- 动态内容区 -->
+    <div id="fr-content"></div>
+    <!-- 必选打分 -->
+    <div class="fr-score-section">
+      <div class="fr-score-q">读完完整版，你对<span id="fr-score-name">孩子</span>的理解有多少变化？</div>
+      <div class="fr-score-hint">必选一个，才能继续</div>
+      <div class="fr-score-btns">
+        <button class="fr-score-btn" onclick="selectFrScore(this,2)"><span class="fr-score-emoji">😟</span>没变化</button>
+        <button class="fr-score-btn" onclick="selectFrScore(this,4)"><span class="fr-score-emoji">😐</span>有一点</button>
+        <button class="fr-score-btn" onclick="selectFrScore(this,6)"><span class="fr-score-emoji">🤔</span>开始理解</button>
+        <button class="fr-score-btn" onclick="selectFrScore(this,8)"><span class="fr-score-emoji">😊</span>清晰多了</button>
+        <button class="fr-score-btn" onclick="selectFrScore(this,10)"><span class="fr-score-emoji">🤩</span>非常清晰</button>
+      </div>
+    </div>
+    <div class="fr-score-required" id="fr-score-required">↑ 请先选择你的理解变化，再继续</div>
+    <!-- CTA -->
+    <div class="fr-cta">
+      <button class="fr-cta-main" id="fr-cta-btn" onclick="submitFrScore()">联系顾问，领取进一步解读 →</button>
+      <div class="fr-cta-sub">测试期间由顾问根据报告编号人工发送，请稍等</div>
     </div>
   </div>
 </div>
@@ -3464,52 +3572,39 @@ input[type=range].slider::-moz-range-thumb {
 <div id="screen-wechat" class="screen">
   <div class="wechat-wrap">
     <div class="wechat-mark">✓</div>
-    <h2 class="wechat-title">完整报告<br>马上发给你</h2>
+    <h2 class="wechat-title">联系顾问<br>进一步解读</h2>
     <p class="wechat-body">
-      添加企业微信后，顾问会把<br><span id="wechat-name-text">孩子</span> 的完整报告发送给你。
+      顾问会根据报告编号，为<span id="wechat-name-text">孩子</span>发送更深入的人格分析与长期行为解读。
     </p>
-    <div style="background:#FFF8F0;border:1px solid #EADBC8;border-radius:10px;padding:12px 16px;margin-bottom:16px;text-align:center">
+    <div style="background:#FFF8F0;border:1px solid #EADBC8;border-radius:10px;padding:12px 16px;margin-bottom:20px;text-align:center">
       <div style="font-size:11px;color:var(--ink-40);margin-bottom:4px">你的报告编号</div>
       <div id="wechat-report-id" style="font-size:15px;font-weight:700;color:var(--amber);letter-spacing:.08em;font-family:monospace"></div>
-      <div style="font-size:12px;color:var(--ink-40);margin-top:4px">添加企业微信后，把这个编号发给顾问，可以快速领取完整报告</div>
+      <div style="font-size:12px;color:var(--ink-40);margin-top:4px">进入客服后把这个编号发给顾问，即可领取完整报告</div>
     </div>
 
-    <div style="background:#F7F5F0;border-radius:12px;padding:16px 20px;margin-bottom:20px;text-align:left">
-      <div style="font-size:11px;font-weight:600;letter-spacing:.1em;color:var(--ink-40);text-transform:uppercase;margin-bottom:12px">领取方式</div>
-      <div style="display:flex;flex-direction:column;gap:10px">
-        <div style="display:flex;align-items:flex-start;gap:10px">
-          <div style="width:22px;height:22px;border-radius:50%;background:var(--amber);color:white;font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0">1</div>
-          <div style="font-size:14px;color:var(--ink);padding-top:2px">手机长按下方二维码</div>
-        </div>
-        <div style="display:flex;align-items:flex-start;gap:10px">
-          <div style="width:22px;height:22px;border-radius:50%;background:var(--amber);color:white;font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0">2</div>
-          <div style="font-size:14px;color:var(--ink);padding-top:2px">选择「识别图中二维码」</div>
-        </div>
-        <div style="display:flex;align-items:flex-start;gap:10px">
-          <div style="width:22px;height:22px;border-radius:50%;background:var(--amber);color:white;font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0">3</div>
-          <div style="font-size:14px;color:var(--ink);padding-top:2px">添加企业微信，领取完整报告</div>
-        </div>
-      </div>
-      <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--ink-10);font-size:12px;color:var(--ink-40)">
-        💻 电脑端请用手机微信「扫一扫」，扫描屏幕上的二维码。
-      </div>
-    </div>
+    <!-- 微信内：直接点击进入客服 -->
+    <a id="kf-direct-link" href="https://work.weixin.qq.com/kfid/kfc6ce446e6e057c683"
+       style="display:block;width:100%;padding:15px 0;background:var(--amber);color:white;border:none;border-radius:12px;font-size:16px;font-weight:700;text-align:center;text-decoration:none;margin-bottom:14px;box-sizing:border-box">
+      点击联系顾问，领取完整报告 →
+    </a>
 
-    <div class="qr-card">
+    <div class="qr-card" style="margin-bottom:20px">
+      <div style="font-size:12px;color:var(--ink-40);text-align:center;margin-bottom:10px">💻 电脑端？用手机微信「扫一扫」扫码</div>
       <div class="qr-frame" id="qr-frame-wrap">
-        <img id="qr-img" alt="企业微信二维码" style="width:140px;height:140px;border-radius:8px;display:none" onerror="this.style.display='none';document.getElementById('qr-placeholder').style.display='flex'">
+        <canvas id="qr-canvas" style="width:140px;height:140px;border-radius:6px;display:none"></canvas>
+        <img id="qr-img" alt="企业微信客服二维码" style="width:140px;height:140px;border-radius:8px;display:none">
         <div id="qr-placeholder" style="display:flex;flex-direction:column;align-items:center;gap:8px">
           <div class="qr-icon">⬛</div>
-          <div style="font-size:13px;color:var(--ink-40)">企业微信二维码</div>
+          <div style="font-size:13px;color:var(--ink-40)">生成中…</div>
         </div>
       </div>
-      <div class="qr-label">长按二维码识别，添加企业微信</div>
+      <div class="qr-label">长按二维码 → 识别图中二维码 → 进入客服</div>
     </div>
 
     <!-- ─── 已是好友 section ─── -->
     <div id="friend-section" style="background:#F7F5F0;border-radius:12px;padding:16px 20px;margin-bottom:20px;text-align:left">
       <div style="font-size:11px;font-weight:600;letter-spacing:.1em;color:var(--ink-40);text-transform:uppercase;margin-bottom:8px">已是企业微信好友？</div>
-      <div style="font-size:14px;color:var(--ink);margin-bottom:12px">把下方链接发给我，我立刻把完整报告发给你</div>
+      <div style="font-size:14px;color:var(--ink);margin-bottom:12px">无需重复添加，直接把报告编号发给顾问，顾问会根据编号为你发送完整解读。</div>
       <div id="report-url-box" style="background:white;border:1px solid var(--ink-10);border-radius:8px;padding:10px 12px;font-size:12px;color:var(--ink-60);word-break:break-all;line-height:1.5;margin-bottom:10px;min-height:36px"></div>
       <button id="copy-url-btn" onclick="copyReportURL()" style="width:100%;padding:12px;background:var(--amber);color:white;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;">复制链接，发给顾问</button>
     </div>
@@ -3546,7 +3641,8 @@ input[type=range].slider::-moz-range-thumb {
 // ─────────────────────────────────────
 const WECHAT_CONFIG = {
   QR_IMAGE: 'images/wechat_qr.png',
-  WECHAT_ID: 'AIPIWEN_2026'
+  WECHAT_ID: 'AIPIWEN_2026',
+  KFID_URL: 'https://work.weixin.qq.com/kfid/kfc6ce446e6e057c683'
 };
 
 // ═══════════════════════════════════════════════════
@@ -3691,7 +3787,8 @@ const state = {
   reportType: 'sensitive',
   relationTarget: 'child',
   screenHistory: ['screen-landing'],
-  reportId: ''
+  reportId: '',
+  feedbackGiven: false
 };
 
 function showScreen(id) {
@@ -3807,6 +3904,12 @@ function needLabel(val) {
           action:'明天可以做点不一样的',normal:'确认这是不是正常的',all:'都想要'}[val] || '已记录';
 }
 
+function goToLoading() {
+  syncNames();
+  buildSummary(); // 设置 reportType，必须在 startLoading 前调用
+  startLoading();
+}
+
 function startLoading() {
   const name = state.childName || '孩子';
   // Brand mark is pure CSS — no emoji needed
@@ -3819,10 +3922,10 @@ function startLoading() {
       const el = document.getElementById(id);
       el.classList.add('vis');
       const status = el.querySelector('.ls-status');
-      setTimeout(() => { el.classList.add('done'); if(status) status.textContent = '完成'; }, 700);
-    }, i * 2800 + 400);
+      setTimeout(() => { el.classList.add('done'); if(status) status.textContent = '完成'; }, 500);
+    }, i * 1600 + 400);
   });
-  setTimeout(() => buildAndShowReport(), 9500);
+  setTimeout(() => buildAndShowReport(), 5800);
 }
 
 /* ── Report data ── */
@@ -3830,47 +3933,50 @@ const REPORTS = {
   sensitive: {
     typeLabel: '感知力丰富型',
     s1title: '我对{name}的理解',
-    s1: `{name}是一个感知力非常丰富的孩子——对周围每一个人的评价都是开着的，内心一直在认真工作，但还没找到一个稳定的地方放自己。\n\n当你批评{name}的时候，{name}感受到的不只是"这件事做错了"，而是"爸爸/妈妈觉得我整个人不好"。那不是一句评论，是一个结论。\n\n这份灵敏，长大以后会是{name}最宝贵的东西。`,
-    s2title: '家长最常有的一个误解',
-    s2: `<strong>你可能认为：</strong>孩子太敏感，要让{name}变得更坚强，以后才能承受挫折。\n\n<strong>真正发生的是：</strong>{name}的感知系统比大多数同龄孩子灵敏得多。你批评{name}，{name}收到的信号量是你发出的三倍。不是矫情，是处理量本来就更大。\n\n<strong>你需要做的，不是让{name}变硬，而是帮{name}找到放这份灵敏的地方。</strong>`,
+    s1: `{name}是一个感知力非常丰富的孩子。外面世界的每一个温度、每一句话落下的重量、你脸上一闪而过的不耐烦——{name}都收到了，而且收到的，比你以为的要多得多。\n\n你以为你只是随口说了一句"你怎么这么磨蹭"。但{name}接收到的，是一份关于自己的判决书——"爸爸/妈妈觉得我这个人有问题"。那不是一句评论，是一个结论。一个{name}可能会悄悄存进心里，反复回放的结论。\n\n{name}不是太脆弱，也不是太敏感。{name}的神经系统的处理带宽，本来就比大多数同龄孩子宽。这意味着{name}能感受到别人感受不到的细节，也意味着同样的一句话击中{name}的力度，是普通孩子的好几倍。不是矫情，是天生如此。\n\n你可能还注意到一件事：考试前{name}会手抖、咬指甲、肚子不舒服。这不是意志力的问题。人类的大脑有三层——本能脑、情绪脑、理性脑。情绪脑一旦被焦虑激活，理性脑就会立刻"断电"。{name}的情绪系统比别的孩子更敏感，这意味着同等压力下，{name}的理性脑更容易被淹没。那种手抖和胃痛，是{name}的身体在如实地告诉你：情绪系统正在超负荷运转。批评和要求"振作"，只会让超载的系统更难恢复。\n\n这份灵敏，现在让你很累，总要小心翼翼。但十年、二十年后，{name}会是那个房间里最能感受到别人需要什么的人，最能在人际关系里走得细腻、走得深的人。你现在不需要改变{name}，你需要帮{name}找到安放这份灵敏的地方。`,
+    s2title: '你可能一直有一个误解',
+    s2: `<strong>你可能认为：</strong>孩子太敏感了，要让{name}变得更坚强、更皮实，以后才能扛住这个世界。\n\n<strong>但真正发生的是：</strong>每一次你说"这点小事有什么好哭的"，{name}学到的不是坚强。{name}学到的是——我的感受是错的，我不应该有这种感受，我必须藏起来。\n\n感知力丰富的孩子，哭不是软弱，是他的情绪系统在高速运转。你批评{name}，{name}收到的信号量是你发出的三倍。他不是在小题大做，他是在处理比你想象中大得多的重量。\n\n<strong>你真正需要做的，不是让{name}变硬，而是帮{name}学会：我感受到了，这没有问题，我可以处理它。</strong>`,
     translates: [
-      {label:'你看到的', text:'你只说了一句"你怎么这么粗心"，{name}哭了很久，晚上还在难过。'},
-      {label:'实际发生的', text:'{name}的情绪系统接收到的，不只是那句话本身。{name}听到的是："爸爸/妈妈对我失望了。"处理的重量，比那句话大得多。'}
+      {label:'你看到的', text:'你只说了一句"你怎么这么粗心"，{name}哭了很久，晚上还在翻来覆去睡不着。'},
+      {label:'实际发生的', text:'{name}的情绪系统收到的，远不止那句话本身。{name}听到的是："爸爸/妈妈对我失望了。我让他们失望了。我不够好。"这个重量，比"粗心"大出许多倍。{name}哭的不是那件事，是那个结论。'}
     ],
-    adv: `{name}有一个你可能没意识到的隐藏能力：<strong>真正感受到别人的感受</strong>。班里有同学难受，{name}第一个察觉——这是非常稀有的共情天赋。`,
-    risk: `{name}正在把别人给的评价，变成对自己的定义。这个年龄是建立"我是谁"的关键窗口。你现在用具体的认可替换掉笼统的否定，可以帮{name}画一幅完全不同的自画像。`,
-    say: { before:'「你真棒！」', after:'「{name}，你今天想到这个方法，我当时没想到，你想到了。」', why:'{name}需要具体的证据才能更新"我够好了"的刻度线。越具体，{name}越信。' },
-    need: '{name}最需要的，是你帮他/她成为自己的见证人——记住他/她真实做到的事，具体的，说得出来的。'
+    adv: `{name}有一个你可能还没意识到的隐藏能力：<strong>真正感受到别人的感受。</strong>\n\n班里有同学状态不对，{name}第一个察觉。朋友难受，{name}不需要人说，就知道该走过去。这是非常稀有的共情天赋。大多数孩子终其一生都学不会这一点。`,
+    risk: `现在{name}正在做一件危险的事：把别人给的评价，慢慢变成对自己的定义。\n\n这个年龄段，是孩子建立"我是一个什么样的人"的关键窗口。如果这个窗口里装的是否定、是失望、是"你不够好"——那幅自画像，会跟{name}很久很久。\n\n但反过来也一样：你现在给的每一个具体的认可，都是在帮{name}重新画那幅画。`,
+    say: { before:'「你真棒！」/ 「这有什么好哭的？」', after:'「{name}，你刚才忍住了，我注意到了。」或者「你今天处理这件事的方式，我当时没想到，你想到了。」', why:'{name}需要具体的、真实发生过的证据，才能更新内心"我够好了"的刻度线。越具体，{name}越信。空洞的夸不起作用，但精准的看见，会让{name}记一辈子。' },
+    say2: { before:'「你怎么这么脆弱」/ 「这点事有什么好难过的」', after:'「我看到了，这件事对你来说很难。」然后什么都不说，只是待在旁边。', why:'{name}需要的不是解决方案，是被接住的感觉。你待在那里不走，本身就是最好的支持。话说完了不需要补充，在旁边就够了。' },
+    need: '{name}最需要的，是一个真正看见他/她的见证人。不是评判，不是建议，只是——"我看到你了。你做到的这件事，是真实的。"'
   },
   autonomy: {
     typeLabel: '自主驱动型',
     s1title: '我对{name}的理解',
-    s1: `{name}是一个对"自己说了算"有强烈需求的孩子——不是任性，是{name}的神经系统需要感到"我的世界是我在掌控的"，才能安心运作。\n\n当你改变了已经说好的事、或者要求{name}按你的方式来，{name}体验到的不是"只是换一种方法"，而是"我的控制感被拿走了"。那个烦躁，是神经系统的自动防御。\n\n这份对自主的坚持，在未来会是{name}最强的驱动力。`,
-    s2title: '家长最常有的一个误解',
-    s2: `<strong>你可能认为：</strong>孩子太固执，不懂灵活变通，这样长大了会吃亏。\n\n<strong>真正发生的是：</strong>"被改变"和"自己决定改变"对{name}来说是完全不同的体验。你替{name}做决定，{name}感受到的是被剥夺，而不是被帮助。\n\n<strong>有效的路不是减少{name}的固执，而是把决定权还给{name}。</strong>`,
+    s1: `{name}是一个对"自己说了算"有强烈需求的孩子。这不是任性，也不是教养问题——是{name}的神经系统需要感到"我的世界是我在掌控的"，才能安心运作。\n\n当你改变了已经说好的事、或者要求{name}按你的方式来，{name}体验到的不是"只是换一种方法"，而是"我的控制感被拿走了"。那个当下的烦躁、抵抗、甚至爆发——不是{name}不懂事，是神经系统的自动防御反应，不受意志控制。\n\n你可能发现，当{name}自己决定要做一件事，完全不用催，执行力惊人。但一旦变成"你应该做这个"，{name}就像被抽走了所有动力。这不是两面性，这是同一件事：{name}的内驱力，只能从内部启动，从来不能从外部装进去。\n\n研究发现，孩子的内驱力由三件事构成：对这件事真实的兴趣、做成功了的成就感、以及犯了错误不被严厉惩罚的安全感。缺了任何一个，内驱力都不会稳固。对{name}来说，"被批评错误"对内驱力的破坏最大——{name}不是受不了批评，是{name}的整个"想做"的意愿，在被否定的那一刻就关机了。\n\n这份对自主的坚持，现在让你很头疼。但这恰恰是未来最稀缺的能力之一：不依赖外部驱动，自己找到方向，自己走下去。`,
+    s2title: '你可能一直有一个误解',
+    s2: `<strong>你可能认为：</strong>孩子太固执了，不懂变通，这样长大了在社会上会吃亏。必须让{name}学会服从规则，学会配合别人。\n\n<strong>但真正发生的是：</strong>"被迫改变"和"自己决定改变"，对{name}来说是完全不同的两件事。前者是剥夺，后者是成长。\n\n你替{name}做决定，你以为是在帮{name}。但{name}感受到的，是"我的控制感被拿走了"。越强行要求{name}顺从，{name}的抵抗就越强——不是对抗你这个人，是神经系统在保护自己仅剩的那点自主感。\n\n<strong>真正有效的路，不是压制{name}的固执，而是把决定权交还给{name}，在你能接受的范围里，让{name}说了算。</strong>`,
     translates: [
-      {label:'你看到的', text:'{name}自己说的目标，不到一周就放弃了，感觉说话不算数。'},
-      {label:'实际发生的', text:'当目标是{name}自己选的，动力来自内部。当你把它变成"你应该完成的任务"，动力就被切断了。{name}不是没毅力，是动力来源被换掉了。'}
+      {label:'你看到的', text:'{name}自己说要做到的事，没几天就放弃了。说话不算数，没有坚持性。'},
+      {label:'实际发生的', text:'当那个目标最初是{name}自己选的，动力是真实的。但当它慢慢变成了"你必须完成的任务"——你开始提醒、催促、管理——动力的来源就被切断了。{name}不是没有毅力，是{name}的内驱力在外部压力进来的那一刻，就自动关闭了。'}
     ],
-    adv: `当{name}真正想做一件事，执行力惊人。那些"自己的事立刻行动"的瞬间，就是这份驱动力在工作。这是最强的竞争力之一。`,
-    risk: `如果{name}的自主需求长期被压制，{name}会学会在你面前表演顺从，在你看不见的地方按自己的方式来。表面听话，内心越来越疏远。`,
-    say: { before:'「你必须完成这个目标」', after:'「这件事，你打算怎么搞定？」然后闭嘴，等{name}说完。', why:'把方案的所有权还给{name}，{name}才有动力去执行它。你的工作是提问，不是提答案。' },
-    need: '{name}最需要的是：在你给的安全范围里，有真实的选择权。在可以的地方，{name}说了算。'
+    adv: `当{name}真正想做一件事——没有人要求、没有人催、完全出于自己的意愿——那种专注和投入，是很多孩子做不到的。\n\n这份只要被激活就极其强大的内驱力，是最高级的竞争力。因为它不依赖外部环境，不需要老师监督、不需要奖励刺激，只要方向对了，{name}自己就能跑起来。`,
+    risk: `如果{name}的自主需求长期被压制，有一件事会悄悄发生：{name}学会了表演服从。\n\n在你面前，{name}变得顺从、安静，好像终于"听话"了。但在你看不见的地方，{name}按自己的方式来，越来越不跟你商量，越来越不让你知道真实的想法。\n\n表面的听话，换来的是内心的疏远。等到青春期，你会发现那扇门已经关了很久了。`,
+    say: { before:'「你必须把这个完成」/ 「我说怎么做就怎么做」', after:'「这件事你打算怎么搞定？」然后闭嘴，等{name}说完，不打断，不补充。', why:'把方案的所有权还给{name}，{name}才有动力去执行。你的角色不是提供答案，而是提出问题，然后真正等待{name}的答案。哪怕那个答案不是你认为最好的。' },
+    say2: { before:'「你总是拖拖拉拉」/ 「你就不能主动点吗」', after:'「这件事你打算什么时候开始？」然后等{name}说，不催，不追问。', why:'问"什么时候"比"为什么还没做"要好——前者是把控制权交还给{name}，后者是评判。{name}自己说出来的时间，比你规定的时间更容易执行。' },
+    need: '{name}最需要的是：在你能接受的安全边界里，有真实的、被认真对待的选择权。不是假选择，是真的在可以的地方，{name}说了算。'
   },
   relation: {
     typeLabel: '关系连接型',
     s1title: '我对{name}的理解',
-    s1: `{name}是一个以关系为中心运作的孩子——{name}的状态好不好，直接取决于和你之间的连接质量。当连接充足，{name}能稳定、能学习、能成长。当连接不稳定，其他什么都会出问题。\n\n{name}问你问题、粘着你——不是依赖，是在检测关系还在不在。\n\n你对{name}来说，是整个世界的锚点。`,
-    s2title: '家长最常有的一个误解',
-    s2: `<strong>你可能认为：</strong>孩子太依赖，要让{name}更独立，不能什么都要问我。\n\n<strong>真正发生的是：</strong>{name}内心有一个"关系稳不稳"的雷达一直开着。越急着推{name}独立，雷达越焦虑，需要更多确认才能安心。\n\n<strong>有效的路反过来：先把连接充足地给到{name}，{name}才有安全感去真正独立。</strong>`,
+    s1: `{name}是一个以关系为核心运作的孩子。{name}的状态好不好——愿不愿意学习、有没有安全感、情绪稳不稳——直接取决于和你之间连接的质量。\n\n当你们的关系是顺畅的、温暖的，{name}能做到你觉得不可能的事。当连接断了或者不稳了，其他什么都会跟着出问题——不是{name}的问题，是{name}没有办法在"关系不安全"的状态下正常运作。\n\n{name}问你问题、粘着你、需要你在场——这不是依赖，这是{name}在做一件非常重要的事：检测关系还在不在。就像手机需要信号才能运作，{name}需要"和你的连接"才能安心生长。\n\n有一件很多父母不知道的事：你对{name}说话的方式，决定了{name}有没有意愿把内心世界打开给你。每一次{name}想说什么，{name}都在心里先问一个问题："如果我说了，会有什么结果？"如果以前的经验是——你给了建议、纠正了{name}的想法、或者说"这有什么大不了的"——{name}就学会了：说了也没用。那扇门，是一次一次这样关上的。\n\n青春期来临之前，这扇门还没有锁死。你现在做的每一次"只是听，不评判"，都是在把门留住一道缝。等到青春期真的来了，{name}寻找倾诉的方向是谁，取决于你现在是什么样的倾听者。`,
+    s2title: '你可能一直有一个误解',
+    s2: `<strong>你可能认为：</strong>孩子太依赖了，什么都要找我，不能独立。要让{name}学会自己处理事情，不能总是跟着我转。\n\n<strong>但真正发生的是：</strong>{name}内心有一个"关系稳不稳"的雷达，一直开着，24小时不关机。你越急着推{name}独立，那个雷达越焦虑，需要更频繁地确认——"妈妈/爸爸还在不在？还爱不爱我？"\n\n越推，越粘。越要求独立，越做不到独立。不是{name}故意的，是神经系统的自动反应。\n\n<strong>有效的路，正好反过来：先把连接充分地给到{name}，让{name}的"关系雷达"真正平静下来，{name}才有安全感去真正独立，去真正放开你的手。</strong>`,
     translates: [
-      {label:'你看到的', text:'问{name}今天怎么样，{name}总说"还行"，什么都不分享。'},
-      {label:'实际发生的', text:'{name}不是没有话说，是不确定"说了之后你会怎么回应我"。如果以前分享过，换来的是建议或评论，{name}就学会了"说了也没用"，干脆不说。'}
+      {label:'你看到的', text:'问{name}今天怎么样，{name}总说"还行"，什么都不分享，像个话匣子锁上了。'},
+      {label:'实际发生的', text:'{name}不是没有话说——{name}一整天都有感受、有故事、有想说的。但{name}在问自己一个问题："如果我说了，你会怎么回应我？"如果以前说过，换来的是建议、纠正、或者"这没什么大不了的"，{name}就学会了：说了也没用，甚至会让自己更难受。所以不如不说。'}
     ],
-    adv: `{name}知道关系重要。这在很多孩子身上是感受不到的。这份对关系的敏感，长大之后会让{name}成为真正懂得经营关系的人。`,
-    risk: `如果{name}在家得不到足够的连接，{name}会开始向外寻找——同伴、网络、任何给{name}"被需要"感觉的地方。预防这一点最好的方式，是现在就主动给够。`,
-    say: { before:'「今天怎么样？」（然后等来"还行"）', after:'「今天有没有一件事，让你觉得还不错？」然后安静等，不评论，只说"嗯"。', why:'具体的小问题比大问题容易回答。{name}需要先看到你只是在听，不是在评判，才会慢慢打开。' },
-    need: '{name}最需要的是：每天有一段真正属于你们两个人的时间。哪怕只有10分钟，你完全在场，{name}说什么你都接得住。'
+    adv: `{name}知道关系重要，知道人与人之间的连接是有重量的。这件事，很多孩子感受不到，很多大人也丢失了。\n\n这份对关系的敏感和在乎，长大之后会变成非常稀缺的能力。那些最重要的关系——朋友、伴侣、一起工作的人——{name}不只会维系，{name}会让对方真正感到被珍惜、被看见。这件事，很多大人一辈子都没学会。`,
+    risk: `如果{name}在家里得不到足够的连接，{name}不会就这么"算了"。{name}会开始向外寻找——同伴群体、网络、任何能给{name}"我被需要、我被看见"这种感觉的地方。\n\n青春期到来之前，这个窗口还开着。等青春期一到，{name}寻找连接的方向就很可能不再是你了。\n\n预防这一切最好的方式，是现在就主动给够。`,
+    say: { before:'「去自己待着」/ 「你能不能自己处理？」', after:'「今天有没有一件事，哪怕很小，让你觉得还不错？」然后安静等，什么都不说，只是"嗯"。', why:'具体的小问题，比"你今天怎么样"更容易回答。但更关键的是：{name}需要先看到你只是在听，不是在评判、不是在给建议——才会慢慢愿意打开。每一次你真的只是听，都是在修复那个连接。' },
+    say2: { before:'「你太粘人了」/ 「能不能独立一点」', after:'「来，我们两个人待一会儿。」然后就这样，不用做什么，只是在一起。', why:'粘人是信号，不是问题本身。{name}需要充足的连接感，充电够了自然会去探索。推开只会让需求更强，先给够，{name}才会真正放开手。' },
+    need: '{name}最需要的，是每天有一段真正属于你们两个人的时间。哪怕只有十分钟，你放下手机，完全在场，{name}说什么你都接得住，不评论，不转移，不解决问题。只是在一起。'
   }
 };
 
@@ -3915,6 +4021,28 @@ const REPORT_SENTENCES = {
     '孩子不是没有话说，是不确定说了之后你会怎么回应。',
     '你对孩子来说，是整个世界的锚点。',
     '每天哪怕只有10分钟，你完全在场。'
+  ]
+};
+
+/* ── Type-specific locked item teasers ── */
+const LOCKED_ITEMS = {
+  sensitive: [
+    ['🌟', '{name}有一个你从没发现的天赋', '感知力丰富的孩子，有一种大多数人终生学不会的能力——你可能从没意识到'],
+    ['⚠️', '现在正在发生一件危险的事', '{name}在把你给的评价，慢慢变成自己的定义。这扇窗口，现在还开着'],
+    ['💬', '换一句话，感受立刻不同', '把「这有什么好哭的」换成这一句——让{name}感到被接住，而不是被评判'],
+    ['❤️', '{name}最需要的，不是鼓励', '是这件很多父母从没做过的事，做了之后{name}会记一辈子']
+  ],
+  autonomy: [
+    ['🌟', '这份固执，是最稀缺的竞争力', '当{name}真正想做一件事，那种专注和执行力，是很多孩子做不到的'],
+    ['⚠️', '继续推，{name}会学会另一件事', '不是服从——是「在你面前表演听话，背后按自己来」'],
+    ['💬', '一句话，让{name}主动开始', '把「你必须完成」换成这一句——控制感还给{name}，事情反而做成了'],
+    ['❤️', '{name}不需要更多管理', '在你能接受的范围里，给这一样东西——比讲道理有效100倍']
+  ],
+  relation: [
+    ['🌟', '{name}懂关系的方式，大多数人没有', '以关系为核心运作的孩子，长大后是最懂得经营人际关系的人'],
+    ['⚠️', '如果找不到连接，{name}会去别处找', '那扇门现在还开着。等青春期来了，你才会知道{name}去哪里找到了连接'],
+    ['💬', '一句话，让{name}愿意开口', '把「去自己待着」换成这一句——{name}说了什么，你都能接得住'],
+    ['❤️', '10分钟，只需要10分钟', '放下手机，完全在场——这是{name}现在最需要的，也是你能给的']
   ]
 };
 
@@ -3965,7 +4093,7 @@ function buildAndShowReport() {
         </div>`).join('')}
       <div style="height:14px"></div>
       <div class="section-lock">
-        <div class="section-lock-blur">${fill(data.translates[0].text)} ···· 还有更多内容等待解锁 ···· 理解{name}的完整行为翻译</div>
+        <div class="section-lock-blur">${fill(data.translates[0].text)} ···· ${{sensitive:`${name}的隐藏天赋 · 一件正在发生的风险 · 明天就能说的一句话`,autonomy:`固执里藏的天赋 · 继续推的后果 · 让${name}主动开始的话`,relation:`为什么${name}需要你在场 · 那扇门还开多久 · 让${name}愿意开口的做法`}[state.reportType] || '更多深度内容等待解锁'}</div>
         <div class="section-lock-chip"><div class="lock-chip-inner">🔒 完整内容，免费获取</div></div>
       </div>
     </div>
@@ -3984,25 +4112,20 @@ function buildAndShowReport() {
       <div class="unlock-block-orb"></div>
       <div class="unlock-kicker">当前免费解读已生成</div>
       <div class="unlock-title" style="font-size:20px">以下为完整版深度分析</div>
-      <div class="unlock-body">你已经看到 ${name} 当前行为背后的核心解释。<br>更多优势、风险和可执行话术，已整理在完整报告中。</div>
+      <div class="unlock-body">${{sensitive:`你刚才看到的，是${name}行为背后的核心解释。<br>完整版包含：${name}的隐藏天赋、正在发生的风险、以及让${name}感到被接住的具体说法。`,autonomy:`你刚才看到的，是${name}行为背后的核心解释。<br>完整版包含：固执里藏的天赋、继续推会发生什么、以及让${name}主动开始的那句话。`,relation:`你刚才看到的，是${name}行为背后的核心解释。<br>完整版包含：${name}理解关系的天赋、连接断了会发生什么、以及让${name}愿意开口的具体做法。`}[state.reportType] || `你已经看到${name}行为背后的核心解释，完整版还有更多。`}</div>
     </div>
 
     <div class="locked-items">
-      ${[['🌟','你还没发现的优势','从问题行为中提炼出的隐藏天赋'],
-         ['⚠️','需要注意的一件事','如果处理不好，会影响长远的风险'],
-         ['💬','明天换一种说法','含具体句子，明天就能用'],
-         ['❤️','他最需要你给的','让你读完想立刻去做的那一件事']
-      ].map(([icon,title,desc])=>`
+      ${(LOCKED_ITEMS[state.reportType] || LOCKED_ITEMS.sensitive).map(([icon,title,desc])=>`
         <div class="locked-item">
           <div class="locked-glyph">${icon}</div>
-          <div class="locked-info"><div class="locked-info-title">${title}</div><div class="locked-info-desc">${desc}</div></div>
+          <div class="locked-info"><div class="locked-info-title">${fill(title)}</div><div class="locked-info-desc">${fill(desc)}</div></div>
           <div class="locked-icon">🔒</div>
         </div>`).join('')}
     </div>
 
     <div style="padding:28px 28px 8px">
-      <button class="btn-unlock" onclick="goToWeChat()" style="font-size:16px">免费获取完整报告 →</button>
-      <div style="text-align:center;font-size:13px;color:var(--ink-40);margin-top:10px">添加企业微信，24小时内发送完整7节报告</div>
+      <button class="btn-unlock" onclick="goToWeChat()" style="font-size:16px">查看完整版报告 →</button>
     </div>
 
     <div class="observer-section">
@@ -4054,24 +4177,38 @@ function buildAndShowReport() {
 const validation = {
   impactSentence: '',
   accurateSentences: [],
-  reunderstandingScore: 5,
+  reunderstandingScore: null,
   sharingTarget: '',
   sharingMessage: ''
 };
 
 function goToWeChat() {
-  buildFeelingScreen();
-  navigateTo('screen-feeling');
+  if (!state.feedbackGiven) {
+    // 拦截：必须先选反馈
+    const fbSection = document.querySelector('.feedback-section');
+    if (fbSection) {
+      fbSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      fbSection.classList.remove('feedback-required');
+      void fbSection.offsetWidth;
+      fbSection.classList.add('feedback-required');
+      setTimeout(() => fbSection.classList.remove('feedback-required'), 700);
+    }
+    return;
+  }
+  showFullReport();
 }
 
 function onFeedback(el, type) {
   document.querySelectorAll('.fb-btn').forEach(b => b.classList.remove('tapped'));
   el.classList.add('tapped');
+  state.feedbackGiven = true;
   // v0.2 追踪反馈
   updateRecord({ feedback: type });
   if (type === 'great' || type === 'ok') {
-    setTimeout(() => goToWeChat(), 600);
+    setTimeout(() => { buildFeelingScreen(); navigateTo('screen-feeling'); }, 600);
   } else {
+    // 不太像：重置并回顶
+    state.feedbackGiven = false;
     setTimeout(() => { document.getElementById('screen-report').scrollTop = 0; }, 300);
   }
 }
@@ -4137,6 +4274,134 @@ function copyReportURL() {
   }
 }
 
+/* ── 完整版报告预览 ─────────────────────────────────────────── */
+function showFullReport() {
+  const name = state.childName || '孩子';
+  const type = state.reportType || 'sensitive';
+  const data = REPORTS[type];
+  if (!data) return;
+  const fill = s => s.replace(/\{name\}/g, name);
+
+  // 3天行动计划（按类型）— {label, text} 结构，体现递进
+  const DAYS = {
+    sensitive: [
+      { label: '先做这件事', text: `下次${name}情绪爆发，不说话、不给建议——只说"我看到了，你现在很难受"，然后待在旁边。` },
+      { label: '在这基础上', text: `找一件${name}今天真的做到了的小事，精准说出来：不是"你很棒"，是"${name}，你刚才忍住了，我注意到了"。` },
+      { label: '再深一层', text: `只问这一个问题："你今天最难熬的一刻是什么？"然后只听，不评论，不分析，不给建议。` }
+    ],
+    autonomy: [
+      { label: '先做这件事', text: `把今天有一件事主动交给${name}决定："你打算怎么搞定？"然后闭嘴，真的等${name}说完。` },
+      { label: '在这基础上', text: `${name}给出方案后，不补充、不修改——哪怕你有更好的方法，今天先让${name}的方案试一次。` },
+      { label: '再深一层', text: `在你能接受的范围里，找出一件事完全让${name}说了算——不是假选择，是真的由${name}决定。` }
+    ],
+    relation: [
+      { label: '先做这件事', text: `今晚放下手机，10分钟，只和${name}待在一起。哪怕什么都不说，只是在一起。` },
+      { label: '在这基础上', text: `问${name}一个很小的具体问题："今天有没有一件事，哪怕很小，让你觉得还不错？"然后只说"嗯"。` },
+      { label: '再深一层', text: `${name}说完任何一件事，你只回"我听到了"——不解决，不建议，不分析。今天只做这一件事。` }
+    ]
+  };
+
+  // 适合转发家人的摘要（按类型）— 写给另一半/老人看的，有温度有结论
+  const SUMMARY = {
+    sensitive: `${name}的情绪反应一直让我不知道怎么应对。今天我才明白——${name}感受到的重量，是普通孩子的好几倍，这是真实的神经系统在工作，不是矫情。我们不需要让${name}变强硬，只需要在${name}难受的时候说"我看到了"，然后待在旁边。就这一件事。`,
+    autonomy: `${name}那股倔劲，以前让我很头疼。今天我才意识到——那是很稀缺的内驱力，只要不被压制，长大之后会变成最强的竞争力。最关键的一件事：在我们能接受的范围里，真的让${name}说了算。不是假装给选择，是真的让${name}决定。`,
+    relation: `${name}很需要和我们在一起的时间，以前我以为是依赖问题。今天才明白——${name}以关系为核心运作，连接充足了才有安全感去探索。我打算每天给${name}10分钟，放下手机，完全在场。先把连接给够，${name}才会真正放开手。`
+  };
+
+  // 填充页面
+  document.getElementById('fr-name').textContent = name;
+  document.getElementById('fr-title').innerHTML = `关于 <em id="fr-name">${name}</em>`;
+  document.getElementById('fr-subtitle').textContent = `读完之后，你会知道明天和${name}说什么、做什么。`;
+  document.getElementById('fr-reportid').textContent = state.reportId || '—';
+
+  const days = DAYS[type];
+  const summary = SUMMARY[type];
+
+  document.getElementById('fr-content').innerHTML = `
+    <div class="fr-section">
+      <div class="fr-section-label">你还没发现的优势</div>
+      <div class="fr-section-title">🌟 ${name}的隐藏天赋</div>
+      <div class="fr-section-body">${fill(data.adv).replace(/\n/g,'<br>')}</div>
+    </div>
+    <div class="fr-section">
+      <div class="fr-section-label">需要注意的一件事</div>
+      <div class="fr-section-title">⚠️ 如果忽视，会有什么风险</div>
+      <div class="fr-section-body">${fill(data.risk).replace(/\n/g,'<br>')}</div>
+    </div>
+    <div class="fr-section">
+      <div class="fr-section-label">明天换一种说法</div>
+      <div class="fr-section-title">💬 场景一</div>
+      <div style="margin-bottom:10px">
+        <div style="font-size:11px;color:var(--ink-40);margin-bottom:4px">以前你可能说</div>
+        <div class="fr-say-chip">${fill(data.say.before)}</div>
+      </div>
+      <div style="margin-bottom:10px">
+        <div style="font-size:11px;color:var(--ink-40);margin-bottom:4px">明天可以换成</div>
+        <div class="fr-say-chip after">${fill(data.say.after)}</div>
+      </div>
+      <div class="fr-section-body" style="font-size:13px;margin-top:8px">${fill(data.say.why)}</div>
+      ${data.say2 ? `<div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--ink-10)">
+        <div class="fr-section-title" style="font-size:13px;margin-bottom:8px">💬 场景二</div>
+        <div style="margin-bottom:10px">
+          <div style="font-size:11px;color:var(--ink-40);margin-bottom:4px">以前你可能说</div>
+          <div class="fr-say-chip">${fill(data.say2.before)}</div>
+        </div>
+        <div style="margin-bottom:10px">
+          <div style="font-size:11px;color:var(--ink-40);margin-bottom:4px">明天可以换成</div>
+          <div class="fr-say-chip after">${fill(data.say2.after)}</div>
+        </div>
+        <div class="fr-section-body" style="font-size:13px;margin-top:8px">${fill(data.say2.why)}</div>
+      </div>` : ''}
+    </div>
+    <div class="fr-section">
+      <div class="fr-section-label">接下来3天可以尝试</div>
+      <div class="fr-section-title">📅 每天一个小动作</div>
+      ${days.map((d,i)=>`
+        <div class="fr-day-row">
+          <div class="fr-day-num">D${i+1}</div>
+          <div class="fr-day-text"><span style="font-size:11px;color:var(--ink-40);display:block;margin-bottom:2px">${d.label}</span>${d.text}</div>
+        </div>`).join('')}
+    </div>
+    <div class="fr-section">
+      <div class="fr-section-label">❤️ ${name}最需要你给的</div>
+      <div class="fr-section-body">${fill(data.need)}</div>
+    </div>
+    <div class="fr-section">
+      <div class="fr-section-label">适合转发给家人的总结</div>
+      <div class="fr-share-box">${summary}</div>
+    </div>
+  `;
+
+  // 重置打分区
+  window._frScore = 0;
+  document.querySelectorAll('.fr-score-btn').forEach(b => b.classList.remove('selected'));
+  document.getElementById('fr-score-required').style.display = 'none';
+  const frNameEl = document.getElementById('fr-score-name');
+  if (frNameEl) frNameEl.textContent = name;
+
+  updateRecord({ clickedFullReport: true });
+  navigateTo('screen-fullreport');
+}
+
+function selectFrScore(el, score) {
+  window._frScore = score;
+  document.querySelectorAll('.fr-score-btn').forEach(b => b.classList.remove('selected'));
+  el.classList.add('selected');
+  document.getElementById('fr-score-required').style.display = 'none';
+}
+
+function submitFrScore() {
+  if (!window._frScore) {
+    const req = document.getElementById('fr-score-required');
+    req.style.display = 'block';
+    req.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    return;
+  }
+  validation.reunderstandingScore = window._frScore;
+  updateRecord({ reunderstandingScore: window._frScore });
+  buildAndShowShareCard();
+}
+
 function goToWeChatFinal() {
   const name = state.childName || '孩子';
   document.getElementById('wechat-name-text').textContent = name;
@@ -4147,6 +4412,17 @@ function goToWeChatFinal() {
   updateRecord({ clickedWeCom: true, clickedFullReport: true });
   notifyNewUser();
   navigateTo('screen-wechat');
+  // 生成客服二维码
+  generateQRCanvas(WECHAT_CONFIG.KFID_URL, 280).then(function(canvas) {
+    var c = document.getElementById('qr-canvas');
+    if (c) {
+      c.width = canvas.width; c.height = canvas.height;
+      c.style.width = '140px'; c.style.height = '140px';
+      c.getContext('2d').drawImage(canvas, 0, 0);
+      c.style.display = 'block';
+      document.getElementById('qr-placeholder').style.display = 'none';
+    }
+  }).catch(function() {});
 }
 
 function buildFeelingScreen() {
@@ -4157,9 +4433,6 @@ function buildFeelingScreen() {
     `<div class="sentence-pill" data-idx="${i}" onclick="selectQ1(this)">${fill(s)}</div>`).join('');
   document.getElementById('q2-pills').innerHTML = sentences.map((s,i) =>
     `<div class="sentence-pill" data-idx="${i}" onclick="toggleQ2Pill(this)">${fill(s)}</div>`).join('');
-  document.getElementById('q3-slider').value = 5;
-  document.getElementById('q3-score-display').textContent = '5';
-  validation.reunderstandingScore = 5;
   document.querySelectorAll('.share-target-pill').forEach(p => p.classList.remove('selected'));
   document.getElementById('q1-custom').value = '';
   document.getElementById('q1-custom').style.display = 'none';
@@ -4168,8 +4441,14 @@ function buildFeelingScreen() {
   document.getElementById('q5-message').value = '';
   validation.impactSentence = '';
   validation.accurateSentences = [];
+  validation.reunderstandingScore = null;
   validation.sharingTarget = '';
   validation.sharingMessage = '';
+  document.querySelectorAll('#q3-btns .q3-dot-btn').forEach(b => b.classList.remove('selected'));
+  const trackFill = document.getElementById('q3-track-fill');
+  if (trackFill) trackFill.style.width = '0';
+  const q3req = document.getElementById('q3-required');
+  if (q3req) q3req.style.display = 'none';
 }
 
 function toggleQ1Custom() {
@@ -4194,9 +4473,13 @@ function toggleQ2Pill(el) {
   validation.accurateSentences = [...document.querySelectorAll('#q2-pills .sentence-pill.selected')].map(p => p.textContent);
 }
 
-function onSliderChange(val) {
-  validation.reunderstandingScore = parseInt(val);
-  document.getElementById('q3-score-display').textContent = val;
+function selectQ3Score(el, score) {
+  validation.reunderstandingScore = score;
+  document.querySelectorAll('#q3-btns .q3-dot-btn').forEach(b => b.classList.remove('selected'));
+  el.classList.add('selected');
+  const fill = document.getElementById('q3-track-fill');
+  if (fill) fill.style.width = ((score - 1) / 9 * 100) + '%';
+  document.getElementById('q3-required').style.display = 'none';
 }
 
 function selectShareTarget(el) {
@@ -4206,6 +4489,13 @@ function selectShareTarget(el) {
 }
 
 function submitFeeling() {
+  // Q3 必填校验
+  if (!validation.reunderstandingScore) {
+    const req = document.getElementById('q3-required');
+    req.style.display = 'block';
+    req.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    return;
+  }
   const q1c = document.getElementById('q1-custom').value.trim();
   if (q1c) validation.impactSentence = q1c;
   const q2c = document.getElementById('q2-custom').value.trim();
@@ -4863,3 +5153,4 @@ function copyShare() {
 
 </body>
 </html>
+<!-- deploy 20260612065846 -->
