@@ -3,6 +3,7 @@
   "routes": [
     { "src": "/api/(.*)",                    "dest": "/api/$1" },
     { "src": "/js/(.*)",                     "dest": "/js/$1" },
+    { "src": "/patterns/(.*)",               "dest": "/patterns/$1" },
     { "src": "/admin.html",                  "dest": "/admin.html" },
     { "src": "/homepage.html",               "dest": "/homepage.html" },
     { "src": "/behavior-input.html",         "dest": "/behavior-input.html" },

@@ -4255,8 +4255,8 @@ function generateReportURL() {
       gender: state.gender || ''
     };
     var encoded = btoa(unescape(encodeURIComponent(JSON.stringify(data))));
-    return 'https://www.aipewen.cn?r=' + encoded;
-  } catch(e) { return 'https://www.aipewen.cn'; }
+    return 'https://aipiwen.cn?r=' + encoded;
+  } catch(e) { return 'https://aipiwen.cn'; }
 }
 
 function copyReportURL() {
@@ -4599,7 +4599,7 @@ function openWeChat() { /* 已移除，动作改为长按二维码识别 */ }
 /* ══════════════════════════════════════════════
    SHARING — 3 types: family / friend / moments
 ══════════════════════════════════════════════ */
-const BASE_URL = 'https://www.aipewen.cn';
+const BASE_URL = 'https://aipiwen.cn';
 
 function generateShareURL(forFamily) {
   if (!forFamily) return BASE_URL;
@@ -4689,70 +4689,77 @@ async function drawPosterA(canvas) {
   const data = REPORTS[state.reportType] || REPORTS.sensitive;
   const vs = VIRAL_SENTENCES[state.reportType] || VIRAL_SENTENCES.sensitive;
 
-  // Background
-  ctx.fillStyle = '#FDFCF8';
+  // ── Dark background ──────────────────────────────────
+  ctx.fillStyle = '#1A1714';
   ctx.fillRect(0, 0, W, H);
+
+  // Amber orb — top right
+  const g1 = ctx.createRadialGradient(W * 0.88, 180, 0, W * 0.88, 180, 460);
+  g1.addColorStop(0, 'rgba(194,105,42,0.30)'); g1.addColorStop(1, 'transparent');
+  ctx.fillStyle = g1; ctx.fillRect(0, 0, W, H);
+
+  // Amber orb — bottom left
+  const g2 = ctx.createRadialGradient(W * 0.12, H * 0.78, 0, W * 0.12, H * 0.78, 320);
+  g2.addColorStop(0, 'rgba(194,105,42,0.14)'); g2.addColorStop(1, 'transparent');
+  ctx.fillStyle = g2; ctx.fillRect(0, 0, W, H);
 
   // Amber top stripe
   ctx.fillStyle = '#C2692A';
-  ctx.fillRect(0, 0, W, 10);
+  ctx.fillRect(0, 0, W, 8);
 
-  // Soft orb decorations
-  const g1 = ctx.createRadialGradient(W * 0.9, 220, 0, W * 0.9, 220, 380);
-  g1.addColorStop(0, 'rgba(194,105,42,0.1)'); g1.addColorStop(1, 'transparent');
-  ctx.fillStyle = g1; ctx.fillRect(0, 0, W, H);
-
-  const g2 = ctx.createRadialGradient(W * 0.05, H - 180, 0, W * 0.05, H - 180, 260);
-  g2.addColorStop(0, 'rgba(194,105,42,0.07)'); g2.addColorStop(1, 'transparent');
-  ctx.fillStyle = g2; ctx.fillRect(0, 0, W, H);
-
-  // Brand wordmark
+  // ── Brand ────────────────────────────────────────────
   ctx.textAlign = 'left';
   ctx.fillStyle = '#C2692A';
-  ctx.font = '600 38px -apple-system, PingFang SC, sans-serif';
-  ctx.fillText('AIPIWEN', 80, 108);
-  ctx.fillStyle = '#8C8580';
-  ctx.font = '300 32px -apple-system, PingFang SC, sans-serif';
-  ctx.fillText('· 重新读懂', 286, 108);
+  ctx.font = '600 42px -apple-system, PingFang SC, sans-serif';
+  ctx.fillText('AIPIWEN', 80, 115);
+  ctx.fillStyle = 'rgba(255,255,255,0.35)';
+  ctx.font = '300 34px -apple-system, PingFang SC, sans-serif';
+  ctx.fillText('· 重新读懂', 294, 115);
 
-  // Type label pill
-  ctx.fillStyle = '#F5EDE4';
-  canvasRoundRect(ctx, 80, 132, 220, 54, 27); ctx.fill();
+  // ── Type label pill ───────────────────────────────────
+  ctx.fillStyle = 'rgba(194,105,42,0.22)';
+  canvasRoundRect(ctx, 80, 140, 240, 58, 29); ctx.fill();
+  ctx.strokeStyle = 'rgba(194,105,42,0.55)';
+  ctx.lineWidth = 1.5;
+  canvasRoundRect(ctx, 80, 140, 240, 58, 29); ctx.stroke();
   ctx.fillStyle = '#C2692A';
-  ctx.font = '600 26px -apple-system, PingFang SC, sans-serif';
+  ctx.font = '600 28px -apple-system, PingFang SC, sans-serif';
   ctx.textAlign = 'center';
-  ctx.fillText(data.typeLabel, 190, 168);
+  ctx.fillText(data.typeLabel, 200, 179);
 
-  // Name + title line
+  // ── Name + title ─────────────────────────────────────
   ctx.textAlign = 'left';
-  ctx.font = '300 56px Georgia, serif';
-  ctx.fillStyle = '#1A1714';
+  ctx.font = '300 58px Georgia, serif';
+  ctx.fillStyle = 'rgba(255,255,255,0.9)';
   const nameW = ctx.measureText(name).width;
-  ctx.fillText(name, 80, 294);
-  ctx.fillStyle = '#8C8580';
-  ctx.fillText('的行为理解报告', 80 + nameW, 294);
+  ctx.fillText(name, 80, 306);
+  ctx.fillStyle = 'rgba(255,255,255,0.38)';
+  ctx.fillText('的行为理解报告', 80 + nameW, 306);
 
   // Amber rule
   ctx.fillStyle = '#C2692A';
-  ctx.fillRect(80, 322, 64, 4);
+  ctx.fillRect(80, 334, 72, 4);
 
-  // Viral sentences — the hero
-  ctx.fillStyle = '#1A1714';
-  ctx.font = '300 74px Georgia, serif';
-  ctx.fillText(vs.line1, 80, 460);
+  // ── Viral sentences — hero ────────────────────────────
+  ctx.fillStyle = 'rgba(255,255,255,0.88)';
+  ctx.font = '300 76px Georgia, serif';
+  ctx.fillText(vs.line1, 80, 474);
   ctx.fillStyle = '#C2692A';
-  ctx.fillText(vs.line2, 80, 556);
+  ctx.fillText(vs.line2, 80, 568);
 
-  // Key insight excerpt
+  // ── Insight excerpt ───────────────────────────────────
   const excerpt = data.s1.split('\n\n')[0].replace(/\{name\}/g, name);
   const shortExcerpt = excerpt.length > 58 ? excerpt.substring(0, 58) + '…' : excerpt;
-  ctx.fillStyle = '#4A4540';
-  ctx.font = '300 32px -apple-system, PingFang SC, sans-serif';
-  canvasWrapText(ctx, shortExcerpt, 80, 648, W - 160, 48);
+  ctx.fillStyle = 'rgba(255,255,255,0.42)';
+  ctx.font = '300 30px -apple-system, PingFang SC, sans-serif';
+  canvasWrapText(ctx, shortExcerpt, 80, 658, W - 160, 46);
 
-  // Stats pill row
-  ctx.fillStyle = '#F5F3EE';
+  // ── Stats card ────────────────────────────────────────
+  ctx.fillStyle = 'rgba(194,105,42,0.10)';
   canvasRoundRect(ctx, 80, 790, W - 160, 148, 20); ctx.fill();
+  ctx.strokeStyle = 'rgba(194,105,42,0.22)';
+  ctx.lineWidth = 1;
+  canvasRoundRect(ctx, 80, 790, W - 160, 148, 20); ctx.stroke();
   const statCols = [
     { val: '3', sub: '个行为模式', cx: 240 },
     { val: '7', sub: '节完整报告', cx: 540 },
@@ -4762,38 +4769,44 @@ async function drawPosterA(canvas) {
     ctx.fillStyle = '#C2692A';
     ctx.font = '700 60px -apple-system, PingFang SC, sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText(val, cx, 880);
-    ctx.fillStyle = '#8C8580';
+    ctx.fillText(val, cx, 882);
+    ctx.fillStyle = 'rgba(255,255,255,0.38)';
     ctx.font = '26px -apple-system, PingFang SC, sans-serif';
-    ctx.fillText(sub, cx, 920);
+    ctx.fillText(sub, cx, 922);
   });
 
-  // CTA text
-  ctx.fillStyle = '#1A1714';
-  ctx.font = '600 40px -apple-system, PingFang SC, sans-serif';
+  // ── CTA block ─────────────────────────────────────────
+  ctx.fillStyle = 'rgba(194,105,42,0.10)';
+  canvasRoundRect(ctx, 80, 1004, W - 160, 390, 20); ctx.fill();
+  ctx.strokeStyle = 'rgba(194,105,42,0.22)';
+  ctx.lineWidth = 1;
+  canvasRoundRect(ctx, 80, 1004, W - 160, 390, 20); ctx.stroke();
+
+  ctx.fillStyle = 'rgba(255,255,255,0.88)';
+  ctx.font = '600 42px -apple-system, PingFang SC, sans-serif';
   ctx.textAlign = 'center';
-  ctx.fillText('你也来重新读懂', W / 2, 1040);
-  ctx.fillStyle = '#8C8580';
-  ctx.font = '300 30px -apple-system, PingFang SC, sans-serif';
-  ctx.fillText('扫码生成专属于你孩子的行为理解报告', W / 2, 1090);
+  ctx.fillText('扫码，重新读懂你的孩子', W / 2, 1068);
+  ctx.fillStyle = 'rgba(255,255,255,0.35)';
+  ctx.font = '300 28px -apple-system, PingFang SC, sans-serif';
+  ctx.fillText('aipiwen.cn · 免费 · 5分钟', W / 2, 1108);
 
   // QR code
-  const qrSize = 240;
+  const qrSize = 210;
   const qrC = await generateQRCanvas(generateShareURL(true), qrSize);
   const qrX = (W - qrSize) / 2;
   if (qrC) {
     ctx.fillStyle = 'white';
-    canvasRoundRect(ctx, qrX - 14, 1096, qrSize + 28, qrSize + 28, 14); ctx.fill();
-    ctx.drawImage(qrC, qrX, 1110, qrSize, qrSize);
+    canvasRoundRect(ctx, qrX - 13, 1130, qrSize + 26, qrSize + 26, 13); ctx.fill();
+    ctx.drawImage(qrC, qrX, 1143, qrSize, qrSize);
   }
 
-  // Footer
-  ctx.fillStyle = '#EAE7E2';
-  ctx.fillRect(0, H - 76, W, 1);
-  ctx.fillStyle = '#8C8580';
-  ctx.font = '24px -apple-system, PingFang SC, sans-serif';
+  // ── Footer ────────────────────────────────────────────
+  ctx.fillStyle = 'rgba(255,255,255,0.10)';
+  ctx.fillRect(0, H - 72, W, 1);
+  ctx.fillStyle = 'rgba(255,255,255,0.25)';
+  ctx.font = '22px -apple-system, PingFang SC, sans-serif';
   ctx.textAlign = 'center';
-  ctx.fillText('AIPIWEN · 重新读懂 · www.aipewen.cn', W / 2, H - 32);
+  ctx.fillText('AIPIWEN · 重新读懂 · aipiwen.cn', W / 2, H - 26);
 }
 
 /* ── Poster B: Friend invite (dark background) ── */
@@ -4889,7 +4902,7 @@ async function drawPosterB(canvas) {
   ctx.fillText('扫码立即体验', W / 2, 1082);
   ctx.fillStyle = 'rgba(255,255,255,0.4)';
   ctx.font = '300 28px -apple-system, PingFang SC, sans-serif';
-  ctx.fillText('www.aipewen.cn', W / 2, 1122);
+  ctx.fillText('aipiwen.cn', W / 2, 1122);
 
   // QR code
   const qrSize = 200;
@@ -4907,7 +4920,7 @@ async function drawPosterB(canvas) {
   ctx.fillStyle = 'rgba(255,255,255,0.28)';
   ctx.font = '22px -apple-system, PingFang SC, sans-serif';
   ctx.textAlign = 'center';
-  ctx.fillText('AIPIWEN · 重新读懂 · www.aipewen.cn', W / 2, H - 28);
+  ctx.fillText('AIPIWEN · 重新读懂 · aipiwen.cn', W / 2, H - 28);
 }
 
 /* ── Poster C: Moments (warm cream, public-facing, no child info) ── */
@@ -4965,7 +4978,7 @@ async function drawPosterC(canvas) {
   ctx.fillStyle = '#1A1714'; ctx.font = '600 32px -apple-system, PingFang SC, sans-serif';
   ctx.textAlign = 'center'; ctx.fillText('扫码体验', W / 2, 1108);
   ctx.fillStyle = '#8C8580'; ctx.font = '300 26px -apple-system, PingFang SC, sans-serif';
-  ctx.fillText('www.aipewen.cn', W / 2, 1148);
+  ctx.fillText('aipiwen.cn', W / 2, 1148);
 
   const qrSize = 200, qrX = (W - qrSize) / 2;
   const qrC = await generateQRCanvas(BASE_URL, qrSize);
@@ -4975,7 +4988,7 @@ async function drawPosterC(canvas) {
   }
 
   ctx.fillStyle = '#8C8580'; ctx.font = '22px -apple-system, PingFang SC, sans-serif';
-  ctx.textAlign = 'center'; ctx.fillText('AIPIWEN · 重新读懂 · www.aipewen.cn', W / 2, H - 28);
+  ctx.textAlign = 'center'; ctx.fillText('AIPIWEN · 重新读懂 · aipiwen.cn', W / 2, H - 28);
 }
 
 /* ── Share panel controls ── */
@@ -5103,7 +5116,7 @@ function copyShare() {
       + '<div style="font-size:13px;color:#888;margin-bottom:6px">完整报告内容</div>'
       + '<div style="font-size:14px;color:#1A1714;line-height:1.7">这份报告来自一次分享，完整内容需原测试者或顾问提供。<br>你也可以从这里开始生成自己孩子的报告。</div>'
       + '</div>'
-      + '<button onclick="window.location.href=\'https://www.aipewen.cn\'" style="width:100%;max-width:340px;padding:14px;background:#C2692A;color:white;border:none;border-radius:10px;font-size:16px;font-weight:600;cursor:pointer;margin-bottom:12px">我也想测一测 →</button>'
+      + '<button onclick="window.location.href=\'https://aipiwen.cn\'" style="width:100%;max-width:340px;padding:14px;background:#C2692A;color:white;border:none;border-radius:10px;font-size:16px;font-weight:600;cursor:pointer;margin-bottom:12px">我也想测一测 →</button>'
       + '<button onclick="document.getElementById(\'share-wechat-btn\').scrollIntoView()" style="width:100%;max-width:340px;padding:14px;background:white;color:#C2692A;border:1.5px solid #C2692A;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer">添加企业微信领取完整报告</button>'
       + '</div>';
 

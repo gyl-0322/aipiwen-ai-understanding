@@ -500,7 +500,7 @@ html,body { font-family: var(--font-sans); background: var(--cream); color: var(
 
     <div class="share-btns">
       <button class="btn-copy" id="copy-btn" onclick="copyShareText()">复制分享文案</button>
-      <button class="btn-save-img" onclick="saveShareImage()">保存分享图片</button>
+      <button class="btn-save-img" onclick="saveShareImage()">生成分享海报</button>
       <button class="btn-secondary" onclick="goToWeChat()" style="margin-top:4px">获取更深解读 →</button>
     </div>
   </div>
@@ -571,9 +571,11 @@ html,body { font-family: var(--font-sans); background: var(--cream); color: var(
     <!-- QR 码 -->
     <div class="wechat-qr-card">
       <div class="wechat-qr-hint">💻 电脑端？用手机微信「扫一扫」扫码</div>
-      <img class="wechat-qr-img" src="images/客服二维码.jpg" alt="AIPIWEN 企业微信顾问二维码"
-           onerror="this.style.display='none'">
-      <div class="wechat-qr-label">长按识别 → 进入顾问聊天 → 发送报告编号</div>
+      <a href="https://work.weixin.qq.com/kfid/kfc6ce446e6e057c683" target="_blank" style="display:block;">
+        <img class="wechat-qr-img" src="patterns/客服二维码.jpg" alt="AIPIWEN 企业微信顾问二维码"
+             onerror="this.style.display='none'">
+      </a>
+      <div class="wechat-qr-label">点击或扫码 → 直接进入顾问聊天</div>
     </div>
 
     <button class="btn-secondary" onclick="showScreen('screen-report')">← 返回查看报告</button>
@@ -762,15 +764,37 @@ function saveShareImage() {
     return;
   }
   html2canvas(card, {
-    scale: 2,
+    scale: 3,
     useCORS: true,
     allowTaint: true,
     backgroundColor: null
   }).then(canvas => {
-    const link = document.createElement('a');
-    link.download = 'AIPIWEN-分享卡片-' + gReportId + '.png';
-    link.href = canvas.toDataURL('image/png');
-    link.click();
+    // Show fullscreen overlay — user long-presses to save on mobile
+    const existing = document.getElementById('poster-overlay');
+    if (existing) document.body.removeChild(existing);
+
+    const overlay = document.createElement('div');
+    overlay.id = 'poster-overlay';
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.92);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;box-sizing:border-box;';
+
+    const hint = document.createElement('div');
+    hint.textContent = '长按图片保存到相册';
+    hint.style.cssText = 'color:rgba(255,255,255,.6);font-size:13px;margin-bottom:14px;letter-spacing:.02em;';
+
+    const img = document.createElement('img');
+    img.src = canvas.toDataURL('image/png');
+    img.style.cssText = 'max-width:88vw;max-height:76vh;border-radius:12px;box-shadow:0 12px 40px rgba(0,0,0,.6);display:block;';
+
+    const closeBtn = document.createElement('button');
+    closeBtn.textContent = '关闭';
+    closeBtn.style.cssText = 'margin-top:20px;padding:10px 36px;background:rgba(255,255,255,.12);color:rgba(255,255,255,.8);border:1px solid rgba(255,255,255,.2);border-radius:24px;font-size:14px;cursor:pointer;font-family:inherit;';
+    closeBtn.onclick = () => document.body.removeChild(overlay);
+    overlay.onclick = (e) => { if (e.target === overlay) document.body.removeChild(overlay); };
+
+    overlay.appendChild(hint);
+    overlay.appendChild(img);
+    overlay.appendChild(closeBtn);
+    document.body.appendChild(overlay);
   }).catch(() => {
     alert('请长按分享图片截图保存');
   });
