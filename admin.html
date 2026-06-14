@@ -66,6 +66,30 @@
   /* Toast */
   #toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:#1A1714;color:white;padding:10px 20px;border-radius:20px;font-size:13px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:999}
   #toast.show{opacity:1}
+
+  /* Analytics section */
+  .section-title{font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#888;margin:28px 0 12px}
+  .analytics-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:12px}
+  @media(max-width:700px){.analytics-grid{grid-template-columns:repeat(2,1fr)}}
+  .a-card{background:white;border-radius:12px;padding:14px 18px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+  .a-card .a-num{font-size:26px;font-weight:700;color:#1A1714;line-height:1}
+  .a-card .a-label{font-size:11px;color:#888;margin-top:4px}
+  .a-card.accent .a-num{color:#C2692A}
+  .retention-row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:12px}
+  @media(max-width:700px){.retention-row{grid-template-columns:1fr 1fr}}
+  .r-bar-wrap{background:white;border-radius:12px;padding:14px 18px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+  .r-bar-label{font-size:12px;color:#555;margin-bottom:6px;display:flex;justify-content:space-between}
+  .r-bar-track{height:8px;background:#F0EDE8;border-radius:4px;overflow:hidden}
+  .r-bar-fill{height:100%;border-radius:4px;background:#C2692A;transition:width .4s}
+  .engagement-card{background:white;border-radius:12px;padding:16px 20px;box-shadow:0 1px 4px rgba(0,0,0,.06);margin-bottom:24px}
+  .eng-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid #F0EDE8;font-size:13px}
+  .eng-row:last-child{border-bottom:none}
+  .eng-key{color:#666}
+  .eng-val{font-weight:600;color:#1A1714}
+  .eng-val.good{color:#2E7D32}
+  .eng-val.warn{color:#C2692A}
+  .eng-val.bad{color:#e53e3e}
+  #no-analytics{padding:32px;text-align:center;color:#aaa;font-size:13px;background:white;border-radius:12px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
 </style>
 </head>
 <body>
@@ -99,6 +123,12 @@
 
   <!-- Table -->
   <div class="table-wrap" id="table-wrap"></div>
+
+  <!-- Analytics & Retention Dashboard -->
+  <div class="section-title">留存 &amp; 参与度分析</div>
+  <div id="analytics-panel">
+    <div id="no-analytics">暂无分析数据<br><small>用户完成首次测试并返回后，数据将出现在这里</small></div>
+  </div>
 </div>
 
 <div id="toast"></div>
@@ -177,8 +207,8 @@ function generateFullReportURL(rec) {
       feeling: rec.parentFeeling || ''
     };
     var encoded = btoa(unescape(encodeURIComponent(JSON.stringify(data))));
-    return 'https://www.aipewen.cn?r=' + encodeURIComponent(encoded);
-  } catch(e) { return 'https://www.aipewen.cn'; }
+    return 'https://www.aipiwen.cn?r=' + encodeURIComponent(encoded);
+  } catch(e) { return 'https://www.aipiwen.cn'; }
 }
 
 function copyFullLink(rid) {
@@ -317,6 +347,99 @@ function showToast(msg) {
 
 // 初始渲染
 render();
+</script>
+<script src="js/aipiwen-core.js"></script>
+<script>
+// ── 留存分析面板 ─────────────────────────────────────
+function pct(n) { return Math.round((n||0) * 100) + '%'; }
+function barHtml(label, value, note) {
+  const w = Math.min(Math.round((value||0)*100), 100);
+  return `<div class="r-bar-wrap">
+    <div class="r-bar-label"><span>${label}</span><span>${note}</span></div>
+    <div class="r-bar-track"><div class="r-bar-fill" style="width:${w}%"></div></div>
+  </div>`;
+}
+
+function renderAnalytics() {
+  const panel = document.getElementById('analytics-panel');
+  if (typeof AIPIWEN === 'undefined' || !AIPIWEN.BehaviorEngagementEngine) return;
+
+  // Collect all user IDs from leads + analytics keys
+  const allKeys = Object.keys(localStorage);
+  const userIds = new Set();
+  allKeys.forEach(k => {
+    const m = k.match(/^aipiwen_analytics_v1_(.+)$/);
+    if (m) userIds.add(m[1]);
+  });
+  // Also from leads
+  try {
+    const leads = JSON.parse(localStorage.getItem('aipiwen_leads_v02') || '[]');
+    leads.forEach(r => { if (r.userId) userIds.add(r.userId); });
+  } catch(e) {}
+
+  if (userIds.size === 0) return; // keep "暂无" placeholder
+
+  // Aggregate across all users
+  let totalEvents = 0, d1Count = 0, d3Count = 0, d7Count = 0;
+  let totalSessions = 0, activeDays = 0, depSum = 0;
+  const engTypes = {};
+  const whyReturns = {};
+  let userCount = 0;
+
+  userIds.forEach(uid => {
+    try {
+      const ret = AIPIWEN.RetentionAnalyzer.analyze(uid);
+      const eng = AIPIWEN.BehaviorEngagementEngine.getDashboard(uid);
+      userCount++;
+      if (ret.d1_retention) d1Count++;
+      if (ret.d3_retention) d3Count++;
+      if (ret.d7_retention) d7Count++;
+      totalSessions += (ret.total_sessions || 0);
+      activeDays += (ret.active_days || 0);
+      depSum += (ret.dependency_score || 0);
+      totalEvents += (eng.total_events || 0);
+      const et = eng.engagement && eng.engagement.engagement_type;
+      if (et) engTypes[et] = (engTypes[et]||0) + 1;
+      const wr = eng.why_return;
+      if (Array.isArray(wr)) wr.forEach(r => { whyReturns[r] = (whyReturns[r]||0) + 1; });
+    } catch(e) {}
+  });
+
+  const d1r = userCount > 1 ? d1Count / (userCount - 1) : 0;
+  const d3r = userCount > 3 ? d3Count / Math.min(userCount, d3Count + 3) : d3Count > 0 ? 1 : 0;
+  const d7r = userCount > 7 ? d7Count / Math.min(userCount, d7Count + 7) : d7Count > 0 ? 1 : 0;
+  const avgDep = userCount ? depSum / userCount : 0;
+
+  // Top engagement type
+  const topEng = Object.entries(engTypes).sort((a,b)=>b[1]-a[1])[0];
+  const topWhy = Object.entries(whyReturns).sort((a,b)=>b[1]-a[1]).slice(0,3).map(e=>e[0]).join('、');
+
+  const engLabel = { new: '新用户', returning: '回访用户', at_risk: '流失风险', churned: '已流失', power: '高频用户' };
+  const depClass = avgDep > 0.6 ? 'good' : avgDep > 0.3 ? 'warn' : 'bad';
+
+  panel.innerHTML = `
+    <div class="analytics-grid">
+      <div class="a-card"><div class="a-num">${userCount}</div><div class="a-label">总用户数</div></div>
+      <div class="a-card accent"><div class="a-num">${totalSessions}</div><div class="a-label">总会话数</div></div>
+      <div class="a-card"><div class="a-num">${totalEvents}</div><div class="a-label">总行为事件</div></div>
+      <div class="a-card"><div class="a-num">${userCount ? Math.round(activeDays/userCount*10)/10 : 0}</div><div class="a-label">人均活跃天数</div></div>
+    </div>
+    <div class="retention-row">
+      ${barHtml('D1 次日留存', d1r, pct(d1r))}
+      ${barHtml('D3 三日留存', d3r, pct(d3r))}
+      ${barHtml('D7 七日留存', d7r, pct(d7r))}
+    </div>
+    <div class="engagement-card">
+      <div class="eng-row"><span class="eng-key">当前主要用户类型</span><span class="eng-val">${topEng ? (engLabel[topEng[0]] || topEng[0]) + ' (' + topEng[1] + '人)' : '—'}</span></div>
+      <div class="eng-row"><span class="eng-key">依赖度均值</span><span class="eng-val ${depClass}">${pct(avgDep)}</span></div>
+      <div class="eng-row"><span class="eng-key">主要回访动因</span><span class="eng-val">${topWhy || '—'}</span></div>
+      <div class="eng-row"><span class="eng-key">用户总数（有数据）</span><span class="eng-val">${userCount}</span></div>
+    </div>`;
+}
+
+// Run after core.js is loaded
+window.addEventListener('DOMContentLoaded', function() {}, false);
+setTimeout(renderAnalytics, 0);
 </script>
 </body>
 </html>
