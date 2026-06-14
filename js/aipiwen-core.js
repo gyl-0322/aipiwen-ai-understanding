@@ -1622,7 +1622,324 @@ const ConsultingPathPlanner = {
   }
 };
 
-/* ── 核心：AI咨询智能体 V3-A（升级至 V3-B 洞察管道）── */
+/* ================================================================
+   V3-C：行为干预与长期咨询系统 — Intervention Layer
+   增量新增，不替换任何 V3-B / V3-A / V2 逻辑
+================================================================ */
+
+/* ── V3-C 模块1：行为干预引擎 ── */
+const BehaviorInterventionEngine = {
+
+  // 12种行为模式 → 可执行干预路径
+  INTERVENTION_BLUEPRINTS: {
+    emotional_explosion: {
+      goal: '降低情绪爆发的频率和强度，帮助孩子建立情绪调节能力',
+      steps: [
+        '**今天开始：**在爆发前，用"我知道你很不高兴"替代"不可以/不准"——先被看见，才能被听见',
+        '**本周内：**找到孩子爆发前的3个信号（如咬嘴唇、眼神飘移），提前低声说"你现在感觉到什么？"',
+        '**两周内：**建立"平静角"——一个孩子可以合法独处的地方，不是惩罚，是调节的工具'
+      ],
+      expected_change: '2-3周内爆发频率降低30-50%；孩子开始出现"我需要一点时间"的自我调节语言',
+      risk_warning: '实施初期孩子可能爆发更猛烈——这是在测试你是否真的改变了，不要退回旧模式'
+    },
+    emotional_sensitive: {
+      goal: '帮助孩子将玻璃心转化为有边界的情感表达',
+      steps: [
+        '**今天开始：**停止"你太脆弱了"等评价，改用"你现在感受到什么？"——接纳优先于纠正',
+        '**本周内：**每天主动询问孩子今天有什么让他难过的事（哪怕你觉得不重要）',
+        '**两周内：**帮孩子建立情绪词汇——让他能说出"我很委屈"而不是只会哭'
+      ],
+      expected_change: '3-4周后，孩子哭泣时间减少；开始用语言替代眼泪表达需求',
+      risk_warning: '改变初期孩子可能哭得更频繁——因为你开始"允许"他有情绪了，这是好转的信号'
+    },
+    homework_conflict: {
+      goal: '将作业冲突从"家长vs孩子"变为"孩子自己的事"',
+      steps: [
+        '**今天开始：**减少一次催促，改为"作业什么时候开始做，由你决定"',
+        '**本周内：**约定固定的"作业时间窗口"（如放学后1小时内），窗口结束后不再提',
+        '**两周内：**让孩子承担自然后果——未完成时让老师/结果说话，而不是家长说话'
+      ],
+      expected_change: '2-4周内亲子间作业冲突减少；孩子开始有主动完成的时刻',
+      risk_warning: '短期内成绩可能下滑或老师反馈——坚持边界比短期成绩更重要，这是过渡期'
+    },
+    autonomy_resist: {
+      goal: '将"叛逆对抗"重新定义为"自主需求"，并给它合理出口',
+      steps: [
+        '**今天开始：**找一件事，让孩子完全做主（哪怕你不同意）',
+        '**本周内：**用"和你商量"替代"你必须"——同样的规则，让孩子参与制定',
+        '**两周内：**每周给孩子一个"我说了算"的时段（30分钟）'
+      ],
+      expected_change: '2-3周内对抗强度下降；孩子开始在被给予自主权的事上表现出自律',
+      risk_warning: '孩子得到自主权后可能短暂"失控"测试边界——这是正常的，设好底线后放手'
+    },
+    phone_addiction: {
+      goal: '将屏幕从"逃避工具"转变为"可管理的选择"',
+      steps: [
+        '**今天开始：**不没收手机，而是问孩子"你觉得玩多久合理？"——让他先说出一个时间',
+        '**本周内：**全家一起设立"无屏幕时段"（如晚饭期间），而不是只针对孩子',
+        '**两周内：**和孩子一起找到3个比手机更有吸引力的现实活动，不说"不如玩手机吗"'
+      ],
+      expected_change: '4-6周，孩子开始能主动放下手机，出现"今天我只玩了XX分钟"的自我报告',
+      risk_warning: '直接缩短时间会加剧冲突——必须先建立信任，再协商规则，顺序不能颠倒'
+    },
+    withdrawal: {
+      goal: '重新打开孩子关闭的沟通通道',
+      steps: [
+        '**今天开始：**停止追问，改为每天说一件"我今天的事"——让孩子学会家里可以说话',
+        '**本周内：**陪孩子做他喜欢的事（哪怕你不感兴趣），不说话也可以',
+        '**两周内：**建立"匿名表达渠道"——每周一张小纸条，可以写任何东西，放在固定地方'
+      ],
+      expected_change: '3-5周后，孩子开始偶尔主动说一件事；沉默期开始缩短',
+      risk_warning: '追问只会强化沉默——欲速则不达，陪伴比追问更重要'
+    },
+    aggression: {
+      goal: '将攻击行为转化为可表达的言语需求',
+      steps: [
+        '**今天开始：**发生后，不立刻惩罚，先平静分开，等3分钟后再谈',
+        '**本周内：**每次攻击后询问"你打他之前，你心里感觉到什么？"',
+        '**两周内：**和孩子练习"当我想打人时，我可以说……"——设计几个替代句子'
+      ],
+      expected_change: '4-6周，攻击前的语言报警开始出现；攻击频率下降',
+      risk_warning: '若攻击升级或出现自伤行为，需要寻求专业心理帮助——这超出家庭调整范围'
+    },
+    lying: {
+      goal: '让孩子觉得"说真话比撒谎更安全"',
+      steps: [
+        '**今天开始：**当孩子说了实话，哪怕内容让你不高兴，明确说"谢谢你告诉我"',
+        '**本周内：**停止追问细节——孩子撒谎通常因为说实话代价太大',
+        '**两周内：**与孩子约定"安全告知"规则：某些事先告诉我，我不会发火'
+      ],
+      expected_change: '3-5周，孩子开始主动承认小事；在"安全话题"上不再撒谎',
+      risk_warning: '惩罚和说教会强化撒谎——唯一打破循环的方式是让说真话变得安全'
+    },
+    school_refusal: {
+      goal: '找到学校恐惧的真实来源，分步重建上学安全感',
+      steps: [
+        '**今天开始：**不强迫，先问"学校里有没有一件事是让你最不想去的？"',
+        '**本周内：**联系老师了解近期班级动态，但不在孩子面前透露',
+        '**两周内：**设计"最小上学方案"——比如只去前两节课，其余在家'
+      ],
+      expected_change: '2-3周，孩子能说出一个具体的学校问题；拒绝强度降低',
+      risk_warning: '强行送去可能造成创伤性记忆——若伴随躯体症状（头痛/腹痛），需评估是否有欺凌或情绪障碍'
+    },
+    anxiety_worry: {
+      goal: '帮助孩子区分"真实危险"和"焦虑想象"，建立内心安全感',
+      steps: [
+        '**今天开始：**当孩子表达担心时，先说"你担心的事情，我听到了"——不解释，不否认',
+        '**本周内：**和孩子一起做"最坏情况演习"：如果那件事真的发生了，我们怎么应对？',
+        '**两周内：**建立睡前"担心时间"——每晚5分钟专门说出担心，其余时间不强制平静'
+      ],
+      expected_change: '3-4周，孩子开始能在说出担心后自己说"其实可能不会发生"',
+      risk_warning: '频繁的躯体化症状（胃痛、头痛）伴随焦虑，需要儿童心理专业评估'
+    },
+    attention_issues: {
+      goal: '为孩子创造成功体验，建立注意力的信心基础',
+      steps: [
+        '**今天开始：**找到孩子能专注超过10分钟的事（哪怕是游戏），记录下来',
+        '**本周内：**利用这个活动建立"番茄工作法"雏形——先10分钟专注，再5分钟自由',
+        '**两周内：**减少环境干扰——关掉背景音，整理桌面，每次只放一件作业'
+      ],
+      expected_change: '2-3周，专注窗口从5分钟扩展到10-15分钟；孩子开始有"我做完了"的体验',
+      risk_warning: '注意力问题可能有神经发育基础——调整2个月无效，建议进行专业评估'
+    },
+    sibling_conflict: {
+      goal: '从"谁对谁错"转向"每个孩子的需求都被看见"',
+      steps: [
+        '**今天开始：**冲突后，先分开安抚，分别询问每人的感受，不立刻评判谁错',
+        '**本周内：**每天给大宝/小宝各10分钟单独时间——让每个人感受到"我也有专属的爱"',
+        '**两周内：**设计"手足合作任务"——一起完成需要合作的事，建立正向连接'
+      ],
+      expected_change: '3-4周，冲突后的恢复时间缩短；两人开始有主动合作的时刻',
+      risk_warning: '若某个孩子持续表现出攻击性或受害性，需要单独关注其情绪健康'
+    }
+  },
+
+  generate(analysis, insight) {
+    const primary = (analysis && analysis.primary) || 'emotional_explosion';
+    const bp = this.INTERVENTION_BLUEPRINTS[primary] || this.INTERVENTION_BLUEPRINTS.emotional_explosion;
+    const kp = (analysis && analysis.keyPhrase) || '';
+    return {
+      intervention_goal: bp.goal,
+      steps: bp.steps,
+      expected_change: bp.expected_change,
+      risk_warning: bp.risk_warning,
+      pattern: primary,
+      key_phrase: kp
+    };
+  }
+};
+
+/* ── V3-C 模块2：家庭动态追踪器 ── */
+const FamilyDynamicTracker = {
+
+  track(userId, history, currentAnalysis) {
+    const allMemories = MemorySystem.getAll(userId);
+
+    if (allMemories.length < 2) {
+      return {
+        trend: 'new',
+        trend_label: '初次评估',
+        stability_score: 50,
+        escalation_risk: 'low',
+        pattern_diversity: 1,
+        sessions_tracked: allMemories.length,
+        is_stuck: false,
+        improvement_signs: false
+      };
+    }
+
+    const totalSessions = allMemories.length;
+    const patterns = allMemories.map(function(m) {
+      return m.analysis && m.analysis.primary;
+    }).filter(Boolean);
+
+    const uniquePatterns = [];
+    patterns.forEach(function(p) {
+      if (uniquePatterns.indexOf(p) === -1) uniquePatterns.push(p);
+    });
+    const patternDiversity = uniquePatterns.length;
+
+    const recent3 = patterns.slice(-3);
+    const recent3Unique = [];
+    recent3.forEach(function(p) {
+      if (recent3Unique.indexOf(p) === -1) recent3Unique.push(p);
+    });
+    const isStuck = recent3Unique.length === 1 && recent3.length >= 2;
+
+    // 判断家庭动态趋势
+    let trend = 'stable';
+    let trendLabel = '维持稳定';
+    let escalationRisk = 'low';
+    let stabilityScore = 60;
+
+    if (totalSessions >= 3 && isStuck) {
+      trend = 'stuck';
+      trendLabel = '问题固化中';
+      escalationRisk = 'medium';
+      stabilityScore = 35;
+    } else if (totalSessions >= 4 && patternDiversity >= 3) {
+      trend = 'escalating';
+      trendLabel = '问题复杂化';
+      escalationRisk = 'high';
+      stabilityScore = 25;
+    } else if (totalSessions >= 2 && patternDiversity <= 1) {
+      trend = 'improving';
+      trendLabel = '聚焦改善中';
+      escalationRisk = 'low';
+      stabilityScore = 75;
+    } else {
+      trend = 'evolving';
+      trendLabel = '动态变化中';
+      escalationRisk = 'medium';
+      stabilityScore = 55;
+    }
+
+    return {
+      trend: trend,
+      trend_label: trendLabel,
+      stability_score: stabilityScore,
+      escalation_risk: escalationRisk,
+      pattern_diversity: patternDiversity,
+      sessions_tracked: totalSessions,
+      is_stuck: isStuck,
+      unique_patterns: uniquePatterns,
+      improvement_signs: trend === 'improving'
+    };
+  }
+};
+
+/* ── V3-C 模块3：复访机制 ── */
+const ConsultationFollowUpSystem = {
+
+  evaluate(userId, dynamicResult) {
+    const allMemories = MemorySystem.getAll(userId);
+    const sessionCount = allMemories.length;
+    const isReturnUser = sessionCount >= 2;
+
+    // 计算上次会话距今天数
+    const lastMemory = allMemories.length > 0 ? allMemories[allMemories.length - 1] : null;
+    let daysSinceLast = null;
+    if (lastMemory && lastMemory.timestamp) {
+      daysSinceLast = Math.floor((Date.now() - new Date(lastMemory.timestamp).getTime()) / 86400000);
+    }
+
+    let followUpNeeded = false;
+    let followUpType   = null;
+    let followUpMessage = '';
+
+    if (sessionCount === 2) {
+      followUpNeeded = true;
+      followUpType   = 'first_return';
+      followUpMessage = '你上次和我聊过孩子的情况。上次那个问题现在有没有一点变化？';
+    } else if (sessionCount >= 3 && dynamicResult.trend === 'stuck') {
+      followUpNeeded = true;
+      followUpType   = 'stuck_care';
+      followUpMessage = '我注意到你已经来了好几次，情况好像还没有明显改变。我想直接问你：你自己这段时间还好吗？长期应对这类问题，家长自己也会很消耗。';
+    } else if (sessionCount >= 3 && dynamicResult.escalation_risk === 'high') {
+      followUpNeeded = true;
+      followUpType   = 'escalation_check';
+      followUpMessage = '从你这几次描述来看，家里的情况在变复杂。我想多了解一下最近的整体状态——不只是孩子，也包括你自己和家庭氛围。';
+    } else if (sessionCount >= 3 && daysSinceLast !== null && daysSinceLast >= 7) {
+      followUpNeeded = true;
+      followUpType   = 'periodic_checkin';
+      followUpMessage = '你上次来是一周前了。上次我们聊到的，有没有尝试过？结果怎么样？';
+    }
+
+    return {
+      is_return_user: isReturnUser,
+      session_count: sessionCount,
+      follow_up_needed: followUpNeeded,
+      follow_up_type: followUpType,
+      follow_up_message: followUpMessage,
+      days_since_last: daysSinceLast
+    };
+  }
+};
+
+/* ── V3-C 模块4：行为改变计划生成器 ── */
+const BehaviorChangePlanGenerator = {
+
+  generate(intervention, analysis, dynamicResult) {
+    const steps   = (intervention && intervention.steps) || [];
+    const risk    = (dynamicResult && dynamicResult.escalation_risk) || 'low';
+    const pattern = (analysis && analysis.primary) || 'emotional_explosion';
+
+    // Day 1-3：立即行动
+    const day1to3 = [];
+    if (steps[0]) day1to3.push(steps[0]);
+    day1to3.push('记录下今天孩子这个行为发生的时间和触发情境（不评价，只记录）');
+
+    // Week 1-2：建立新模式
+    const week1to2 = [];
+    if (steps[1]) week1to2.push(steps[1]);
+    if (steps[2]) week1to2.push(steps[2]);
+    week1to2.push('回顾第一周：哪一次你的应对方式不一样了？孩子有什么反应？把这个写下来');
+
+    // 长期策略
+    const longTerm = [];
+    if (intervention && intervention.expected_change) {
+      longTerm.push('**预期变化：**' + intervention.expected_change);
+    }
+    if (risk === 'high') {
+      longTerm.push('**专业建议：**当前家庭关系风险较高，建议同步寻求专业家庭咨询支持');
+    } else if (dynamicResult && dynamicResult.trend === 'stuck') {
+      longTerm.push('**追踪提醒：**同一问题多次出现，建议从家庭互动结构层面审视，而不只是孩子行为层面');
+    } else {
+      longTerm.push('持续使用这套方法，大多数家庭在4-6周内看到明显改变');
+    }
+
+    return {
+      day1to3: day1to3,
+      week1to2: week1to2,
+      long_term: longTerm,
+      pattern: pattern,
+      total_duration_estimate: risk === 'high' ? '6-8周' : '3-5周',
+      risk_level: risk
+    };
+  }
+};
+
+/* ── 核心：AI咨询智能体（升级至 V3-C 干预模式）── */
 const AIPIWENConsultingAgent = {
 
   processInput(userId, userText, existingSession) {
@@ -1634,10 +1951,14 @@ const AIPIWENConsultingAgent = {
     ConsultingSessionStore.addTurn(session, 'user', userText);
 
     // ══ V3-B 洞察管道（每轮都运行）══
-    const insight       = ConsultingInsightEngine.analyze(userText, history, session.collected_info);
+    const insight        = ConsultingInsightEngine.analyze(userText, history, session.collected_info);
     const contradictions = ContradictionDetector.detect(userText, history, session.collected_info);
     session.last_insight        = insight;
     session.last_contradictions = contradictions.has_contradictions ? contradictions : (session.last_contradictions || null);
+
+    // ══ V3-C 家庭动态实时追踪（每轮刷新）══
+    const dynamicResult  = FamilyDynamicTracker.track(userId, history, null);
+    session.family_dynamic = dynamicResult;
 
     let response = '';
     let action   = '';
@@ -1706,17 +2027,14 @@ const AIPIWENConsultingAgent = {
       }
 
     } else if (session.stage === 'recommendation') {
-      // 用户回复"想继续" → 输出带路径感知的建议
+      // V3-C：输出行为改变计划（不只是建议，而是干预路径）
       if (session.analysis_result) {
-        const c = ContentLibrary.fullReport(session.analysis_result);
-        // V3-B：路径感知建议输出
-        const path = ConsultingPathPlanner.plan(
-          userId, session.last_insight, session.analysis_result,
-          TrendAnalyzer.analyze(userId),
-          session.turns.filter(function(t) { return t.role === 'user'; }).length
-        );
-        response = this._buildRecommendationWithPath(c, session.analysis_result, path);
+        const intervention = BehaviorInterventionEngine.generate(session.analysis_result, session.last_insight);
+        const plan         = BehaviorChangePlanGenerator.generate(intervention, session.analysis_result, dynamicResult);
+        response = this._buildV3CChangePlan(session.analysis_result, intervention, plan, dynamicResult);
         analysisResult = session.analysis_result;
+        session.last_intervention = intervention;
+        session.last_plan         = plan;
         session.stage = 'complete';
         action = 'recommend';
       } else {
@@ -1725,8 +2043,8 @@ const AIPIWENConsultingAgent = {
       }
 
     } else {
-      // complete → 自由对话
-      response = '你还有其他想聊的吗？随时可以描述新的行为，我来帮你分析。';
+      // complete → 自由对话（V3-C：可继续追踪执行情况）
+      response = '你有没有尝试过上面的方法？如果遇到新的情况，随时告诉我，我们可以继续调整。';
       action = 'chat';
     }
 
@@ -1736,10 +2054,10 @@ const AIPIWENConsultingAgent = {
     return { response, action, session, stage: session.stage, analysisResult };
   },
 
-  // V3-B 升级：分析管道整合洞察结果
+  // V3-C 升级：完整分析管道（V2 + V3-B + V3-C）
   _runAnalysis(userId, session, history, insight) {
-    const behavior    = session.collected_info.behavior_raw;
-    const analysis    = AnalysisEngine.analyze(behavior, history);
+    const behavior     = session.collected_info.behavior_raw;
+    const analysis     = AnalysisEngine.analyze(behavior, history);
     const whyParagraph = BehaviorReasoningEngine.generateWhyParagraph(analysis.primary, analysis.keyPhrase);
     const trendResult  = TrendAnalyzer.analyze(userId);
 
@@ -1748,6 +2066,12 @@ const AIPIWENConsultingAgent = {
       userId, insight, analysis, trendResult,
       session.turns.filter(function(t) { return t.role === 'user'; }).length
     );
+
+    // ══ V3-C 干预管道 ══
+    const dynamicResult  = FamilyDynamicTracker.track(userId, history, analysis);
+    const intervention   = BehaviorInterventionEngine.generate(analysis, insight);
+    session.family_dynamic    = dynamicResult;
+    session.last_intervention = intervention;
 
     // 写入 V2 记忆系统
     MemorySystem.add(userId, {
@@ -1760,26 +2084,22 @@ const AIPIWENConsultingAgent = {
     const reportId = generateReportId();
     LeadSystem.create(userId, reportId, analysis, behavior);
 
-    // V3-B：带洞察层的分析回复
-    const response = this._buildAnalysisWithInsight(
-      analysis, whyParagraph, trendResult, insight, path, session.collected_info
+    // V3-C：整合分析 + 干预目标的完整回复
+    const response = this._buildV3CAnalysisResponse(
+      analysis, whyParagraph, trendResult, insight, path, dynamicResult, intervention, session.collected_info
     );
-    return { response, analysis, whyParagraph, trendResult, reportId, path };
+    return { response, analysis, whyParagraph, trendResult, reportId, path, dynamicResult, intervention };
   },
 
-  // V3-B：整合三层洞察的分析回复
+  // V3-B 保留：三层洞察分析回复（供外部调用）
   _buildAnalysisWithInsight(analysis, whyParagraph, trendResult, insight, path, collectedInfo) {
     const patternMeta = AnalysisEngine.PATTERNS[analysis.primary];
     const label = patternMeta ? patternMeta.label : '行为模式';
     const kp    = analysis.keyPhrase || (collectedInfo.behavior_raw || '').slice(0, 20);
     const c     = ContentLibrary.lightReport(analysis);
     const lines = [];
-
-    // 1. 共情
     lines.push('从你描述的情况来看，「' + kp + '」这类情况确实容易让家长感到无力——越用力，好像越没用。');
     lines.push('');
-
-    // 2. 三层洞察（V3-B 新增）
     if (insight && insight.surface) {
       lines.push('**我对这个问题的理解是这样的：**');
       lines.push('- **表层现象：**' + insight.surface);
@@ -1789,73 +2109,174 @@ const AIPIWENConsultingAgent = {
       }
       lines.push('');
     }
-
-    // 3. 核心判断
     lines.push('**AI 判断：这属于「' + label + '」类行为模式。**');
     lines.push(c.insight);
     lines.push('');
-
-    // 4. Why Layer（V2 保留）
     if (whyParagraph && whyParagraph.mainReason) {
       lines.push('**为什么会这样：**');
       lines.push(whyParagraph.mainReason);
-      if (whyParagraph.secondReason) {
-        lines.push('');
-        lines.push('另一个常被忽略的原因：' + whyParagraph.secondReason);
-      }
+      if (whyParagraph.secondReason) { lines.push(''); lines.push('另一个常被忽略的原因：' + whyParagraph.secondReason); }
       lines.push('');
     }
-
-    // 5. 趋势（V2 保留，回访用户专属）
     if (trendResult && trendResult.trendText && trendResult.totalSessions >= 2) {
-      lines.push('**从你的历史记录看：**');
-      lines.push(trendResult.trendText);
-      lines.push('');
+      lines.push('**从你的历史记录看：**'); lines.push(trendResult.trendText); lines.push('');
     }
-
-    // 6. 咨询路径提示（V3-B 新增）
-    if (path) {
-      lines.push('**当前咨询阶段：**' + path.current_phase_label);
-      lines.push('下一步：' + path.next_direction);
-      lines.push('');
-    }
-
+    if (path) { lines.push('**当前咨询阶段：**' + path.current_phase_label); lines.push('下一步：' + path.next_direction); lines.push(''); }
     lines.push('你准备好听具体的应对建议了吗？');
     return lines.join('\n');
   },
 
-  // V3-B：带路径感知的建议输出
+  // V3-C NEW：分析 + 干预目标一体化回复（不只是解释，第一步就给出干预方向）
+  _buildV3CAnalysisResponse(analysis, whyParagraph, trendResult, insight, path, dynamicResult, intervention, collectedInfo) {
+    const patternMeta = AnalysisEngine.PATTERNS[analysis.primary];
+    const label = patternMeta ? patternMeta.label : '行为模式';
+    const kp    = analysis.keyPhrase || (collectedInfo.behavior_raw || '').slice(0, 20);
+    const c     = ContentLibrary.lightReport(analysis);
+    const lines = [];
+
+    // 1. 共情开场
+    lines.push('从你描述的「' + kp + '」来看，这不是孩子"故意找茬"，背后有一个你可以理解的原因。');
+    lines.push('');
+
+    // 2. V3-B 三层洞察
+    if (insight && insight.surface) {
+      lines.push('**这个问题的三个层次：**');
+      lines.push('- **你看到的：**' + insight.surface);
+      lines.push('- **行为模式：**' + insight.behavior);
+      if (insight.structural_key && insight.structure) {
+        lines.push('- **家庭结构：**' + insight.structure);
+      }
+      lines.push('');
+    }
+
+    // 3. V2 核心判断 + WHY
+    lines.push('**AI 判断：这属于「' + label + '」模式。**');
+    lines.push(c.insight);
+    lines.push('');
+    if (whyParagraph && whyParagraph.mainReason) {
+      lines.push('**为什么：**' + whyParagraph.mainReason);
+      if (whyParagraph.secondReason) {
+        lines.push('另一个原因：' + whyParagraph.secondReason);
+      }
+      lines.push('');
+    }
+
+    // 4. V3-C 干预目标（第一步行动指引）
+    if (intervention && intervention.intervention_goal) {
+      lines.push('**干预目标：**' + intervention.intervention_goal);
+      lines.push('');
+      lines.push('**第一步（今天可以做的）：**');
+      lines.push(intervention.steps[0] || '');
+      lines.push('');
+    }
+
+    // 5. V3-C 家庭动态状态
+    if (dynamicResult && dynamicResult.sessions_tracked >= 2) {
+      lines.push('**家庭动态：**');
+      if (dynamicResult.trend === 'stuck') {
+        lines.push('这是你第' + dynamicResult.sessions_tracked + '次和我讨论类似问题——说明需要从更深的家庭互动结构来理解这件事，而不只是处理行为表面。');
+      } else if (dynamicResult.trend === 'escalating') {
+        lines.push('从你的记录来看，家里同时有多个方向的问题在出现——这需要整体来看，而不是逐一击破。');
+      } else if (dynamicResult.trend === 'improving') {
+        lines.push('从你的记录来看，你一直在关注同一类问题——聚焦是好事，说明你在真正尝试理解孩子。');
+      }
+      lines.push('');
+    }
+
+    // 6. V2 趋势（回访专属）
+    if (trendResult && trendResult.trendText && trendResult.totalSessions >= 2) {
+      lines.push(trendResult.trendText);
+      lines.push('');
+    }
+
+    lines.push('你想先听完整的**行为改变计划**吗？我会给你一个 Day 1→Week 2 的分步路径。');
+    return lines.join('\n');
+  },
+
+  // V3-C NEW：行为改变计划完整输出
+  _buildV3CChangePlan(analysis, intervention, plan, dynamicResult) {
+    const kp    = (analysis && analysis.keyPhrase) || '';
+    const lines = [];
+
+    lines.push('**针对「' + kp + '」的行为改变计划：**');
+    lines.push('');
+
+    // 干预目标
+    if (intervention && intervention.intervention_goal) {
+      lines.push('**目标：**' + intervention.intervention_goal);
+      lines.push('');
+    }
+
+    // Day 1-3
+    lines.push('**Day 1–3（立即行动）：**');
+    (plan.day1to3 || []).forEach(function(item) { lines.push('› ' + item); });
+    lines.push('');
+
+    // Week 1-2
+    lines.push('**Week 1–2（建立新模式）：**');
+    (plan.week1to2 || []).forEach(function(item) { lines.push('› ' + item); });
+    lines.push('');
+
+    // 长期策略
+    lines.push('**长期策略（' + (plan.total_duration_estimate || '4-6周') + '）：**');
+    (plan.long_term || []).forEach(function(item) { lines.push('› ' + item); });
+    lines.push('');
+
+    // 风险提醒
+    if (intervention && intervention.risk_warning) {
+      lines.push('**⚠ 注意：**' + intervention.risk_warning);
+      lines.push('');
+    }
+
+    // 家庭动态状态
+    if (dynamicResult && dynamicResult.escalation_risk === 'high') {
+      lines.push('**家庭关系提醒：**当前家庭中同时存在多个压力点，建议除了处理孩子行为，也关注整体家庭氛围。');
+      lines.push('');
+    }
+
+    lines.push('尝试第一步后，随时回来告诉我结果——我会根据你的反馈调整下一步。');
+    return lines.join('\n');
+  },
+
+  // V3-B 保留（供外部调用）
   _buildRecommendationWithPath(c, analysis, path) {
     const kp    = analysis.keyPhrase || '';
     const lines = ['针对「' + kp + '」，这是三条可以从今天开始用的方式：', ''];
-
     c.advice.forEach(function(a, i) {
       lines.push('**' + (i + 1) + '. ' + a.tag + '**');
       lines.push(a.text);
       if (a.example) lines.push('› 参考说法：「' + a.example + '」');
       lines.push('');
     });
-
-    // V3-B：路径行动指引
     if (path && path.recommended_actions && path.recommended_actions.length > 0) {
       lines.push('**接下来建议你做：**');
       path.recommended_actions.forEach(function(act) { lines.push('› ' + act); });
       lines.push('');
     }
-
     lines.push('如果有任何一条想深入聊，或者尝试后有新的情况，随时告诉我。');
     return lines.join('\n');
   },
 
-  // 开始新会话 → 返回 greeting（V3-A 原有逻辑保留）
+  // V3-C 升级：开始新会话 — 复访用户触发 ConsultationFollowUpSystem
   startSession(userId) {
     const historyCtx = MemorySystem.getContext(userId);
     ConsultingSessionStore.reset(userId);
-    const session  = ConsultingSessionStore.newSession(userId);
-    const greeting = AgentResponseGenerator.greeting(historyCtx);
+    const session = ConsultingSessionStore.newSession(userId);
+
+    // ══ V3-C：复访检测 ══
+    const dynamicResult = FamilyDynamicTracker.track(userId, MemorySystem.getRecent(userId, 5), null);
+    const followUp      = ConsultationFollowUpSystem.evaluate(userId, dynamicResult);
+
+    let greeting = AgentResponseGenerator.greeting(historyCtx);
+
+    // 复访用户：将回访问题嵌入问候
+    if (followUp.follow_up_needed && followUp.follow_up_message) {
+      greeting = followUp.follow_up_message + '\n\n' + greeting;
+    }
+
     ConsultingSessionStore.addTurn(session, 'agent', greeting);
     ConsultingSessionStore.save(session);
-    return { greeting, session };
+    return { greeting, session, followUp, dynamicResult };
   }
 };
 
@@ -1873,10 +2294,16 @@ window.AIPIWEN = {
   ConsultingSessionStore,
   InformationSufficiencyEvaluator,
   AgentResponseGenerator,
+  // V3-B
   ConsultingInsightEngine,
   ContradictionDetector,
   PriorityQuestionSelector,
   ConsultingPathPlanner,
+  // V3-C
+  BehaviorInterventionEngine,
+  FamilyDynamicTracker,
+  ConsultationFollowUpSystem,
+  BehaviorChangePlanGenerator,
   AIPIWENConsultingAgent,
   generateReportId,
   truncate
