@@ -522,40 +522,24 @@ html,body { font-family: var(--font-sans); background: var(--cream); color: var(
   </nav>
 
   <div class="wechat-wrap">
-    <div class="wechat-icon">💬</div>
-    <h2 class="wechat-title">获取更深入的<br>孩子行为解读</h2>
-    <p class="wechat-body">
-      顾问会根据你的报告编号，为你提供更深层的行为分析与定制化建议。
-    </p>
+    <h2 class="wechat-title" style="text-align:center;margin-bottom:6px">扫码进入顾问聊天</h2>
+    <p class="wechat-body" style="text-align:center;margin-bottom:20px">免费咨询 · 机器人客服即时响应</p>
 
-    <!-- reportId 展示 -->
-    <div class="wechat-report-id-box">
-      <div class="wechat-rid-label">你的报告编号</div>
-      <div class="wechat-rid-value" id="wx-reportid">—</div>
-      <div class="wechat-rid-sub">添加顾问后，把这个编号发给顾问</div>
-    </div>
-
-    <!-- 操作流程 -->
-    <div class="wechat-steps">
-      <div class="wechat-step">
-        <div class="wechat-step-num">1</div>
-        <div>点击下方按钮或扫码，添加 AIPIWEN 顾问</div>
-      </div>
-      <div class="wechat-step">
-        <div class="wechat-step-num">2</div>
-        <div>将报告编号发送给顾问：<strong id="wx-rid-inline" style="color:var(--amber)"></strong></div>
-      </div>
-      <div class="wechat-step">
-        <div class="wechat-step-num">3</div>
-        <div>顾问按编号核对报告，为你发送完整个人化解读</div>
-      </div>
-    </div>
-
-    <!-- 直接点击进入企业微信 -->
+    <!-- QR 码：主视觉，可点击直接进入 -->
     <a id="kf-link" href="https://work.weixin.qq.com/kfid/kfc6ce446e6e057c683"
-       class="wechat-cta-link">
-      点击联系顾问，获取深度解读 →
+       target="_blank" style="display:block;text-align:center;margin-bottom:6px;">
+      <img class="wechat-qr-img" src="patterns/客服二维码.jpg" alt="扫码进入 AIPIWEN 顾问聊天"
+           style="width:200px;height:200px;border-radius:16px;border:3px solid var(--amber);box-shadow:0 4px 20px rgba(194,105,42,.2);display:inline-block;"
+           onerror="this.parentElement.style.display='none'">
     </a>
+    <div style="text-align:center;font-size:12px;color:var(--ink-40);margin-bottom:22px;">长按识别 或 手机微信扫一扫</div>
+
+    <!-- 报告编号提示 -->
+    <div class="wechat-report-id-box" style="margin-bottom:18px;">
+      <div class="wechat-rid-label">进入聊天后，发送你的报告编号</div>
+      <div class="wechat-rid-value" id="wx-reportid">—</div>
+      <div class="wechat-rid-sub" id="wx-rid-inline">顾问将为你发送完整个人化解读</div>
+    </div>
 
     <!-- 本周行为变化提示 -->
     <div class="wechat-nudge" id="wechat-nudge" style="display:none">
@@ -566,16 +550,6 @@ html,body { font-family: var(--font-sans); background: var(--cream); color: var(
           本周已记录行为变化，是否需要顾问更新分析？把报告编号发给顾问，即可获取最新解读。
         </div>
       </div>
-    </div>
-
-    <!-- QR 码 -->
-    <div class="wechat-qr-card">
-      <div class="wechat-qr-hint">💻 电脑端？用手机微信「扫一扫」扫码</div>
-      <a href="https://work.weixin.qq.com/kfid/kfc6ce446e6e057c683" target="_blank" style="display:block;">
-        <img class="wechat-qr-img" src="patterns/客服二维码.jpg" alt="AIPIWEN 企业微信顾问二维码"
-             onerror="this.style.display='none'">
-      </a>
-      <div class="wechat-qr-label">点击或扫码 → 直接进入顾问聊天</div>
     </div>
 
     <button class="btn-secondary" onclick="showScreen('screen-report')">← 返回查看报告</button>

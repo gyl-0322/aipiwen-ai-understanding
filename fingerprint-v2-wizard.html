@@ -546,26 +546,41 @@ body {
 #posterTemplate { position: fixed; left: -9999px; top: -9999px; }
 .poster-bg {
   width: 375px;
-  background: var(--cream);
+  background: #1A1714;
   padding: 44px 32px 36px;
   display: flex;
   flex-direction: column;
   position: relative;
   overflow: hidden;
-  border: 1px solid var(--ink-10);
 }
-.poster-bg::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--amber); }
-.poster-logo { font-size: 10px; color: var(--ink-40); letter-spacing: .35em; margin-bottom: 24px; text-align: center; font-family: var(--font-sans); }
-.poster-type { font-family: var(--font-serif); font-size: 28px; font-weight: normal; margin-bottom: 8px; color: var(--ink); text-align: center; }
-.poster-tagline { font-size: 12px; color: var(--ink-40); line-height: 1.6; letter-spacing: .08em; text-align: center; margin-bottom: 28px; }
-.poster-mid { background: var(--amber-soft); border-radius: 14px; padding: 18px; margin-bottom: 22px; border: 1px solid rgba(194,105,42,.2); }
+/* Amber glow orbs */
+.poster-bg::before {
+  content: '';
+  position: absolute;
+  top: -60px; right: -60px;
+  width: 180px; height: 180px;
+  background: radial-gradient(circle, rgba(194,105,42,.35) 0%, transparent 70%);
+  border-radius: 50%;
+}
+.poster-bg::after {
+  content: '';
+  position: absolute;
+  bottom: -40px; left: -40px;
+  width: 140px; height: 140px;
+  background: radial-gradient(circle, rgba(194,105,42,.2) 0%, transparent 70%);
+  border-radius: 50%;
+}
+.poster-logo { font-size: 10px; color: rgba(253,252,248,.35); letter-spacing: .35em; margin-bottom: 24px; text-align: center; font-family: var(--font-sans); }
+.poster-type { font-family: var(--font-serif); font-size: 30px; font-weight: normal; margin-bottom: 8px; color: #FDFCF8; text-align: center; }
+.poster-tagline { font-size: 12px; color: rgba(253,252,248,.55); line-height: 1.6; letter-spacing: .1em; text-align: center; margin-bottom: 28px; }
+.poster-mid { background: rgba(255,255,255,.07); border-radius: 14px; padding: 18px; margin-bottom: 22px; border: 1px solid rgba(194,105,42,.3); }
 .poster-mid-label { font-size: 10px; color: var(--amber); letter-spacing: .25em; margin-bottom: 12px; text-align: center; text-transform: uppercase; }
 .poster-tags { display: flex; flex-wrap: wrap; gap: 7px; justify-content: center; }
-.poster-tag { background: var(--cream); color: var(--amber); padding: 5px 13px; border-radius: 20px; font-size: 12px; border: 1px solid rgba(194,105,42,.3); }
-.poster-footer { display: flex; align-items: center; gap: 14px; background: var(--ink); border-radius: 12px; padding: 16px; }
+.poster-tag { background: rgba(194,105,42,.18); color: #E8A44A; padding: 5px 13px; border-radius: 20px; font-size: 12px; border: 1px solid rgba(194,105,42,.35); }
+.poster-footer { display: flex; align-items: center; gap: 14px; background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.1); border-radius: 12px; padding: 16px; }
 .poster-qr-wrap { flex-shrink: 0; background: white; border-radius: 8px; padding: 4px; }
 .poster-qr-wrap img { width: 64px; height: 64px; border-radius: 5px; display: block; }
-.poster-cta { font-size: 13px; font-weight: 600; color: var(--cream); margin-bottom: 3px; }
+.poster-cta { font-size: 13px; font-weight: 600; color: #FDFCF8; margin-bottom: 3px; }
 .poster-url { font-size: 11px; color: var(--amber); letter-spacing: .05em; }
 
 /* ─── THUMB CONFIRM (step 6) ─── */
@@ -1202,7 +1217,7 @@ body {
       </div>
       <div>
         <div class="poster-cta">测测你孩子的天赋类型</div>
-        <div class="poster-url">v1.aipiwen.cn</div>
+        <div class="poster-url">aipiwen.cn</div>
       </div>
     </div>
   </div>
@@ -1778,7 +1793,7 @@ async function generatePoster() {
     const tmp = document.createElement('div');
     tmp.style.cssText = 'position:fixed;left:-9999px;top:-9999px;width:80px;height:80px';
     document.body.appendChild(tmp);
-    new QRCode(tmp, { text:'https://v1.aipiwen.cn', width:80, height:80, colorDark:'#1A1714', colorLight:'#FFFFFF', correctLevel: QRCode.CorrectLevel.L });
+    new QRCode(tmp, { text:'https://aipiwen.cn', width:80, height:80, colorDark:'#1A1714', colorLight:'#FFFFFF', correctLevel: QRCode.CorrectLevel.L });
     setTimeout(() => {
       const canvas = tmp.querySelector('canvas');
       if (canvas) { const c = document.createElement('canvas'); c.width=80; c.height=80; c.getContext('2d').drawImage(canvas,0,0); qrDataUrl=c.toDataURL(); }
