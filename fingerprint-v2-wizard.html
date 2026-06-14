@@ -3,8 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>皮纹天赋速测 · AIPIWEN</title>
+<title>AI皮纹天赋速测 · 向导版</title>
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <style>
+/* ─── DESIGN TOKENS ─── */
 :root {
   --cream:      #FDFCF8;
   --cream-deep: #F5F3EE;
@@ -14,577 +17,1775 @@
   --ink-20:     #C8C3BC;
   --ink-10:     #EAE7E2;
   --amber:      #C2692A;
+  --amber-dark: #A0541F;
   --amber-soft: #F5EDE4;
   --ok:         #3A7D5E;
-  --ok-soft:    #EAF3EE;
-  --font-serif: Georgia,'Noto Serif SC',serif;
-  --font-sans:  -apple-system,'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif;
+  --font-serif: Georgia, "Noto Serif SC", "Source Han Serif SC", serif;
+  --font-sans:  -apple-system, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
 }
-*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+* { margin: 0; padding: 0; box-sizing: border-box; }
 body {
-  font-family:var(--font-sans); background:var(--cream); color:var(--ink);
-  -webkit-font-smoothing:antialiased; min-height:100vh;
+  font-family: var(--font-sans);
+  background: var(--cream-deep);
+  min-height: 100vh;
+  padding: 15px;
+  -webkit-font-smoothing: antialiased;
+}
+.container {
+  max-width: 640px;
+  margin: 0 auto;
+  background: var(--cream);
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 4px 24px rgba(26,23,20,.10), 0 1px 4px rgba(26,23,20,.06);
 }
 
-/* ── HEADER ── */
-.top-nav {
-  position:sticky; top:0; z-index:50;
-  background:rgba(253,252,248,.95); backdrop-filter:blur(10px);
-  border-bottom:1px solid var(--ink-10);
-  padding:14px 20px;
-  display:flex; align-items:center; justify-content:space-between;
-  max-width:520px; margin:0 auto;
+/* ─── HEADER ─── */
+.header {
+  background: var(--ink);
+  padding: 26px 24px 22px;
+  text-align: center;
+  color: var(--cream);
+  position: relative;
+  overflow: hidden;
 }
-.nav-back {
-  display:flex; align-items:center; gap:4px;
-  font-size:14px; color:var(--ink-40); text-decoration:none;
-  background:none; border:none; cursor:pointer;
+.header::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 50% 0%, rgba(194,105,42,.18) 0%, transparent 70%);
+  pointer-events: none;
 }
-.nav-back svg { width:18px; height:18px; }
-.nav-wordmark { font-size:13px; font-weight:800; letter-spacing:.14em; color:var(--ink); }
+.header h1 {
+  font-family: var(--font-serif);
+  font-size: 22px;
+  font-weight: normal;
+  letter-spacing: .04em;
+  margin-bottom: 5px;
+  position: relative;
+}
+.header h1 em { font-style: normal; color: var(--amber); }
+.header p {
+  font-size: 12px;
+  color: var(--ink-20);
+  letter-spacing: .06em;
+  position: relative;
+}
 
-/* ── PROGRESS ── */
+/* ─── PROGRESS ─── */
 .progress-wrap {
-  max-width:520px; margin:0 auto;
-  padding:14px 20px 0;
-  display:flex; gap:5px; align-items:center;
+  padding: 14px 20px 0;
+  background: var(--cream);
 }
-.ps {
-  flex:1; height:3px; border-radius:2px;
-  background:var(--ink-10); transition:background .3s;
+.progress-labels {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 6px;
+  font-size: 11px;
+  color: var(--ink-40);
 }
-.ps.done   { background:var(--amber); }
-.ps.active { background:var(--amber); opacity:.55; }
-.prog-label {
-  max-width:520px; margin:0 auto;
-  padding:4px 20px 0; text-align:right;
-  font-size:11px; color:var(--ink-40);
+.progress-steps {
+  display: flex;
+  gap: 3px;
+  margin-bottom: 14px;
 }
+.progress-dot {
+  flex: 1;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--ink-10);
+  transition: background .3s;
+}
+.progress-dot.done { background: var(--amber); }
+.progress-dot.active { background: rgba(194,105,42,.5); }
 
-/* ── STEP CONTENT ── */
-.step-wrap {
-  max-width:520px; margin:0 auto;
-  padding:28px 20px 140px;
-}
-.step-eyebrow {
-  font-size:11px; font-weight:600; letter-spacing:.12em;
-  text-transform:uppercase; color:var(--amber); margin-bottom:10px;
+/* ─── STEP SCREEN ─── */
+.step-screen { display: none; padding: 0 20px 28px; }
+.step-screen.active { display: block; }
+
+.step-label {
+  font-size: 10px;
+  letter-spacing: .22em;
+  color: var(--amber);
+  text-transform: uppercase;
+  margin-bottom: 8px;
+  font-family: var(--font-sans);
 }
 .step-title {
-  font-family:var(--font-serif); font-size:24px; line-height:1.3;
-  letter-spacing:-.2px; font-weight:normal; margin-bottom:10px;
+  font-family: var(--font-serif);
+  font-size: 20px;
+  font-weight: normal;
+  color: var(--ink);
+  margin-bottom: 6px;
+  line-height: 1.35;
 }
-.step-title em { font-style:italic; color:var(--amber); }
-.step-desc {
-  font-size:14px; line-height:1.75; color:var(--ink-70); margin-bottom:28px;
+.step-sub {
+  font-size: 13px;
+  color: var(--ink-40);
+  margin-bottom: 18px;
+  line-height: 1.6;
 }
 
-/* ── FINGER GRID ── */
-.hand-section  { margin-bottom:18px; }
-.hand-label    { font-size:11px; font-weight:600; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-40); margin-bottom:8px; }
-.finger-row    { display:flex; gap:7px; }
+/* ─── TEACH BOX ─── */
+.teach-box {
+  display: flex;
+  gap: 14px;
+  background: var(--amber-soft);
+  border-radius: 14px;
+  padding: 16px;
+  margin-bottom: 18px;
+  align-items: flex-start;
+  border: 1px solid rgba(194,105,42,.18);
+}
+.teach-img-wrap {
+  flex-shrink: 0;
+  width: 76px;
+  height: 76px;
+  border-radius: 10px;
+  overflow: hidden;
+  background: white;
+  border: 1px solid var(--ink-10);
+}
+.teach-img-wrap img { width: 100%; height: 100%; object-fit: contain; display: block; }
+.teach-text h3 {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: 5px;
+}
+.teach-text p {
+  font-size: 12px;
+  color: var(--ink-70);
+  line-height: 1.6;
+}
+
+/* ─── COMPARE PANEL ─── */
+.compare-panel {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 18px;
+  padding: 14px;
+  background: var(--cream-deep);
+  border-radius: 12px;
+  border: 1px solid var(--ink-10);
+}
+.compare-item {
+  flex: 1;
+  text-align: center;
+}
+.compare-item img {
+  width: 70px;
+  height: 70px;
+  object-fit: contain;
+  border-radius: 8px;
+  background: white;
+  border: 1px solid var(--ink-10);
+  display: block;
+  margin: 0 auto 6px;
+}
+.compare-item p {
+  font-size: 11px;
+  color: var(--ink-70);
+  line-height: 1.5;
+}
+.compare-vs {
+  font-size: 12px;
+  color: var(--ink-20);
+  flex-shrink: 0;
+  font-weight: 600;
+}
+.compare-badge-bad { color: var(--ink-40); font-size: 10px; }
+.compare-badge-good { color: var(--amber); font-size: 10px; font-weight: 600; }
+
+/* ─── FINGER DIAGRAM ─── */
+.finger-diagram-wrap {
+  margin-bottom: 18px;
+}
+.hand-row-label {
+  font-size: 11px;
+  color: var(--ink-40);
+  margin-bottom: 6px;
+  letter-spacing: .04em;
+}
+.finger-row {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 8px;
+}
 .finger-btn {
-  flex:1; min-height:72px;
-  display:flex; flex-direction:column; align-items:center; justify-content:flex-end;
-  padding:8px 2px;
-  background:white; border:1.5px solid var(--ink-10); border-radius:36px 36px 10px 10px;
-  cursor:pointer; font-size:11px; color:var(--ink-70); text-align:center; line-height:1.3;
-  transition:all .15s; user-select:none;
+  flex: 1;
+  aspect-ratio: 1;
+  border: 2px solid var(--ink-10);
+  border-radius: 10px;
+  background: var(--cream);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  color: var(--ink-40);
+  line-height: 1.3;
+  padding: 4px 2px;
+  transition: all .18s;
+  text-align: center;
 }
-.f-dot { width:10px; height:10px; border-radius:50%; background:var(--ink-10); margin-bottom:7px; transition:background .15s; }
-.finger-btn.selected { background:var(--amber-soft); border-color:var(--amber); color:var(--amber); }
-.finger-btn.selected .f-dot { background:var(--amber); }
-.finger-btn.disabled { opacity:.32; cursor:not-allowed; pointer-events:none; }
-.finger-btn:active:not(.disabled) { transform:scale(.95); }
+.finger-btn span.fi { font-size: 16px; display: block; margin-bottom: 2px; }
+.finger-btn:hover { border-color: var(--amber); background: var(--amber-soft); }
+.finger-btn.selected {
+  border-color: var(--amber);
+  background: var(--amber);
+  color: white;
+}
+.finger-btn.thumb { border-color: var(--ink-20); }
+.finger-btn.disabled { opacity: .3; cursor: not-allowed; pointer-events: none; }
 
-/* ── REFERENCE PAGE (S2) ── */
-.ref-hero { text-align:center; padding:20px 0 24px; }
-.ref-hero-icon { font-size:48px; margin-bottom:12px; }
-.ref-card {
-  background:white; border:1px solid var(--ink-10);
-  border-radius:16px; padding:20px; margin-bottom:14px;
+/* ─── WHORL SELECTOR ─── */
+.whorl-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 18px;
 }
-.ref-card-title {
-  font-size:15px; font-weight:600; margin-bottom:10px;
-  display:flex; align-items:center; gap:8px;
+.whorl-card {
+  border: 2px solid var(--ink-10);
+  border-radius: 12px;
+  padding: 10px 8px 8px;
+  cursor: pointer;
+  text-align: center;
+  background: var(--cream);
+  transition: all .18s;
 }
-.ref-badge {
-  font-size:11px; font-weight:600; letter-spacing:.08em;
-  background:var(--amber-soft); color:var(--amber); border-radius:10px; padding:2px 8px;
-}
-.ref-card p { font-size:13px; line-height:1.75; color:var(--ink-70); }
-.ref-list { list-style:none; margin-top:10px; display:flex; flex-direction:column; gap:7px; }
-.ref-list li { font-size:13px; line-height:1.6; color:var(--ink-70); display:flex; gap:8px; }
-.ref-list li::before { content:'·'; color:var(--amber); font-weight:bold; flex-shrink:0; }
-.ref-note {
-  margin-top:14px; padding:12px 14px;
-  background:var(--cream-deep); border-radius:10px;
-  font-size:12px; color:var(--ink-40); line-height:1.6;
-}
+.whorl-card:hover { border-color: var(--amber); background: var(--amber-soft); }
+.whorl-card.selected { border-color: var(--amber); background: var(--amber-soft); }
+.whorl-card img { width: 60px; height: 60px; object-fit: contain; border-radius: 6px; background: white; margin: 0 auto 6px; display: block; }
+.whorl-card .wc-name { font-size: 11px; color: var(--ink); font-weight: 600; }
+.whorl-card .wc-sub { font-size: 10px; color: var(--ink-40); margin-top: 2px; }
+.whorl-card.not-w { border-style: dashed; }
+.whorl-card.not-w img { opacity: .3; }
 
-/* ── THUMB TYPES (S6) ── */
-.thumb-section { margin-bottom:28px; }
-.thumb-section-title {
-  font-size:14px; font-weight:600; color:var(--ink);
-  margin-bottom:12px; display:flex; align-items:center; gap:10px;
+/* ─── COUNT SELECTOR ─── */
+.count-row {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
 }
-.thumb-icon {
-  width:30px; height:30px; border-radius:50%;
-  background:var(--amber-soft); display:flex; align-items:center; justify-content:center;
-  font-size:16px; flex-shrink:0;
+.count-btn {
+  min-width: 48px;
+  padding: 10px 6px;
+  border: 2px solid var(--ink-10);
+  border-radius: 10px;
+  background: var(--cream);
+  cursor: pointer;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+  transition: all .18s;
 }
-.type-grid { display:flex; flex-wrap:wrap; gap:8px; }
-.type-btn {
-  flex:1; min-width:80px;
-  padding:11px 6px; text-align:center;
-  background:white; border:1.5px solid var(--ink-10); border-radius:12px;
-  cursor:pointer; font-size:13px; color:var(--ink-70);
-  font-family:var(--font-sans); transition:all .15s;
-}
-.type-btn.selected { background:var(--amber-soft); border-color:var(--amber); color:var(--amber); font-weight:600; }
-.type-btn:active { transform:scale(.97); }
+.count-btn:hover { border-color: var(--amber); background: var(--amber-soft); }
+.count-btn.selected { border-color: var(--amber); background: var(--amber); color: white; }
 
-.subtype-wrap { overflow:hidden; max-height:0; transition:max-height .3s ease; margin-top:0; }
-.subtype-wrap.open { max-height:200px; margin-top:10px; }
-.subtype-label { font-size:12px; color:var(--ink-40); margin-bottom:8px; }
-.subtype-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; }
-.subtype-btn {
-  padding:9px 4px; text-align:center;
-  background:white; border:1.5px solid var(--ink-10); border-radius:10px;
-  cursor:pointer; font-size:11px; color:var(--ink-70);
-  font-family:var(--font-sans); transition:all .15s; line-height:1.4;
+/* ─── HINT TAGS ─── */
+.hint-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 14px;
 }
-.subtype-btn.selected { background:var(--ok-soft); border-color:var(--ok); color:var(--ok); font-weight:600; }
-.subtype-btn:active { transform:scale(.96); }
+.hint-tag {
+  font-size: 11px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  background: var(--ink-10);
+  color: var(--ink-70);
+}
+.hint-tag.amber { background: var(--amber-soft); color: var(--amber); border: 1px solid rgba(194,105,42,.2); }
 
-/* ── BOTTOM NAV ── */
-.bottom-nav {
-  position:fixed; bottom:0; left:50%; transform:translateX(-50%);
-  width:100%; max-width:520px;
-  padding:14px 20px calc(14px + env(safe-area-inset-bottom));
-  background:rgba(253,252,248,.96); backdrop-filter:blur(12px);
-  border-top:1px solid var(--ink-10);
-  display:flex; gap:10px; z-index:40;
+/* ─── BUTTONS ─── */
+.btn-primary {
+  width: 100%;
+  padding: 14px;
+  background: var(--amber);
+  color: var(--cream);
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  letter-spacing: .04em;
+  transition: background .18s, transform .18s, box-shadow .18s;
+  margin-top: 4px;
 }
+.btn-primary:hover { background: var(--amber-dark); transform: translateY(-1px); box-shadow: 0 6px 20px rgba(194,105,42,.3); }
+.btn-primary:disabled { background: var(--ink-10); color: var(--ink-40); transform: none; box-shadow: none; cursor: not-allowed; }
+.btn-secondary {
+  width: 100%;
+  padding: 12px;
+  background: transparent;
+  color: var(--ink-40);
+  border: 1.5px solid var(--ink-10);
+  border-radius: 12px;
+  font-size: 14px;
+  cursor: pointer;
+  margin-top: 8px;
+  transition: all .18s;
+}
+.btn-secondary:hover { border-color: var(--ink-20); color: var(--ink); }
+.btn-pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 4px;
+}
+.btn-pair .btn-no {
+  padding: 13px;
+  background: var(--cream-deep);
+  color: var(--ink-70);
+  border: 1.5px solid var(--ink-10);
+  border-radius: 12px;
+  font-size: 15px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all .18s;
+}
+.btn-pair .btn-no:hover { border-color: var(--ink-20); }
+.btn-pair .btn-yes {
+  padding: 13px;
+  background: var(--amber);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .18s;
+}
+.btn-pair .btn-yes:hover { background: var(--amber-dark); }
 .btn-back {
-  flex:1; padding:15px; border-radius:13px;
-  border:1.5px solid var(--ink-10); background:white; color:var(--ink-70);
-  font-size:15px; font-weight:600; cursor:pointer; font-family:var(--font-sans);
-  transition:background .15s;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--ink-40);
+  cursor: pointer;
+  border: none;
+  background: none;
+  padding: 6px 0;
+  margin-bottom: 14px;
 }
-.btn-back:active { background:var(--cream-deep); }
-.btn-next {
-  flex:2; padding:15px; border-radius:13px;
-  border:none; background:var(--ink); color:white;
-  font-size:15px; font-weight:700; cursor:pointer; font-family:var(--font-sans);
-  box-shadow:0 4px 14px rgba(26,23,20,.2); transition:background .15s;
-}
-.btn-next:active { background:#3A3530; }
-.btn-next.amber-btn { background:var(--amber); box-shadow:0 4px 14px rgba(194,105,42,.3); }
-.btn-next.amber-btn:active { background:#A85822; }
 
-/* ── RESULT ── */
-.result-wrap { max-width:520px; margin:0 auto; padding:36px 20px 140px; }
-.result-check {
-  width:64px; height:64px; border-radius:50%;
-  background:var(--ok-soft); margin:0 auto 20px;
-  display:flex; align-items:center; justify-content:center; font-size:28px;
+/* ─── RESULT SCREEN ─── */
+.result-reveal {
+  padding: 28px 0 10px;
+  text-align: center;
+  border-bottom: 1px solid var(--ink-10);
+  margin-bottom: 20px;
 }
-.result-title { font-family:var(--font-serif); font-size:26px; text-align:center; font-weight:normal; margin-bottom:8px; }
-.result-sub   { font-size:14px; color:var(--ink-40); text-align:center; margin-bottom:32px; }
-.result-section-label {
-  font-size:11px; font-weight:600; letter-spacing:.1em; text-transform:uppercase;
-  color:var(--ink-40); margin-bottom:10px; margin-top:24px;
+.result-label {
+  font-size: 10px;
+  letter-spacing: .28em;
+  color: var(--ink-40);
+  text-transform: uppercase;
+  margin-bottom: 12px;
 }
-.result-table {
-  background:white; border:1px solid var(--ink-10);
-  border-radius:14px; overflow:hidden;
+.result-type {
+  font-family: var(--font-serif);
+  font-size: 26px;
+  font-weight: normal;
+  color: var(--ink);
+  margin-bottom: 8px;
+  line-height: 1.3;
 }
-.result-row {
-  display:flex; align-items:center;
-  padding:12px 16px; border-bottom:1px solid var(--ink-10);
-  gap:10px;
+.result-tagline {
+  font-size: 13px;
+  color: var(--amber);
+  letter-spacing: .08em;
 }
-.result-row:last-child { border-bottom:none; }
-.result-type { font-size:14px; font-weight:500; flex:1; }
-.result-fnames { font-size:12px; color:var(--ink-40); flex:2; }
-.result-badge {
-  width:28px; height:28px; border-radius:50%; flex-shrink:0;
-  background:var(--amber-soft); color:var(--amber);
-  font-size:13px; font-weight:700;
-  display:flex; align-items:center; justify-content:center;
+.report-section {
+  margin-bottom: 18px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--ink-10);
 }
-.result-cta {
-  display:block; margin-top:28px; padding:18px;
-  background:var(--amber); color:white; border-radius:14px;
-  text-align:center; font-size:15px; font-weight:700;
-  text-decoration:none; box-shadow:0 4px 16px rgba(194,105,42,.3);
+.report-section:last-child { border-bottom: none; }
+.report-section h3 {
+  font-size: 10px;
+  letter-spacing: .22em;
+  color: var(--amber);
+  text-transform: uppercase;
+  margin-bottom: 10px;
+  font-family: var(--font-sans);
 }
-.result-note { text-align:center; font-size:12px; color:var(--ink-40); margin-top:12px; line-height:1.6; }
+.report-section p {
+  font-size: 14px;
+  color: var(--ink-70);
+  line-height: 1.75;
+  margin-bottom: 8px;
+}
+.report-section p:last-child { margin-bottom: 0; }
+.report-section p strong { color: var(--ink); }
+.advantage-tags { display: flex; flex-wrap: wrap; gap: 7px; }
+.tag { font-size: 12px; padding: 5px 12px; border-radius: 20px; }
+.tag-primary { background: var(--amber-soft); color: var(--amber); border: 1px solid rgba(194,105,42,.2); }
+
+/* ─── LEAD MAGNET ─── */
+.lead-box {
+  background: var(--ink);
+  border-radius: 16px;
+  padding: 20px;
+  text-align: center;
+  margin-bottom: 20px;
+}
+.lead-box h3 {
+  font-family: var(--font-serif);
+  font-size: 17px;
+  font-weight: normal;
+  color: var(--cream);
+  margin-bottom: 8px;
+}
+.lead-box p {
+  font-size: 12px;
+  color: var(--ink-20);
+  line-height: 1.7;
+  margin-bottom: 16px;
+}
+.lead-box .qr-wrap {
+  background: white;
+  border-radius: 12px;
+  padding: 10px;
+  display: inline-block;
+  margin-bottom: 12px;
+}
+.lead-box .qr-wrap img { width: 110px; height: 110px; display: block; border-radius: 6px; }
+.lead-box .qr-cta { font-size: 12px; color: var(--ink-20); }
+.lead-box .kfid-btn {
+  display: inline-block;
+  background: var(--amber);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  padding: 10px 22px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 4px;
+  text-decoration: none;
+}
+
+.result-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 8px;
+}
+.result-actions .btn-share {
+  flex: 1;
+  padding: 12px;
+  background: var(--amber);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .18s;
+}
+.result-actions .btn-retry {
+  flex: 1;
+  padding: 12px;
+  background: var(--cream-deep);
+  color: var(--ink-70);
+  border: 1.5px solid var(--ink-10);
+  border-radius: 12px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all .18s;
+}
+
+/* ─── POSTER MODAL ─── */
+.modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(26,23,20,.85);
+  z-index: 9999;
+  justify-content: center;
+  align-items: flex-end;
+  padding: 20px;
+}
+.modal.show { display: flex; }
+.modal-card {
+  background: var(--cream);
+  border-radius: 20px 20px 16px 16px;
+  width: 100%;
+  max-width: 560px;
+  max-height: 88vh;
+  overflow-y: auto;
+  padding: 24px 20px 28px;
+}
+.modal-title {
+  font-family: var(--font-serif);
+  font-size: 18px;
+  font-weight: normal;
+  text-align: center;
+  margin-bottom: 16px;
+  color: var(--ink);
+}
+.modal-close {
+  float: right;
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  color: var(--ink-40);
+  margin-top: -4px;
+}
+
+/* ─── POSTER TEMPLATE (hidden) ─── */
+#posterTemplate { position: fixed; left: -9999px; top: -9999px; }
+.poster-bg {
+  width: 375px;
+  background: var(--cream);
+  padding: 44px 32px 36px;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--ink-10);
+}
+.poster-bg::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--amber); }
+.poster-logo { font-size: 10px; color: var(--ink-40); letter-spacing: .35em; margin-bottom: 24px; text-align: center; font-family: var(--font-sans); }
+.poster-type { font-family: var(--font-serif); font-size: 28px; font-weight: normal; margin-bottom: 8px; color: var(--ink); text-align: center; }
+.poster-tagline { font-size: 12px; color: var(--ink-40); line-height: 1.6; letter-spacing: .08em; text-align: center; margin-bottom: 28px; }
+.poster-mid { background: var(--amber-soft); border-radius: 14px; padding: 18px; margin-bottom: 22px; border: 1px solid rgba(194,105,42,.2); }
+.poster-mid-label { font-size: 10px; color: var(--amber); letter-spacing: .25em; margin-bottom: 12px; text-align: center; text-transform: uppercase; }
+.poster-tags { display: flex; flex-wrap: wrap; gap: 7px; justify-content: center; }
+.poster-tag { background: var(--cream); color: var(--amber); padding: 5px 13px; border-radius: 20px; font-size: 12px; border: 1px solid rgba(194,105,42,.3); }
+.poster-footer { display: flex; align-items: center; gap: 14px; background: var(--ink); border-radius: 12px; padding: 16px; }
+.poster-qr-wrap { flex-shrink: 0; background: white; border-radius: 8px; padding: 4px; }
+.poster-qr-wrap img { width: 64px; height: 64px; border-radius: 5px; display: block; }
+.poster-cta { font-size: 13px; font-weight: 600; color: var(--cream); margin-bottom: 3px; }
+.poster-url { font-size: 11px; color: var(--amber); letter-spacing: .05em; }
+
+/* ─── THUMB CONFIRM (step 6) ─── */
+.thumb-confirm {
+  background: var(--cream-deep);
+  border-radius: 14px;
+  padding: 14px;
+  margin-bottom: 14px;
+  border: 1px solid var(--ink-10);
+}
+.thumb-confirm-label { font-size: 12px; color: var(--ink-40); margin-bottom: 10px; }
+
+/* ─── STEP 6: THUMB CATEGORY PICKER ─── */
+.s6-cat-row {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+.s6-cat-btn {
+  flex: 1;
+  padding: 7px 2px 6px;
+  border: 2px solid var(--ink-10);
+  border-radius: 10px;
+  background: var(--cream);
+  cursor: pointer;
+  text-align: center;
+  font-size: 9px;
+  color: var(--ink);
+  transition: all .18s;
+  line-height: 1.35;
+  font-family: var(--font-sans);
+}
+.s6-cat-btn img {
+  width: 26px;
+  height: 26px;
+  object-fit: contain;
+  background: white;
+  border-radius: 4px;
+  display: block;
+  margin: 0 auto 3px;
+  border: 1px solid var(--ink-10);
+}
+.s6-cat-btn:hover { border-color: var(--amber); background: var(--amber-soft); }
+.s6-cat-btn.selected { border-color: var(--amber); background: var(--amber); color: white; }
+.s6-cat-btn.selected img { border-color: rgba(255,255,255,.4); }
+.s6-pre-note {
+  display: none;
+  font-size: 11px;
+  color: var(--amber);
+  margin-bottom: 8px;
+  padding: 5px 8px;
+  background: var(--amber-soft);
+  border-radius: 6px;
+}
+
+/* ─── STEP 6: W SUBTYPE PICKER ─── */
+.s6-whorl-sub {
+  display: none;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+  margin-bottom: 8px;
+  padding: 10px;
+  background: white;
+  border-radius: 10px;
+  border: 1px solid var(--ink-10);
+}
+.s6-whorl-sub.show { display: grid; }
+.s6-whorl-card {
+  border: 2px solid var(--ink-10);
+  border-radius: 8px;
+  padding: 5px 3px 4px;
+  cursor: pointer;
+  text-align: center;
+  background: var(--cream);
+  transition: all .18s;
+}
+.s6-whorl-card:hover { border-color: var(--amber); background: var(--amber-soft); }
+.s6-whorl-card.selected { border-color: var(--amber); background: var(--amber-soft); }
+.s6-whorl-card img {
+  width: 38px;
+  height: 38px;
+  object-fit: contain;
+  border-radius: 4px;
+  background: white;
+  margin: 0 auto 3px;
+  display: block;
+}
+.s6-whorl-card .wn { font-size: 8px; color: var(--ink); font-weight: 600; line-height: 1.3; }
+
+/* ─── ZOOM MODAL ─── */
+.zoomable { cursor: zoom-in; transition: transform .18s; }
+.zoomable:hover { transform: scale(1.08); }
+.zoom-modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(26,23,20,.88);
+  z-index: 99999;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  padding: 24px;
+}
+.zoom-modal.show { display: flex; }
+.zoom-modal img {
+  max-width: 280px;
+  max-height: 280px;
+  border-radius: 14px;
+  box-shadow: 0 12px 48px rgba(26,23,20,.5);
+  background: white;
+  padding: 18px;
+  object-fit: contain;
+}
+.zoom-modal-name {
+  color: var(--cream);
+  font-size: 17px;
+  margin-top: 16px;
+  font-family: var(--font-serif);
+  letter-spacing: .04em;
+}
+.zoom-modal-close {
+  margin-top: 18px;
+  background: rgba(255,255,255,.15);
+  border: 1px solid rgba(255,255,255,.25);
+  color: white;
+  padding: 8px 24px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 13px;
+  letter-spacing: .06em;
+}
+
+/* ─── RESPONSIVE ─── */
+@media (max-width: 420px) {
+  body { padding: 8px; }
+  .whorl-grid { grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .whorl-card img { width: 48px; height: 48px; }
+  .finger-btn { font-size: 9px; }
+  .s6-whorl-sub { grid-template-columns: repeat(4, 1fr); gap: 4px; }
+  .s6-whorl-card img { width: 32px; height: 32px; }
+}
 </style>
 </head>
 <body>
+<div class="container">
 
-<!-- HEADER -->
-<header>
-  <nav class="top-nav">
-    <button class="nav-back" onclick="goBack()">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
-      返回
-    </button>
-    <span class="nav-wordmark">AIPIWEN</span>
-    <div style="width:52px"></div>
-  </nav>
-  <div class="progress-wrap">
-    <div class="ps" id="ps1"></div>
-    <div class="ps" id="ps2"></div>
-    <div class="ps" id="ps3"></div>
-    <div class="ps" id="ps4"></div>
-    <div class="ps" id="ps5"></div>
-    <div class="ps" id="ps6"></div>
-    <div class="ps" id="ps7"></div>
+  <!-- HEADER -->
+  <div class="header">
+    <h1>AI 皮纹天<em>赋</em>速测</h1>
+    <p>指尖携带的遗传密码 · 揭示与生俱来的天赋图谱</p>
   </div>
-  <div class="prog-label" id="prog-label"></div>
-</header>
 
-<main id="main"></main>
+  <!-- PROGRESS — 7 dots -->
+  <div class="progress-wrap">
+    <div class="progress-labels">
+      <span id="stepLabel">第 1 步 · 共 7 步</span>
+      <span id="stepName">反箕纹</span>
+    </div>
+    <div class="progress-steps">
+      <div class="progress-dot active" id="pd1"></div>
+      <div class="progress-dot" id="pd2"></div>
+      <div class="progress-dot" id="pd3"></div>
+      <div class="progress-dot" id="pd4"></div>
+      <div class="progress-dot" id="pd5"></div>
+      <div class="progress-dot" id="pd6"></div>
+      <div class="progress-dot" id="pd7"></div>
+    </div>
+  </div>
 
-<div class="bottom-nav" id="bottom-nav">
-  <button class="btn-back" id="btn-back" onclick="prevStep()">上一步</button>
-  <button class="btn-next" id="btn-next" onclick="nextStep()">下一步</button>
+  <!-- ══════════════════════════════════════
+       STEP 1 — 反箕纹检测
+  ══════════════════════════════════════ -->
+  <div class="step-screen active" id="screen-s1">
+    <div class="step-label">第 1 步</div>
+    <div class="step-title">先找这种纹：开口朝大拇指</div>
+    <div class="step-sub">大多数人的箕形纹开口朝小指，少数人恰好反过来——这是最重要的一个特征。</div>
+
+    <!-- Compare: Lu vs Rl -->
+    <div class="compare-panel">
+      <div class="compare-item">
+        <img src="patterns/Lu.jpg" alt="大正箕" class="zoomable" onclick="showZoom('patterns/Lu.jpg','大正箕（Lu）')">
+        <p><span class="compare-badge-bad">常见 · 大正箕</span><br>开口朝小指方向</p>
+      </div>
+      <div class="compare-vs">VS</div>
+      <div class="compare-item">
+        <img src="patterns/Rl.jpg" alt="反箕" class="zoomable" onclick="showZoom('patterns/Rl.jpg','反箕（Rl）')">
+        <p><span class="compare-badge-good">少见 · 反箕</span><br>开口朝拇指方向 ←</p>
+      </div>
+    </div>
+
+    <div class="teach-box">
+      <div class="teach-img-wrap">
+        <img src="patterns/Rl.jpg" alt="反箕" class="zoomable" onclick="showZoom('patterns/Rl.jpg','反箕（Rl）')">
+      </div>
+      <div class="teach-text">
+        <h3>怎么分辨反箕？（点图放大）</h3>
+        <p>掌心朝上，看纹路"开口"方向。如果开口靠近大拇指那侧——就是反箕。可以有多个手指都是反箕。</p>
+      </div>
+    </div>
+
+    <p style="font-size:14px;color:var(--ink);font-weight:600;margin-bottom:14px;">
+      10 个手指里，有没有"开口朝大拇指"的纹路？
+    </p>
+
+    <div class="btn-pair">
+      <button class="btn-no" onclick="s1Answer(false)">没有</button>
+      <button class="btn-yes" onclick="s1ShowPicker()">有</button>
+    </div>
+
+    <!-- Finger picker (shown on "有") -->
+    <div id="s1-picker" style="display:none; margin-top:18px;">
+      <p style="font-size:13px;color:var(--ink-70);margin-bottom:10px;">点击有反箕纹的手指（可多选）：</p>
+      <div class="finger-diagram-wrap">
+        <div class="hand-row-label">右手（掌心朝上，从左到右：大拇指 → 小指）</div>
+        <div class="finger-row">
+          <button class="finger-btn thumb" data-fi="0" onclick="s1Toggle(0)"><span class="fi">👍</span>大拇</button>
+          <button class="finger-btn" data-fi="1" onclick="s1Toggle(1)"><span class="fi">☝️</span>食指</button>
+          <button class="finger-btn" data-fi="2" onclick="s1Toggle(2)"><span class="fi">🖕</span>中指</button>
+          <button class="finger-btn" data-fi="3" onclick="s1Toggle(3)"><span class="fi">💍</span>无名</button>
+          <button class="finger-btn" data-fi="4" onclick="s1Toggle(4)"><span class="fi">🤙</span>小指</button>
+        </div>
+        <div class="hand-row-label">左手（掌心朝上，从左到右：小指 → 大拇指）</div>
+        <div class="finger-row">
+          <button class="finger-btn" data-fi="9" onclick="s1Toggle(9)"><span class="fi">🤙</span>小指</button>
+          <button class="finger-btn" data-fi="8" onclick="s1Toggle(8)"><span class="fi">💍</span>无名</button>
+          <button class="finger-btn" data-fi="7" onclick="s1Toggle(7)"><span class="fi">🖕</span>中指</button>
+          <button class="finger-btn" data-fi="6" onclick="s1Toggle(6)"><span class="fi">☝️</span>食指</button>
+          <button class="finger-btn thumb" data-fi="5" onclick="s1Toggle(5)"><span class="fi">👍</span>大拇</button>
+        </div>
+      </div>
+      <button class="btn-primary" id="s1-confirm" onclick="s1Confirm()" disabled>确认，继续</button>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       STEP 2 — 斗形纹识别（参考步）
+  ══════════════════════════════════════ -->
+  <div class="step-screen" id="screen-s2">
+    <button class="btn-back" onclick="goBack('s1')">← 返回</button>
+    <div class="step-label">第 2 步</div>
+    <div class="step-title">认识斗形纹（W）</div>
+    <div class="step-sub">斗形纹是最有特点的类型，看起来像漩涡、螺旋或同心圆。以下这些都算斗形纹：</div>
+
+    <p style="font-size:11px;color:var(--ink-40);margin-bottom:6px;">点击图片可放大对照：</p>
+    <div style="display:flex;gap:6px;margin-bottom:16px;overflow-x:auto;padding-bottom:4px;">
+      <img src="patterns/Ws.jpg"  class="zoomable" onclick="showZoom('patterns/Ws.jpg','螺旋斗（Ws）')"   style="width:56px;height:56px;border-radius:6px;background:white;flex-shrink:0;border:1px solid var(--ink-10);">
+      <img src="patterns/Wt.jpg"  class="zoomable" onclick="showZoom('patterns/Wt.jpg','靶心斗（Wt）')"   style="width:56px;height:56px;border-radius:6px;background:white;flex-shrink:0;border:1px solid var(--ink-10);">
+      <img src="patterns/Wc.jpg"  class="zoomable" onclick="showZoom('patterns/Wc.jpg','双斗上下（Wc）')" style="width:56px;height:56px;border-radius:6px;background:white;flex-shrink:0;border:1px solid var(--ink-10);">
+      <img src="patterns/Wd.jpg"  class="zoomable" onclick="showZoom('patterns/Wd.jpg','双斗左右（Wd）')" style="width:56px;height:56px;border-radius:6px;background:white;flex-shrink:0;border:1px solid var(--ink-10);">
+      <img src="patterns/Wpe.jpg" class="zoomable" onclick="showZoom('patterns/Wpe.jpg','孔雀眼（Wpe）')"  style="width:56px;height:56px;border-radius:6px;background:white;flex-shrink:0;border:1px solid var(--ink-10);">
+      <img src="patterns/Wsp.jpg" class="zoomable" onclick="showZoom('patterns/Wsp.jpg','侧向斗（Wsp）')"  style="width:56px;height:56px;border-radius:6px;background:white;flex-shrink:0;border:1px solid var(--ink-10);">
+      <img src="patterns/We.jpg"  class="zoomable" onclick="showZoom('patterns/We.jpg','伸长斗（We）')"   style="width:56px;height:56px;border-radius:6px;background:white;flex-shrink:0;border:1px solid var(--ink-10);">
+    </div>
+
+    <div class="teach-box">
+      <div class="teach-img-wrap">
+        <img src="patterns/Ws.jpg" alt="螺旋斗" class="zoomable" onclick="showZoom('patterns/Ws.jpg','螺旋斗（Ws）')">
+      </div>
+      <div class="teach-text">
+        <h3>怎么认斗形纹？</h3>
+        <p>把手指立起来看纹路中心：如果像漩涡、同心圆，或有两个中心点——就是斗形纹（W）。先记住它们的样子。</p>
+      </div>
+    </div>
+
+    <div style="font-size:13px;color:var(--ink-70);background:var(--amber-soft);border-radius:12px;padding:14px;margin-bottom:18px;border:1px solid rgba(194,105,42,.18);line-height:1.65;">
+      接下来我们先排除弧形纹和箕形纹，最后再回来确认哪些手指有斗形纹。
+    </div>
+
+    <button class="btn-primary" onclick="showScreen('s3')">明白了，继续</button>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       STEP 3 — 简单弧（X）
+  ══════════════════════════════════════ -->
+  <div class="step-screen" id="screen-s3">
+    <button class="btn-back" onclick="goBack('s2')">← 返回</button>
+    <div class="step-label">第 3 步</div>
+    <div class="step-title">找找"小山丘"：简单弧</div>
+    <div class="step-sub">简单弧（X）没有三叉点，纹路像平缓的小山丘，从一侧直接流向另一侧，是最简单的纹型。</div>
+
+    <div class="compare-panel">
+      <div class="compare-item">
+        <img src="patterns/X.jpg" alt="简单弧" class="zoomable" onclick="showZoom('patterns/X.jpg','简单弧（X）')">
+        <p><span class="compare-badge-good">简单弧（X）</span><br>小山丘，无三叉点</p>
+      </div>
+      <div class="compare-vs">VS</div>
+      <div class="compare-item">
+        <img src="patterns/Xn.jpg" alt="帐篷弧" class="zoomable" onclick="showZoom('patterns/Xn.jpg','帐篷弧（Xn）')">
+        <p><span class="compare-badge-bad">帐篷弧（Xn）</span><br>下一步再选这个 →</p>
+      </div>
+    </div>
+
+    <p style="font-size:14px;color:var(--ink);font-weight:600;margin-bottom:4px;">哪些手指是"小山丘"简单弧？</p>
+    <p style="font-size:12px;color:var(--ink-40);margin-bottom:14px;">可多选；没有的话直接点"没有"</p>
+
+    <div class="finger-diagram-wrap">
+      <div class="hand-row-label">右手</div>
+      <div class="finger-row" id="s3-right">
+        <button class="finger-btn thumb" data-fi="0" onclick="s3Toggle(0)"><span class="fi">👍</span>大拇</button>
+        <button class="finger-btn" data-fi="1" onclick="s3Toggle(1)"><span class="fi">☝️</span>食指</button>
+        <button class="finger-btn" data-fi="2" onclick="s3Toggle(2)"><span class="fi">🖕</span>中指</button>
+        <button class="finger-btn" data-fi="3" onclick="s3Toggle(3)"><span class="fi">💍</span>无名</button>
+        <button class="finger-btn" data-fi="4" onclick="s3Toggle(4)"><span class="fi">🤙</span>小指</button>
+      </div>
+      <div class="hand-row-label">左手</div>
+      <div class="finger-row" id="s3-left">
+        <button class="finger-btn" data-fi="9" onclick="s3Toggle(9)"><span class="fi">🤙</span>小指</button>
+        <button class="finger-btn" data-fi="8" onclick="s3Toggle(8)"><span class="fi">💍</span>无名</button>
+        <button class="finger-btn" data-fi="7" onclick="s3Toggle(7)"><span class="fi">🖕</span>中指</button>
+        <button class="finger-btn" data-fi="6" onclick="s3Toggle(6)"><span class="fi">☝️</span>食指</button>
+        <button class="finger-btn thumb" data-fi="5" onclick="s3Toggle(5)"><span class="fi">👍</span>大拇</button>
+      </div>
+    </div>
+    <button class="btn-primary" onclick="s3Next()">确认，继续</button>
+    <button class="btn-secondary" onclick="s3None()">没有简单弧，直接跳过</button>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       STEP 4 — 帐篷弧（Xn）
+  ══════════════════════════════════════ -->
+  <div class="step-screen" id="screen-s4">
+    <button class="btn-back" onclick="s4Back()">← 返回</button>
+    <div class="step-label">第 4 步</div>
+    <div class="step-title">找找"帐篷"形：帐篷弧</div>
+    <div class="step-sub">帐篷弧（Xn）中间有一条竖直向上冲的纹路，形状像帐篷的尖顶。已选过简单弧的手指会变灰。</div>
+
+    <div class="teach-box">
+      <div class="teach-img-wrap">
+        <img src="patterns/Xn.jpg" alt="帐篷弧" class="zoomable" onclick="showZoom('patterns/Xn.jpg','帐篷弧（Xn）')">
+      </div>
+      <div class="teach-text">
+        <h3>帐篷弧（Xn）· 点图放大</h3>
+        <p>和简单弧类似，但中间有一条像帐篷支柱的纹直冲上方。注意区分这两种弧形纹。</p>
+      </div>
+    </div>
+
+    <p style="font-size:14px;color:var(--ink);font-weight:600;margin-bottom:4px;">哪些手指是帐篷弧？</p>
+    <p style="font-size:12px;color:var(--ink-40);margin-bottom:14px;">灰色手指已选过简单弧，不能重复选</p>
+
+    <div class="finger-diagram-wrap">
+      <div class="hand-row-label">右手</div>
+      <div class="finger-row" id="s4-right">
+        <button class="finger-btn thumb" data-fi="0" onclick="s4Toggle(0)"><span class="fi">👍</span>大拇</button>
+        <button class="finger-btn" data-fi="1" onclick="s4Toggle(1)"><span class="fi">☝️</span>食指</button>
+        <button class="finger-btn" data-fi="2" onclick="s4Toggle(2)"><span class="fi">🖕</span>中指</button>
+        <button class="finger-btn" data-fi="3" onclick="s4Toggle(3)"><span class="fi">💍</span>无名</button>
+        <button class="finger-btn" data-fi="4" onclick="s4Toggle(4)"><span class="fi">🤙</span>小指</button>
+      </div>
+      <div class="hand-row-label">左手</div>
+      <div class="finger-row" id="s4-left">
+        <button class="finger-btn" data-fi="9" onclick="s4Toggle(9)"><span class="fi">🤙</span>小指</button>
+        <button class="finger-btn" data-fi="8" onclick="s4Toggle(8)"><span class="fi">💍</span>无名</button>
+        <button class="finger-btn" data-fi="7" onclick="s4Toggle(7)"><span class="fi">🖕</span>中指</button>
+        <button class="finger-btn" data-fi="6" onclick="s4Toggle(6)"><span class="fi">☝️</span>食指</button>
+        <button class="finger-btn thumb" data-fi="5" onclick="s4Toggle(5)"><span class="fi">👍</span>大拇</button>
+      </div>
+    </div>
+    <button class="btn-primary" onclick="s4Next()">确认，继续</button>
+    <button class="btn-secondary" onclick="s4None()">没有帐篷弧，直接跳过</button>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       STEP 5 — 大正箕（Lu）
+  ══════════════════════════════════════ -->
+  <div class="step-screen" id="screen-s5">
+    <button class="btn-back" onclick="s5Back()">← 返回</button>
+    <div class="step-label">第 5 步</div>
+    <div class="step-title">找"簸箕"形状：大正箕</div>
+    <div class="step-sub">大正箕（Lu）是最常见的纹型，像朝小指方向开口的簸箕。反箕和弧形纹的手指已变灰。</div>
+
+    <div class="teach-box">
+      <div class="teach-img-wrap">
+        <img src="patterns/Lu.jpg" alt="大正箕" class="zoomable" onclick="showZoom('patterns/Lu.jpg','大正箕（Lu）')">
+      </div>
+      <div class="teach-text">
+        <h3>大正箕（Lu）· 点图放大</h3>
+        <p>纹路像簸箕，开口朝向小指方向。是概率最高的纹型，大多数手指都会有。</p>
+      </div>
+    </div>
+
+    <p style="font-size:14px;color:var(--ink);font-weight:600;margin-bottom:4px;">哪些手指是大正箕？</p>
+    <p style="font-size:12px;color:var(--ink-40);margin-bottom:14px;">灰色手指已在前面步骤中选过，不能重复</p>
+
+    <div class="finger-diagram-wrap">
+      <div class="hand-row-label">右手</div>
+      <div class="finger-row" id="s5-right">
+        <button class="finger-btn thumb" data-fi="0" onclick="s5Toggle(0)"><span class="fi">👍</span>大拇</button>
+        <button class="finger-btn" data-fi="1" onclick="s5Toggle(1)"><span class="fi">☝️</span>食指</button>
+        <button class="finger-btn" data-fi="2" onclick="s5Toggle(2)"><span class="fi">🖕</span>中指</button>
+        <button class="finger-btn" data-fi="3" onclick="s5Toggle(3)"><span class="fi">💍</span>无名</button>
+        <button class="finger-btn" data-fi="4" onclick="s5Toggle(4)"><span class="fi">🤙</span>小指</button>
+      </div>
+      <div class="hand-row-label">左手</div>
+      <div class="finger-row" id="s5-left">
+        <button class="finger-btn" data-fi="9" onclick="s5Toggle(9)"><span class="fi">🤙</span>小指</button>
+        <button class="finger-btn" data-fi="8" onclick="s5Toggle(8)"><span class="fi">💍</span>无名</button>
+        <button class="finger-btn" data-fi="7" onclick="s5Toggle(7)"><span class="fi">🖕</span>中指</button>
+        <button class="finger-btn" data-fi="6" onclick="s5Toggle(6)"><span class="fi">☝️</span>食指</button>
+        <button class="finger-btn thumb" data-fi="5" onclick="s5Toggle(5)"><span class="fi">👍</span>大拇</button>
+      </div>
+    </div>
+    <button class="btn-primary" onclick="s5Next()">确认，继续</button>
+    <button class="btn-secondary" onclick="s5None()">没有大正箕，跳过</button>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       STEP 6 — 两个大拇指具体类型
+  ══════════════════════════════════════ -->
+  <div class="step-screen" id="screen-s6">
+    <button class="btn-back" onclick="s6Back()">← 返回</button>
+    <div class="step-label">第 6 步</div>
+    <div class="step-title">确认两个大拇指</div>
+    <div class="step-sub">大拇指是最关键的——它直接决定天赋类型。如果是斗形纹，请选择具体哪种斗。</div>
+
+    <!-- Right thumb -->
+    <div class="thumb-confirm">
+      <div class="thumb-confirm-label">右手大拇指 —— 是哪种纹？</div>
+      <div class="s6-pre-note" id="s6-rt-pre"></div>
+      <div class="s6-cat-row">
+        <button class="s6-cat-btn" data-hand="rt" data-cat="W" onclick="s6CatSelect('rt','W')">
+          <img src="patterns/Ws.jpg" alt="斗">斗形纹 W▼
+        </button>
+        <button class="s6-cat-btn" data-hand="rt" data-cat="Lu" onclick="s6CatSelect('rt','Lu')">
+          <img src="patterns/Lu.jpg" alt="箕">大正箕 Lu
+        </button>
+        <button class="s6-cat-btn" data-hand="rt" data-cat="X" onclick="s6CatSelect('rt','X')">
+          <img src="patterns/X.jpg" alt="弧">简单弧 X
+        </button>
+        <button class="s6-cat-btn" data-hand="rt" data-cat="Xn" onclick="s6CatSelect('rt','Xn')">
+          <img src="patterns/Xn.jpg" alt="帐">帐篷弧 Xn
+        </button>
+      </div>
+      <!-- W subtype picker for right thumb -->
+      <div class="s6-whorl-sub" id="s6-rt-wsub">
+        <div class="s6-whorl-card" data-type="Ws" onclick="s6WSelect('rt','Ws')">
+          <img src="patterns/Ws.jpg" class="zoomable" onclick="event.stopPropagation();showZoom('patterns/Ws.jpg','螺旋斗（Ws）')">
+          <div class="wn">螺旋斗</div>
+        </div>
+        <div class="s6-whorl-card" data-type="Wt" onclick="s6WSelect('rt','Wt')">
+          <img src="patterns/Wt.jpg" class="zoomable" onclick="event.stopPropagation();showZoom('patterns/Wt.jpg','靶心斗（Wt）')">
+          <div class="wn">靶心斗</div>
+        </div>
+        <div class="s6-whorl-card" data-type="Wc" onclick="s6WSelect('rt','Wc')">
+          <img src="patterns/Wc.jpg" class="zoomable" onclick="event.stopPropagation();showZoom('patterns/Wc.jpg','双斗上下（Wc）')">
+          <div class="wn">双斗上下</div>
+        </div>
+        <div class="s6-whorl-card" data-type="Wd" onclick="s6WSelect('rt','Wd')">
+          <img src="patterns/Wd.jpg" class="zoomable" onclick="event.stopPropagation();showZoom('patterns/Wd.jpg','双斗左右（Wd）')">
+          <div class="wn">双斗左右</div>
+        </div>
+        <div class="s6-whorl-card" data-type="Wpe" onclick="s6WSelect('rt','Wpe')">
+          <img src="patterns/Wpe.jpg" class="zoomable" onclick="event.stopPropagation();showZoom('patterns/Wpe.jpg','孔雀眼（Wpe）')">
+          <div class="wn">孔雀眼</div>
+        </div>
+        <div class="s6-whorl-card" data-type="We" onclick="s6WSelect('rt','We')">
+          <img src="patterns/We.jpg" class="zoomable" onclick="event.stopPropagation();showZoom('patterns/We.jpg','伸长斗（We）')">
+          <div class="wn">伸长斗</div>
+        </div>
+        <div class="s6-whorl-card" data-type="Wsp" onclick="s6WSelect('rt','Wsp')">
+          <img src="patterns/Wsp.jpg" class="zoomable" onclick="event.stopPropagation();showZoom('patterns/Wsp.jpg','侧向斗（Wsp）')">
+          <div class="wn">侧向斗</div>
+        </div>
+        <div class="s6-whorl-card" data-type="Wsp-r" onclick="s6WSelect('rt','Wsp-r')">
+          <img src="patterns/Wsp.jpg" class="zoomable" onclick="event.stopPropagation();showZoom('patterns/Wsp.jpg','反侧向斗（Wsp-r）')">
+          <div class="wn">反侧向斗</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Left thumb -->
+    <div class="thumb-confirm">
+      <div class="thumb-confirm-label">左手大拇指 —— 是哪种纹？</div>
+      <div class="s6-pre-note" id="s6-lt-pre"></div>
+      <div class="s6-cat-row">
+        <button class="s6-cat-btn" data-hand="lt" data-cat="W" onclick="s6CatSelect('lt','W')">
+          <img src="patterns/Ws.jpg" alt="斗">斗形纹 W▼
+        </button>
+        <button class="s6-cat-btn" data-hand="lt" data-cat="Lu" onclick="s6CatSelect('lt','Lu')">
+          <img src="patterns/Lu.jpg" alt="箕">大正箕 Lu
+        </button>
+        <button class="s6-cat-btn" data-hand="lt" data-cat="X" onclick="s6CatSelect('lt','X')">
+          <img src="patterns/X.jpg" alt="弧">简单弧 X
+        </button>
+        <button class="s6-cat-btn" data-hand="lt" data-cat="Xn" onclick="s6CatSelect('lt','Xn')">
+          <img src="patterns/Xn.jpg" alt="帐">帐篷弧 Xn
+        </button>
+      </div>
+      <!-- W subtype picker for left thumb -->
+      <div class="s6-whorl-sub" id="s6-lt-wsub">
+        <div class="s6-whorl-card" data-type="Ws" onclick="s6WSelect('lt','Ws')">
+          <img src="patterns/Ws.jpg" class="zoomable" onclick="event.stopPropagation();showZoom('patterns/Ws.jpg','螺旋斗（Ws）')">
+          <div class="wn">螺旋斗</div>
+        </div>
+        <div class="s6-whorl-card" data-type="Wt" onclick="s6WSelect('lt','Wt')">
+          <img src="patterns/Wt.jpg" class="zoomable" onclick="event.stopPropagation();showZoom('patterns/Wt.jpg','靶心斗（Wt）')">
+          <div class="wn">靶心斗</div>
+        </div>
+        <div class="s6-whorl-card" data-type="Wc" onclick="s6WSelect('lt','Wc')">
+          <img src="patterns/Wc.jpg" class="zoomable" onclick="event.stopPropagation();showZoom('patterns/Wc.jpg','双斗上下（Wc）')">
+          <div class="wn">双斗上下</div>
+        </div>
+        <div class="s6-whorl-card" data-type="Wd" onclick="s6WSelect('lt','Wd')">
+          <img src="patterns/Wd.jpg" class="zoomable" onclick="event.stopPropagation();showZoom('patterns/Wd.jpg','双斗左右（Wd）')">
+          <div class="wn">双斗左右</div>
+        </div>
+        <div class="s6-whorl-card" data-type="Wpe" onclick="s6WSelect('lt','Wpe')">
+          <img src="patterns/Wpe.jpg" class="zoomable" onclick="event.stopPropagation();showZoom('patterns/Wpe.jpg','孔雀眼（Wpe）')">
+          <div class="wn">孔雀眼</div>
+        </div>
+        <div class="s6-whorl-card" data-type="We" onclick="s6WSelect('lt','We')">
+          <img src="patterns/We.jpg" class="zoomable" onclick="event.stopPropagation();showZoom('patterns/We.jpg','伸长斗（We）')">
+          <div class="wn">伸长斗</div>
+        </div>
+        <div class="s6-whorl-card" data-type="Wsp" onclick="s6WSelect('lt','Wsp')">
+          <img src="patterns/Wsp.jpg" class="zoomable" onclick="event.stopPropagation();showZoom('patterns/Wsp.jpg','侧向斗（Wsp）')">
+          <div class="wn">侧向斗</div>
+        </div>
+        <div class="s6-whorl-card" data-type="Wsp-r" onclick="s6WSelect('lt','Wsp-r')">
+          <img src="patterns/Wsp.jpg" class="zoomable" onclick="event.stopPropagation();showZoom('patterns/Wsp.jpg','反侧向斗（Wsp-r）')">
+          <div class="wn">反侧向斗</div>
+        </div>
+      </div>
+    </div>
+
+    <button class="btn-primary" id="s6-btn" onclick="s6Next()" disabled>确认，看其他手指的斗</button>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       STEP 7 — 其他8个手指的斗形纹
+  ══════════════════════════════════════ -->
+  <div class="step-screen" id="screen-s7">
+    <button class="btn-back" onclick="s7Back()">← 返回</button>
+    <div class="step-label">第 7 步</div>
+    <div class="step-title">其他 8 个手指：哪些是斗？</div>
+    <div class="step-sub">两个大拇指已确认。现在看剩余 8 个手指，哪些是斗形纹（W）？灰色手指已在前面选过其他纹型。</div>
+
+    <div class="hint-tags">
+      <span class="hint-tag amber">螺旋、漩涡 = 斗</span>
+      <span class="hint-tag amber">同心圆 = 斗</span>
+      <span class="hint-tag amber">两个中心点 = 斗</span>
+    </div>
+
+    <p style="font-size:11px;color:var(--ink-40);margin-bottom:6px;">点击图片放大对照：</p>
+    <div style="display:flex;gap:6px;margin-bottom:14px;overflow-x:auto;padding-bottom:4px;">
+      <img src="patterns/Ws.jpg"  class="zoomable" onclick="showZoom('patterns/Ws.jpg','螺旋斗（Ws）')"   style="width:48px;height:48px;border-radius:6px;background:white;flex-shrink:0;border:1px solid var(--ink-10);">
+      <img src="patterns/Wt.jpg"  class="zoomable" onclick="showZoom('patterns/Wt.jpg','靶心斗（Wt）')"   style="width:48px;height:48px;border-radius:6px;background:white;flex-shrink:0;border:1px solid var(--ink-10);">
+      <img src="patterns/Wc.jpg"  class="zoomable" onclick="showZoom('patterns/Wc.jpg','双斗上下（Wc）')" style="width:48px;height:48px;border-radius:6px;background:white;flex-shrink:0;border:1px solid var(--ink-10);">
+      <img src="patterns/Wd.jpg"  class="zoomable" onclick="showZoom('patterns/Wd.jpg','双斗左右（Wd）')" style="width:48px;height:48px;border-radius:6px;background:white;flex-shrink:0;border:1px solid var(--ink-10);">
+      <img src="patterns/Wpe.jpg" class="zoomable" onclick="showZoom('patterns/Wpe.jpg','孔雀眼（Wpe）')"  style="width:48px;height:48px;border-radius:6px;background:white;flex-shrink:0;border:1px solid var(--ink-10);">
+      <img src="patterns/Wsp.jpg" class="zoomable" onclick="showZoom('patterns/Wsp.jpg','侧向斗（Wsp）')"  style="width:48px;height:48px;border-radius:6px;background:white;flex-shrink:0;border:1px solid var(--ink-10);">
+      <img src="patterns/We.jpg"  class="zoomable" onclick="showZoom('patterns/We.jpg','伸长斗（We）')"   style="width:48px;height:48px;border-radius:6px;background:white;flex-shrink:0;border:1px solid var(--ink-10);">
+    </div>
+
+    <div class="finger-diagram-wrap">
+      <div class="hand-row-label">右手（食指 → 小指，大拇已在上一步确认）</div>
+      <div class="finger-row" id="s7-right">
+        <button class="finger-btn" data-fi="1" onclick="s7Toggle(1)"><span class="fi">☝️</span>食指</button>
+        <button class="finger-btn" data-fi="2" onclick="s7Toggle(2)"><span class="fi">🖕</span>中指</button>
+        <button class="finger-btn" data-fi="3" onclick="s7Toggle(3)"><span class="fi">💍</span>无名</button>
+        <button class="finger-btn" data-fi="4" onclick="s7Toggle(4)"><span class="fi">🤙</span>小指</button>
+      </div>
+      <div class="hand-row-label">左手（食指 → 小指，大拇已在上一步确认）</div>
+      <div class="finger-row" id="s7-left">
+        <button class="finger-btn" data-fi="6" onclick="s7Toggle(6)"><span class="fi">☝️</span>食指</button>
+        <button class="finger-btn" data-fi="7" onclick="s7Toggle(7)"><span class="fi">🖕</span>中指</button>
+        <button class="finger-btn" data-fi="8" onclick="s7Toggle(8)"><span class="fi">💍</span>无名</button>
+        <button class="finger-btn" data-fi="9" onclick="s7Toggle(9)"><span class="fi">🤙</span>小指</button>
+      </div>
+    </div>
+    <button class="btn-primary" onclick="s7Next()">查看我的天赋报告</button>
+    <button class="btn-secondary" onclick="s7None()">其他手指都不是斗，直接看结果</button>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       RESULT SCREEN
+  ══════════════════════════════════════ -->
+  <div class="step-screen" id="screen-result">
+    <div class="result-reveal">
+      <div class="result-label">AI 皮纹天赋分析</div>
+      <div class="result-type" id="resultType">认知型 W</div>
+      <div class="result-tagline" id="resultTagline">主见权威 · 好奇心强 · 探索型</div>
+    </div>
+
+    <div id="reportContent"></div>
+
+    <!-- Lead magnet -->
+    <div class="lead-box">
+      <h3>了解如何激活这份天赋</h3>
+      <p>皮纹只是起点——真正的成长需要匹配天赋的教育策略。添加顾问，获取专属成长方案：如何选择兴趣班、如何设计学习环境、如何与孩子沟通才最有效。</p>
+      <div class="qr-wrap">
+        <img src="images/客服二维码.jpg" alt="客服二维码">
+      </div>
+      <p class="qr-cta">扫码添加顾问 · 免费咨询</p>
+      <a class="kfid-btn" href="https://work.weixin.qq.com/kfid/kfc6ce446e6e057c683" target="_blank">立即咨询</a>
+    </div>
+
+    <div class="result-actions">
+      <button class="btn-share" onclick="generatePoster()">生成分享海报</button>
+      <button class="btn-retry" onclick="resetWizard()">重新测试</button>
+    </div>
+  </div>
+
+</div><!-- /.container -->
+
+<!-- ZOOM MODAL -->
+<div class="zoom-modal" id="zoomModal" onclick="if(event.target===this)closeZoom()">
+  <img id="zoomImg" src="" alt="">
+  <div class="zoom-modal-name" id="zoomName"></div>
+  <button class="zoom-modal-close" onclick="closeZoom()">关闭</button>
+</div>
+
+<!-- POSTER TEMPLATE (off-screen) -->
+<div id="posterTemplate">
+  <div class="poster-bg">
+    <div class="poster-logo">AI PIWEN · 皮纹天赋</div>
+    <div class="poster-type" id="pType"></div>
+    <div class="poster-tagline" id="pTagline"></div>
+    <div class="poster-mid">
+      <div class="poster-mid-label">核心天赋</div>
+      <div class="poster-tags" id="pTags"></div>
+    </div>
+    <div class="poster-footer">
+      <div class="poster-qr-wrap">
+        <img id="posterQR" src="" alt="QR">
+      </div>
+      <div>
+        <div class="poster-cta">测测你孩子的天赋类型</div>
+        <div class="poster-url">v1.aipiwen.cn</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- POSTER MODAL -->
+<div class="modal" id="posterModal">
+  <div class="modal-card">
+    <div class="modal-title">分享海报 <button class="modal-close" onclick="closePoster()">×</button></div>
+    <p style="font-size:12px;color:var(--ink-40);text-align:center;margin-bottom:14px;">长按图片保存，分享给朋友</p>
+    <div id="posterPreview"></div>
+  </div>
 </div>
 
 <script>
-// ── CONSTANTS ──────────────────────────────────────────────────────────
-const FINGERS_ALL = ['LT','LI','LM','LR','LL','RT','RI','RM','RR','RL'];
-const FINGERS_8   = ['LI','LM','LR','LL','RI','RM','RR','RL'];
-const F_SHORT = {LT:'拇',LI:'食',LM:'中',LR:'无名',LL:'小',RT:'拇',RI:'食',RM:'中',RR:'无名',RL:'小'};
-const F_FULL  = {
-  LT:'左拇',LI:'左食',LM:'左中',LR:'左无名',LL:'左小',
-  RT:'右拇',RI:'右食',RM:'右中',RR:'右无名',RL:'右小'
-};
-const TYPE_LABEL = {rl:'反箕 Rl',x:'简单弧 X',xn:'帐篷弧 Xn',lu:'大正箕 Lu',dou:'斗形纹',lr:'正箕 Lr'};
-const DOU_SUBTYPES = ['正旋斗','反旋斗','双箕斗','囊形斗','杂形斗','螺旋斗','开放斗','偶发斗'];
-const THUMB_TYPES  = [
-  {id:'rl', label:'反箕'},
-  {id:'lu', label:'大正箕'},
-  {id:'x',  label:'简单弧'},
-  {id:'xn', label:'帐篷弧'},
-  {id:'dou',label:'斗形纹'},
-];
-const TOTAL_STEPS = 7;
+/* ═══════════════════════════════════════════════
+   CONSTANTS
+═══════════════════════════════════════════════ */
+const IS_W = v => v && ['Ws','Wt','We','Wc','Wd','Wpe','Wsp','Wsp-r'].includes(v);
 
-// ── STATE ──────────────────────────────────────────────────────────────
-const S = {
-  step:       1,
-  rlFingers:  new Set(),   // S1 反箕
-  xFingers:   new Set(),   // S3 简单弧
-  xnFingers:  new Set(),   // S4 帐篷弧
-  luFingers:  new Set(),   // S5 大正箕
-  douFingers: new Set(),   // S7 斗形纹（非拇指）
-  thumbL: { type:null, douSubtype:null },
-  thumbR: { type:null, douSubtype:null },
+const FINGER_NAMES = ['右大拇','右食指','右中指','右无名','右小指',
+                      '左大拇','左食指','左中指','左无名','左小指'];
+
+const TYPE_NAMES = { X:'简单弧', Xn:'帐篷弧', Lu:'大正箕',
+  Ws:'螺旋斗', Wt:'靶心斗', Wc:'双斗上下', Wd:'双斗左右',
+  Wpe:'孔雀眼', We:'伸长斗', Wsp:'侧向斗', 'Wsp-r':'反侧向斗' };
+
+/* ═══════════════════════════════════════════════
+   STATE
+═══════════════════════════════════════════════ */
+const state = {
+  data: {
+    rlFingers:    new Set(),  // step 1: Rl finger indices
+    xFingers:     new Set(),  // step 3: X (simple arc) fingers  — synced with step 6 thumb override
+    xnFingers:    new Set(),  // step 4: Xn (tent arc) fingers   — synced with step 6 thumb override
+    luFingers:    new Set(),  // step 5: Lu fingers               — synced with step 6 thumb override
+    rtThumb:      null,       // step 6: specific type for right thumb (IS_W / 'Lu' / 'X' / 'Xn')
+    ltThumb:      null,       // step 6: specific type for left thumb
+    wOtherFingers: new Set(), // step 7: non-thumb W fingers (indices 1-4, 6-9)
+  }
 };
 
-// ── THUMB HELPERS ──────────────────────────────────────────────────────
-function setThumbType(side, typeId) {
-  const fid = side==='L'?'LT':'RT';
-  [S.rlFingers,S.xFingers,S.xnFingers,S.luFingers,S.douFingers].forEach(s=>s.delete(fid));
-  if(side==='L'){S.thumbL.type=typeId; if(typeId!=='dou')S.thumbL.douSubtype=null;}
-  else          {S.thumbR.type=typeId; if(typeId!=='dou')S.thumbR.douSubtype=null;}
-  // Sync back
-  if(typeId==='rl')       S.rlFingers.add(fid);
-  else if(typeId==='x')   S.xFingers.add(fid);
-  else if(typeId==='xn')  S.xnFingers.add(fid);
-  else if(typeId==='lu')  S.luFingers.add(fid);
-  else if(typeId==='dou') S.douFingers.add(fid);
-}
-function setThumbSubtype(side, sub) {
-  if(side==='L') S.thumbL.douSubtype=sub;
-  else           S.thumbR.douSubtype=sub;
+/* ═══════════════════════════════════════════════
+   NAVIGATION
+═══════════════════════════════════════════════ */
+const STEP_MAP = {
+  's1':    {step:1, name:'反箕纹'},
+  's2':    {step:2, name:'斗形纹识别'},
+  's3':    {step:3, name:'简单弧'},
+  's4':    {step:4, name:'帐篷弧'},
+  's5':    {step:5, name:'大正箕'},
+  's6':    {step:6, name:'大拇指类型'},
+  's7':    {step:7, name:'其他斗形纹'},
+  'result':{step:7, name:'分析结果'},
+};
+
+function showScreen(id) {
+  document.querySelectorAll('.step-screen').forEach(el => el.classList.remove('active'));
+  document.getElementById('screen-' + id).classList.add('active');
+  const info = STEP_MAP[id] || {};
+  document.getElementById('stepLabel').textContent = `第 ${info.step || '-'} 步 · 共 7 步`;
+  document.getElementById('stepName').textContent = info.name || '';
+  for (let i = 1; i <= 7; i++) {
+    const dot = document.getElementById('pd' + i);
+    if (!dot) continue;
+    if (i < info.step) dot.className = 'progress-dot done';
+    else if (i === info.step) dot.className = 'progress-dot active';
+    else dot.className = 'progress-dot';
+  }
+  window.scrollTo(0, 0);
 }
 
-// ── FINAL TYPE ─────────────────────────────────────────────────────────
-function getFinalType(fid) {
-  if(fid==='LT') return S.thumbL.type||'lr';
-  if(fid==='RT') return S.thumbR.type||'lr';
-  if(S.rlFingers.has(fid))  return 'rl';
-  if(S.xFingers.has(fid))   return 'x';
-  if(S.xnFingers.has(fid))  return 'xn';
-  if(S.luFingers.has(fid))  return 'lu';
-  if(S.douFingers.has(fid)) return 'dou';
-  return 'lr';
+function goBack(to) { showScreen(to); }
+
+/* ═══════════════════════════════════════════════
+   STEP 1 — Rl check
+═══════════════════════════════════════════════ */
+function s1Answer(hasRl) {
+  if (!hasRl) {
+    state.data.rlFingers.clear();
+    showScreen('s2');
+  } else {
+    document.getElementById('s1-picker').style.display = 'block';
+  }
+}
+function s1ShowPicker() { s1Answer(true); }
+
+function s1Toggle(idx) {
+  const btn = document.querySelector(`#screen-s1 [data-fi="${idx}"]`);
+  if (state.data.rlFingers.has(idx)) {
+    state.data.rlFingers.delete(idx);
+    btn.classList.remove('selected');
+  } else {
+    state.data.rlFingers.add(idx);
+    btn.classList.add('selected');
+  }
+  document.getElementById('s1-confirm').disabled = state.data.rlFingers.size === 0;
 }
 
-// ── FINGER GRID BUILDER ────────────────────────────────────────────────
-function buildFingerGrid(fingers, activeSet, disabledSet, toggleFn) {
-  const leftF  = fingers.filter(f=>f.startsWith('L'));
-  const rightF = fingers.filter(f=>f.startsWith('R'));
+function s1Confirm() {
+  if (state.data.rlFingers.size > 0) showResult();
+}
 
-  function makeHand(list, label) {
-    const section = document.createElement('div');
-    section.className = 'hand-section';
-    section.innerHTML = `<div class="hand-label">${label}</div>`;
-    const row = document.createElement('div');
-    row.className = 'finger-row';
-    list.forEach(f => {
-      const btn = document.createElement('button');
-      btn.className = 'finger-btn';
-      if(activeSet.has(f))   btn.classList.add('selected');
-      if(disabledSet.has(f)) btn.classList.add('disabled');
-      btn.innerHTML = `<div class="f-dot"></div>${F_SHORT[f]}`;
-      if(!disabledSet.has(f)) btn.onclick = () => toggleFn(f);
-      row.appendChild(btn);
-    });
-    section.appendChild(row);
-    return section;
+/* ═══════════════════════════════════════════════
+   STEP 3 — X (简单弧)
+═══════════════════════════════════════════════ */
+function s3Init() {
+  document.querySelectorAll('#screen-s3 .finger-btn').forEach(btn => {
+    const fi = parseInt(btn.dataset.fi);
+    const blocked = state.data.rlFingers.has(fi);
+    btn.classList.toggle('disabled', blocked);
+    if (blocked) btn.classList.remove('selected');
+    else btn.classList.toggle('selected', state.data.xFingers.has(fi));
+  });
+}
+
+function s3Toggle(idx) {
+  const btn = document.querySelector(`#screen-s3 [data-fi="${idx}"]`);
+  if (!btn || btn.classList.contains('disabled')) return;
+  if (state.data.xFingers.has(idx)) {
+    state.data.xFingers.delete(idx);
+    btn.classList.remove('selected');
+  } else {
+    state.data.xFingers.add(idx);
+    btn.classList.add('selected');
+  }
+}
+
+function s3Next() {
+  s4Init();
+  showScreen('s4');
+}
+function s3None() {
+  state.data.xFingers.clear();
+  s4Init();
+  showScreen('s4');
+}
+
+/* ═══════════════════════════════════════════════
+   STEP 4 — Xn (帐篷弧)
+═══════════════════════════════════════════════ */
+function s4Init() {
+  // Fingers already selected as Rl or X are blocked
+  document.querySelectorAll('#screen-s4 .finger-btn').forEach(btn => {
+    const fi = parseInt(btn.dataset.fi);
+    const blocked = state.data.rlFingers.has(fi) || state.data.xFingers.has(fi);
+    btn.classList.toggle('disabled', blocked);
+    if (blocked) btn.classList.remove('selected');
+    else btn.classList.toggle('selected', state.data.xnFingers.has(fi));
+  });
+}
+
+function s4Toggle(idx) {
+  const btn = document.querySelector(`#screen-s4 [data-fi="${idx}"]`);
+  if (!btn || btn.classList.contains('disabled')) return;
+  if (state.data.xnFingers.has(idx)) {
+    state.data.xnFingers.delete(idx);
+    btn.classList.remove('selected');
+  } else {
+    state.data.xnFingers.add(idx);
+    btn.classList.add('selected');
+  }
+}
+
+function s4Back() {
+  s3Init();
+  showScreen('s3');
+}
+function s4Next() {
+  s5Init();
+  showScreen('s5');
+}
+function s4None() {
+  state.data.xnFingers.clear();
+  s5Init();
+  showScreen('s5');
+}
+
+/* ═══════════════════════════════════════════════
+   STEP 5 — Lu (大正箕)
+═══════════════════════════════════════════════ */
+function s5Init() {
+  // Blocked: Rl + X + Xn
+  document.querySelectorAll('#screen-s5 .finger-btn').forEach(btn => {
+    const fi = parseInt(btn.dataset.fi);
+    const blocked = state.data.rlFingers.has(fi) || state.data.xFingers.has(fi) || state.data.xnFingers.has(fi);
+    btn.classList.toggle('disabled', blocked);
+    if (blocked) btn.classList.remove('selected');
+    else btn.classList.toggle('selected', state.data.luFingers.has(fi));
+  });
+}
+
+function s5Toggle(idx) {
+  const btn = document.querySelector(`#screen-s5 [data-fi="${idx}"]`);
+  if (!btn || btn.classList.contains('disabled')) return;
+  if (state.data.luFingers.has(idx)) {
+    state.data.luFingers.delete(idx);
+    btn.classList.remove('selected');
+  } else {
+    state.data.luFingers.add(idx);
+    btn.classList.add('selected');
+  }
+}
+
+function s5Back() {
+  s4Init();
+  showScreen('s4');
+}
+function s5Next() {
+  s6Init();
+  showScreen('s6');
+}
+function s5None() {
+  state.data.luFingers.clear();
+  s6Init();
+  showScreen('s6');
+}
+
+/* ═══════════════════════════════════════════════
+   STEP 6 — Thumb types
+═══════════════════════════════════════════════ */
+function s6Init() {
+  // Auto-populate rtThumb/ltThumb from previous steps if not yet set
+  if (!state.data.rtThumb) {
+    if (state.data.xFingers.has(0))  state.data.rtThumb = 'X';
+    else if (state.data.xnFingers.has(0)) state.data.rtThumb = 'Xn';
+    else if (state.data.luFingers.has(0)) state.data.rtThumb = 'Lu';
+  }
+  if (!state.data.ltThumb) {
+    if (state.data.xFingers.has(5))  state.data.ltThumb = 'X';
+    else if (state.data.xnFingers.has(5)) state.data.ltThumb = 'Xn';
+    else if (state.data.luFingers.has(5)) state.data.ltThumb = 'Lu';
   }
 
-  const wrap = document.createElement('div');
-  if(leftF.length)  wrap.appendChild(makeHand(leftF,  '左手'));
-  if(rightF.length) wrap.appendChild(makeHand(rightF, '右手'));
-  return wrap;
+  s6RenderThumb('rt', state.data.rtThumb, 0);
+  s6RenderThumb('lt', state.data.ltThumb, 5);
+  s6UpdateBtn();
 }
 
-// ── STEP RENDERS ───────────────────────────────────────────────────────
+function s6RenderThumb(hand, type, fi) {
+  // Reset all UI for this hand
+  document.querySelectorAll(`#screen-s6 [data-hand="${hand}"][data-cat]`).forEach(b => b.classList.remove('selected'));
+  document.getElementById(`s6-${hand}-wsub`).classList.remove('show');
+  document.querySelectorAll(`#s6-${hand}-wsub .s6-whorl-card`).forEach(c => c.classList.remove('selected'));
 
-function renderS1() {
-  const el = document.createElement('div');
-  el.className = 'step-wrap';
-  el.innerHTML = `
-    <div class="step-eyebrow">S1 · 反箕识别</div>
-    <h2 class="step-title">哪些手指是<em>反箕</em>？</h2>
-    <p class="step-desc">反箕（Rl）开口朝向拇指侧，纹路中心向桡骨方向倾斜。点击选择有反箕的手指，没有则直接下一步。</p>`;
-  el.appendChild(buildFingerGrid(
-    FINGERS_ALL, S.rlFingers, new Set(),
-    fid => { S.rlFingers.has(fid)?S.rlFingers.delete(fid):S.rlFingers.add(fid); render(); }
-  ));
-  document.getElementById('main').replaceChildren(el);
+  // Show pre-note if came from earlier step classification
+  const preNote = document.getElementById(`s6-${hand}-pre`);
+  const preTypes = { X:'简单弧', Xn:'帐篷弧', Lu:'大正箕' };
+  const origInPrev = state.data.xFingers.has(fi) || state.data.xnFingers.has(fi) || state.data.luFingers.has(fi);
+  if (origInPrev && type && !IS_W(type) && preTypes[type]) {
+    preNote.textContent = `已在上面步骤选过：${preTypes[type]}（可修改）`;
+    preNote.style.display = 'block';
+  } else {
+    preNote.style.display = 'none';
+  }
+
+  if (!type) return;
+  const cat = IS_W(type) ? 'W' : type;
+  const catBtn = document.querySelector(`#screen-s6 [data-hand="${hand}"][data-cat="${cat}"]`);
+  if (catBtn) catBtn.classList.add('selected');
+
+  if (IS_W(type)) {
+    const sub = document.getElementById(`s6-${hand}-wsub`);
+    sub.classList.add('show');
+    const card = sub.querySelector(`[data-type="${type}"]`);
+    if (card) card.classList.add('selected');
+  }
 }
 
-function renderS2() {
-  const el = document.createElement('div');
-  el.className = 'step-wrap';
-  el.innerHTML = `
-    <div class="step-eyebrow">S2 · 参考页（只看不选）</div>
-    <h2 class="step-title"><em>斗形纹</em>识别指南</h2>
-    <p class="step-desc">下一步将识别弧形纹。在此之前，请先了解斗形纹的特征，以便后续区分。</p>
-    <div class="ref-hero"><div class="ref-hero-icon">🌀</div></div>
-    <div class="ref-card">
-      <div class="ref-card-title">斗形纹 <span class="ref-badge">Whorl</span></div>
-      <p>斗形纹是最容易辨认的指纹类型，纹路呈封闭环形，围绕一个中心点旋转。</p>
-      <ul class="ref-list">
-        <li>有完整封闭的圆心，纹路围绕中心旋转</li>
-        <li>至少出现两个三叉点（三角区）</li>
-        <li>常见形态：螺旋形、同心圆形、双箕对称形</li>
-        <li>辨别要点：纹路"转起来了"，能看到中心旋涡</li>
-      </ul>
-    </div>
-    <div class="ref-card">
-      <div class="ref-card-title">与箕形纹的区别</div>
-      <ul class="ref-list">
-        <li>箕形纹有开口，纹路从一侧进、同侧出</li>
-        <li>斗形纹完全封闭，没有开口</li>
-        <li>弧形纹（X）最简单，没有中心点，也没有开口，整体像弓形</li>
-      </ul>
-    </div>
-    <div class="ref-note">📌 此页仅供参考，无需操作，点击「下一步」继续识别简单弧。</div>`;
-  document.getElementById('main').replaceChildren(el);
-}
+function s6CatSelect(hand, cat) {
+  const fi = hand === 'rt' ? 0 : 5;
 
-function renderS3() {
-  const el = document.createElement('div');
-  el.className = 'step-wrap';
-  el.innerHTML = `
-    <div class="step-eyebrow">S3 · 简单弧识别</div>
-    <h2 class="step-title">哪些手指是<em>简单弧</em>？</h2>
-    <p class="step-desc">简单弧（X）纹路整体呈弓形，无中心旋涡，无三叉点，是最"平"的指纹。没有则直接下一步。</p>`;
-  el.appendChild(buildFingerGrid(
-    FINGERS_ALL, S.xFingers, new Set(),
-    fid => { S.xFingers.has(fid)?S.xFingers.delete(fid):S.xFingers.add(fid); render(); }
-  ));
-  document.getElementById('main').replaceChildren(el);
-}
-
-function renderS4() {
-  // Disabled: fingers already in xFingers
-  const el = document.createElement('div');
-  el.className = 'step-wrap';
-  el.innerHTML = `
-    <div class="step-eyebrow">S4 · 帐篷弧识别</div>
-    <h2 class="step-title">哪些手指是<em>帐篷弧</em>？</h2>
-    <p class="step-desc">帐篷弧（Xn）像一顶帐篷，有一根垂直轴线，弓形较高、尖锐。已选简单弧的手指已灰掉。</p>`;
-  el.appendChild(buildFingerGrid(
-    FINGERS_ALL, S.xnFingers, S.xFingers,
-    fid => { S.xnFingers.has(fid)?S.xnFingers.delete(fid):S.xnFingers.add(fid); render(); }
-  ));
-  document.getElementById('main').replaceChildren(el);
-}
-
-function renderS5() {
-  // Disabled: Rl ∪ X ∪ Xn
-  const disabled = new Set([...S.rlFingers, ...S.xFingers, ...S.xnFingers]);
-  const el = document.createElement('div');
-  el.className = 'step-wrap';
-  el.innerHTML = `
-    <div class="step-eyebrow">S5 · 大正箕识别</div>
-    <h2 class="step-title">哪些手指是<em>大正箕</em>？</h2>
-    <p class="step-desc">大正箕（Lu）开口朝向小指侧，纹路宽松、圈数较少。反箕/简单弧/帐篷弧已排除，变灰不可选。</p>`;
-  el.appendChild(buildFingerGrid(
-    FINGERS_ALL, S.luFingers, disabled,
-    fid => { S.luFingers.has(fid)?S.luFingers.delete(fid):S.luFingers.add(fid); render(); }
-  ));
-  document.getElementById('main').replaceChildren(el);
-}
-
-function renderS6() {
-  const el = document.createElement('div');
-  el.className = 'step-wrap';
-  el.innerHTML = `
-    <div class="step-eyebrow">S6 · 两个拇指类型</div>
-    <h2 class="step-title">确认<em>大拇指</em>具体类型</h2>
-    <p class="step-desc">拇指比较特殊，在此单独确认。选择斗形纹后会展开8种子类型。</p>`;
-
-  ['L','R'].forEach(side => {
-    const fid    = side==='L'?'LT':'RT';
-    const tstate = side==='L'?S.thumbL:S.thumbR;
-    const section = document.createElement('div');
-    section.className = 'thumb-section';
-    section.innerHTML = `<div class="thumb-section-title">
-      <div class="thumb-icon">${side==='L'?'👈':'👉'}</div>
-      ${side==='L'?'左手拇指':'右手拇指'}
-    </div>`;
-
-    const typeGrid = document.createElement('div');
-    typeGrid.className = 'type-grid';
-    THUMB_TYPES.forEach(t => {
-      const btn = document.createElement('button');
-      btn.className = 'type-btn' + (tstate.type===t.id?' selected':'');
-      btn.textContent = t.label;
-      btn.onclick = () => { setThumbType(side, t.id); render(); };
-      typeGrid.appendChild(btn);
-    });
-    section.appendChild(typeGrid);
-
-    // Subtype expand for 斗
-    const subtypeWrap = document.createElement('div');
-    subtypeWrap.className = 'subtype-wrap' + (tstate.type==='dou'?' open':'');
-    subtypeWrap.innerHTML = `<div class="subtype-label">选择斗形纹子类型：</div>
-      <div class="subtype-grid">
-        ${DOU_SUBTYPES.map((sub,i)=>
-          `<button class="subtype-btn${tstate.douSubtype===sub?' selected':''}"
-            onclick="setThumbSubtype('${side}','${sub}');render()">${sub}</button>`
-        ).join('')}
-      </div>`;
-    section.appendChild(subtypeWrap);
-    el.appendChild(section);
+  // Highlight category buttons
+  document.querySelectorAll(`#screen-s6 [data-hand="${hand}"][data-cat]`).forEach(b => {
+    b.classList.toggle('selected', b.dataset.cat === cat);
   });
 
-  document.getElementById('main').replaceChildren(el);
+  const sub = document.getElementById(`s6-${hand}-wsub`);
+
+  if (cat === 'W') {
+    sub.classList.add('show');
+    // Don't set thumb type yet — wait for W subtype selection
+    // Clear type if it was non-W
+    const curType = hand === 'rt' ? state.data.rtThumb : state.data.ltThumb;
+    if (curType && !IS_W(curType)) {
+      s6SetThumbType(hand, null);
+    }
+  } else {
+    sub.classList.remove('show');
+    document.querySelectorAll(`#s6-${hand}-wsub .s6-whorl-card`).forEach(c => c.classList.remove('selected'));
+    s6SetThumbType(hand, cat);
+  }
+  s6UpdateBtn();
 }
 
-function renderS7() {
-  // Show 8 non-thumb fingers. Gray: already in Rl/X/Xn/Lu
-  const disabled = new Set([...S.rlFingers,...S.xFingers,...S.xnFingers,...S.luFingers].filter(f=>f!=='LT'&&f!=='RT'));
-  const el = document.createElement('div');
-  el.className = 'step-wrap';
-  el.innerHTML = `
-    <div class="step-eyebrow">S7 · 斗形纹识别</div>
-    <h2 class="step-title">食指至小指中，哪些是<em>斗形纹</em>？</h2>
-    <p class="step-desc">大拇指已在上一步处理。请从剩余8根手指中，选出斗形纹。已有其他分类的手指已灰掉。</p>`;
-  el.appendChild(buildFingerGrid(
-    FINGERS_8, S.douFingers, disabled,
-    fid => { S.douFingers.has(fid)?S.douFingers.delete(fid):S.douFingers.add(fid); render(); }
-  ));
-  document.getElementById('main').replaceChildren(el);
-}
-
-function renderResult() {
-  // Compute type groups
-  const groups = {rl:[],x:[],xn:[],lu:[],dou:[],lr:[]};
-  FINGERS_ALL.forEach(f => {
-    const t = getFinalType(f);
-    groups[t].push(F_FULL[f]);
+function s6WSelect(hand, wtype) {
+  s6SetThumbType(hand, wtype);
+  // Highlight the selected W card
+  const sub = document.getElementById(`s6-${hand}-wsub`);
+  sub.querySelectorAll('.s6-whorl-card').forEach(c => {
+    c.classList.toggle('selected', c.dataset.type === wtype);
   });
-  const totalDou = groups.dou.length;
-
-  const el = document.createElement('div');
-  el.className = 'result-wrap';
-  el.innerHTML = `
-    <div class="result-check">✓</div>
-    <h2 class="result-title">采集完成</h2>
-    <p class="result-sub">共识别 10 指，以下是你填写的皮纹分布</p>
-    <div class="result-section-label">皮纹分布汇总</div>
-    <div class="result-table">
-      ${Object.entries(groups).filter(([,v])=>v.length>0).map(([type,fingers])=>`
-        <div class="result-row">
-          <span class="result-type">${TYPE_LABEL[type]}</span>
-          <span class="result-fnames">${fingers.join('、')}</span>
-          <span class="result-badge">${fingers.length}</span>
-        </div>`).join('')}
-    </div>
-    <p style="font-size:13px;line-height:1.75;color:var(--ink-70);margin-top:20px;">
-      你的孩子共有 <strong style="color:var(--amber)">${totalDou} 个斗形纹</strong>，
-      加上各类箕形纹分布，顾问将为你解读十大脑区的先天优势与发展方向。
-    </p>
-    <a class="result-cta" href="https://work.weixin.qq.com/kfid/kfc6ce446e6e057c683">
-      联系顾问获取完整天赋解读 →
-    </a>
-    <p class="result-note">顾问会在收到信息后24小时内联系你</p>`;
-
-  document.getElementById('main').replaceChildren(el);
-  document.getElementById('bottom-nav').style.display = 'none';
-  document.querySelector('.progress-wrap').style.display = 'none';
-  document.getElementById('prog-label').style.display = 'none';
+  s6UpdateBtn();
 }
 
-// ── NAVIGATION ─────────────────────────────────────────────────────────
-function render() {
-  updateProgress();
-  const step = S.step;
-  if(step===1) renderS1();
-  else if(step===2) renderS2();
-  else if(step===3) renderS3();
-  else if(step===4) renderS4();
-  else if(step===5) renderS5();
-  else if(step===6) renderS6();
-  else if(step===7) renderS7();
-  else renderResult();
+function s6SetThumbType(hand, type) {
+  const fi = hand === 'rt' ? 0 : 5;
+  const prev = hand === 'rt' ? state.data.rtThumb : state.data.ltThumb;
+
+  // Remove from old set
+  if (prev === 'X')  state.data.xFingers.delete(fi);
+  else if (prev === 'Xn') state.data.xnFingers.delete(fi);
+  else if (prev === 'Lu') state.data.luFingers.delete(fi);
+
+  // Set new
+  if (hand === 'rt') state.data.rtThumb = type;
+  else state.data.ltThumb = type;
+
+  // Add to new set
+  if (type === 'X')  state.data.xFingers.add(fi);
+  else if (type === 'Xn') state.data.xnFingers.add(fi);
+  else if (type === 'Lu') state.data.luFingers.add(fi);
 }
 
-function updateProgress() {
-  for(let i=1;i<=7;i++){
-    const el=document.getElementById('ps'+i);
-    if(!el) continue;
-    el.className='ps';
-    if(i<S.step) el.classList.add('done');
-    else if(i===S.step) el.classList.add('active');
+function s6UpdateBtn() {
+  const rt = state.data.rtThumb;
+  const lt = state.data.ltThumb;
+  // Both must be set and if W, must be a specific subtype (not null)
+  document.getElementById('s6-btn').disabled = !(rt && lt);
+}
+
+function s6Back() {
+  s5Init();
+  showScreen('s5');
+}
+
+function s6Next() {
+  s7Init();
+  showScreen('s7');
+}
+
+/* ═══════════════════════════════════════════════
+   STEP 7 — Other W fingers (non-thumb: 1-4, 6-9)
+═══════════════════════════════════════════════ */
+function s7Init() {
+  const blocked = new Set([
+    ...state.data.rlFingers,
+    ...state.data.xFingers,
+    ...state.data.xnFingers,
+    ...state.data.luFingers,
+  ]);
+
+  document.querySelectorAll('#screen-s7 .finger-btn').forEach(btn => {
+    const fi = parseInt(btn.dataset.fi);
+    btn.classList.toggle('disabled', blocked.has(fi));
+    if (blocked.has(fi)) btn.classList.remove('selected');
+    else btn.classList.toggle('selected', state.data.wOtherFingers.has(fi));
+  });
+}
+
+function s7Toggle(idx) {
+  const btn = document.querySelector(`#screen-s7 [data-fi="${idx}"]`);
+  if (!btn || btn.classList.contains('disabled')) return;
+  if (state.data.wOtherFingers.has(idx)) {
+    state.data.wOtherFingers.delete(idx);
+    btn.classList.remove('selected');
+  } else {
+    state.data.wOtherFingers.add(idx);
+    btn.classList.add('selected');
   }
-  const lbl=document.getElementById('prog-label');
-  if(lbl && S.step<=7) lbl.textContent=`第 ${S.step} 步 / 共 ${TOTAL_STEPS} 步`;
+}
 
-  const backBtn=document.getElementById('btn-back');
-  const nextBtn=document.getElementById('btn-next');
-  if(backBtn) backBtn.style.display = S.step===1 ? 'none' : '';
-  if(nextBtn){
-    nextBtn.className='btn-next'+(S.step===7?' amber-btn':'');
-    nextBtn.textContent = S.step===7 ? '查看结果' : '下一步';
+function s7Back() {
+  s6Init();
+  showScreen('s6');
+}
+function s7Next() { showResult(); }
+function s7None() {
+  state.data.wOtherFingers.clear();
+  showResult();
+}
+
+/* ═══════════════════════════════════════════════
+   CLASSIFICATION
+═══════════════════════════════════════════════ */
+function classify() {
+  const d = state.data;
+
+  // Rl anywhere → 逆思型
+  if (d.rlFingers.size > 0) {
+    return { mainType: '逆思型 R', tagline: '逆向思考 · 创意非凡 · 与众不同', key: 'rl' };
+  }
+
+  const rtIsW  = IS_W(d.rtThumb);
+  const ltIsW  = IS_W(d.ltThumb);
+  const rtIsLu = d.luFingers.has(0);
+  const ltIsLu = d.luFingers.has(5);
+  const rtIsArc = d.xFingers.has(0) || d.xnFingers.has(0);
+  const ltIsArc = d.xFingers.has(5) || d.xnFingers.has(5);
+
+  // Total counts
+  const totalW   = (rtIsW ? 1 : 0) + (ltIsW ? 1 : 0) + d.wOtherFingers.size;
+  const totalLu  = d.luFingers.size;
+  const totalArc = d.xFingers.size + d.xnFingers.size;
+
+  // Both thumbs W → cognitive family
+  if (rtIsW && ltIsW) {
+    if (totalW >= 10) return { mainType: '超级认知型 W', tagline: '唯我独尊 · 领袖风范 · 王者之气', key: 'super_w' };
+    if (totalW >= 6)  return { mainType: '认知型 W',     tagline: '主见权威 · 好奇心强 · 探索型',     key: 'w' };
+    return               { mainType: '认知倾向 W',   tagline: '有主见 · 好奇心 · 探索倾向',       key: 'w_mild' };
+  }
+
+  // Both thumbs Lu → mimicry family
+  if (rtIsLu && ltIsLu) {
+    if (totalLu >= 10) return { mainType: '超级模仿型 L', tagline: '敞开接纳 · 大公无私 · 奉献型',   key: 'super_l' };
+    if (totalLu >= 6)  return { mainType: '模仿型 L',     tagline: '善于模仿 · 适应力强 · 服务型',   key: 'l' };
+    return               { mainType: '模仿倾向 L',   tagline: '适应力强 · 善于学习 · 配合型',     key: 'l_mild' };
+  }
+
+  // Both thumbs arc → open type
+  if (rtIsArc && ltIsArc)  return { mainType: '开放型 X', tagline: '海绵学习 · 踏实肯干 · 简单极致', key: 'x' };
+  if (totalArc >= 6)        return { mainType: '开放型 X', tagline: '海绵学习 · 踏实肯干 · 简单极致', key: 'x' };
+
+  // One W + one Lu → integrator
+  if ((rtIsW && ltIsLu) || (rtIsLu && ltIsW))
+    return { mainType: '整合型 WC', tagline: '灵活善变 · 价值思维 · 多面高手', key: 'wc' };
+
+  // Fallback: combo
+  return { mainType: '组合型', tagline: '多元特质 · 灵活应变 · 综合型', key: 'combo' };
+}
+
+/* ═══════════════════════════════════════════════
+   REPORT GENERATION
+═══════════════════════════════════════════════ */
+function generateReport(result) {
+  const key = result.key;
+  let talents = '', advantage = '', learning = '', career = '', advice = '';
+
+  if (key === 'rl') {
+    talents = '逆向思维 · 创意爆发 · 独特视角 · 挑战常规';
+    advantage = '<p>你的大脑天生与众不同。反箕纹赋予你<strong>反向思考</strong>的超能力——当别人都在往东走时，你自然而然会想"为什么不能往西？"这不是叛逆，这是天赋。你擅长发现别人看不到的角度，在艺术创作、程序调试、策略规划等领域往往能给出令人惊叹的方案。</p><p>你的创意不是凭空而来，而是基于对事物本质的深刻理解。给你一个规则，你第一时间想到的是"这个规则的边界在哪里？"这种能力在创新驱动的工作中极其珍贵。</p>';
+    learning = '<p><strong>项目式学习</strong>最适合你。与其按部就班听课，不如直接上手做项目——编程、设计、写作、实验都行。<strong>允许质疑</strong>：当你问"为什么要这样做"时，这是在深度学习，不是捣乱。<strong>给选择权</strong>：让自己决定学习顺序和方式，效果远超被动接受。</p>';
+    career = '<p><strong>推荐方向：</strong>产品经理、UI/UX设计师、独立开发者、创意总监、数据科学家、创业者。这些角色都需要"看到别人看不到的"能力，正是你的核心优势。</p>';
+    advice = '<p><strong>给家长的建议：</strong>请珍惜这份独特性！当孩子总是问"为什么"、总是想"反过来试试"时，不要急着纠正。<strong>保护好奇心 > 强调服从</strong>。给他/她一个可以自由探索的空间，你会发现惊喜。逆思型的孩子需要的是"对话者"而不是"管理者"。</p>';
+  } else if (key === 'super_w') {
+    talents = '领袖气质 · 主见坚定 · 目标导向 · 王者之气';
+    advantage = '<p>你是天生的领导者，10个手指都是斗形纹，意味着极强的<strong>自我意识和主见</strong>。"我知道我要什么"是你的人生信条。你不是在跟随潮流，而是在定义方向。</p><p>斗形纹代表目标感和掌控力。在团队中，你往往自然成为那个"拿主意的人"。这不是傲慢，而是与生俱来的领导力。</p>';
+    learning = '<p><strong>目标驱动式学习</strong>最有效。先明确"学这个有什么用"，动力就会爆棚。<strong>挑战性任务</strong>比重复练习更适合——需要感受到"我在征服难题"。<strong>给予决策权</strong>：让自己制定学习计划，甚至可以选择跳过已掌握的内容。</p>';
+    career = '<p><strong>推荐方向：</strong>CEO/创始人、技术负责人、项目经理、律师、外科医生、投资经理。这些角色需要强大的决断力和目标感，与天赋完美匹配。</p>';
+    advice = '<p><strong>给家长的建议：</strong>超级认知型的孩子需要"尊重"多于"管教"。给选择权和决策空间，哪怕是小事。<strong>讲道理比下命令有效</strong>——这类孩子需要理解"为什么"，而不是被告知"做什么"。</p>';
+  } else if (key === 'w' || key === 'w_mild') {
+    talents = '好奇心强 · 主见权威 · 探索欲旺 · 自我驱动';
+    advantage = '<p>斗形纹居多意味着你有<strong>强烈的好奇心和主见</strong>。"为什么"是你的口头禅，你不满足于表面答案，总想探究事物的本质。在讨论中，你不是为了赢，而是为了接近真理。</p>';
+    learning = '<p><strong>探究式学习</strong>最适合你。与其告诉你答案，不如引导你自己发现答案。<strong>深度阅读</strong>：你适合读有深度的书和文章，而不是碎片化信息。<strong>辩论和讨论</strong>：通过思想碰撞来深化理解。</p>';
+    career = '<p><strong>推荐方向：</strong>研究员、工程师、教授/学者、分析师、科学记者、战略顾问。这些角色需要深度思考和持续探索，与天赋完美匹配。</p>';
+    advice = '<p><strong>给家长的建议：</strong>认知型的孩子需要<strong>被认真对待</strong>。当他/她问"为什么"时，不要敷衍。尊重他/她的观点，即使与你不同。辩论是好事，说明孩子在思考。</p>';
+  } else if (key === 'super_l') {
+    talents = '共情能力强 · 大公无私 · 奉献精神 · 团队核心';
+    advantage = '<p>10个手指都是箕形纹，意味着你有<strong>天然的共情能力和开放心态</strong>。你能敏锐感知他人的情绪和需求，像海绵一样吸收环境和榜样的影响。你是天生的团队润滑剂。</p>';
+    learning = '<p><strong>榜样学习法</strong>最适合你。找到一个优秀的榜样（老师、学长、偶像），观察并模仿他/她的方法和态度。<strong>环境很重要</strong>：在积极向上的群体中，你会自然地吸收好的习惯。</p>';
+    career = '<p><strong>推荐方向：</strong>教师、心理咨询师、人力资源、客户成功经理、护士、社工。这些角色需要强大的共情能力和服务意识，正是你的核心优势。</p>';
+    advice = '<p><strong>给家长的建议：</strong>模仿型的孩子是"环境的产物"。<strong>身教 > 言传</strong>——你想让他/她成为什么样的人，自己先做到。创造温暖、稳定的家庭氛围，给孩子明确的正面榜样。</p>';
+  } else if (key === 'l' || key === 'l_mild') {
+    talents = '善于模仿 · 适应力强 · 团队配合 · 观察入微';
+    advantage = '<p>正箕纹居多意味着你有<strong>出色的模仿能力和团队适应性</strong>。你能快速学习和复制优秀的方法，也能敏锐感知团队的节奏和氛围。</p><p>模仿型的你不是"没有创造力"——你的创造力体现在"改进"上：吸收别人的优点后，加入自己的优化，做出更好的版本。</p>';
+    learning = '<p><strong>示范+练习</strong>最适合你。先看完整的示范（视频、演示），然后自己跟着做。<strong>找好榜样</strong>：身边有一个优秀的人参考，你的进步速度会惊人。</p>';
+    career = '<p><strong>推荐方向：</strong>运营经理、客户经理、培训师、行政主管、医疗技师、客服主管。这些角色需要快速学习能力、执行力和服务意识，与天赋完美匹配。</p>';
+    advice = '<p><strong>给家长的建议：</strong>模仿型的孩子高度依赖环境。<strong>近朱者赤</strong>——确保他/她身边的人是积极的榜样。表扬具体的行为，而不是笼统的夸奖。给孩子明确的流程和步骤，他/她会照做得很好。</p>';
+  } else if (key === 'x') {
+    talents = '踏实肯干 · 海绵学习 · 简单纯粹 · 执行力强';
+    advantage = '<p>弧形纹为主意味着你<strong>踏实、专注、不复杂</strong>。你不玩心眼，不绕弯子，说一是一，二是二。在这个充满不确定性的世界里，你的"稳"是最稀缺的品质。</p><p>开放型的你像一块干净的海绵——给你什么你就吸收什么。早期教育和环境对你的影响特别深。</p>';
+    learning = '<p><strong>结构化学习</strong>最适合你。清晰的步骤、明确的指令、可量化的目标——这些让你最有安全感。<strong>重复练习</strong>对你很有效，因为你能通过反复来巩固掌握。</p>';
+    career = '<p><strong>推荐方向：</strong>会计师、质检工程师、运营专员、图书馆员、行政主管、技术文档工程师。这些角色需要细致、耐心和执行力，与天赋完美匹配。</p>';
+    advice = '<p><strong>给家长的建议：</strong>开放型的孩子需要<strong>稳定的环境</strong>和<strong>明确的规则</strong>。不要突然改变计划或规则。早期建立良好的生活和学习习惯至关重要，因为这些习惯会伴随终身。</p>';
+  } else if (key === 'wc') {
+    talents = '灵活善变 · 资源整合 · 多面手 · 适应力MAX';
+    advantage = '<p>一斗一箕的组合赋予你<strong>极强的灵活性和适应力</strong>。你能在不同场景中切换模式，像变色龙一样融入各种环境。你可以同时理解不同立场的人，在不同领域都有涉猎。</p>';
+    learning = '<p><strong>多样化输入</strong>最适合你。不要局限于一种学习方式——看书、看视频、动手做、讨论、教学他人，轮着来。<strong>跨学科学习</strong>：把不同领域的知识连接起来，你会产生独特的洞见。</p>';
+    career = '<p><strong>推荐方向：</strong>产品经理、咨询顾问、自媒体创作者、活动策划、创业联合创始人。这些角色需要整合多方资源、应对多变场景，正是你的舞台。</p>';
+    advice = '<p><strong>给家长的建议：</strong>整合型的孩子可能看起来"三分钟热度"——这不一定是坏事，他/她是在探索自己的可能性。<strong>支持探索但引导深入</strong>：允许尝试多种兴趣，但当找到真正喜欢的时，鼓励坚持下去。</p>';
+  } else {
+    talents = '多元特质 · 综合发展 · 灵活应变 · 平衡发展';
+    advantage = '<p>你的指纹纹型分布非常均衡，这意味着你拥有<strong>多元化的天赋组合</strong>。你不是单一类型的典型代表，而是多种特质的融合体，在不同场合展现不同优势。</p>';
+    learning = '<p><strong>混合式学习</strong>最适合你。根据不同的内容选择不同的学习方法——理论性的用阅读和思考，实操性的用动手和练习。关注大拇指纹型作为核心性格方向。</p>';
+    career = '<p><strong>推荐方向：</strong>项目经理、中小企业经营者、自由职业者等需要综合能力的角色。建议结合大拇指和食指纹型做更精细的职业定位。</p>';
+    advice = '<p><strong>给家长的建议：</strong>组合型的孩子需要<strong>全面的培养</strong>。不要只关注某一方面的发展，而是提供多样化的体验和机会。观察孩子在哪些方面表现出最大的热情和天赋，然后重点支持那些方向。</p>';
+  }
+
+  return `
+<div class="report-section"><h3>核心天赋</h3><div class="advantage-tags">${talents.split('·').map(t=>`<span class="tag tag-primary">${t.trim()}</span>`).join('')}</div></div>
+<div class="report-section"><h3>性格优势</h3>${advantage}</div>
+<div class="report-section"><h3>学习风格</h3>${learning}</div>
+<div class="report-section"><h3>发展方向</h3>${career}</div>
+<div class="report-section"><h3>给家长的建议</h3>${advice}</div>
+<div class="report-section" style="border-bottom:none;"><p style="font-size:11px;color:var(--ink-20);text-align:center;">— 本报告由 AI 皮纹天赋速测生成 —<br>皮纹学仅供参考，不作为正式评估依据<br>${new Date().toLocaleString('zh-CN')}</p></div>
+`;
+}
+
+/* ═══════════════════════════════════════════════
+   SHOW RESULT
+═══════════════════════════════════════════════ */
+function showResult() {
+  const result = classify();
+  document.getElementById('resultType').textContent = result.mainType;
+  document.getElementById('resultTagline').textContent = result.tagline;
+  document.getElementById('reportContent').innerHTML = generateReport(result);
+  window._currentResult = result;
+  showScreen('result');
+  for (let i = 1; i <= 7; i++) {
+    const dot = document.getElementById('pd' + i);
+    if (dot) dot.className = 'progress-dot done';
   }
 }
 
-function nextStep() {
-  if(S.step<7){ S.step++; render(); window.scrollTo(0,0); }
-  else { S.step=8; renderResult(); window.scrollTo(0,0); }
-}
-function prevStep() {
-  if(S.step>1){ S.step--; render(); window.scrollTo(0,0); }
-}
-function goBack() {
-  if(S.step>1){ prevStep(); } else { window.location.href='homepage.html'; }
+/* ═══════════════════════════════════════════════
+   POSTER GENERATION
+═══════════════════════════════════════════════ */
+async function generatePoster() {
+  const result = window._currentResult || classify();
+  document.getElementById('pType').textContent = result.mainType;
+  document.getElementById('pTagline').textContent = result.tagline;
+
+  const tags = document.querySelectorAll('.advantage-tags .tag');
+  document.getElementById('pTags').innerHTML = Array.from(tags).map(t => `<span class="poster-tag">${t.textContent}</span>`).join('');
+
+  let qrDataUrl = '';
+  await new Promise(resolve => {
+    const tmp = document.createElement('div');
+    tmp.style.cssText = 'position:fixed;left:-9999px;top:-9999px;width:80px;height:80px';
+    document.body.appendChild(tmp);
+    new QRCode(tmp, { text:'https://v1.aipiwen.cn', width:80, height:80, colorDark:'#1A1714', colorLight:'#FFFFFF', correctLevel: QRCode.CorrectLevel.L });
+    setTimeout(() => {
+      const canvas = tmp.querySelector('canvas');
+      if (canvas) { const c = document.createElement('canvas'); c.width=80; c.height=80; c.getContext('2d').drawImage(canvas,0,0); qrDataUrl=c.toDataURL(); }
+      document.body.removeChild(tmp); resolve();
+    }, 100);
+  });
+  document.getElementById('posterQR').src = qrDataUrl;
+
+  document.getElementById('posterModal').classList.add('show');
+  const preview = document.getElementById('posterPreview');
+  preview.innerHTML = '<div style="padding:40px;text-align:center;color:var(--ink-40)">正在生成海报…</div>';
+
+  try {
+    const tpl = document.getElementById('posterTemplate');
+    const canvas = await html2canvas(tpl.querySelector('.poster-bg'), {
+      width:375, scale:2, backgroundColor:'#FDFCF8',
+      useCORS:true, allowTaint:true, logging:false
+    });
+    preview.innerHTML = `<img src="${canvas.toDataURL('image/png')}" style="max-width:100%;border-radius:12px;box-shadow:0 4px 16px rgba(0,0,0,.12);" alt="分享海报">`;
+  } catch(e) {
+    preview.innerHTML = '<div style="padding:40px;text-align:center;color:#e74c3c">海报生成失败，请重试</div>';
+  }
 }
 
-// ── INIT ───────────────────────────────────────────────────────────────
-document.addEventListener('DOMContentLoaded', render);
+function closePoster() { document.getElementById('posterModal').classList.remove('show'); }
+
+/* ═══════════════════════════════════════════════
+   ZOOM
+═══════════════════════════════════════════════ */
+function showZoom(src, name) {
+  document.getElementById('zoomImg').src = src;
+  document.getElementById('zoomName').textContent = name;
+  document.getElementById('zoomModal').classList.add('show');
+}
+function closeZoom() {
+  document.getElementById('zoomModal').classList.remove('show');
+}
+
+/* ═══════════════════════════════════════════════
+   RESET
+═══════════════════════════════════════════════ */
+function resetWizard() {
+  const d = state.data;
+  d.rlFingers.clear(); d.xFingers.clear(); d.xnFingers.clear();
+  d.luFingers.clear(); d.wOtherFingers.clear();
+  d.rtThumb = null; d.ltThumb = null;
+
+  document.querySelectorAll('.finger-btn').forEach(b => { b.classList.remove('selected','disabled'); });
+  document.querySelectorAll('.s6-cat-btn').forEach(b => b.classList.remove('selected'));
+  document.querySelectorAll('.s6-whorl-card').forEach(c => c.classList.remove('selected'));
+  document.querySelectorAll('.s6-whorl-sub').forEach(s => s.classList.remove('show'));
+  document.querySelectorAll('.s6-pre-note').forEach(n => n.style.display = 'none');
+  document.getElementById('s1-picker').style.display = 'none';
+  document.getElementById('s1-confirm').disabled = true;
+  document.getElementById('s6-btn').disabled = true;
+
+  showScreen('s1');
+}
+
+/* Init */
+showScreen('s1');
 </script>
 </body>
 </html>
