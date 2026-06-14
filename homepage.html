@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>AIPIWEN · 让父母真正读懂孩子</title>
+<style>
+/* ─────────────────────────────────────
+   DESIGN TOKENS — 与行为理解App完全一致
+───────────────────────────────────── */
+:root {
+  --cream:      #FDFCF8;
+  --cream-deep: #F5F3EE;
+  --ink:        #1A1714;
+  --ink-70:     #4A4540;
+  --ink-40:     #8C8580;
+  --ink-20:     #C8C3BC;
+  --ink-10:     #EAE7E2;
+  --amber:      #C2692A;
+  --amber-soft: #F5EDE4;
+  --amber-glow: rgba(194,105,42,.10);
+  --dark:       #1A1714;
+  --ok:         #3A7D5E;
+  --r-sm:  10px;
+  --r-md:  16px;
+  --r-lg:  24px;
+  --r-xl:  32px;
+  --font-serif: Georgia, 'Noto Serif SC', 'Source Han Serif SC', serif;
+  --font-sans:  -apple-system, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  --ease: cubic-bezier(.4,0,.2,1);
+  --ease-spring: cubic-bezier(.34,1.56,.64,1);
+}
+
+*,*::before,*::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: var(--font-sans);
+  background: var(--cream);
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+  min-height: 100vh;
+}
+
+/* ─────────────────────────────────────
+   LOGO ANIMATION
+───────────────────────────────────── */
+@keyframes logo-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+@keyframes logo-spin-rev {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(-360deg); }
+}
+@keyframes logo-breathe {
+  0%,100% { opacity: .82; transform: scale(1); }
+  50%      { opacity: 1;   transform: scale(1.04); }
+}
+.logo-ring-outer {
+  transform-origin: 18px 18px;
+  animation: logo-spin 22s linear infinite;
+}
+.logo-petals {
+  transform-origin: 18px 18px;
+  animation: logo-spin-rev 14s linear infinite;
+}
+.logo-center {
+  transform-origin: 18px 18px;
+  animation: logo-breathe 3.5s ease-in-out infinite;
+}
+
+/* ─────────────────────────────────────
+   SITE HEADER
+───────────────────────────────────── */
+.site-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 28px 16px;
+  position: sticky;
+  top: 0;
+  background: rgba(253,252,248,.94);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  z-index: 100;
+  border-bottom: 1px solid var(--ink-10);
+}
+/* Logo 左侧：图标 + 文字 */
+.logo-lockup {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  text-decoration: none;
+}
+.logo-svg {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+}
+.wordmark {
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--ink);
+  line-height: 1;
+}
+.wm-e { color: var(--amber); }
+
+/* 右侧：沐海星辰 实心印章 */
+.brand-seal {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  width: 50px;
+  height: 50px;
+  background: var(--amber);
+  border-radius: 5px;
+  padding: 5px;
+  gap: 0;
+  position: relative;
+  flex-shrink: 0;
+  box-shadow: 0 3px 12px rgba(194,105,42,.40), 0 1px 4px rgba(194,105,42,.20);
+}
+.brand-seal::after {
+  content: '';
+  position: absolute;
+  inset: 4px;
+  border: 1.2px solid rgba(255,255,255,.55);
+  border-radius: 2px;
+  pointer-events: none;
+}
+.brand-seal span {
+  font-family: var(--font-serif);
+  font-size: 14px;
+  font-weight: 700;
+  color: #ffffff;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  letter-spacing: 0;
+}
+
+/* ─────────────────────────────────────
+   HERO
+───────────────────────────────────── */
+.hero {
+  padding: 56px 28px 48px;
+  max-width: 520px;
+  margin: 0 auto;
+}
+.hero-eyebrow {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--amber);
+  margin-bottom: 16px;
+}
+.hero-title {
+  font-family: var(--font-serif);
+  font-size: 36px;
+  line-height: 1.22;
+  letter-spacing: -.5px;
+  color: var(--ink);
+  font-weight: normal;
+  margin-bottom: 18px;
+}
+.hero-title em {
+  font-style: italic;
+  color: var(--amber);
+}
+.hero-body {
+  font-size: 16px;
+  line-height: 1.8;
+  color: var(--ink-70);
+  max-width: 380px;
+}
+
+/* ─────────────────────────────────────
+   DIVIDER
+───────────────────────────────────── */
+.section-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 28px;
+  max-width: 520px;
+  margin: 0 auto 28px;
+}
+.section-divider::before,
+.section-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--ink-10);
+}
+.section-divider-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--ink-20);
+  white-space: nowrap;
+}
+
+/* ─────────────────────────────────────
+   PRODUCT CARDS
+───────────────────────────────────── */
+.products {
+  padding: 0 20px 48px;
+  max-width: 520px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.product-card {
+  background: #FFFEFB;
+  border: 1px solid var(--ink-10);
+  border-radius: var(--r-lg);
+  padding: 28px 24px;
+  text-decoration: none;
+  color: inherit;
+  display: block;
+  transition: transform .2s var(--ease), box-shadow .2s var(--ease), border-color .2s;
+  position: relative;
+  overflow: hidden;
+}
+.product-card:active {
+  transform: scale(.985);
+}
+.product-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: var(--amber);
+  opacity: 0;
+  transition: opacity .2s;
+}
+.product-card:hover::before {
+  opacity: 1;
+}
+.product-card-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--amber-soft);
+  border-radius: 20px;
+  padding: 4px 12px;
+  margin-bottom: 18px;
+}
+.product-card-badge-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--amber);
+}
+.product-card-badge-text {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--amber);
+}
+.product-card-title {
+  font-family: var(--font-serif);
+  font-size: 24px;
+  line-height: 1.3;
+  letter-spacing: -.3px;
+  color: var(--ink);
+  font-weight: normal;
+  margin-bottom: 10px;
+}
+.product-card-desc {
+  font-size: 14px;
+  line-height: 1.75;
+  color: var(--ink-70);
+  margin-bottom: 22px;
+}
+.product-card-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+.product-pill {
+  background: var(--cream-deep);
+  border-radius: 20px;
+  padding: 5px 12px;
+  font-size: 12px;
+  color: var(--ink-70);
+}
+.product-card-cta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.product-cta-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--dark);
+  color: #FAF9F6;
+  border-radius: var(--r-md);
+  padding: 12px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: .02em;
+  transition: background .15s;
+}
+.product-cta-btn:active { background: #3A3530; }
+.product-cta-btn svg { width: 16px; height: 16px; }
+.product-cta-status {
+  font-size: 12px;
+  color: var(--ok);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-weight: 500;
+}
+.product-cta-status::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--ok);
+  display: block;
+}
+
+/* 将来产品占位卡 */
+.product-card.coming-soon {
+  border-style: dashed;
+  border-color: var(--ink-10);
+  background: var(--cream);
+  opacity: .6;
+}
+.product-card.coming-soon .product-cta-btn {
+  background: var(--ink-10);
+  color: var(--ink-40);
+}
+
+/* ─────────────────────────────────────
+   ABOUT STRIP
+───────────────────────────────────── */
+.about-strip {
+  background: var(--dark);
+  margin: 0;
+  padding: 40px 28px;
+}
+.about-inner {
+  max-width: 520px;
+  margin: 0 auto;
+}
+.about-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--amber);
+  margin-bottom: 14px;
+}
+.about-text {
+  font-family: var(--font-serif);
+  font-size: 20px;
+  line-height: 1.6;
+  color: #EAE7E0;
+  font-weight: normal;
+}
+.about-text em { font-style: italic; color: var(--amber); }
+
+/* ─────────────────────────────────────
+   HERO CTA BUTTON
+───────────────────────────────────── */
+.hero-cta-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 32px;
+  padding: 18px 32px;
+  background: var(--amber);
+  color: #fff;
+  border-radius: var(--r-lg);
+  font-size: 18px;
+  font-weight: 700;
+  text-decoration: none;
+  letter-spacing: .02em;
+  box-shadow: 0 6px 24px rgba(194,105,42,.38);
+  transition: transform .18s var(--ease), box-shadow .18s var(--ease);
+}
+.hero-cta-btn:active {
+  transform: scale(.96);
+  box-shadow: 0 3px 10px rgba(194,105,42,.28);
+}
+.hero-trust {
+  margin-top: 16px;
+  font-size: 13px;
+  color: var(--ink-40);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.hero-trust::before { content: '✓'; color: var(--amber); font-weight: 700; }
+
+/* ─────────────────────────────────────
+   FOOTER
+───────────────────────────────────── */
+.site-footer {
+  padding: 28px 28px calc(28px + env(safe-area-inset-bottom));
+  max-width: 520px;
+  margin: 0 auto;
+  text-align: center;
+}
+.footer-logo {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--ink-40);
+  margin-bottom: 8px;
+}
+.footer-icp {
+  font-size: 12px;
+  color: var(--ink-20);
+  margin-bottom: 6px;
+}
+.footer-icp a {
+  color: var(--ink-20);
+  text-decoration: none;
+}
+.footer-copy {
+  font-size: 12px;
+  color: var(--ink-20);
+}
+</style>
+</head>
+<body>
+
+<!-- ── HEADER ── -->
+<header class="site-header">
+  <!-- 左：动态 logo + wordmark -->
+  <a class="logo-lockup" href="#">
+    <svg class="logo-svg" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <!-- 外旋虚线环 -->
+      <circle class="logo-ring-outer" cx="18" cy="18" r="15.5"
+              stroke="#C2692A" stroke-width=".9"
+              stroke-dasharray="2.5 6" opacity=".30"/>
+      <!-- 四瓣反旋 -->
+      <g class="logo-petals">
+        <ellipse cx="18" cy="12" rx="2.2" ry="6.5" fill="#C2692A" opacity=".75" transform="rotate(0 18 18)"/>
+        <ellipse cx="18" cy="12" rx="2.2" ry="6.5" fill="#C2692A" opacity=".50" transform="rotate(90 18 18)"/>
+        <ellipse cx="18" cy="12" rx="1.4" ry="5.5" fill="#C2692A" opacity=".35" transform="rotate(45 18 18)"/>
+        <ellipse cx="18" cy="12" rx="1.4" ry="5.5" fill="#C2692A" opacity=".35" transform="rotate(135 18 18)"/>
+      </g>
+      <!-- 中心光点 -->
+      <circle class="logo-center" cx="18" cy="18" r="3" fill="#C2692A"/>
+    </svg>
+    <span class="wordmark">AIPIW<span class="wm-e">E</span>N</span>
+  </a>
+
+  <!-- 右：沐海 · 星辰 -->
+  <div class="brand-seal" title="沐海星辰">
+    <span>沐</span><span>海</span>
+    <span>星</span><span>辰</span>
+  </div>
+</header>
+
+<!-- ── HERO ── -->
+<section class="hero">
+  <div class="hero-eyebrow">AI 亲子理解平台</div>
+  <h1 class="hero-title">
+    你以为孩子在"闹"，<br>
+    其实他在表达<em>你没看见的需求</em>
+  </h1>
+  <p class="hero-body">
+    每一个让你困惑的行为背后，都藏着孩子没有被听见的需要。AI 帮你读懂它。
+  </p>
+  <a class="hero-cta-btn" href="behavior-input.html">
+    👉 开始读懂我的孩子
+  </a>
+  <div class="hero-trust">免费 · 2分钟 · 无需注册</div>
+</section>
+
+<!-- ── ABOUT ── -->
+<section class="about-strip">
+  <div class="about-inner">
+    <div class="about-label">关于沐海星辰</div>
+    <p class="about-text">
+      孩子的每一次哭闹、每一次抵抗、每一次沉默，背后都藏着属于他的道理。<br><br>
+      沐海星辰将<em>胚胎学、遗传学、脑科学、心理学、统计学</em>的研究成果融入 AI，帮父母真正听见孩子——不是要改变他，而是真正看见他。<br><br>
+      因为被看见，本身就是最深的爱。
+    </p>
+  </div>
+</section>
+
+<!-- ── FOOTER ── -->
+<footer class="site-footer">
+  <div class="footer-logo">AIPIWEN</div>
+  <div class="footer-icp">
+    <a href="https://beian.miit.gov.cn" target="_blank">陕ICP备2026008899号</a>
+  </div>
+  <div class="footer-copy">© 2026 沐海星辰</div>
+</footer>
+
+</body>
+</html>

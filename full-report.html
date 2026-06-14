@@ -1,0 +1,1085 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>完整行为分析报告 · AIPIWEN</title>
+<style>
+:root {
+  --cream:      #FDFCF8;
+  --cream-deep: #F5F3EE;
+  --ink:        #1A1714;
+  --ink-70:     #4A4540;
+  --ink-40:     #8C8580;
+  --ink-20:     #C8C3BC;
+  --ink-10:     #EAE7E2;
+  --amber:      #C2692A;
+  --amber-soft: #F5EDE4;
+  --amber-glow: rgba(194,105,42,.12);
+  --ok:         #3A7D5E;
+  --font-serif: Georgia, 'Noto Serif SC', 'Source Han Serif SC', serif;
+  --font-sans:  -apple-system, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  --ease: cubic-bezier(.4,0,.2,1);
+}
+*,*::before,*::after { box-sizing: border-box; margin: 0; padding: 0; }
+html,body { font-family: var(--font-sans); background: var(--cream); color: var(--ink); -webkit-font-smoothing: antialiased; min-height: 100vh; }
+
+/* SCREENS */
+.screen { display: none; }
+.screen.active { display: block; }
+
+/* NAV */
+.top-nav {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--ink-10);
+  background: rgba(253,252,248,.94);
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  position: sticky; top: 0; z-index: 10;
+}
+.nav-back { display: flex; align-items: center; gap: 5px; font-size: 14px; color: var(--ink-40); cursor: pointer; text-decoration: none; }
+.nav-back svg { width: 18px; height: 18px; }
+.nav-wordmark { font-size: 13px; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; color: var(--ink); }
+
+/* PAGE WRAP */
+.page-wrap { max-width: 520px; margin: 0 auto; padding: 28px 24px 80px; }
+
+/* REPORT HEADER */
+.report-header {
+  margin-bottom: 28px;
+  padding-bottom: 22px;
+  border-bottom: 1px solid var(--ink-10);
+}
+.report-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--amber); border-radius: 20px; padding: 4px 14px;
+  font-size: 11px; font-weight: 700; letter-spacing: .1em;
+  text-transform: uppercase; color: white; margin-bottom: 12px;
+}
+.report-title {
+  font-family: var(--font-serif); font-size: 28px; line-height: 1.25;
+  color: var(--ink); font-weight: normal; margin-bottom: 10px;
+}
+.report-title em { font-style: italic; color: var(--amber); }
+.report-id-block {
+  display: flex; align-items: center; gap: 10px;
+  background: var(--cream-deep); border-radius: 10px;
+  padding: 10px 14px; margin-top: 12px;
+}
+.report-id-label { font-size: 11px; color: var(--ink-40); flex-shrink: 0; }
+.report-id-value {
+  font-size: 14px; font-weight: 700; color: var(--amber);
+  letter-spacing: .08em; font-family: monospace;
+}
+.report-id-hint { font-size: 11px; color: var(--ink-40); margin-top: 4px; }
+
+/* SECTION CARDS */
+.section-card {
+  background: white; border: 1px solid var(--ink-10);
+  border-radius: 16px; padding: 22px 20px; margin-bottom: 16px;
+}
+.section-card + .section-card { }
+.section-eyebrow {
+  font-size: 10px; font-weight: 700; letter-spacing: .14em;
+  text-transform: uppercase; color: var(--amber); margin-bottom: 10px;
+}
+.section-heading {
+  font-family: var(--font-serif); font-size: 19px; line-height: 1.3;
+  color: var(--ink); font-weight: normal; margin-bottom: 12px;
+}
+
+/* BEHAVIOR STRUCTURE */
+.behavior-formula {
+  display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+  background: var(--cream-deep); border-radius: 10px; padding: 12px 14px;
+  margin-bottom: 14px;
+}
+.formula-item {
+  font-size: 13px; font-weight: 600; color: var(--amber);
+  background: var(--amber-soft); border-radius: 6px; padding: 4px 10px;
+}
+.formula-plus { font-size: 14px; color: var(--ink-40); font-weight: 300; }
+.formula-eq   { font-size: 14px; color: var(--ink-40); margin: 0 4px; }
+.section-body { font-size: 14px; line-height: 1.85; color: var(--ink-70); }
+
+/* MISCONCEPTIONS */
+.misconception-list { display: flex; flex-direction: column; gap: 10px; margin-top: 4px; }
+.misconception-item {
+  display: flex; align-items: flex-start; gap: 10px;
+  background: #FEF9F6; border: 1px solid #F4E6DA;
+  border-radius: 10px; padding: 12px 14px;
+}
+.misconception-x { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+.misconception-content {}
+.misconception-wrong { font-size: 13px; font-weight: 600; color: #B0451A; margin-bottom: 3px; }
+.misconception-right { font-size: 13px; color: var(--ink-70); line-height: 1.6; }
+
+/* ADVICE */
+.advice-list { display: flex; flex-direction: column; gap: 12px; margin-top: 4px; }
+.advice-item {
+  display: flex; align-items: flex-start; gap: 12px;
+  border-left: 3px solid var(--amber); padding-left: 14px;
+}
+.advice-num {
+  font-size: 11px; font-weight: 700; letter-spacing: .1em;
+  color: var(--amber); margin-bottom: 4px; text-transform: uppercase;
+}
+.advice-tag {
+  display: inline-block; background: var(--amber); color: white;
+  font-size: 10px; font-weight: 700; border-radius: 4px;
+  padding: 2px 7px; letter-spacing: .06em; margin-bottom: 5px;
+}
+.advice-text { font-size: 14px; line-height: 1.75; color: var(--ink-70); }
+.advice-example {
+  font-size: 13px; color: var(--amber); font-style: italic;
+  background: var(--amber-soft); border-radius: 6px; padding: 6px 10px;
+  margin-top: 6px;
+}
+
+/* BOTTOM CTA AREA */
+.bottom-cta {
+  margin-top: 28px; display: flex; flex-direction: column; gap: 10px;
+}
+.btn-primary {
+  display: block; width: 100%; padding: 17px 24px;
+  background: var(--amber); color: white; border: none;
+  border-radius: 14px; font-family: var(--font-sans);
+  font-size: 16px; font-weight: 700; cursor: pointer;
+  text-align: center; text-decoration: none;
+  box-shadow: 0 5px 18px rgba(194,105,42,.35);
+  transition: transform .18s, box-shadow .18s;
+}
+.btn-primary:active { transform: scale(.97); }
+.btn-secondary {
+  display: block; width: 100%; padding: 15px 24px;
+  background: transparent; color: var(--ink-70);
+  border: 1.5px solid var(--ink-20); border-radius: 14px;
+  font-family: var(--font-sans); font-size: 15px; font-weight: 600;
+  cursor: pointer; text-align: center; text-decoration: none;
+  transition: border-color .18s, color .18s;
+}
+.btn-secondary:active { border-color: var(--amber); color: var(--amber); }
+
+/* ─── SHARE SCREEN ──────────────────────────────── */
+.share-page-wrap { max-width: 520px; margin: 0 auto; padding: 28px 24px 80px; }
+.share-heading {
+  font-family: var(--font-serif); font-size: 22px;
+  color: var(--ink); font-weight: normal; margin-bottom: 6px; text-align: center;
+}
+.share-sub { font-size: 13px; color: var(--ink-40); text-align: center; margin-bottom: 24px; }
+
+/* The share card (will be captured by html2canvas) */
+.share-card-wrap {
+  border-radius: 16px; overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0,0,0,.14); margin-bottom: 20px;
+}
+.share-card {
+  background: linear-gradient(135deg, #1A1714 0%, #2E2520 100%);
+  padding: 32px 28px;
+  position: relative; overflow: hidden;
+}
+.share-card-orb {
+  position: absolute; border-radius: 50%; opacity: .12;
+  background: var(--amber);
+}
+.share-card-orb-1 { width: 220px; height: 220px; top: -80px; right: -60px; }
+.share-card-orb-2 { width: 160px; height: 160px; bottom: -50px; left: -40px; }
+.share-card-brand {
+  font-size: 10px; font-weight: 700; letter-spacing: .18em;
+  text-transform: uppercase; color: rgba(255,255,255,.4); margin-bottom: 20px;
+}
+.share-card-insight {
+  font-family: var(--font-serif); font-size: 21px; line-height: 1.45;
+  color: white; font-weight: normal; margin-bottom: 24px; position: relative; z-index: 1;
+}
+.share-card-divider { height: 1px; background: rgba(255,255,255,.12); margin-bottom: 20px; }
+.share-card-row {
+  display: flex; align-items: center; justify-content: space-between;
+  position: relative; z-index: 1;
+}
+.share-card-id { font-size: 11px; color: rgba(255,255,255,.45); font-family: monospace; }
+.share-card-tag {
+  display: inline-block; background: var(--amber); color: white;
+  font-size: 11px; font-weight: 700; border-radius: 6px; padding: 4px 10px;
+  letter-spacing: .06em;
+}
+
+/* Hint + copyable text */
+.share-hint {
+  font-size: 12px; color: var(--ink-40); text-align: center; margin-bottom: 16px; line-height: 1.6;
+}
+.share-copy-text {
+  background: var(--cream-deep); border: 1px solid var(--ink-10);
+  border-radius: 10px; padding: 12px 14px;
+  font-size: 13px; line-height: 1.75; color: var(--ink-70);
+  margin-bottom: 14px;
+}
+.share-btns { display: flex; flex-direction: column; gap: 10px; }
+.btn-copy {
+  display: block; width: 100%; padding: 15px;
+  background: var(--cream-deep); border: 1.5px solid var(--ink-20);
+  border-radius: 12px; font-family: var(--font-sans);
+  font-size: 15px; font-weight: 600; color: var(--ink); cursor: pointer;
+  transition: background .15s;
+}
+.btn-copy.copied { background: #EAF5EF; border-color: var(--ok); color: var(--ok); }
+.btn-save-img {
+  display: block; width: 100%; padding: 15px;
+  background: var(--ink); color: white; border: none;
+  border-radius: 12px; font-family: var(--font-sans);
+  font-size: 15px; font-weight: 600; cursor: pointer;
+  transition: background .15s;
+}
+
+/* ─── WECHAT SCREEN ─────────────────────────────── */
+.wechat-wrap { max-width: 520px; margin: 0 auto; padding: 32px 24px 80px; }
+.wechat-icon { font-size: 40px; text-align: center; margin-bottom: 16px; }
+.wechat-title {
+  font-family: var(--font-serif); font-size: 26px; line-height: 1.3;
+  color: var(--ink); font-weight: normal; text-align: center; margin-bottom: 10px;
+}
+.wechat-body {
+  font-size: 15px; line-height: 1.8; color: var(--ink-70);
+  text-align: center; margin-bottom: 24px;
+}
+.wechat-report-id-box {
+  background: var(--amber-soft); border: 1.5px solid #E8C9A8;
+  border-radius: 12px; padding: 14px 18px; margin-bottom: 20px; text-align: center;
+}
+.wechat-rid-label { font-size: 11px; color: var(--ink-40); margin-bottom: 6px; }
+.wechat-rid-value {
+  font-size: 18px; font-weight: 700; color: var(--amber);
+  letter-spacing: .1em; font-family: monospace;
+}
+.wechat-rid-sub { font-size: 12px; color: var(--ink-40); margin-top: 4px; }
+.wechat-cta-link {
+  display: block; width: 100%; padding: 17px;
+  background: #07C160; color: white; border: none;
+  border-radius: 14px; font-family: var(--font-sans);
+  font-size: 16px; font-weight: 700; cursor: pointer;
+  text-align: center; text-decoration: none; margin-bottom: 14px;
+  box-shadow: 0 4px 16px rgba(7,193,96,.3);
+}
+.wechat-qr-card {
+  background: white; border: 1px solid var(--ink-10);
+  border-radius: 14px; padding: 20px; text-align: center; margin-bottom: 20px;
+}
+.wechat-qr-hint { font-size: 12px; color: var(--ink-40); margin-bottom: 12px; }
+.wechat-qr-img {
+  width: 160px; height: 160px; border-radius: 8px;
+  object-fit: cover; display: block; margin: 0 auto 10px;
+}
+.wechat-qr-label { font-size: 12px; color: var(--ink-40); line-height: 1.6; }
+.wechat-steps {
+  background: var(--cream-deep); border-radius: 12px;
+  padding: 16px 18px; margin-bottom: 20px;
+}
+.wechat-step {
+  display: flex; align-items: flex-start; gap: 10px;
+  font-size: 13px; color: var(--ink-70); padding: 5px 0;
+}
+.wechat-step-num {
+  width: 20px; height: 20px; border-radius: 50%;
+  background: var(--amber); color: white;
+  font-size: 11px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; margin-top: 1px;
+}
+
+/* ─── RETENTION MODULE ──────────────────────────── */
+.retention-card {
+  background: white; border: 1px solid var(--ink-10);
+  border-radius: 16px; padding: 22px 20px; margin-bottom: 16px;
+}
+.retention-eyebrow {
+  font-size: 10px; font-weight: 700; letter-spacing: .14em;
+  text-transform: uppercase; color: var(--ok); margin-bottom: 10px;
+}
+.retention-heading {
+  font-family: var(--font-serif); font-size: 18px;
+  color: var(--ink); font-weight: normal; margin-bottom: 14px;
+}
+.retention-first {
+  background: var(--cream-deep); border-radius: 10px;
+  padding: 14px 16px; text-align: center;
+}
+.retention-first-icon { font-size: 28px; margin-bottom: 8px; }
+.retention-first-text { font-size: 13px; color: var(--ink-70); line-height: 1.7; }
+.retention-first-cta  { margin-top: 10px; font-size: 12px; color: var(--amber); font-weight: 600; }
+.compare-grid { display: flex; flex-direction: column; gap: 10px; }
+.compare-row {
+  display: flex; align-items: center; justify-content: space-between;
+  background: var(--cream-deep); border-radius: 10px; padding: 10px 14px;
+}
+.compare-label { font-size: 13px; color: var(--ink-70); font-weight: 500; flex: 1; }
+.compare-vals  { display: flex; align-items: center; gap: 8px; }
+.compare-num   { font-size: 13px; color: var(--ink-40); }
+.compare-arrow { font-size: 14px; font-weight: 700; min-width: 28px; text-align: center; }
+.compare-arrow.up     { color: #C86A4A; }
+.compare-arrow.down   { color: var(--ok); }
+.compare-arrow.stable { color: var(--ink-40); }
+.compare-tag { font-size: 11px; padding: 2px 8px; border-radius: 10px; font-weight: 600; }
+.compare-tag.up     { background: #FEF0EB; color: #C86A4A; }
+.compare-tag.down   { background: #EAF5EF; color: var(--ok); }
+.compare-tag.stable { background: var(--ink-10); color: var(--ink-40); }
+.emotion-cycle { display: flex; flex-direction: column; gap: 8px; margin-top: 4px; }
+.emotion-day   { display: flex; align-items: center; gap: 10px; }
+.emotion-day-label { font-size: 12px; color: var(--ink-40); width: 28px; flex-shrink: 0; }
+.emotion-bar-wrap  { flex: 1; background: var(--cream-deep); border-radius: 4px; height: 14px; position: relative; overflow: hidden; }
+.emotion-bar { height: 100%; border-radius: 4px; transition: width .5s ease; }
+.emotion-bar.high   { background: #C86A4A; }
+.emotion-bar.medium { background: var(--amber); }
+.emotion-bar.low    { background: var(--ok); }
+.emotion-day-lv { font-size: 11px; color: var(--ink-40); width: 24px; text-align: right; }
+.emotion-legend { display: flex; gap: 12px; margin-top: 10px; flex-wrap: wrap; }
+.legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--ink-40); }
+.legend-dot  { width: 8px; height: 8px; border-radius: 50%; }
+.trend-list { display: flex; flex-direction: column; gap: 12px; margin-top: 4px; }
+.trend-item { display: flex; align-items: flex-start; gap: 10px; }
+.trend-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+.trend-name { font-size: 13px; font-weight: 600; color: var(--ink); margin-bottom: 2px; }
+.trend-desc { font-size: 12px; color: var(--ink-70); line-height: 1.6; }
+.trend-badge {
+  display: inline-block; font-size: 10px; font-weight: 700;
+  border-radius: 8px; padding: 1px 7px; margin-left: 6px; vertical-align: middle;
+}
+.trend-badge.improving { background: #EAF5EF; color: var(--ok); }
+.trend-badge.neutral   { background: var(--ink-10); color: var(--ink-40); }
+.trend-badge.watch     { background: #FEF0EB; color: #C86A4A; }
+.wechat-nudge {
+  background: linear-gradient(135deg, var(--amber-soft) 0%, #FDF5EE 100%);
+  border: 1.5px solid #E8C9A8; border-radius: 14px;
+  padding: 16px 18px; margin-bottom: 20px;
+  display: flex; gap: 12px; align-items: flex-start;
+}
+.wechat-nudge-icon  { font-size: 22px; flex-shrink: 0; }
+.wechat-nudge-title { font-size: 14px; font-weight: 700; color: var(--ink); margin-bottom: 4px; }
+.wechat-nudge-text  { font-size: 13px; color: var(--ink-70); line-height: 1.6; }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════
+     SCREEN 1: FULL REPORT
+═══════════════════════════════════════ -->
+<div id="screen-report" class="screen active">
+  <nav class="top-nav">
+    <a class="nav-back" href="light-report.html">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M19 12H5M12 5l-7 7 7 7"/>
+      </svg>
+      返回
+    </a>
+    <div class="nav-wordmark">AIPIWEN</div>
+    <div style="width:40px"></div>
+  </nav>
+
+  <div class="page-wrap">
+    <!-- HEADER -->
+    <div class="report-header">
+      <div class="report-badge">完整行为分析报告</div>
+      <h1 class="report-title">行为 = <em>需求</em> × 情绪 × 环境</h1>
+      <div class="report-id-block">
+        <span class="report-id-label">报告编号</span>
+        <span class="report-id-value" id="r-reportid">—</span>
+      </div>
+      <div class="report-id-hint" style="margin-top:6px;font-size:11px;color:var(--ink-40);padding-left:2px">
+        联系顾问时请提供此编号 · 顾问按编号发送完整解读
+      </div>
+    </div>
+
+    <!-- S1: 行为结构 -->
+    <div class="section-card">
+      <div class="section-eyebrow">行为结构分析</div>
+      <h2 class="section-heading" id="r-struct-heading">孩子的行为是三个层次的叠加</h2>
+      <div class="behavior-formula">
+        <div class="formula-item">情绪反应</div>
+        <div class="formula-plus">+</div>
+        <div class="formula-item">需求表达</div>
+        <div class="formula-plus">+</div>
+        <div class="formula-item">环境触发</div>
+        <div class="formula-eq">=</div>
+        <div class="formula-item">你看到的行为</div>
+      </div>
+      <p class="section-body" id="r-struct-body"></p>
+    </div>
+
+    <!-- S2: 家长误区 -->
+    <div class="section-card">
+      <div class="section-eyebrow">家长常见误区</div>
+      <h2 class="section-heading">你看到的不是全部</h2>
+      <div class="misconception-list" id="r-misconceptions"></div>
+    </div>
+
+    <!-- S3: 三条建议 -->
+    <div class="section-card">
+      <div class="section-eyebrow">三条可执行建议</div>
+      <h2 class="section-heading">从明天开始可以做的事</h2>
+      <div class="advice-list" id="r-advice-list"></div>
+    </div>
+
+    <!-- ═══ 行为变化趋势模块 ═══ -->
+    <div class="retention-card" id="retention-module">
+      <div class="retention-eyebrow">行为变化追踪</div>
+      <h2 class="retention-heading">孩子行为变化趋势</h2>
+      <!-- 内容由 JS 动态生成 -->
+      <div id="retention-content"></div>
+    </div>
+
+    <!-- BOTTOM CTA -->
+    <div class="bottom-cta">
+      <button class="btn-primary" onclick="goToShare()">👉 分享给家人 / 朋友</button>
+      <button class="btn-secondary" onclick="goToWeChat()">获取更深解读（企业微信）</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     SCREEN 2: SHARE
+═══════════════════════════════════════ -->
+<div id="screen-share" class="screen">
+  <nav class="top-nav">
+    <div class="nav-back" onclick="showScreen('screen-report')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M19 12H5M12 5l-7 7 7 7"/>
+      </svg>
+      返回
+    </div>
+    <div class="nav-wordmark">AIPIWEN</div>
+    <div style="width:40px"></div>
+  </nav>
+
+  <div class="share-page-wrap">
+    <h2 class="share-heading">分享这份理解</h2>
+    <p class="share-sub">让更多人看见孩子背后的需求</p>
+
+    <!-- Share card (captured by html2canvas) -->
+    <div class="share-card-wrap">
+      <div class="share-card" id="share-card-el">
+        <div class="share-card-orb share-card-orb-1"></div>
+        <div class="share-card-orb share-card-orb-2"></div>
+        <div class="share-card-brand">AIPIWEN · AI 亲子理解</div>
+        <div class="share-card-insight" id="sc-insight">你看到的是行为，但孩子在表达你没看见的需求。</div>
+        <div class="share-card-divider"></div>
+        <div class="share-card-row">
+          <div class="share-card-id" id="sc-reportid"></div>
+          <div class="share-card-tag">AI 行为分析</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="share-hint">长按截图保存，或点击下方按钮</div>
+
+    <div class="share-copy-text" id="share-copy-text">
+      我刚用AI分析了孩子行为，发现很多问题不是孩子的问题，而是我们没看懂他。推荐你也试试：aipiwen.cn
+    </div>
+
+    <div class="share-btns">
+      <button class="btn-copy" id="copy-btn" onclick="copyShareText()">复制分享文案</button>
+      <button class="btn-save-img" onclick="saveShareImage()">保存分享图片</button>
+      <button class="btn-secondary" onclick="goToWeChat()" style="margin-top:4px">获取更深解读 →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     SCREEN 3: WECHAT
+═══════════════════════════════════════ -->
+<div id="screen-wechat" class="screen">
+  <nav class="top-nav">
+    <div class="nav-back" onclick="showScreen('screen-report')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M19 12H5M12 5l-7 7 7 7"/>
+      </svg>
+      返回
+    </div>
+    <div class="nav-wordmark">AIPIWEN</div>
+    <div style="width:40px"></div>
+  </nav>
+
+  <div class="wechat-wrap">
+    <div class="wechat-icon">💬</div>
+    <h2 class="wechat-title">获取更深入的<br>孩子行为解读</h2>
+    <p class="wechat-body">
+      顾问会根据你的报告编号，为你提供更深层的行为分析与定制化建议。
+    </p>
+
+    <!-- reportId 展示 -->
+    <div class="wechat-report-id-box">
+      <div class="wechat-rid-label">你的报告编号</div>
+      <div class="wechat-rid-value" id="wx-reportid">—</div>
+      <div class="wechat-rid-sub">添加顾问后，把这个编号发给顾问</div>
+    </div>
+
+    <!-- 操作流程 -->
+    <div class="wechat-steps">
+      <div class="wechat-step">
+        <div class="wechat-step-num">1</div>
+        <div>点击下方按钮或扫码，添加 AIPIWEN 顾问</div>
+      </div>
+      <div class="wechat-step">
+        <div class="wechat-step-num">2</div>
+        <div>将报告编号发送给顾问：<strong id="wx-rid-inline" style="color:var(--amber)"></strong></div>
+      </div>
+      <div class="wechat-step">
+        <div class="wechat-step-num">3</div>
+        <div>顾问按编号核对报告，为你发送完整个人化解读</div>
+      </div>
+    </div>
+
+    <!-- 直接点击进入企业微信 -->
+    <a id="kf-link" href="https://work.weixin.qq.com/kfid/kfc6ce446e6e057c683"
+       class="wechat-cta-link">
+      点击联系顾问，获取深度解读 →
+    </a>
+
+    <!-- 本周行为变化提示 -->
+    <div class="wechat-nudge" id="wechat-nudge" style="display:none">
+      <div class="wechat-nudge-icon">📊</div>
+      <div>
+        <div class="wechat-nudge-title" id="nudge-title">孩子行为有新变化</div>
+        <div class="wechat-nudge-text" id="nudge-text">
+          本周已记录行为变化，是否需要顾问更新分析？把报告编号发给顾问，即可获取最新解读。
+        </div>
+      </div>
+    </div>
+
+    <!-- QR 码 -->
+    <div class="wechat-qr-card">
+      <div class="wechat-qr-hint">💻 电脑端？用手机微信「扫一扫」扫码</div>
+      <img class="wechat-qr-img" src="images/客服二维码.jpg" alt="AIPIWEN 企业微信顾问二维码"
+           onerror="this.style.display='none'">
+      <div class="wechat-qr-label">长按识别 → 进入顾问聊天 → 发送报告编号</div>
+    </div>
+
+    <button class="btn-secondary" onclick="showScreen('screen-report')">← 返回查看报告</button>
+  </div>
+</div>
+
+<!-- html2canvas -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script>
+// ── Config ─────────────────────────────────────────
+const KFID_URL   = 'https://work.weixin.qq.com/kfid/kfc6ce446e6e057c683';
+const LEADS_KEY  = 'aipiwen_leads_v02';
+const BEH_KEY    = 'aipiwen_behavior_input';
+
+// ── State ──────────────────────────────────────────
+let gReportId = '';
+let gBehavior = '';
+let gType     = '';
+
+// ── Report content ─────────────────────────────────
+const CONTENT = {
+  emotional: {
+    structHeading: '情绪反应是孩子最真实的语言',
+    structBody: '孩子激烈的情绪反应，是一个「情绪触发 → 感受累积 → 超过承载 → 外化表现」的过程。环境中的某个触发点（催促、否定、对比）引发了强烈感受，而他还没有发展出足够的工具来调节这种感受，所以"爆炸"了。这不是道德问题，是神经发育阶段的正常现象。',
+    misconceptions: [
+      { wrong: '他是故意激怒我', right: '孩子的情绪爆发不是针对你，他只是找不到更好的出口' },
+      { wrong: '他太脆弱了，应该被锻炼', right: '情绪敏感是特质，不是弱点；强制压制会让他更难调节情绪' },
+      { wrong: '道歉之后就没事了', right: '情绪的根本触发点没有被处理，下次还会再发生' }
+    ],
+    advice: [
+      {
+        tag: '怎么说',
+        text: '在孩子情绪激动时，不要试图讲道理。先说：「我看到你很难受了」——确认感受，而不是评判行为。',
+        example: '"你现在一定很难受，我陪着你。"'
+      },
+      {
+        tag: '怎么做',
+        text: '等情绪平复后（15-30分钟）再讨论事情。情绪激动时大脑的前额叶是关闭的，没法真正"听进去"任何内容。',
+        example: '找一个孩子平静的时刻，坐下来聊，不是在爆发的当场。'
+      },
+      {
+        tag: '调整环境',
+        text: '减少容易触发情绪的"催促-评判-比较"语言模式。用"你来决定什么时候开始"代替"快去写作业"。',
+        example: '"作业今晚要完成，你想几点开始？"'
+      }
+    ]
+  },
+  control: {
+    structHeading: '对抗背后是「我需要被当作一个人来尊重」',
+    structBody: '孩子"不听话"的背后是自主需求的强烈信号。他正处于发展独立意志的关键期，频繁被否定、被替代决策，会积累挫败感，最终以对抗形式爆发。这不是叛逆，这是他在说：「我也是一个有想法的人」。',
+    misconceptions: [
+      { wrong: '他就是懒，不想努力', right: '抵抗往往发生在孩子感到被掌控、没有选择权的时候' },
+      { wrong: '他叛逆，要更严管', right: '更严的管控通常带来更强的抵抗，关键是建立"共同决定"' },
+      { wrong: '说了不听，就是对抗我', right: '孩子在对抗的是"被强迫"的感觉，不是在对抗你这个人' }
+    ],
+    advice: [
+      {
+        tag: '怎么说',
+        text: '把命令句变成选择题。让孩子感受到他对自己的生活有一定控制权，抵触会大幅降低。',
+        example: '"作业今天要完成，你想先做语文还是数学？"'
+      },
+      {
+        tag: '怎么做',
+        text: '在不危及安全的范围内，给孩子更多自主权——让他自己选怎么做，而不是只告诉他做什么。失败也是他的学习。',
+        example: '让他决定今晚的作业顺序、用什么笔、坐在哪里做。'
+      },
+      {
+        tag: '调整环境',
+        text: '减少家庭中的"命令密度"。数一数一天中你给孩子几个指令，尝试减少30%，换成问句和邀请。',
+        example: '少说"去做"，多问"你怎么想"。'
+      }
+    ]
+  },
+  avoidance: {
+    structHeading: '回避是孩子在保护自己，说明压力已经超载',
+    structBody: '当孩子用沉默、沉迷或回避来应对时，他是在用能力范围内唯一可行的方式处理超过承载极限的压力。这种状态下，孩子内心通常同时存在强烈的羞耻感和无助感。强行拉回对话，会进一步关闭他的沟通意愿。',
+    misconceptions: [
+      { wrong: '他是在逃避责任', right: '他是在管理一种他还不知道怎么面对的感受或压力' },
+      { wrong: '玩手机就是懒散没出息', right: '沉浸在可控的数字世界，是他在现实压力下的临时庇护所' },
+      { wrong: '不说话就是没事', right: '越沉默越需要关注——他可能已经在内心撑了很久了' }
+    ],
+    advice: [
+      {
+        tag: '怎么说',
+        text: '不要追问"你为什么不说话"或"到底怎么了"。这会让他更封闭。改用开放式、低压力的表达。',
+        example: '"我就在这里，你准备好了随时可以说，我不急。"'
+      },
+      {
+        tag: '怎么做',
+        text: '建立"并肩时光"：做饭、散步、一起看他喜欢的视频。不谈正事，只是在一起。孩子通常在低压活动中更容易开口。',
+        example: '一周挑一次，和孩子一起做他喜欢的事，不提作业学习。'
+      },
+      {
+        tag: '调整环境',
+        text: '检查孩子面对的压力源：学业期待、对比、家庭氛围。减少一个压力源，比增加十次谈话更有效。',
+        example: '和孩子的老师谈谈，了解他在学校的状态。'
+      }
+    ]
+  }
+};
+
+// ── Screen control ─────────────────────────────────
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+function goToShare() {
+  updateLead({ clickedShareFamily: true });
+  showScreen('screen-share');
+}
+
+function goToWeChat() {
+  updateLead({ clickedWeCom: true });
+  showScreen('screen-wechat');
+}
+
+// ── Lead tracking ──────────────────────────────────
+function updateLead(fields) {
+  try {
+    if (!gReportId) return;
+    const all = JSON.parse(localStorage.getItem(LEADS_KEY) || '[]');
+    const idx = all.findIndex(r => r.reportId === gReportId);
+    if (idx >= 0) {
+      Object.assign(all[idx], fields);
+      localStorage.setItem(LEADS_KEY, JSON.stringify(all));
+    }
+  } catch(e) {}
+}
+
+// ── Build report ───────────────────────────────────
+function buildReport(reportId, behavior, type) {
+  const c = CONTENT[type] || CONTENT.emotional;
+
+  // Header
+  document.getElementById('r-reportid').textContent = reportId;
+
+  // Structure
+  document.getElementById('r-struct-heading').textContent = c.structHeading;
+  document.getElementById('r-struct-body').textContent    = c.structBody;
+
+  // Misconceptions
+  const mList = document.getElementById('r-misconceptions');
+  c.misconceptions.forEach(m => {
+    mList.innerHTML += `
+      <div class="misconception-item">
+        <div class="misconception-x">✗</div>
+        <div class="misconception-content">
+          <div class="misconception-wrong">「${m.wrong}」</div>
+          <div class="misconception-right">${m.right}</div>
+        </div>
+      </div>`;
+  });
+
+  // Advice
+  const aList = document.getElementById('r-advice-list');
+  c.advice.forEach((a, i) => {
+    aList.innerHTML += `
+      <div class="advice-item">
+        <div>
+          <div class="advice-tag">${a.tag}</div>
+          <div class="advice-text">${a.text}</div>
+          <div class="advice-example">${a.example}</div>
+        </div>
+      </div>`;
+  });
+
+  // Share card
+  const summaries = {
+    emotional: '你看到的是情绪崩溃，但孩子在说：我需要被看见，不是被评判。',
+    control:   '你看到的是不服从，但孩子在说：我需要有权决定自己的事。',
+    avoidance: '你看到的是逃避，但孩子在说：我现在承受不了更多了，让我先缓缓。'
+  };
+  document.getElementById('sc-insight').textContent  = summaries[type] || summaries.emotional;
+  document.getElementById('sc-reportid').textContent = reportId;
+
+  // WeChat screen
+  document.getElementById('wx-reportid').textContent    = reportId;
+  document.getElementById('wx-rid-inline').textContent  = reportId;
+}
+
+// ── Share functions ────────────────────────────────
+function copyShareText() {
+  const text = document.getElementById('share-copy-text').textContent.trim();
+  const btn  = document.getElementById('copy-btn');
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(text).then(() => {
+      btn.textContent = '✓ 已复制！';
+      btn.classList.add('copied');
+      setTimeout(() => { btn.textContent = '复制分享文案'; btn.classList.remove('copied'); }, 3000);
+    }).catch(() => fallbackCopy(text, btn));
+  } else {
+    fallbackCopy(text, btn);
+  }
+  updateLead({ clickedShareFamily: true });
+}
+
+function fallbackCopy(text, btn) {
+  const ta = document.createElement('textarea');
+  ta.value = text; ta.style.cssText = 'position:fixed;opacity:0';
+  document.body.appendChild(ta); ta.select();
+  try { document.execCommand('copy'); } catch(e) {}
+  document.body.removeChild(ta);
+  btn.textContent = '✓ 已复制！'; btn.classList.add('copied');
+  setTimeout(() => { btn.textContent = '复制分享文案'; btn.classList.remove('copied'); }, 3000);
+}
+
+function saveShareImage() {
+  const card = document.getElementById('share-card-el');
+  if (typeof html2canvas === 'undefined') {
+    alert('图片生成中，请稍候再试');
+    return;
+  }
+  html2canvas(card, {
+    scale: 2,
+    useCORS: true,
+    allowTaint: true,
+    backgroundColor: null
+  }).then(canvas => {
+    const link = document.createElement('a');
+    link.download = 'AIPIWEN-分享卡片-' + gReportId + '.png';
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+  }).catch(() => {
+    alert('请长按分享图片截图保存');
+  });
+  updateLead({ clickedShareMoments: true });
+}
+
+// ══════════════════════════════════════════════════
+// 留存增长机制 v1.0 — 纯 localStorage，不依赖后端
+// ══════════════════════════════════════════════════
+
+const DAY_MS = 86400000;
+
+// ── 获取所有历史记录并按时间排序 ─────────────────────
+function getAllLeads() {
+  try {
+    const raw = JSON.parse(localStorage.getItem(LEADS_KEY) || '[]');
+    return raw.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+  } catch(e) { return []; }
+}
+
+// ── 按周分桶 ─────────────────────────────────────────
+function splitByWeek(records) {
+  const now = Date.now();
+  const thisWeek = records.filter(r => now - new Date(r.createdAt).getTime() <= 7 * DAY_MS);
+  const lastWeek = records.filter(r => {
+    const age = now - new Date(r.createdAt).getTime();
+    return age > 7 * DAY_MS && age <= 14 * DAY_MS;
+  });
+  return { thisWeek, lastWeek };
+}
+
+// ── 统计各行为类型数量 ───────────────────────────────
+function countTypes(records) {
+  const c = { emotional: 0, control: 0, avoidance: 0 };
+  records.forEach(r => { if (c[r.behaviorType] !== undefined) c[r.behaviorType]++; });
+  return c;
+}
+
+// ── 变化指示器 ───────────────────────────────────────
+function indicator(thisVal, lastVal) {
+  if (lastVal === 0 && thisVal === 0) return { arrow: '—', tag: '无记录', css: 'stable' };
+  if (lastVal === 0 && thisVal > 0)  return { arrow: '↑', tag: '新出现', css: 'up' };
+  if (thisVal > lastVal)             return { arrow: '↑', tag: '增多',   css: 'up' };
+  if (thisVal < lastVal)             return { arrow: '↓', tag: '减少',   css: 'down' };
+  return { arrow: '→', tag: '稳定', css: 'stable' };
+}
+
+// ── 情绪周期（按星期几）────────────────────────────
+function buildEmotionCycle(records) {
+  const LABELS = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+  const buckets = Array(7).fill(0);
+  records.forEach(r => { buckets[new Date(r.createdAt).getDay()]++; });
+  const max = Math.max(...buckets, 1);
+  const today = new Date().getDay();
+
+  // Show Mon–Sun in order starting from today-6
+  const order = [];
+  for (let i = 6; i >= 0; i--) order.push((today - i + 7) % 7);
+
+  const rows = order.map(dayIdx => {
+    const cnt = buckets[dayIdx];
+    const pct = Math.round((cnt / max) * 100);
+    const level = pct >= 66 ? 'high' : pct >= 33 ? 'medium' : 'low';
+    const levelLabel = pct >= 66 ? '高' : pct >= 33 ? '中' : '低';
+    return { label: LABELS[dayIdx], pct, level, levelLabel, cnt };
+  });
+  return rows;
+}
+
+// ── 家庭关系趋势 ─────────────────────────────────────
+function buildFamilyTrend(records, thisWeek, lastWeek) {
+  // Conflict: control-type behavior frequency
+  const conflictThis = thisWeek.filter(r => r.behaviorType === 'control').length;
+  const conflictLast = lastWeek.filter(r => r.behaviorType === 'control').length;
+  const conflictInd  = indicator(conflictThis, conflictLast);
+
+  // Communication: records where user reached WeChat (clickedWeCom)
+  const commsThis = thisWeek.filter(r => r.clickedWeCom).length;
+  const commsLast = lastWeek.filter(r => r.clickedWeCom).length;
+  const commsInd  = indicator(commsThis, commsLast);
+
+  // Understanding: emotional-type records (seeking understanding)
+  const underThis = thisWeek.filter(r => r.behaviorType === 'emotional').length;
+  const underLast = lastWeek.filter(r => r.behaviorType === 'emotional').length;
+  const underInd  = indicator(underThis, underLast);
+
+  return [
+    {
+      icon: '⚡',
+      name: '冲突频率',
+      badge: conflictInd.css === 'down' ? { label: '减少', cls: 'improving' }
+           : conflictInd.css === 'up'   ? { label: '增多', cls: 'watch' }
+           : { label: '稳定', cls: 'neutral' },
+      desc: conflictInd.css === 'down' ? '本周控制冲突类行为减少，亲子互动质量在改善。'
+          : conflictInd.css === 'up'   ? '本周控制冲突类行为增多，建议关注孩子的自主需求。'
+          : conflictLast === 0 ? '暂无上周数据，继续记录下去可以看到变化。'
+          : '本周与上周冲突频率持平。'
+    },
+    {
+      icon: '💬',
+      name: '沟通求助',
+      badge: commsInd.css === 'up'   ? { label: '增加', cls: 'improving' }
+           : commsInd.css === 'down' ? { label: '减少', cls: 'neutral' }
+           : { label: '稳定', cls: 'neutral' },
+      desc: commsThis > 0 ? '你本周有联系顾问，说明对孩子行为有主动跟进意识。'
+          : records.length === 1 ? '这是你第一次记录。继续使用，系统会追踪沟通变化。'
+          : '本周未联系顾问，遇到困惑时欢迎随时发送报告编号。'
+    },
+    {
+      icon: '🔍',
+      name: '理解程度',
+      badge: underInd.css === 'down' ? { label: '上升', cls: 'improving' }
+           : underInd.css === 'up'   ? { label: '仍需关注', cls: 'watch' }
+           : { label: '稳定', cls: 'neutral' },
+      desc: underThis > 0 ? `本周关注了${underThis}次情绪相关行为，持续关注有助于提升理解深度。`
+          : '继续记录孩子行为，理解深度会随时间提升。'
+    }
+  ];
+}
+
+// ── 渲染第一次访问占位 ──────────────────────────────
+function renderFirstVisit(container) {
+  container.innerHTML = `
+    <div class="retention-first">
+      <div class="retention-first-icon">📝</div>
+      <div class="retention-first-text">
+        这是你第一次记录孩子行为。<br>
+        下次再来时，这里会自动显示「本周 vs 上周」的行为变化对比。
+      </div>
+      <div class="retention-first-cta">坚持记录 → 看见孩子的成长轨迹</div>
+    </div>`;
+}
+
+// ── 渲染行为对比 ─────────────────────────────────────
+function renderComparison(container, thisWeek, lastWeek) {
+  const thisC = countTypes(thisWeek);
+  const lastC = countTypes(lastWeek);
+  const rows = [
+    { label: '😤 情绪敏感行为', key: 'emotional' },
+    { label: '⚡ 自主冲突行为', key: 'control' },
+    { label: '🔇 压力回避行为', key: 'avoidance' }
+  ];
+  let html = `
+    <div style="font-size:12px;color:var(--ink-40);margin-bottom:10px;display:flex;justify-content:flex-end;gap:16px">
+      <span>本周</span><span>上周</span><span style="min-width:60px;text-align:center">变化</span>
+    </div>
+    <div class="compare-grid">`;
+  rows.forEach(row => {
+    const tv = thisC[row.key], lv = lastC[row.key];
+    const ind = indicator(tv, lv);
+    html += `
+      <div class="compare-row">
+        <div class="compare-label">${row.label}</div>
+        <div class="compare-vals">
+          <span class="compare-num">${tv}次</span>
+          <span style="color:var(--ink-20)">vs</span>
+          <span class="compare-num">${lv}次</span>
+          <span class="compare-arrow ${ind.css}">${ind.arrow}</span>
+          <span class="compare-tag ${ind.css}">${ind.tag}</span>
+        </div>
+      </div>`;
+  });
+  html += `</div>`;
+  container.innerHTML = html;
+}
+
+// ── 渲染情绪周期 ─────────────────────────────────────
+function renderEmotionCycle(container, records) {
+  if (!records.length) {
+    container.innerHTML = '<div style="font-size:13px;color:var(--ink-40)">暂无足够数据，记录更多行为后可以看到周期变化。</div>';
+    return;
+  }
+  const cycle = buildEmotionCycle(records);
+  let html = '<div class="emotion-cycle">';
+  cycle.forEach(day => {
+    const w = day.pct || 0;
+    const isEmpty = day.cnt === 0;
+    html += `
+      <div class="emotion-day">
+        <div class="emotion-day-label">${day.label}</div>
+        <div class="emotion-bar-wrap">
+          <div class="emotion-bar ${isEmpty ? '' : day.level}" style="width:${Math.max(w, isEmpty ? 0 : 4)}%"></div>
+        </div>
+        <div class="emotion-day-lv">${isEmpty ? '' : day.levelLabel}</div>
+      </div>`;
+  });
+  html += `</div>
+    <div class="emotion-legend">
+      <div class="legend-item"><div class="legend-dot" style="background:#C86A4A"></div>高频</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--amber)"></div>中频</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--ok)"></div>低频</div>
+    </div>`;
+  container.innerHTML = html;
+}
+
+// ── 渲染家庭关系趋势 ─────────────────────────────────
+function renderFamilyTrend(container, trends) {
+  let html = '<div class="trend-list">';
+  trends.forEach(t => {
+    html += `
+      <div class="trend-item">
+        <div class="trend-icon">${t.icon}</div>
+        <div>
+          <div class="trend-name">${t.name}<span class="trend-badge ${t.badge.cls}">${t.badge.label}</span></div>
+          <div class="trend-desc">${t.desc}</div>
+        </div>
+      </div>`;
+  });
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+// ── 渲染企业微信触达提示 ─────────────────────────────
+function renderWechatNudge(all, thisWeek) {
+  const nudge = document.getElementById('wechat-nudge');
+  if (!nudge) return;
+  // Show nudge if user has 2+ records or has records this week
+  if (all.length >= 2 || thisWeek.length >= 1) {
+    nudge.style.display = 'flex';
+    const titleEl = document.getElementById('nudge-title');
+    const textEl  = document.getElementById('nudge-text');
+    if (thisWeek.length >= 2) {
+      if (titleEl) titleEl.textContent = '本周已记录' + thisWeek.length + '次行为变化';
+      if (textEl)  textEl.textContent  = '孩子行为本周有多次变化，顾问可以根据这些记录提供更精准的解读。发送报告编号即可获取最新分析。';
+    } else if (all.length >= 2) {
+      if (titleEl) titleEl.textContent = '孩子行为有新变化';
+      if (textEl)  textEl.textContent  = '与上次记录相比，是否需要顾问更新分析？把最新报告编号（' + (gReportId || '') + '）发给顾问即可。';
+    }
+  }
+}
+
+// ── 主函数：构建整个留存模块 ──────────────────────────
+function buildRetentionModule() {
+  const container = document.getElementById('retention-content');
+  if (!container) return;
+
+  const all = getAllLeads();
+  const { thisWeek, lastWeek } = splitByWeek(all);
+  const hasHistory = all.length >= 2;
+
+  if (!hasHistory) {
+    // First visit — show placeholder
+    renderFirstVisit(container);
+    return;
+  }
+
+  // Build full module with all 4 sub-sections
+  const sections = [
+    { id: 'compare-sec',  title: '本周 vs 上周', subtitle: '行为对比' },
+    { id: 'cycle-sec',    title: '情绪活跃周期', subtitle: '近7天行为分布' },
+    { id: 'family-sec',   title: '家庭关系趋势', subtitle: '综合变化' }
+  ];
+
+  container.innerHTML = sections.map(s => `
+    <div style="margin-bottom:20px">
+      <div style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--amber);margin-bottom:6px">${s.subtitle}</div>
+      <div style="font-size:14px;font-weight:600;color:var(--ink);margin-bottom:10px">${s.title}</div>
+      <div id="${s.id}"></div>
+    </div>`).join('<div style="height:1px;background:var(--ink-10);margin:16px 0"></div>');
+
+  renderComparison(document.getElementById('compare-sec'), thisWeek, lastWeek);
+  renderEmotionCycle(document.getElementById('cycle-sec'), all.slice(-14)); // last 14 days
+  renderFamilyTrend(document.getElementById('family-sec'), buildFamilyTrend(all, thisWeek, lastWeek));
+
+  // WeChat nudge
+  renderWechatNudge(all, thisWeek);
+}
+
+// ── Init ───────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', function() {
+  // Get reportId from URL
+  const params = new URLSearchParams(window.location.search);
+  gReportId = params.get('id') || '';
+
+  // Get behavior + type from localStorage
+  try {
+    const stored = JSON.parse(localStorage.getItem(BEH_KEY) || '{}');
+    gBehavior = stored.behavior || '';
+  } catch(e) {}
+
+  // Get type from leads store
+  try {
+    if (gReportId) {
+      const all = JSON.parse(localStorage.getItem(LEADS_KEY) || '[]');
+      const rec = all.find(r => r.reportId === gReportId);
+      if (rec) gType = rec.behaviorType || 'emotional';
+    }
+  } catch(e) {}
+  if (!gType) gType = 'emotional';
+
+  // Fallback: if no reportId, generate one
+  if (!gReportId) {
+    const now = new Date();
+    const d = now.toISOString().slice(0,10).replace(/-/g,'');
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    let rand = '';
+    for (let i = 0; i < 4; i++) rand += chars[Math.floor(Math.random() * chars.length)];
+    gReportId = 'AIPIWEN-' + d + '-' + rand;
+  }
+
+  buildReport(gReportId, gBehavior, gType);
+  updateLead({ clickedFullReport: true });
+
+  // ── Build retention module after report is built ──
+  buildRetentionModule();
+});
+</script>
+</body>
+</html>

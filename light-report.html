@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>AI 理解报告 · AIPIWEN</title>
+<style>
+:root {
+  --cream:      #FDFCF8;
+  --cream-deep: #F5F3EE;
+  --ink:        #1A1714;
+  --ink-70:     #4A4540;
+  --ink-40:     #8C8580;
+  --ink-20:     #C8C3BC;
+  --ink-10:     #EAE7E2;
+  --amber:      #C2692A;
+  --amber-soft: #F5EDE4;
+  --amber-glow: rgba(194,105,42,.12);
+  --ok:         #3A7D5E;
+  --font-serif: Georgia, 'Noto Serif SC', 'Source Han Serif SC', serif;
+  --font-sans:  -apple-system, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  --ease: cubic-bezier(.4,0,.2,1);
+}
+*,*::before,*::after { box-sizing: border-box; margin: 0; padding: 0; }
+html,body { font-family: var(--font-sans); background: var(--cream); color: var(--ink); -webkit-font-smoothing: antialiased; min-height: 100vh; }
+
+/* NAV */
+.top-nav {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--ink-10);
+  background: rgba(253,252,248,.94);
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  position: sticky; top: 0; z-index: 10;
+}
+.nav-back { display: flex; align-items: center; gap: 5px; font-size: 14px; color: var(--ink-40); cursor: pointer; text-decoration: none; }
+.nav-back svg { width: 18px; height: 18px; }
+.nav-wordmark { font-size: 13px; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; color: var(--ink); }
+
+/* LOADING */
+#screen-loading {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  min-height: calc(100vh - 57px); padding: 40px 24px;
+  text-align: center;
+}
+.loading-orb {
+  width: 64px; height: 64px; border-radius: 50%;
+  background: conic-gradient(var(--amber) 0deg, var(--amber-soft) 360deg);
+  animation: spin 1.1s linear infinite;
+  margin-bottom: 24px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-title { font-family: var(--font-serif); font-size: 22px; color: var(--ink); font-weight: normal; margin-bottom: 10px; }
+.loading-sub { font-size: 14px; color: var(--ink-40); line-height: 1.7; }
+.loading-steps { margin-top: 24px; text-align: left; }
+.loading-step {
+  display: flex; align-items: center; gap: 10px;
+  font-size: 13px; color: var(--ink-40); padding: 6px 0;
+  opacity: 0; animation: fadeStep .5s ease forwards;
+}
+.loading-step.done { color: var(--ok); }
+.loading-step .step-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--ink-10); flex-shrink: 0;
+}
+.loading-step.done .step-dot { background: var(--ok); }
+@keyframes fadeStep { from { opacity:0; transform: translateX(-8px); } to { opacity:1; transform: none; } }
+
+/* REPORT */
+#screen-report { display: none; }
+.page-wrap { max-width: 520px; margin: 0 auto; padding: 32px 24px 80px; }
+
+.report-header {
+  text-align: center; padding: 28px 0 24px;
+  border-bottom: 1px solid var(--ink-10); margin-bottom: 28px;
+}
+.report-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--amber-soft); border-radius: 20px; padding: 5px 14px;
+  font-size: 11px; font-weight: 700; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--amber); margin-bottom: 14px;
+}
+.report-title {
+  font-family: var(--font-serif); font-size: 26px; line-height: 1.3;
+  color: var(--ink); font-weight: normal; margin-bottom: 8px;
+}
+.report-title em { font-style: italic; color: var(--amber); }
+.report-behavior-quote {
+  font-size: 13px; color: var(--ink-40); font-style: italic;
+  padding: 10px 16px; background: var(--cream-deep); border-radius: 10px;
+  margin-top: 10px; line-height: 1.6;
+}
+.report-behavior-quote::before { content: '"'; }
+.report-behavior-quote::after  { content: '"'; }
+
+/* INSIGHT SECTIONS */
+.insight-section {
+  background: white; border: 1px solid var(--ink-10);
+  border-radius: 16px; padding: 22px 20px; margin-bottom: 16px;
+}
+.insight-eyebrow {
+  font-size: 10px; font-weight: 700; letter-spacing: .14em;
+  text-transform: uppercase; color: var(--amber); margin-bottom: 10px;
+}
+.insight-heading {
+  font-family: var(--font-serif); font-size: 18px;
+  color: var(--ink); font-weight: normal; margin-bottom: 10px;
+}
+.insight-body { font-size: 14px; line-height: 1.8; color: var(--ink-70); }
+
+/* TYPE BADGE */
+.type-badge-wrap { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0 4px; }
+.type-badge {
+  padding: 6px 14px; border-radius: 20px;
+  font-size: 13px; font-weight: 600;
+}
+.type-badge.active { background: var(--amber); color: white; }
+.type-badge.inactive { background: var(--ink-10); color: var(--ink-40); }
+
+/* SUMMARY CARD */
+.summary-card {
+  background: var(--amber); border-radius: 16px;
+  padding: 22px 20px; margin-bottom: 28px; color: white;
+}
+.summary-eyebrow {
+  font-size: 10px; font-weight: 700; letter-spacing: .14em;
+  text-transform: uppercase; opacity: .7; margin-bottom: 10px;
+}
+.summary-text {
+  font-family: var(--font-serif); font-size: 20px;
+  line-height: 1.45; font-weight: normal;
+}
+
+/* CTA */
+.cta-section { margin-top: 8px; }
+.cta-main {
+  display: block; width: 100%; padding: 18px 24px;
+  background: var(--ink); color: white;
+  border: none; border-radius: 16px;
+  font-family: var(--font-sans); font-size: 17px; font-weight: 700;
+  cursor: pointer; text-align: center; text-decoration: none;
+  box-shadow: 0 6px 20px rgba(26,23,20,.25);
+  transition: transform .18s, box-shadow .18s;
+}
+.cta-main:active { transform: scale(.97); }
+.cta-note { text-align: center; font-size: 12px; color: var(--ink-40); margin-top: 10px; line-height: 1.6; }
+</style>
+</head>
+<body>
+
+<nav class="top-nav">
+  <a class="nav-back" href="behavior-input.html">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M19 12H5M12 5l-7 7 7 7"/>
+    </svg>
+    返回
+  </a>
+  <div class="nav-wordmark">AIPIWEN</div>
+  <div style="width:40px"></div>
+</nav>
+
+<!-- LOADING -->
+<div id="screen-loading">
+  <div class="loading-orb"></div>
+  <div class="loading-title">AI 正在理解孩子的行为…</div>
+  <div class="loading-sub">这不是翻译，是换一种视角看见孩子</div>
+  <div class="loading-steps" id="loading-steps"></div>
+</div>
+
+<!-- REPORT -->
+<div id="screen-report">
+  <div class="page-wrap">
+
+    <div class="report-header">
+      <div class="report-badge">AI 轻报告</div>
+      <h1 class="report-title" id="report-title">行为 = <em>内在需求表达</em></h1>
+      <div class="report-behavior-quote" id="behavior-quote"></div>
+    </div>
+
+    <!-- 行为解释 -->
+    <div class="insight-section">
+      <div class="insight-eyebrow">行为解释</div>
+      <h2 class="insight-heading" id="insight-heading-1"></h2>
+      <p class="insight-body" id="insight-body-1"></p>
+    </div>
+
+    <!-- 初步分类 -->
+    <div class="insight-section">
+      <div class="insight-eyebrow">初步分类</div>
+      <div class="type-badge-wrap" id="type-badges"></div>
+      <p class="insight-body" style="margin-top:12px" id="type-desc"></p>
+    </div>
+
+    <!-- 一句话总结 -->
+    <div class="summary-card">
+      <div class="summary-eyebrow">AI 洞察</div>
+      <div class="summary-text" id="summary-text"></div>
+    </div>
+
+    <!-- CTA -->
+    <div class="cta-section">
+      <a class="cta-main" id="cta-link" href="#">👉 查看完整AI行为分析报告</a>
+      <div class="cta-note">完整报告包含行为结构分析、家长误区和三条可执行建议</div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const STORAGE_KEY = 'aipiwen_behavior_input';
+const LEADS_KEY   = 'aipiwen_leads_v02';
+
+// ── Report content by type ─────────────────────────
+const REPORT_CONTENT = {
+  emotional: {
+    label: '情绪敏感',
+    heading: '孩子的激烈反应，是他还没学会用语言表达感受',
+    body: '当孩子情绪爆发时，他不是在"无理取闹"，而是他的感受已经超过了他目前能承受的边界。孩子的神经系统比大人更敏感，情绪调节能力还在发育中——他需要的不是被压制，而是被看见。',
+    summary: '你看到的是情绪失控，但孩子在说：我需要你理解我，而不是要求我立刻停下来。'
+  },
+  control: {
+    label: '自主冲突',
+    heading: '孩子的抵抗，是他在争取被尊重的感觉',
+    body: '孩子"不听话"的背后，往往是自主感需求被长期压制的反应。他不是在对抗你这个人，他是在争取对自己生活的控制权。这是成长过程中正常且健康的信号，说明他开始有了独立意志。',
+    summary: '你看到的是不服从，但孩子在说：我需要有权利做一些自己的决定。'
+  },
+  avoidance: {
+    label: '压力回避',
+    heading: '沉默或逃避是孩子在保护自己，说明压力已经超载',
+    body: '当孩子选择沉默、沉迷手机或逃避沟通时，这不是冷漠，而是一种自我保护机制。他正在用能力范围内唯一可行的方式来调节超过承载极限的压力。强行拉回对话可能会让他更封闭。',
+    summary: '你看到的是逃避和冷漠，但孩子在说：我现在没有能力处理更多了，让我先喘口气。'
+  }
+};
+
+// ── Classify behavior ──────────────────────────────
+function classifyBehavior(text) {
+  const t = text;
+  if (/发脾气|哭|情绪|崩溃|大叫|暴躁|烦躁|委屈|难过|难受|敏感/.test(t)) return 'emotional';
+  if (/不写作业|不听|叛逆|顶嘴|对抗|抵抗|不服从|反抗|固执|争执/.test(t)) return 'control';
+  if (/沉默|不说话|沉迷手机|沉迷游戏|躲避|回避|逃避|不回应|关门|不出门/.test(t)) return 'avoidance';
+  // fallback heuristic
+  if (/作业|学习|上学|功课/.test(t)) return 'control';
+  if (/手机|游戏|电视|网络/.test(t)) return 'avoidance';
+  return 'emotional';
+}
+
+// ── Generate reportId ──────────────────────────────
+function generateReportId() {
+  const now = new Date();
+  const d = now.toISOString().slice(0,10).replace(/-/g,'');
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let rand = '';
+  for (let i = 0; i < 4; i++) rand += chars[Math.floor(Math.random() * chars.length)];
+  return 'AIPIWEN-' + d + '-' + rand;
+}
+
+// ── Save to leads ──────────────────────────────────
+function saveLead(reportId, behavior, type) {
+  try {
+    const all = JSON.parse(localStorage.getItem(LEADS_KEY) || '[]');
+    const rec = {
+      reportId,
+      createdAt: new Date().toISOString(),
+      sourceUrl: window.location.href,
+      userInputBehavior: behavior,
+      behaviorType: type,
+      fromLightReport: true,
+      leadScore: '低意向',
+      leadReason: '轻报告生成'
+    };
+    const idx = all.findIndex(r => r.reportId === reportId);
+    if (idx >= 0) all[idx] = rec; else all.push(rec);
+    localStorage.setItem(LEADS_KEY, JSON.stringify(all));
+  } catch(e) {}
+}
+
+// ── Loading animation ──────────────────────────────
+const STEPS = [
+  '读取孩子行为描述…',
+  '识别行为背后的需求信号…',
+  '比对亲子关系模式库…',
+  '生成理解报告…'
+];
+
+function runLoading(callback) {
+  const container = document.getElementById('loading-steps');
+  let i = 0;
+  function addStep() {
+    if (i >= STEPS.length) {
+      setTimeout(callback, 400);
+      return;
+    }
+    const el = document.createElement('div');
+    el.className = 'loading-step';
+    el.style.animationDelay = (i * 0.1) + 's';
+    el.innerHTML = `<div class="step-dot"></div>${STEPS[i]}`;
+    container.appendChild(el);
+    setTimeout(() => { el.classList.add('done'); }, 300);
+    i++;
+    setTimeout(addStep, 650);
+  }
+  addStep();
+}
+
+// ── Build and show report ──────────────────────────
+function showReport(behavior, reportId) {
+  const type = classifyBehavior(behavior);
+  const content = REPORT_CONTENT[type];
+
+  // Save to localStorage
+  saveLead(reportId, behavior, type);
+
+  // Set report DOM
+  document.getElementById('behavior-quote').textContent = behavior;
+  document.getElementById('insight-heading-1').textContent = content.heading;
+  document.getElementById('insight-body-1').textContent   = content.body;
+  document.getElementById('summary-text').textContent     = content.summary;
+
+  // Type badges
+  const allTypes = [
+    { key:'emotional', label:'情绪敏感' },
+    { key:'control',   label:'自主冲突' },
+    { key:'avoidance', label:'压力回避' }
+  ];
+  const badgeWrap = document.getElementById('type-badges');
+  allTypes.forEach(t => {
+    const b = document.createElement('div');
+    b.className = 'type-badge ' + (t.key === type ? 'active' : 'inactive');
+    b.textContent = t.label;
+    badgeWrap.appendChild(b);
+  });
+  document.getElementById('type-desc').textContent =
+    `AI 初步判断：这个行为模式属于「${content.label}」类型。完整报告会提供更详细的分析。`;
+
+  // CTA link
+  document.getElementById('cta-link').href = 'full-report.html?id=' + encodeURIComponent(reportId);
+
+  // Show report screen
+  document.getElementById('screen-loading').style.display = 'none';
+  document.getElementById('screen-report').style.display  = 'block';
+}
+
+// ── Init ───────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', function() {
+  // Read behavior from localStorage
+  let behavior = '';
+  try {
+    const stored = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+    behavior = stored.behavior || '';
+  } catch(e) {}
+
+  if (!behavior) {
+    // No behavior stored — redirect back
+    window.location.href = 'behavior-input.html';
+    return;
+  }
+
+  // Generate reportId
+  const reportId = generateReportId();
+
+  // Run loading animation then show report
+  runLoading(function() {
+    showReport(behavior, reportId);
+  });
+});
+</script>
+</body>
+</html>
