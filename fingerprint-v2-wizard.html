@@ -1135,7 +1135,7 @@ body {
           <div class="wn">侧向斗</div>
         </div>
         <div class="s6-whorl-card" data-type="Wsp-r" onclick="s6WSelect('rt','Wsp-r')">
-          <img src="patterns/Wsp.jpg" class="zoomable" onclick="event.stopPropagation();showZoom('patterns/Wsp.jpg','反侧向斗（Wsp-r）')">
+          <img src="patterns/Wsp-r.jpg" class="zoomable" onclick="event.stopPropagation();showZoom('patterns/Wsp-r.jpg','反侧向斗（Wsp-r）')">
           <div class="wn">反侧向斗</div>
         </div>
       </div>
@@ -1190,7 +1190,7 @@ body {
           <div class="wn">侧向斗</div>
         </div>
         <div class="s6-whorl-card" data-type="Wsp-r" onclick="s6WSelect('lt','Wsp-r')">
-          <img src="patterns/Wsp.jpg" class="zoomable" onclick="event.stopPropagation();showZoom('patterns/Wsp.jpg','反侧向斗（Wsp-r）')">
+          <img src="patterns/Wsp-r.jpg" class="zoomable" onclick="event.stopPropagation();showZoom('patterns/Wsp-r.jpg','反侧向斗（Wsp-r）')">
           <div class="wn">反侧向斗</div>
         </div>
       </div>
@@ -1661,8 +1661,10 @@ function s6SetThumbType(hand, type) {
 function s6UpdateBtn() {
   const rt = state.data.rtThumb;
   const lt = state.data.ltThumb;
-  // Both must be set and if W, must be a specific subtype (not null)
-  document.getElementById('s6-btn').disabled = !(rt && lt);
+  const btn = document.getElementById('s6-btn');
+  btn.disabled = !(rt && lt);
+  // 快速通道路径直接出结果，不进 S7，按钮文字相应调整
+  btn.textContent = state.allTenWhorls ? '确认，查看我的天赋报告' : '确认，看其他手指的斗';
 }
 
 function s6Back() {
@@ -1906,7 +1908,7 @@ function generateReport(result) {
     career = '<p><strong>推荐方向：</strong>产品经理、咨询顾问、团队领导、自媒体创作者、活动策划、创业联合创始人。整合多方资源、适应多变场景——正是你的舞台。</p>';
     advice = '<p><strong>给家长的建议：</strong>这个孩子需要"尊重 + 引导"并重。他/她有自己的想法（斗纹特质），同时高度依赖榜样（箕纹特质）。<strong>以身作则 + 尊重孩子意见</strong>，双管齐下效果最好。</p>';
   } else if (key === 'combo_open') {
-    talents = '主导天赋 + 海绵吸收力 · 踏实肯干 · 主见与执行兼备';
+    talents = '主导天赋 · 海绵吸收力 · 踏实肯干 · 主见执行兼备';
     advantage = '<p>你的主导纹型（大拇指）决定了核心天赋方向，而弧形纹出现在食指（或其他手指）上，赋予了你<strong>额外的开放性和落地执行力</strong>。</p><p>弧形纹代表"海绵特质"——高度开放、踏实肯干、乐于吸收。与主导天赋结合，让你既有方向感和主见，又能认真落地执行。这是"想得到 + 做得到"的组合，在实战中极为稀缺。</p>';
     learning = '<p><strong>先思考后执行</strong>是你的最佳节奏：先发挥主导天赋设定方向，再发挥开放型特质认真落地。<strong>结构化练习</strong>对你很有效（来自弧形纹特质），同时要设定有意义的目标激发主导天赋。</p>';
     career = '<p><strong>推荐方向：</strong>技术负责人、项目执行经理、独立开发者、工程师、医疗专业人才、法务专员。在需要"既有主见又能踏实执行"的角色中你最能发光。</p>';
@@ -1992,7 +1994,14 @@ ${els}
 }
 
 async function generatePoster() {
+  const shareBtn = document.querySelector('.btn-share');
+  if (shareBtn && shareBtn.disabled) return;
+  if (shareBtn) { shareBtn.disabled = true; shareBtn.textContent = '生成中…'; }
+
   const result = window._currentResult || classify();
+  const _restoreBtn = () => {
+    if (shareBtn) { shareBtn.disabled = false; shareBtn.textContent = '生成分享海报'; }
+  };
 
   // humanName = 海报主展示名（人话版）；hook = 钩子标题；benefit = 收益一行
   const PCFG = {
@@ -2041,7 +2050,8 @@ async function generatePoster() {
     const tmp = document.createElement('div');
     tmp.style.cssText = 'position:fixed;left:-9999px;top:-9999px;width:80px;height:80px';
     document.body.appendChild(tmp);
-    new QRCode(tmp, { text:'https://aipiwen.cn', width:80, height:80, colorDark:'#1A1714', colorLight:'#FFFFFF', correctLevel: QRCode.CorrectLevel.L });
+    const qrUrl = `https://aipiwen.cn?utm_source=poster&utm_medium=share&utm_campaign=fp&type=${result.key}`;
+    new QRCode(tmp, { text:qrUrl, width:80, height:80, colorDark:'#1A1714', colorLight:'#FFFFFF', correctLevel: QRCode.CorrectLevel.L });
     setTimeout(() => {
       const canvas = tmp.querySelector('canvas');
       if (canvas) { const c=document.createElement('canvas'); c.width=80; c.height=80; c.getContext('2d').drawImage(canvas,0,0); qrDataUrl=c.toDataURL(); }
@@ -2063,6 +2073,8 @@ async function generatePoster() {
     preview.innerHTML = `<img src="${canvas.toDataURL('image/png')}" style="max-width:100%;border-radius:12px;display:block;" alt="分享海报">`;
   } catch(e) {
     preview.innerHTML = '<div style="padding:40px;text-align:center;color:#e74c3c">海报生成失败，请重试</div>';
+  } finally {
+    _restoreBtn();
   }
 }
 
