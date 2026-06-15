@@ -90,6 +90,33 @@
   .eng-val.warn{color:#C2692A}
   .eng-val.bad{color:#e53e3e}
   #no-analytics{padding:32px;text-align:center;color:#aaa;font-size:13px;background:white;border-radius:12px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+
+  /* ── Growth Dashboard ── */
+  .growth-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:0}
+  @media(max-width:800px){.growth-grid{grid-template-columns:1fr}}
+  .growth-panel{background:white;border-radius:12px;padding:18px 20px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+  .growth-panel-title{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#888;margin-bottom:14px}
+  /* Funnel */
+  .funnel-row{display:flex;align-items:center;gap:10px;margin-bottom:9px;font-size:12px}
+  .funnel-label{width:72px;color:#555;flex-shrink:0;font-size:11px}
+  .funnel-bar-wrap{flex:1;position:relative;height:20px;background:#F0EDE8;border-radius:4px;overflow:hidden}
+  .funnel-bar-fill{height:100%;border-radius:4px;background:#C2692A;transition:width .5s}
+  .funnel-count{width:36px;text-align:right;font-weight:700;color:#1A1714;flex-shrink:0}
+  .funnel-drop{width:42px;font-size:11px;color:#999;flex-shrink:0;text-align:right}
+  .funnel-drop.high{color:#e53e3e}
+  /* Type table */
+  .type-table{width:100%;border-collapse:collapse;font-size:12px}
+  .type-table th{text-align:left;color:#888;font-weight:600;padding:5px 8px;border-bottom:1px solid #F0EDE8;font-size:11px;text-transform:uppercase;letter-spacing:.05em}
+  .type-table td{padding:7px 8px;border-bottom:1px solid #F5F3EF;color:#333}
+  .type-table tr:last-child td{border-bottom:none}
+  .virality-bar{display:inline-block;height:8px;border-radius:4px;background:#C2692A;margin-left:4px;vertical-align:middle}
+  /* Attribution */
+  .attr-row{display:flex;align-items:center;gap:10px;margin-bottom:8px;font-size:12px}
+  .attr-src{width:80px;color:#555;flex-shrink:0;font-size:11px;text-transform:uppercase;font-weight:600}
+  .attr-bar-wrap{flex:1;height:16px;background:#F0EDE8;border-radius:4px;overflow:hidden}
+  .attr-bar-fill{height:100%;border-radius:4px;background:#C2692A;opacity:.75}
+  .attr-count{width:30px;text-align:right;font-weight:700;color:#1A1714;flex-shrink:0;font-size:12px}
+  .no-growth{padding:24px;text-align:center;color:#aaa;font-size:12px;background:white;border-radius:12px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
 </style>
 </head>
 <body>
@@ -123,6 +150,12 @@
 
   <!-- Table -->
   <div class="table-wrap" id="table-wrap"></div>
+
+  <!-- Growth Dashboard -->
+  <div class="section-title">增长漏斗 &amp; 类型表现</div>
+  <div id="growth-panel-wrap">
+    <div class="no-growth">暂无追踪数据<br><small>用户完成皮纹测评后，转化漏斗数据将出现在这里</small></div>
+  </div>
 
   <!-- Analytics & Retention Dashboard -->
   <div class="section-title">留存 &amp; 参与度分析</div>
@@ -348,6 +381,86 @@ function showToast(msg) {
 // 初始渲染
 render();
 </script>
+<script src="js/growth-tracker.js"></script>
+<script>
+// ── 增长漏斗 & 类型表现 Dashboard ─────────────────────────────────────
+function renderGrowthDashboard() {
+  const wrap = document.getElementById('growth-panel-wrap');
+  if (typeof GT === 'undefined') { return; }
+
+  const dash = GT.getDashboard();
+  const { funnel, typePerf, attribution } = dash;
+
+  // Only render if there's any data
+  const totalPageOpen = (funnel.find(f => f.step === 'page_open') || {}).count || 0;
+  if (totalPageOpen === 0) return;
+
+  // ── Funnel section ──────────────────────────────────────────────────────────
+  const maxCount = Math.max(...funnel.map(f => f.count), 1);
+  const funnelRows = funnel.map(f => {
+    const w = Math.round((f.count / maxCount) * 100);
+    const dropClass = f.dropoff >= 50 ? 'high' : '';
+    const dropLabel = f.dropoff > 0 ? `-${f.dropoff}%` : '';
+    return `<div class="funnel-row">
+      <div class="funnel-label">${f.label}</div>
+      <div class="funnel-bar-wrap"><div class="funnel-bar-fill" style="width:${w}%"></div></div>
+      <div class="funnel-count">${f.count}</div>
+      <div class="funnel-drop ${dropClass}">${dropLabel}</div>
+    </div>`;
+  }).join('');
+
+  // ── Type performance table ──────────────────────────────────────────────────
+  const typeRows = typePerf.length === 0
+    ? '<tr><td colspan="5" style="text-align:center;color:#aaa;padding:16px">暂无类型数据</td></tr>'
+    : typePerf.map(t => {
+        const vBar = `<span class="virality-bar" style="width:${Math.min(t.virality, 100)}px"></span>`;
+        return `<tr>
+          <td style="font-weight:600;color:#C2692A">${t.key}</td>
+          <td>${t.views}</td>
+          <td>${t.shares}</td>
+          <td>${t.wecom}</td>
+          <td>${t.virality}%${vBar}</td>
+        </tr>`;
+      }).join('');
+
+  // ── Attribution section ─────────────────────────────────────────────────────
+  const attrTotal = attribution.reduce((s, a) => s + a.count, 0) || 1;
+  const attrRows = attribution.length === 0
+    ? '<div style="color:#aaa;font-size:12px;padding:12px 0">暂无来源数据</div>'
+    : attribution.map(a => {
+        const w = Math.round((a.count / attrTotal) * 100);
+        return `<div class="attr-row">
+          <div class="attr-src">${a.source}</div>
+          <div class="attr-bar-wrap"><div class="attr-bar-fill" style="width:${w}%"></div></div>
+          <div class="attr-count">${a.count}</div>
+        </div>`;
+      }).join('');
+
+  wrap.innerHTML = `
+    <div class="growth-grid">
+      <div class="growth-panel">
+        <div class="growth-panel-title">转化漏斗</div>
+        ${funnelRows}
+      </div>
+      <div>
+        <div class="growth-panel" style="margin-bottom:16px">
+          <div class="growth-panel-title">类型病毒力排名（分享率）</div>
+          <table class="type-table">
+            <thead><tr><th>类型</th><th>查看</th><th>分享</th><th>咨询</th><th>病毒力</th></tr></thead>
+            <tbody>${typeRows}</tbody>
+          </table>
+        </div>
+        <div class="growth-panel">
+          <div class="growth-panel-title">流量来源</div>
+          ${attrRows}
+        </div>
+      </div>
+    </div>`;
+}
+
+setTimeout(renderGrowthDashboard, 50);
+</script>
+
 <script src="js/aipiwen-core.js"></script>
 <script>
 // ── 留存分析面板 ─────────────────────────────────────

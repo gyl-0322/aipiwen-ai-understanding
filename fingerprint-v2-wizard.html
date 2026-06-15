@@ -1267,7 +1267,7 @@ body {
         </a>
       </div>
       <p class="qr-cta">扫码添加顾问 · 免费咨询</p>
-      <a class="kfid-btn" href="https://work.weixin.qq.com/kfid/kfc6ce446e6e057c683" target="_blank">立即咨询</a>
+      <a class="kfid-btn" href="https://work.weixin.qq.com/kfid/kfc6ce446e6e057c683" target="_blank" onclick="if(window.GT){var r=window._currentResult||{};GT.track('wecom_click',{type:r.key||''});}">立即咨询</a>
     </div>
 
     <div class="result-actions">
@@ -1345,6 +1345,7 @@ body {
     <div class="modal-title">分享海报 <button class="modal-close" onclick="closePoster()">×</button></div>
     <p class="poster-hint" style="font-size:12px;text-align:center;margin-bottom:14px;">长按图片保存，分享给朋友</p>
     <div id="posterPreview"></div>
+    <button id="posterDownloadBtn" onclick="downloadPoster()" style="display:none;margin:14px auto 0;padding:10px 24px;background:#C2692A;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;width:100%;">保存海报到手机</button>
   </div>
 </div>
 
@@ -1414,6 +1415,7 @@ function goBack(to) { showScreen(to); }
 function s1Answer(hasRl) {
   if (!hasRl) {
     state.data.rlFingers.clear();
+    if (window.GT) GT.track('step1_complete', { step: 's1', choice: 'no_rl' });
     showScreen('s2');
   } else {
     document.getElementById('s1-picker').style.display = 'block';
@@ -1434,7 +1436,10 @@ function s1Toggle(idx) {
 }
 
 function s1Confirm() {
-  if (state.data.rlFingers.size > 0) showResult();
+  if (state.data.rlFingers.size > 0) {
+    if (window.GT) GT.track('step1_complete', { step: 's1', choice: 'has_rl' });
+    showResult();
+  }
 }
 
 /* ═══════════════════════════════════════════════
@@ -1687,6 +1692,7 @@ function s2AllWhorls() {
 function s6Next() {
   if (state.allTenWhorls) {
     // Came from 十斗快速通道 — skip s7, go straight to result
+    if (window.GT) GT.track('step2_complete', { step: 's6_allwhorls' });
     showResult();
   } else {
     s7Init();
@@ -1729,9 +1735,13 @@ function s7Back() {
   s6Init();
   showScreen('s6');
 }
-function s7Next() { showResult(); }
+function s7Next() {
+  if (window.GT) GT.track('step2_complete', { step: 's7' });
+  showResult();
+}
 function s7None() {
   state.data.wOtherFingers.clear();
+  if (window.GT) GT.track('step2_complete', { step: 's7_none' });
   showResult();
 }
 
@@ -1945,6 +1955,7 @@ function showResult() {
     const dot = document.getElementById('pd' + i);
     if (dot) dot.className = 'progress-dot done';
   }
+  if (window.GT) GT.track('result_view', { type: result.key });
 }
 
 /* ═══════════════════════════════════════════════
@@ -2061,6 +2072,7 @@ async function generatePoster() {
   document.getElementById('posterQR').src = qrDataUrl;
 
   document.getElementById('posterModal').classList.add('show');
+  if (window.GT) GT.track('poster_open', { type: result.key });
   const preview = document.getElementById('posterPreview');
   preview.innerHTML = '<div style="padding:40px;text-align:center;color:rgba(253,252,248,.3)">正在生成海报…</div>';
 
@@ -2070,11 +2082,29 @@ async function generatePoster() {
       width:375, scale:2, backgroundColor:'#0E0C0A',
       useCORS:true, allowTaint:true, logging:false
     });
-    preview.innerHTML = `<img src="${canvas.toDataURL('image/png')}" style="max-width:100%;border-radius:12px;display:block;" alt="分享海报">`;
+    const dataUrl = canvas.toDataURL('image/png');
+    preview.innerHTML = `<img src="${dataUrl}" style="max-width:100%;border-radius:12px;display:block;" alt="分享海报">`;
+    // Show download button + store dataUrl for download
+    window._posterDataUrl = dataUrl;
+    const dlBtn = document.getElementById('posterDownloadBtn');
+    if (dlBtn) dlBtn.style.display = 'block';
   } catch(e) {
     preview.innerHTML = '<div style="padding:40px;text-align:center;color:#e74c3c">海报生成失败，请重试</div>';
   } finally {
     _restoreBtn();
+  }
+}
+
+function downloadPoster() {
+  const url = window._posterDataUrl;
+  if (!url) return;
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'aipiwen_poster.png';
+  a.click();
+  if (window.GT) {
+    const result = window._currentResult || {};
+    GT.track('poster_share', { method: 'download', type: result.key || '' });
   }
 }
 
@@ -2116,6 +2146,11 @@ function resetWizard() {
 
 /* Init */
 showScreen('s1');
+</script>
+<script src="js/growth-tracker.js"></script>
+<script>
+// Growth tracker init — fires after tracker loads
+if (window.GT) GT.track('page_open');
 </script>
 </body>
 </html>
