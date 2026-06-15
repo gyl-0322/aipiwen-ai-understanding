@@ -593,37 +593,37 @@ body {
   margin: 0 24px; flex-shrink: 0; position: relative; z-index: 1;
 }
 .poster-mini-tag {
-  font-size: 9px; color: rgba(253,252,248,.28); letter-spacing: .35em;
-  text-align: center; padding: 12px 0 6px; position: relative; z-index: 1;
+  font-size: 8.5px; color: rgba(253,252,248,.2); letter-spacing: .45em;
+  text-align: center; padding: 14px 0 8px; position: relative; z-index: 1;
 }
 .poster-hook {
-  font-size: 25px; font-weight: 700; color: #FDFCF8;
-  text-align: center; line-height: 1.45; padding: 2px 32px 0;
-  position: relative; z-index: 1; letter-spacing: .02em;
+  font-size: 19px; font-weight: 400; color: rgba(253,252,248,.9);
+  text-align: center; line-height: 1.75; padding: 0 36px;
+  position: relative; z-index: 1; letter-spacing: .04em;
 }
 .poster-fp-wrap {
   display: flex; justify-content: center; align-items: center;
-  padding: 14px 0 6px; position: relative; z-index: 1; flex-shrink: 0;
+  padding: 16px 0 10px; position: relative; z-index: 1; flex-shrink: 0;
 }
 .poster-type-badge {
   display: flex; justify-content: center;
-  padding: 0 0 8px; position: relative; z-index: 1;
+  padding: 0 0 6px; position: relative; z-index: 1;
 }
 .poster-type-pill {
   display: inline-flex; align-items: center;
-  border: 1px solid var(--pc); border-radius: 24px;
-  padding: 7px 22px; background: rgba(0,0,0,.3);
+  border: 0.5px solid rgba(194,105,42,.45); border-radius: 3px;
+  padding: 6px 18px; background: rgba(0,0,0,.2);
 }
 .poster-type-name {
-  font-size: 17px; font-weight: 600; color: #FDFCF8; letter-spacing: .06em;
+  font-size: 14px; font-weight: 400; color: rgba(253,252,248,.82); letter-spacing: .12em;
 }
-.poster-benefit {
-  font-size: 10px; color: rgba(253,252,248,.38); letter-spacing: .06em; line-height: 1.6;
-  text-align: center; padding: 6px 28px 0; position: relative; z-index: 1;
+.poster-keywords {
+  font-size: 9.5px; color: rgba(194,105,42,.55); letter-spacing: .3em;
+  text-align: center; padding: 5px 0 0; position: relative; z-index: 1;
 }
 .poster-tagline {
-  font-size: 10px; color: rgba(253,252,248,.22); letter-spacing: .18em; line-height: 2;
-  text-align: center; padding: 2px 28px 0; position: relative; z-index: 1;
+  font-size: 9.5px; color: rgba(253,252,248,.18); letter-spacing: .2em; line-height: 2.2;
+  text-align: center; padding: 4px 28px 0; position: relative; z-index: 1;
 }
 .poster-divider {
   display: flex; align-items: center; margin: 14px 24px 12px;
@@ -663,9 +663,9 @@ body {
 }
 .poster-qr-wrap { flex-shrink: 0; background: #FDFCF8; border-radius: 6px; padding: 4px; }
 .poster-qr-wrap img { width: 56px; height: 56px; display: block; }
-.poster-cta { font-size: 13px; font-weight: 600; color: rgba(253,252,248,.88); line-height: 1.4; margin-bottom: 2px; }
-.poster-cta-sub { font-size: 11px; color: rgba(253,252,248,.38); margin-bottom: 4px; }
-.poster-url { font-size: 10px; color: var(--pc); letter-spacing: .12em; }
+.poster-cta { font-size: 11.5px; font-weight: 400; color: rgba(253,252,248,.7); line-height: 1.6; margin-bottom: 3px; }
+.poster-cta-sub { font-size: 10px; color: rgba(253,252,248,.3); margin-bottom: 5px; letter-spacing: .04em; }
+.poster-url { font-size: 9.5px; color: rgba(194,105,42,.5); letter-spacing: .15em; }
 
 /* ─── THUMB CONFIRM (step 6) ─── */
 .thumb-confirm {
@@ -1304,7 +1304,7 @@ body {
         <span class="poster-type-name" id="pType"></span>
       </div>
     </div>
-    <div class="poster-benefit" id="pBenefit"></div>
+    <div class="poster-keywords" id="pKeywords"></div>
     <div class="poster-tagline" id="pTagline"></div>
     <div class="poster-divider">
       <span class="poster-divider-label">核 心 天 赋</span>
@@ -1331,9 +1331,9 @@ body {
         <img id="posterQR" src="" alt="QR">
       </div>
       <div>
-        <div class="poster-cta">测一下</div>
-        <div class="poster-cta-sub">你是不是一直用错了教育方式</div>
-        <div class="poster-url">aipiwen.cn · 免费测试</div>
+        <div class="poster-cta">了解孩子的思维结构</div>
+        <div class="poster-cta-sub">获取一份个性化分析报告</div>
+        <div class="poster-url">aipiwen.cn</div>
       </div>
     </div>
   </div>
@@ -1951,16 +1951,16 @@ function showResult() {
 function _fpSVG(color) {
   // 斗纹：同心椭圆逐层旋转，模拟螺旋状斗形指纹
   const rings = [
-    { rx:10,  ry:8,   rot:0,  op:1.00, sw:1.6 },
-    { rx:18,  ry:14,  rot:6,  op:0.92, sw:1.4 },
-    { rx:28,  ry:21,  rot:11, op:0.84, sw:1.25},
-    { rx:38,  ry:29,  rot:16, op:0.76, sw:1.1 },
-    { rx:49,  ry:37,  rot:20, op:0.67, sw:1.0 },
-    { rx:61,  ry:46,  rot:23, op:0.57, sw:0.9 },
-    { rx:73,  ry:55,  rot:26, op:0.46, sw:0.8 },
-    { rx:86,  ry:64,  rot:27, op:0.34, sw:0.7 },
-    { rx:100, ry:74,  rot:27, op:0.22, sw:0.6 },
-    { rx:114, ry:84,  rot:24, op:0.12, sw:0.5 },
+    { rx:10,  ry:8,   rot:0,  op:0.72, sw:1.2 },
+    { rx:18,  ry:14,  rot:6,  op:0.65, sw:1.05},
+    { rx:28,  ry:21,  rot:11, op:0.58, sw:0.95},
+    { rx:38,  ry:29,  rot:16, op:0.52, sw:0.85},
+    { rx:49,  ry:37,  rot:20, op:0.45, sw:0.8 },
+    { rx:61,  ry:46,  rot:23, op:0.37, sw:0.72},
+    { rx:73,  ry:55,  rot:26, op:0.29, sw:0.65},
+    { rx:86,  ry:64,  rot:27, op:0.21, sw:0.58},
+    { rx:100, ry:74,  rot:27, op:0.14, sw:0.5 },
+    { rx:114, ry:84,  rot:24, op:0.08, sw:0.42},
   ];
   const els = rings.map(({rx,ry,rot,op,sw}) =>
     `<ellipse cx="0" cy="0" rx="${rx}" ry="${ry}" fill="none" stroke="${color}" stroke-width="${sw}" opacity="${op}" transform="rotate(${rot})"/>`
@@ -1968,47 +1968,41 @@ function _fpSVG(color) {
   return `<svg width="250" height="200" viewBox="-125 -100 250 200" xmlns="http://www.w3.org/2000/svg" style="display:block">
 <defs>
   <radialGradient id="fpg" cx="50%" cy="50%" r="50%">
-    <stop offset="0%" stop-color="${color}" stop-opacity="0.32"/>
+    <stop offset="0%" stop-color="${color}" stop-opacity="0.18"/>
     <stop offset="100%" stop-color="${color}" stop-opacity="0"/>
   </radialGradient>
   <radialGradient id="fcg" cx="50%" cy="50%" r="50%">
-    <stop offset="0%" stop-color="${color}" stop-opacity="0.55"/>
-    <stop offset="45%" stop-color="${color}" stop-opacity="0.15"/>
+    <stop offset="0%" stop-color="${color}" stop-opacity="0.32"/>
+    <stop offset="50%" stop-color="${color}" stop-opacity="0.08"/>
     <stop offset="100%" stop-color="${color}" stop-opacity="0"/>
   </radialGradient>
 </defs>
-<!-- 外层光晕 -->
 <ellipse cx="0" cy="0" rx="118" ry="92" fill="url(#fpg)"/>
-<!-- 斗纹同心圈 -->
 ${els}
-<!-- 斗纹两侧三角点 (delta) -->
-<polygon points="-92,0 -84,-9 -84,9" fill="${color}" opacity="0.35"/>
-<polygon points="92,0 84,-9 84,9" fill="${color}" opacity="0.35"/>
-<!-- 中心核心发光 -->
-<ellipse cx="0" cy="0" rx="38" ry="30" fill="url(#fcg)"/>
-<circle cx="0" cy="0" r="5" fill="${color}" opacity="1"/>
-<circle cx="0" cy="0" r="14" fill="${color}" opacity="0.18"/>
+<ellipse cx="0" cy="0" rx="32" ry="25" fill="url(#fcg)"/>
+<circle cx="0" cy="0" r="4" fill="${color}" opacity="0.7"/>
+<circle cx="0" cy="0" r="10" fill="${color}" opacity="0.1"/>
 </svg>`;
 }
 
 async function generatePoster() {
   const result = window._currentResult || classify();
 
-  // humanName = 海报主展示名（人话版）；hook = 钩子标题；benefit = 收益一行
+  // humanName=海报类型名 hook=观察式标题(2行) keywords=1-2词极简标签
   const PCFG = {
-    rl:        { humanName:'反直觉思考型孩子', hook:'越说越不听？\n这不是叛逆，是天生的逆向思维',          benefit:'了解他反向思考的优势，用对方式才能真正影响他',    color:'#C2692A' },
-    super_w_a: { humanName:'天生领袖型孩子',   hook:'十个斗形指纹 万里挑一\n这种孩子天生就是做决策的人',  benefit:'发现他的领导力天赋，避免用管理代替引导',           color:'#D4891A' },
-    super_w_b: { humanName:'多维整合领袖型孩子',hook:'同时处理多件事\n却比别人更清楚目标在哪里',           benefit:'理解他的多线思维，让他真正发挥整合天赋',           color:'#D4891A' },
-    super_w_c: { humanName:'完美标准领袖型孩子',hook:'追求完美不是挑剔\n是他天生设定的认知标准',          benefit:'读懂完美主义背后的驱动力，别把优势变成负担',        color:'#D4891A' },
-    w:         { humanName:'独立主见型孩子',   hook:'孩子总有自己的想法？\n说明他的大脑结构不普通',        benefit:'了解他的思维方式，帮他找到真正适合的学习路径',     color:'#C2692A' },
-    wc:        { humanName:'全局整合型孩子',   hook:'看似什么都想做\n其实他是天生的统筹者',                benefit:'找到他整合信息的天赋，别再逼他只专注一件事',        color:'#C2692A' },
-    perfect_w: { humanName:'高标准完美型孩子', hook:'做事反复修改、永远不满意\n这是天赋，不是缺点',        benefit:'理解完美主义背后的驱动力，不催促不否定才能激发他',  color:'#C2692A' },
-    super_l:   { humanName:'无限接纳型孩子',   hook:'十个正箕纹\n这种孩子天生有无限接纳力',               benefit:'善用他的包容与学习力，引导他找到核心方向',          color:'#C2692A' },
-    l:         { humanName:'超强学习复制型孩子',hook:'学什么像什么\n这种孩子的天赋最被低估',               benefit:'知道他最适合的学习方式，帮他找到值得模仿的榜样',    color:'#C2692A' },
-    x:         { humanName:'踏实执行型孩子',   hook:'不爱出风头、踏实专注\n这种孩子将来最稳',             benefit:'了解他的执行力天赋，别再逼他"表现自己"',           color:'#C2692A' },
-    combo_w:   { humanName:'双重天赋型孩子',   hook:'两种天赋同时存在\n多元潜能等待被激活',               benefit:'找到他真正的优势组合，帮他建立自信',               color:'#C2692A' },
-    combo_w_l: { humanName:'主见学习型孩子',   hook:'主见与学习力并存\n稀有的双重天赋组合',               benefit:'用对方向，他既能独立思考也能快速吸收',              color:'#C2692A' },
-    combo_open:{ humanName:'开放加持型孩子',   hook:'既有主见 又能开放吸收\n这种组合天生适合成长',         benefit:'找到他独特的学习节奏，比单一类型更灵活',           color:'#C2692A' },
+    rl:        { humanName:'反直觉思考型', hook:'一种容易被误解的思维结构\n正在影响亲子之间的沟通方式',    keywords:'独立 · 非线性',  color:'#C2692A' },
+    super_w_a: { humanName:'主导认知型',   hook:'一种少见的主导型思维模式\n在行为上有其独特的呈现方式',   keywords:'主导 · 决策',    color:'#D4891A' },
+    super_w_b: { humanName:'多维整合型',   hook:'多线程信息处理与整合能力\n是这类孩子稳定的认知特征',     keywords:'整合 · 多维',    color:'#D4891A' },
+    super_w_c: { humanName:'精确完美型',   hook:'对精确标准的高敏感性\n形成了这类孩子独特的认知底层',     keywords:'精确 · 完美',    color:'#D4891A' },
+    w:         { humanName:'独立主见型',   hook:'独立于群体判断的思维倾向\n是这类孩子一种稳定的认知特征', keywords:'独立 · 主见',    color:'#C2692A' },
+    wc:        { humanName:'全局整合型',   hook:'并行处理与系统统筹的能力\n在这类孩子身上表现突出',       keywords:'统筹 · 并行',    color:'#C2692A' },
+    perfect_w: { humanName:'高标准认知型', hook:'高标准认知结构在行为层面\n常被解读为挑剔或完美主义',     keywords:'高标准 · 精细',  color:'#C2692A' },
+    super_l:   { humanName:'高接纳共情型', hook:'高度接纳性与共情力\n是这类孩子认知结构的核心底色',       keywords:'接纳 · 共情',    color:'#C2692A' },
+    l:         { humanName:'高效学习型',   hook:'高效学习与快速复制能力\n是这类孩子最稳定的认知特征',     keywords:'学习 · 模仿',    color:'#C2692A' },
+    x:         { humanName:'稳定执行型',   hook:'稳定专注与持续执行力\n在长期任务中有突出表现',           keywords:'专注 · 执行',    color:'#C2692A' },
+    combo_w:   { humanName:'复合认知型',   hook:'双重认知结构并存\n形成了这类孩子独特的思维优势组合',     keywords:'多元 · 复合',    color:'#C2692A' },
+    combo_w_l: { humanName:'主见接纳型',   hook:'主见与接纳能力共存\n形成这类孩子稀有的思维结构',         keywords:'主见 · 接纳',    color:'#C2692A' },
+    combo_open:{ humanName:'开放融合型',   hook:'开放性与主导性并行\n形成灵活的学习与信息处理方式',       keywords:'开放 · 融合',    color:'#C2692A' },
   };
   const cfg = PCFG[result.key] || PCFG['w'];
 
@@ -2027,7 +2021,7 @@ async function generatePoster() {
   // Content
   document.getElementById('pHook').innerHTML = cfg.hook.replace(/\n/g,'<br>');
   document.getElementById('pType').textContent = cfg.humanName;
-  document.getElementById('pBenefit').textContent = cfg.benefit;
+  document.getElementById('pKeywords').textContent = cfg.keywords;
   document.getElementById('pTagline').textContent = result.tagline;
   document.getElementById('pFpWrap').innerHTML = _fpSVG(cfg.color);
 
