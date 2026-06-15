@@ -617,9 +617,13 @@ body {
 .poster-type-name {
   font-size: 17px; font-weight: 600; color: #FDFCF8; letter-spacing: .06em;
 }
+.poster-benefit {
+  font-size: 10px; color: rgba(253,252,248,.38); letter-spacing: .06em; line-height: 1.6;
+  text-align: center; padding: 6px 28px 0; position: relative; z-index: 1;
+}
 .poster-tagline {
-  font-size: 10.5px; color: rgba(253,252,248,.3); letter-spacing: .2em; line-height: 2;
-  text-align: center; padding: 0 28px 0; position: relative; z-index: 1;
+  font-size: 10px; color: rgba(253,252,248,.22); letter-spacing: .18em; line-height: 2;
+  text-align: center; padding: 2px 28px 0; position: relative; z-index: 1;
 }
 .poster-divider {
   display: flex; align-items: center; margin: 14px 24px 12px;
@@ -1300,6 +1304,7 @@ body {
         <span class="poster-type-name" id="pType"></span>
       </div>
     </div>
+    <div class="poster-benefit" id="pBenefit"></div>
     <div class="poster-tagline" id="pTagline"></div>
     <div class="poster-divider">
       <span class="poster-divider-label">核 心 天 赋</span>
@@ -1326,9 +1331,9 @@ body {
         <img id="posterQR" src="" alt="QR">
       </div>
       <div>
-        <div class="poster-cta">长按识别二维码</div>
-        <div class="poster-cta-sub">测测孩子的天赋类型</div>
-        <div class="poster-url">aipiwen.cn</div>
+        <div class="poster-cta">测一下</div>
+        <div class="poster-cta-sub">你是不是一直用错了教育方式</div>
+        <div class="poster-url">aipiwen.cn · 免费测试</div>
       </div>
     </div>
   </div>
@@ -1989,20 +1994,21 @@ ${els}
 async function generatePoster() {
   const result = window._currentResult || classify();
 
+  // humanName = 海报主展示名（人话版）；hook = 钩子标题；benefit = 收益一行
   const PCFG = {
-    rl:         { hook:'逆向思维的孩子\n最容易被误解',           color:'#C2692A' },
-    super_w_a:  { hook:'十指全斗 万里挑一\n天生领袖的指纹印记', color:'#D4891A' },
-    super_w_b:  { hook:'整合天才\n每百人中不足一个',             color:'#D4891A' },
-    super_w_c:  { hook:'极致完美\n卓越天赋的稀有印记',           color:'#D4891A' },
-    w:          { hook:'独立思考的孩子\n天生不随大流',           color:'#C2692A' },
-    wc:         { hook:'双核大脑\n串联信息 整合全局',            color:'#C2692A' },
-    perfect_w:  { hook:'追求极致\n完美主义者的天赋密码',         color:'#C2692A' },
-    super_l:    { hook:'十指箕纹\n无限接纳 奉献天赋',            color:'#C2692A' },
-    l:          { hook:'学什么像什么\n模仿力是最稀缺的天赋',     color:'#C2692A' },
-    x:          { hook:'踏实专注\n简单极致的开放天赋',           color:'#C2692A' },
-    combo_w:    { hook:'双重天赋\n多元潜能等待激活',             color:'#C2692A' },
-    combo_w_l:  { hook:'主见与包容\n两种天赋合为一体',           color:'#C2692A' },
-    combo_open: { hook:'开放吸收力\n每件事都能学得进去',         color:'#C2692A' },
+    rl:        { humanName:'反直觉思考型孩子', hook:'越说越不听？\n这不是叛逆，是天生的逆向思维',          benefit:'了解他反向思考的优势，用对方式才能真正影响他',    color:'#C2692A' },
+    super_w_a: { humanName:'天生领袖型孩子',   hook:'十个斗形指纹 万里挑一\n这种孩子天生就是做决策的人',  benefit:'发现他的领导力天赋，避免用管理代替引导',           color:'#D4891A' },
+    super_w_b: { humanName:'多维整合领袖型孩子',hook:'同时处理多件事\n却比别人更清楚目标在哪里',           benefit:'理解他的多线思维，让他真正发挥整合天赋',           color:'#D4891A' },
+    super_w_c: { humanName:'完美标准领袖型孩子',hook:'追求完美不是挑剔\n是他天生设定的认知标准',          benefit:'读懂完美主义背后的驱动力，别把优势变成负担',        color:'#D4891A' },
+    w:         { humanName:'独立主见型孩子',   hook:'孩子总有自己的想法？\n说明他的大脑结构不普通',        benefit:'了解他的思维方式，帮他找到真正适合的学习路径',     color:'#C2692A' },
+    wc:        { humanName:'全局整合型孩子',   hook:'看似什么都想做\n其实他是天生的统筹者',                benefit:'找到他整合信息的天赋，别再逼他只专注一件事',        color:'#C2692A' },
+    perfect_w: { humanName:'高标准完美型孩子', hook:'做事反复修改、永远不满意\n这是天赋，不是缺点',        benefit:'理解完美主义背后的驱动力，不催促不否定才能激发他',  color:'#C2692A' },
+    super_l:   { humanName:'无限接纳型孩子',   hook:'十个正箕纹\n这种孩子天生有无限接纳力',               benefit:'善用他的包容与学习力，引导他找到核心方向',          color:'#C2692A' },
+    l:         { humanName:'超强学习复制型孩子',hook:'学什么像什么\n这种孩子的天赋最被低估',               benefit:'知道他最适合的学习方式，帮他找到值得模仿的榜样',    color:'#C2692A' },
+    x:         { humanName:'踏实执行型孩子',   hook:'不爱出风头、踏实专注\n这种孩子将来最稳',             benefit:'了解他的执行力天赋，别再逼他"表现自己"',           color:'#C2692A' },
+    combo_w:   { humanName:'双重天赋型孩子',   hook:'两种天赋同时存在\n多元潜能等待被激活',               benefit:'找到他真正的优势组合，帮他建立自信',               color:'#C2692A' },
+    combo_w_l: { humanName:'主见学习型孩子',   hook:'主见与学习力并存\n稀有的双重天赋组合',               benefit:'用对方向，他既能独立思考也能快速吸收',              color:'#C2692A' },
+    combo_open:{ humanName:'开放加持型孩子',   hook:'既有主见 又能开放吸收\n这种组合天生适合成长',         benefit:'找到他独特的学习节奏，比单一类型更灵活',           color:'#C2692A' },
   };
   const cfg = PCFG[result.key] || PCFG['w'];
 
@@ -2020,7 +2026,8 @@ async function generatePoster() {
 
   // Content
   document.getElementById('pHook').innerHTML = cfg.hook.replace(/\n/g,'<br>');
-  document.getElementById('pType').textContent = result.mainType;
+  document.getElementById('pType').textContent = cfg.humanName;
+  document.getElementById('pBenefit').textContent = cfg.benefit;
   document.getElementById('pTagline').textContent = result.tagline;
   document.getElementById('pFpWrap').innerHTML = _fpSVG(cfg.color);
 
