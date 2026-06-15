@@ -384,16 +384,73 @@ render();
 <script src="js/growth-tracker.js"></script>
 <script>
 // ── 增长漏斗 & 类型表现 Dashboard ─────────────────────────────────────
-function renderGrowthDashboard() {
+const FUNNEL_STEPS = [
+  { step: 'page_open',       label: '页面打开' },
+  { step: 'step1_complete',  label: 'Step1 完成' },
+  { step: 'step2_complete',  label: 'Step2 完成' },
+  { step: 'result_view',     label: '查看结果' },
+  { step: 'poster_open',     label: '打开海报' },
+  { step: 'poster_share',    label: '分享海报' },
+  { step: 'wecom_click',     label: '点击咨询' },
+  { step: 'lead_captured',   label: '留资完成' },
+];
+
+async function renderGrowthDashboard() {
   const wrap = document.getElementById('growth-panel-wrap');
-  if (typeof GT === 'undefined') { return; }
 
-  const dash = GT.getDashboard();
-  const { funnel, typePerf, attribution } = dash;
+  // Fetch from server KV
+  let serverData = null;
+  try {
+    const r = await fetch('/api/growth');
+    if (r.ok) serverData = await r.json();
+  } catch (e) {}
 
-  // Only render if there's any data
-  const totalPageOpen = (funnel.find(f => f.step === 'page_open') || {}).count || 0;
-  if (totalPageOpen === 0) return;
+  // Merge: server (persistent) wins; fall back to localStorage GT
+  let rawFunnel = {}, rawTypePerf = {}, rawAttr = {};
+  if (serverData && serverData.kvConnected) {
+    rawFunnel    = serverData.funnel      || {};
+    rawTypePerf  = serverData.typePerf    || {};
+    rawAttr      = serverData.attribution || {};
+  } else if (typeof GT !== 'undefined') {
+    // Fallback: read from localStorage growth-tracker
+    const dash = GT.getDashboard();
+    dash.funnel.forEach(f => { rawFunnel[f.step] = f.count; });
+    dash.typePerf.forEach(t => { rawTypePerf[t.key] = { views: t.views, shares: t.shares, wecom: t.wecom, leads: t.leads }; });
+    dash.attribution.forEach(a => { rawAttr[a.source] = a.count; });
+  }
+
+  // Transform funnel
+  let prev = null;
+  const funnel = FUNNEL_STEPS.map(({ step, label }) => {
+    const count = rawFunnel[step] || 0;
+    const dropoff = prev && prev > 0 ? Math.round((1 - count / prev) * 100) : 0;
+    prev = count || prev;
+    return { step, label, count, dropoff };
+  });
+
+  // Transform typePerf
+  const typePerf = Object.entries(rawTypePerf).map(([key, v]) => ({
+    key,
+    views:    v.views  || 0,
+    shares:   v.shares || 0,
+    wecom:    v.wecom  || 0,
+    leads:    v.leads  || 0,
+    virality: v.views > 0 ? Math.round((v.shares / v.views) * 100) : 0,
+  })).sort((a, b) => b.virality - a.virality);
+
+  // Transform attribution
+  const attribution = Object.entries(rawAttr).map(([source, count]) => ({ source, count }))
+    .sort((a, b) => b.count - a.count);
+
+  const totalPageOpen = rawFunnel['page_open'] || 0;
+  const kvStatus = serverData
+    ? (serverData.kvConnected ? `✅ KV 已连接 · ${serverData.eventCount || 0} 条事件` : '⚠️ KV 未连接（显示本地数据）')
+    : '⚠️ 无法连接服务器';
+
+  if (totalPageOpen === 0) {
+    wrap.innerHTML = `<div class="no-growth">${kvStatus}<br>暂无追踪数据<br><small>用户完成皮纹测评后，漏斗数据将出现在这里</small></div>`;
+    return;
+  }
 
   // ── Funnel section ──────────────────────────────────────────────────────────
   const maxCount = Math.max(...funnel.map(f => f.count), 1);
@@ -437,6 +494,7 @@ function renderGrowthDashboard() {
       }).join('');
 
   wrap.innerHTML = `
+    <div style="font-size:11px;color:#888;margin-bottom:10px;padding:6px 12px;background:#f5f5f0;border-radius:8px;">${kvStatus}</div>
     <div class="growth-grid">
       <div class="growth-panel">
         <div class="growth-panel-title">转化漏斗</div>
@@ -458,7 +516,7 @@ function renderGrowthDashboard() {
     </div>`;
 }
 
-setTimeout(renderGrowthDashboard, 50);
+renderGrowthDashboard();
 </script>
 
 <script src="js/aipiwen-core.js"></script>

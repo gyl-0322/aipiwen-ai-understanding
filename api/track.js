@@ -1,34 +1,57 @@
 /**
- * AIPIWEN Growth Tracker — Server Endpoint v1
- * Vercel serverless function: POST /api/track
+ * AIPIWEN Growth Tracker — Server Endpoint v2
+ * Vercel serverless: POST /api/track
  *
- * In-memory aggregation only (resets on cold start).
- * V2: replace _store with a real database write.
+ * Storage: Vercel KV (Upstash Redis REST API) — persistent across cold starts.
+ * Env vars auto-injected when KV store is linked in Vercel dashboard:
+ *   KV_REST_API_URL
+ *   KV_REST_API_TOKEN
+ *
+ * Redis schema:
+ *   gt:funnel        HASH  { event_name → count }
+ *   gt:attr          HASH  { utm_source  → count }
+ *   gt:type:{key}    HASH  { views, shares, wecom, leads → count }
+ *   gt:types         SET   known type keys (avoids slow KEYS scan)
+ *   gt:events        LIST  JSON strings, newest-first, capped at 2000
  */
 
-// In-memory log (ephemeral)
-const _log = [];
-const _agg = {
-  funnel: {},
-  typePerf: {},
-  attribution: {}
-};
+const MAX_EVENTS = 2000;
 
-const MAX_LOG = 1000; // cap memory usage
+// ── KV helpers ────────────────────────────────────────────────────────────────
 
-export default function handler(req, res) {
-  // CORS for same-origin & WeChat webview
+function kvBase() { return process.env.KV_REST_API_URL || null; }
+function kvToken() { return process.env.KV_REST_API_TOKEN || null; }
+
+/** Run multiple Redis commands in a single HTTP round-trip */
+async function kvPipeline(commands) {
+  const base = kvBase();
+  if (!base) return null; // KV not yet connected — silent degraded mode
+  try {
+    const res = await fetch(`${base}/pipeline`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${kvToken()}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(commands),
+    });
+    if (!res.ok) console.error(`[KV] pipeline HTTP ${res.status}`);
+    return res.ok ? res.json() : null;
+  } catch (e) {
+    console.error('[KV] pipeline error:', e.message);
+    return null;
+  }
+}
+
+// ── Handler ───────────────────────────────────────────────────────────────────
+
+export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
-  if (req.method === 'OPTIONS') {
-    return res.status(204).end();
-  }
-
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
+  if (req.method === 'OPTIONS') return res.status(204).end();
+  if (req.method !== 'POST')   return res.status(405).json({ error: 'Method not allowed' });
 
   let payload;
   try {
@@ -43,28 +66,33 @@ export default function handler(req, res) {
     return res.status(400).json({ error: 'Missing event' });
   }
 
-  // Append to log
-  const entry = { event, meta, session, type, ts: ts || Date.now(), utm, received: Date.now() };
-  _log.push(entry);
-  if (_log.length > MAX_LOG) _log.shift();
+  const src = (utm && utm.source) || 'direct';
+  const entry = JSON.stringify({
+    event, meta, session, type,
+    ts: ts || Date.now(), utm, received: Date.now(),
+  });
 
-  // Aggregate funnel
-  _agg.funnel[event] = (_agg.funnel[event] || 0) + 1;
+  // Always: funnel counter + attribution + event log (capped)
+  const pipeline = [
+    ['HINCRBY', 'gt:funnel', event, 1],
+    ['HINCRBY', 'gt:attr',   src,   1],
+    ['LPUSH',   'gt:events', entry],
+    ['LTRIM',   'gt:events', 0, MAX_EVENTS - 1],
+  ];
 
-  // Type performance
+  // Type-level performance counters
   if (type) {
-    if (!_agg.typePerf[type]) _agg.typePerf[type] = { views: 0, shares: 0, wecom: 0, leads: 0 };
-    if (event === 'result_view')   _agg.typePerf[type].views++;
-    if (event === 'poster_share')  _agg.typePerf[type].shares++;
-    if (event === 'wecom_click')   _agg.typePerf[type].wecom++;
-    if (event === 'lead_captured') _agg.typePerf[type].leads++;
+    const typeKey = `gt:type:${type}`;
+    pipeline.push(['SADD', 'gt:types', type]);
+    if (event === 'result_view')   pipeline.push(['HINCRBY', typeKey, 'views',  1]);
+    if (event === 'poster_share')  pipeline.push(['HINCRBY', typeKey, 'shares', 1]);
+    if (event === 'wecom_click')   pipeline.push(['HINCRBY', typeKey, 'wecom',  1]);
+    if (event === 'lead_captured') pipeline.push(['HINCRBY', typeKey, 'leads',  1]);
   }
 
-  // Attribution
-  const src = (utm && utm.source) || 'direct';
-  _agg.attribution[src] = (_agg.attribution[src] || 0) + 1;
+  await kvPipeline(pipeline);
 
-  console.log(`[GT] ${event} | session=${session} | type=${type || '-'} | src=${src}`);
+  console.log(`[GT v2] ${event} | session=${session || '-'} | type=${type || '-'} | src=${src}`);
 
   return res.status(200).json({ ok: true });
 }
