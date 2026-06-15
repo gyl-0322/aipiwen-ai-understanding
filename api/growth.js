@@ -15,8 +15,9 @@
  * }
  */
 
-function kvBase()  { return process.env.KV_REST_API_URL   || null; }
-function kvToken() { return process.env.KV_REST_API_TOKEN || null; }
+// Supports both Upstash marketplace vars and legacy Vercel KV vars
+function kvBase()  { return process.env.UPSTASH_REDIS_REST_URL   || process.env.KV_REST_API_URL   || null; }
+function kvToken() { return process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_REST_API_TOKEN || null; }
 
 async function kvCmd(cmd, ...args) {
   const base = kvBase();
