@@ -117,6 +117,46 @@
   .attr-bar-fill{height:100%;border-radius:4px;background:#C2692A;opacity:.75}
   .attr-count{width:30px;text-align:right;font-weight:700;color:#1A1714;flex-shrink:0;font-size:12px}
   .no-growth{padding:24px;text-align:center;color:#aaa;font-size:12px;background:white;border-radius:12px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+
+  /* ── Intelligence Panel ───────────────────────────────── */
+  .intel-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+  @media(max-width:700px){.intel-grid{grid-template-columns:1fr}}
+  .intel-card{background:white;border-radius:12px;padding:18px 20px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+  .intel-card-title{font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#888;margin-bottom:12px}
+  .intel-insight-item{font-size:12px;color:#444;line-height:1.65;padding:5px 0;border-bottom:1px solid #F5F3EF}
+  .intel-insight-item:last-child{border-bottom:none}
+
+  /* Bottleneck card */
+  .bottleneck-card{border-radius:12px;padding:16px 18px;margin-bottom:12px;display:flex;align-items:flex-start;gap:14px}
+  .bottleneck-card.high  {background:#FFF5F5;border:1.5px solid #FC8181}
+  .bottleneck-card.medium{background:#FFFBEB;border:1.5px solid #F6AD55}
+  .bottleneck-card.low   {background:#F0FFF4;border:1.5px solid #68D391}
+  .bottleneck-icon{font-size:28px;flex-shrink:0;line-height:1}
+  .bottleneck-label{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;margin-bottom:4px}
+  .bottleneck-card.high   .bottleneck-label{color:#C53030}
+  .bottleneck-card.medium .bottleneck-label{color:#B7791F}
+  .bottleneck-card.low    .bottleneck-label{color:#276749}
+  .bottleneck-desc{font-size:14px;font-weight:700;color:#1A1714;margin-bottom:3px}
+  .bottleneck-sub{font-size:12px;color:#888}
+
+  /* Action cards */
+  .action-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:12px}
+  @media(max-width:800px){.action-grid{grid-template-columns:1fr}}
+  .action-card{border-radius:12px;padding:16px}
+  .action-card.p0{background:#1A1714;color:#FDFCF8}
+  .action-card.p1{background:#FFF8F2;border:1.5px solid #F5DEC8}
+  .action-card.p2{background:#F5F8FF;border:1.5px solid #C3D5F5}
+  .action-badge{display:inline-block;font-size:10px;font-weight:800;letter-spacing:.1em;border-radius:6px;padding:3px 8px;margin-bottom:10px}
+  .action-card.p0 .action-badge{background:#C2692A;color:white}
+  .action-card.p1 .action-badge{background:#E8A56A;color:white}
+  .action-card.p2 .action-badge{background:#7094D0;color:white}
+  .action-badge-sub{font-size:10px;margin-left:6px;opacity:.6;font-weight:400}
+  .action-item{font-size:12px;line-height:1.65;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.08)}
+  .action-card.p1 .action-item,.action-card.p2 .action-item{border-bottom-color:#EEE;color:#444}
+  .action-card.p0 .action-item{color:rgba(253,252,248,.85)}
+  .action-item:last-child{border-bottom:none}
+  .action-item::before{content:"→ ";opacity:.5;font-weight:600}
+  .action-empty{font-size:12px;color:#aaa;font-style:italic}
 </style>
 </head>
 <body>
@@ -150,6 +190,12 @@
 
   <!-- Table -->
   <div class="table-wrap" id="table-wrap"></div>
+
+  <!-- Intelligence Panel -->
+  <div class="section-title">🧠 增长决策建议</div>
+  <div id="intelligence-panel-wrap">
+    <div class="no-growth">暂无决策数据<br><small>漏斗数据积累后，自动生成洞察和行动建议</small></div>
+  </div>
 
   <!-- Growth Dashboard -->
   <div class="section-title">增长漏斗 &amp; 类型表现</div>
@@ -515,6 +561,68 @@ async function renderGrowthDashboard() {
       </div>
     </div>`;
 }
+
+// renderGrowthDashboard() is called by the intelligence block below after GI loads
+</script>
+
+<script src="js/growth-intelligence.js"></script>
+<script>
+// ── 增长决策面板 ──────────────────────────────────────────────────────────
+function renderIntelligencePanel(data) {
+  var wrap = document.getElementById('intelligence-panel-wrap');
+  if (!wrap) return;
+  if (!data || !window.GI) return;
+
+  var result = GI.analyze(data);
+  var bot    = result.bottleneck;
+  var acts   = result.actions;
+
+  // 瓶颈卡
+  var botHtml = '';
+  if (bot) {
+    var icons = { high: '🚨', medium: '⚠️', low: '✅' };
+    botHtml = '<div class="bottleneck-card ' + bot.severity + '">'
+      + '<div class="bottleneck-icon">' + icons[bot.severity] + '</div>'
+      + '<div><div class="bottleneck-label">主要瓶颈 · ' + { high:'严重', medium:'中等', low:'轻微' }[bot.severity] + '</div>'
+      + '<div class="bottleneck-desc">' + bot.fromLabel + ' → ' + bot.toLabel + ' &nbsp;掉落 ' + bot.dropPct + '%</div>'
+      + '<div class="bottleneck-sub">这一步流失了最多用户，优先在这里优化</div>'
+      + '</div></div>';
+  }
+
+  // 洞察列表
+  var insightItems = result.insights.map(function(s) {
+    return '<div class="intel-insight-item">' + s + '</div>';
+  }).join('');
+
+  // 行动建议渲染
+  function actionItems(arr) {
+    if (!arr || arr.length === 0) return '<div class="action-empty">暂无建议</div>';
+    return arr.map(function(a) { return '<div class="action-item">' + a + '</div>'; }).join('');
+  }
+
+  wrap.innerHTML = botHtml
+    + '<div class="intel-grid">'
+    + '  <div class="intel-card"><div class="intel-card-title">增长洞察</div>' + insightItems + '</div>'
+    + '  <div>'
+    + '    <div class="action-grid">'
+    + '      <div class="action-card p0"><div class="action-badge">P0 <span class="action-badge-sub">立即执行</span></div>' + actionItems(acts.P0) + '</div>'
+    + '      <div class="action-card p1"><div class="action-badge">P1 <span class="action-badge-sub">本周测试</span></div>' + actionItems(acts.P1) + '</div>'
+    + '      <div class="action-card p2"><div class="action-badge">P2 <span class="action-badge-sub">长期优化</span></div>' + actionItems(acts.P2) + '</div>'
+    + '    </div>'
+    + '  </div>'
+    + '</div>';
+}
+
+// 在 renderGrowthDashboard 完成后调用
+var _origRender = renderGrowthDashboard;
+renderGrowthDashboard = async function() {
+  await _origRender();
+  // 复用已抓到的服务器数据
+  try {
+    var r = await fetch('/api/growth');
+    if (r.ok) { renderIntelligencePanel(await r.json()); }
+  } catch(e) {}
+};
 
 renderGrowthDashboard();
 </script>
