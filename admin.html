@@ -157,6 +157,33 @@
   .action-item:last-child{border-bottom:none}
   .action-item::before{content:"→ ";opacity:.5;font-weight:600}
   .action-empty{font-size:12px;color:#aaa;font-style:italic}
+
+  /* ── 优化记录 ─────────────────────────────────────────── */
+  .opt-form-card{background:white;border-radius:12px;padding:18px 20px;box-shadow:0 1px 4px rgba(0,0,0,.06);margin-bottom:14px}
+  .opt-form-title{font-size:12px;font-weight:700;color:#555;margin-bottom:12px;letter-spacing:.04em}
+  .opt-form-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .opt-select{padding:8px 10px;border-radius:8px;border:1.5px solid #DDD;font-size:12px;background:white;color:#333;flex-shrink:0}
+  .opt-input{flex:1;min-width:200px;padding:8px 12px;border-radius:8px;border:1.5px solid #DDD;font-size:13px;color:#1A1714;outline:none}
+  .opt-input:focus{border-color:#C2692A}
+  .opt-save-btn{padding:8px 18px;background:#1A1714;color:#FDFCF8;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;flex-shrink:0;transition:opacity .15s}
+  .opt-save-btn:hover{opacity:.8}
+
+  /* Timeline */
+  .opt-entry{background:white;border-radius:12px;padding:16px 18px;margin-bottom:10px;box-shadow:0 1px 4px rgba(0,0,0,.05);display:flex;gap:14px;align-items:flex-start}
+  .opt-entry-left{flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:4px}
+  .opt-badge{display:inline-block;font-size:10px;font-weight:800;letter-spacing:.08em;border-radius:6px;padding:3px 8px;color:white}
+  .opt-badge.P0{background:#C2692A}
+  .opt-badge.P1{background:#E8A56A}
+  .opt-badge.P2{background:#7094D0}
+  .opt-date{font-size:10px;color:#aaa;margin-top:2px;white-space:nowrap}
+  .opt-entry-body{flex:1}
+  .opt-desc-text{font-size:13px;font-weight:600;color:#1A1714;margin-bottom:8px;line-height:1.5}
+  .opt-metrics{display:flex;flex-wrap:wrap;gap:6px}
+  .opt-metric-chip{font-size:11px;background:#F5F3EF;border-radius:6px;padding:3px 8px;color:#555}
+  .opt-metric-chip.delta-up  {background:#F0FFF4;color:#276749;font-weight:700}
+  .opt-metric-chip.delta-down{background:#FFF5F5;color:#C53030;font-weight:700}
+  .opt-no-records{padding:24px;text-align:center;color:#aaa;font-size:12px;background:white;border-radius:12px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+  .opt-connector{width:2px;height:20px;background:#EEE;margin:0 auto}
 </style>
 </head>
 <body>
@@ -208,6 +235,34 @@
   <div id="analytics-panel">
     <div id="no-analytics">暂无分析数据<br><small>用户完成首次测试并返回后，数据将出现在这里</small></div>
   </div>
+
+  <!-- 优化记录 -->
+  <div class="section-title">📝 优化记录</div>
+  <div id="opt-log-wrap">
+
+    <!-- 录入表单 -->
+    <div class="opt-form-card">
+      <div class="opt-form-title">记录本次优化</div>
+      <div class="opt-form-row">
+        <select id="opt-level" class="opt-select">
+          <option value="P0">P0 · 立即执行</option>
+          <option value="P1">P1 · 本周测试</option>
+          <option value="P2">P2 · 长期优化</option>
+        </select>
+        <input id="opt-desc" class="opt-input" type="text"
+          placeholder="描述改动内容，例如：把保存按钮移到海报正下方"
+          onkeydown="if(event.key==='Enter')saveOptRecord()">
+        <button class="opt-save-btn" onclick="saveOptRecord()">快照 &amp; 记录</button>
+      </div>
+      <div style="font-size:11px;color:#aaa;margin-top:6px">
+        点击后自动保存当前漏斗指标快照，方便以后对比优化前后效果
+      </div>
+    </div>
+
+    <!-- 时间线 -->
+    <div id="opt-timeline"></div>
+  </div>
+
 </div>
 
 <div id="toast"></div>
@@ -719,6 +774,136 @@ function renderAnalytics() {
 // Run after core.js is loaded
 window.addEventListener('DOMContentLoaded', function() {}, false);
 setTimeout(renderAnalytics, 0);
+</script>
+
+<script>
+// ── 优化记录系统 ──────────────────────────────────────────────────────────
+var OPT_KEY = 'aipiwen_opt_log';
+
+function loadOptRecords() {
+  try { return JSON.parse(localStorage.getItem(OPT_KEY) || '[]'); } catch(e) { return []; }
+}
+
+function saveOptRecord() {
+  var desc  = (document.getElementById('opt-desc').value  || '').trim();
+  var level = document.getElementById('opt-level').value || 'P0';
+  if (!desc) {
+    document.getElementById('opt-desc').focus();
+    document.getElementById('opt-desc').placeholder = '请填写改动内容后再记录';
+    return;
+  }
+
+  // 抓当前漏斗快照（从 /api/growth）
+  fetch('/api/growth').then(function(r) { return r.ok ? r.json() : null; }).then(function(data) {
+    var snapshot = null;
+    if (data && data.kvConnected) {
+      var f = data.funnel || {};
+      snapshot = {
+        page_open:      f.page_open      || 0,
+        result_view:    f.result_view    || 0,
+        poster_share:   f.poster_share   || 0,
+        wecom_click:    f.wecom_click    || 0,
+        lead_captured:  f.lead_captured  || 0,
+        eventCount:     data.eventCount  || 0,
+      };
+    }
+
+    var records = loadOptRecords();
+    records.unshift({
+      id:       'opt_' + Date.now(),
+      ts:       Date.now(),
+      date:     new Date().toLocaleDateString('zh-CN', { month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' }),
+      level:    level,
+      desc:     desc,
+      snapshot: snapshot,
+    });
+    localStorage.setItem(OPT_KEY, JSON.stringify(records));
+
+    document.getElementById('opt-desc').value = '';
+    renderOptTimeline();
+    showToast('✅ 记录已保存，漏斗快照已附上');
+  }).catch(function() {
+    // KV 不可用时仍保存（无快照）
+    var records = loadOptRecords();
+    records.unshift({ id:'opt_'+Date.now(), ts:Date.now(),
+      date: new Date().toLocaleDateString('zh-CN',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}),
+      level:level, desc:desc, snapshot:null });
+    localStorage.setItem(OPT_KEY, JSON.stringify(records));
+    document.getElementById('opt-desc').value = '';
+    renderOptTimeline();
+    showToast('✅ 记录已保存（无网络快照）');
+  });
+}
+
+function deleteOptRecord(id) {
+  if (!confirm('删除这条记录？')) return;
+  var records = loadOptRecords().filter(function(r) { return r.id !== id; });
+  localStorage.setItem(OPT_KEY, JSON.stringify(records));
+  renderOptTimeline();
+}
+
+function renderOptTimeline() {
+  var container = document.getElementById('opt-timeline');
+  if (!container) return;
+  var records = loadOptRecords();
+  if (records.length === 0) {
+    container.innerHTML = '<div class="opt-no-records">还没有记录 · 每次做完优化后填一条，系统自动保存当前数据快照</div>';
+    return;
+  }
+
+  var html = '';
+  records.forEach(function(rec, idx) {
+    // 对比下一条记录的快照（时间更早的那条）
+    var prev = records[idx + 1];
+    var deltaHtml = '';
+    if (rec.snapshot) {
+      var chips = [];
+      var keys = [
+        { k:'page_open',    label:'访问' },
+        { k:'result_view',  label:'看结果' },
+        { k:'poster_share', label:'分享' },
+        { k:'wecom_click',  label:'咨询' },
+        { k:'lead_captured',label:'留资' },
+      ];
+      keys.forEach(function(item) {
+        var val = rec.snapshot[item.k] || 0;
+        var cls = '';
+        if (prev && prev.snapshot) {
+          var diff = val - (prev.snapshot[item.k] || 0);
+          if (diff > 0) cls = ' delta-up';
+          else if (diff < 0) cls = ' delta-down';
+        }
+        chips.push('<span class="opt-metric-chip' + cls + '">' + item.label + ' ' + val + '</span>');
+      });
+      deltaHtml = '<div class="opt-metrics" style="margin-top:8px">' + chips.join('') + '</div>';
+    } else {
+      deltaHtml = '<div style="font-size:11px;color:#bbb;margin-top:6px">快照不可用（记录时未连接服务器）</div>';
+    }
+
+    html += '<div class="opt-entry">'
+      + '<div class="opt-entry-left">'
+      + '  <span class="opt-badge ' + rec.level + '">' + rec.level + '</span>'
+      + '  <div class="opt-date">' + rec.date + '</div>'
+      + '</div>'
+      + '<div class="opt-entry-body">'
+      + '  <div class="opt-desc-text">' + rec.desc + '</div>'
+      + deltaHtml
+      + '  <div style="margin-top:8px">'
+      + '    <span style="font-size:11px;color:#ccc;cursor:pointer" onclick="deleteOptRecord(\'' + rec.id + '\')"">删除</span>'
+      + '  </div>'
+      + '</div>'
+      + '</div>';
+
+    if (idx < records.length - 1) {
+      html += '<div class="opt-connector"></div>';
+    }
+  });
+
+  container.innerHTML = html;
+}
+
+// 初始化
+renderOptTimeline();
 </script>
 </body>
 </html>
