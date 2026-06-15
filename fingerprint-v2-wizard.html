@@ -2004,6 +2004,16 @@ ${els}
 </svg>`;
 }
 
+function _getOrCreateFpUid() {
+  const KEY = 'aipiwen_fp_uid';
+  let uid = localStorage.getItem(KEY);
+  if (!uid) {
+    uid = 'u_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+    localStorage.setItem(KEY, uid);
+  }
+  return uid;
+}
+
 async function generatePoster() {
   const shareBtn = document.querySelector('.btn-share');
   if (shareBtn && shareBtn.disabled) return;
@@ -2061,7 +2071,8 @@ async function generatePoster() {
     const tmp = document.createElement('div');
     tmp.style.cssText = 'position:fixed;left:-9999px;top:-9999px;width:80px;height:80px';
     document.body.appendChild(tmp);
-    const qrUrl = `https://aipiwen.cn?utm_source=poster&utm_medium=share&utm_campaign=fp&type=${result.key}`;
+    const uid = _getOrCreateFpUid();
+    const qrUrl = `https://aipiwen.cn/personality?type=${result.key}&user_id=${uid}&from=poster`;
     new QRCode(tmp, { text:qrUrl, width:80, height:80, colorDark:'#1A1714', colorLight:'#FFFFFF', correctLevel: QRCode.CorrectLevel.L });
     setTimeout(() => {
       const canvas = tmp.querySelector('canvas');

@@ -220,9 +220,17 @@ html,body { font-family: var(--font-sans); background: var(--cream); color: var(
       <div class="cta-note">完整报告包含行为结构分析、家长误区和三条可执行建议</div>
     </div>
 
+    <!-- 分享二维码 -->
+    <div id="share-qr-section" style="display:none;margin-top:24px;padding:20px;background:var(--ink);border-radius:16px;text-align:center;">
+      <div style="font-size:10px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:rgba(253,252,248,.4);margin-bottom:14px;">分享给朋友</div>
+      <div id="share-qr-wrap" style="display:inline-block;background:white;border-radius:10px;padding:8px;margin-bottom:12px;"></div>
+      <div style="font-size:13px;color:rgba(253,252,248,.7);line-height:1.6;">扫码测测你孩子的天赋类型<br><span style="font-size:11px;color:rgba(253,252,248,.35);">AIPIWEN · 皮纹天赋 · 免费测评</span></div>
+    </div>
+
   </div>
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="js/aipiwen-core.js"></script>
 <script>
 const STORAGE_KEY = 'aipiwen_behavior_input';
@@ -344,6 +352,17 @@ function showReport(behavior, reportId, userId) {
 
   // CTA 链接
   document.getElementById('cta-link').href = 'full-report.html?id=' + encodeURIComponent(reportId);
+
+  // 分享二维码
+  try {
+    const qrWrap = document.getElementById('share-qr-wrap');
+    const qrSection = document.getElementById('share-qr-section');
+    if (qrWrap && typeof QRCode !== 'undefined') {
+      const shareUrl = 'https://aipiwen.cn/fingerprint-v2-wizard.html?utm_source=report&utm_medium=qr&utm_campaign=share';
+      new QRCode(qrWrap, { text: shareUrl, width: 100, height: 100, colorDark: '#1A1714', colorLight: '#FFFFFF', correctLevel: QRCode.CorrectLevel.L });
+      qrSection.style.display = 'block';
+    }
+  } catch(e) {}
 
   // 切换屏幕
   document.getElementById('screen-loading').style.display = 'none';
