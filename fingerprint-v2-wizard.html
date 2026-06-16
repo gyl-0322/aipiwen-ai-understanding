@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>AI皮纹天赋速测 · 向导版</title>
-<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script src="https://cdn.bootcdn.net/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdn.bootcdn.net/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
 /* ─── DESIGN TOKENS ─── */
 :root {
@@ -2065,22 +2065,34 @@ async function generatePoster() {
   document.getElementById('pTags').innerHTML = Array.from(tags).slice(0,4)
     .map(t=>`<div class="poster-talent">${t.textContent.trim()}</div>`).join('');
 
-  // QR
+  // QR — try-catch 防止 CDN 加载失败导致整体崩溃
   let qrDataUrl = '';
-  await new Promise(resolve => {
-    const tmp = document.createElement('div');
-    tmp.style.cssText = 'position:fixed;left:-9999px;top:-9999px;width:80px;height:80px';
-    document.body.appendChild(tmp);
-    const uid = _getOrCreateFpUid();
-    const qrUrl = `https://aipiwen.cn/personality?type=${result.key}&user_id=${uid}&from=poster`;
-    new QRCode(tmp, { text:qrUrl, width:80, height:80, colorDark:'#1A1714', colorLight:'#FFFFFF', correctLevel: QRCode.CorrectLevel.L });
-    setTimeout(() => {
-      const canvas = tmp.querySelector('canvas');
-      if (canvas) { const c=document.createElement('canvas'); c.width=80; c.height=80; c.getContext('2d').drawImage(canvas,0,0); qrDataUrl=c.toDataURL(); }
-      document.body.removeChild(tmp); resolve();
-    }, 100);
-  });
-  document.getElementById('posterQR').src = qrDataUrl;
+  try {
+    await new Promise((resolve, reject) => {
+      if (typeof QRCode === 'undefined') { resolve(); return; }
+      const tmp = document.createElement('div');
+      tmp.style.cssText = 'position:fixed;left:-9999px;top:-9999px;width:80px;height:80px';
+      document.body.appendChild(tmp);
+      const uid = _getOrCreateFpUid();
+      const qrUrl = `https://aipiwen.cn/personality?type=${result.key}&user_id=${uid}&from=poster`;
+      try {
+        new QRCode(tmp, { text:qrUrl, width:80, height:80, colorDark:'#1A1714', colorLight:'#FFFFFF', correctLevel: QRCode.CorrectLevel.L });
+      } catch(e) { document.body.removeChild(tmp); resolve(); return; }
+      setTimeout(() => {
+        const canvas = tmp.querySelector('canvas');
+        if (canvas) { const c=document.createElement('canvas'); c.width=80; c.height=80; c.getContext('2d').drawImage(canvas,0,0); qrDataUrl=c.toDataURL(); }
+        document.body.removeChild(tmp); resolve();
+      }, 250);
+    });
+  } catch(e) { /* QR 生成失败，继续不含 QR 的海报 */ }
+  const posterQREl = document.getElementById('posterQR');
+  if (qrDataUrl) {
+    posterQREl.src = qrDataUrl;
+  } else {
+    // QR 不可用时隐藏 QR 区域，避免空白块
+    const qrWrap = document.querySelector('.poster-qr-wrap');
+    if (qrWrap) qrWrap.style.display = 'none';
+  }
 
   document.getElementById('posterModal').classList.add('show');
   if (window.GT) GT.track('poster_open', { type: result.key });
