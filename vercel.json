@@ -9,13 +9,11 @@
     { "src": "/behavior-input.html",         "dest": "/behavior-input.html" },
     { "src": "/light-report.html",           "dest": "/light-report.html" },
     { "src": "/full-report.html",            "dest": "/full-report.html" },
-    { "src": "/consulting.html",             "dest": "/consulting.html" },
     { "src": "/fingerprint-v2-wizard.html",  "dest": "/fingerprint-v2-wizard.html" },
     { "src": "/personality",                 "dest": "/personality.html" },
     { "src": "/personality.html",            "dest": "/personality.html" },
-    { "src": "/index.html",                  "dest": "/index.html" },
     { "src": "/",                            "dest": "/homepage.html" },
-    { "src": "/(.*)",                        "dest": "/index.html" }
+    { "src": "/(.*)",                        "dest": "/homepage.html" }
   ],
   "functions": {
     "api/wechat.js": { "maxDuration": 10 },
