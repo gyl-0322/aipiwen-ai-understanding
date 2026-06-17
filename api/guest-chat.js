@@ -5,6 +5,8 @@
  * body: { content, history: [{role, content}] }
  */
 
+const { getGlobalPatterns } = require('./_lib');
+
 module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   if (req.method === 'OPTIONS') return res.status(204).end();
@@ -23,13 +25,18 @@ module.exports = async function handler(req, res) {
   const { content, history = [] } = payload;
   if (!content?.trim()) return res.status(400).json({ error: '内容不能为空' });
 
-  // 构建对话历史
+  // 构建对话历史 + 读取全局高频模式（并行）
   const historyText = history.slice(-8)
     .map(m => `${m.role === 'ai' ? 'AI顾问' : '家长'}：${m.content}`)
     .join('\n');
 
-  const prompt = `你是AIPIWEN的儿童行为理解顾问，专注帮助家长真正读懂孩子。
+  const globalPatterns = await getGlobalPatterns().catch(() => null);
+  const patternsSection = globalPatterns
+    ? `\n【AIPIWEN平台近期家长最常提到的情境，供参考】\n${globalPatterns}\n`
+    : '';
 
+  const prompt = `你是AIPIWEN的儿童行为理解顾问，专注帮助家长真正读懂孩子。
+${patternsSection}
 ${historyText ? `此前对话：\n${historyText}\n` : ''}
 家长刚说：${content.trim()}
 

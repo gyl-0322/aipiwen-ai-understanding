@@ -22,6 +22,12 @@
     "api/myip.js":       { "maxDuration": 5 },
     "api/auth.js":       { "maxDuration": 10 },
     "api/children.js":   { "maxDuration": 15 },
-    "api/guest-chat.js": { "maxDuration": 15 }
-  }
+    "api/guest-chat.js": { "maxDuration": 15 },
+    "api/digest.js":     { "maxDuration": 60 }
+  },
+  "crons": [
+    { "path": "/api/digest?action=portrait_all", "schedule": "0 2 * * *"   },
+    { "path": "/api/digest?action=patterns",     "schedule": "0 3 * * 0"   },
+    { "path": "/api/digest?action=weekly",       "schedule": "0 4 * * 0"   }
+  ]
 }
