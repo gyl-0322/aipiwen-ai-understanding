@@ -133,6 +133,22 @@ async function getGlobalPatterns() {
   return gp?.patterns || null;
 }
 
+// ─── Redis 记录归档 ───────────────────────────────────────────────────────────
+// records 超过 MAX_RECORDS 条时，把旧记录压缩进归档 key
+const MAX_RECORDS = 200;
+
+async function archiveRecordsIfNeeded(openid, childId, records) {
+  if (records.length <= MAX_RECORDS) return records;
+
+  // 把第 MAX_RECORDS+1 条之后的旧记录单独存档（最多保留50条供回顾）
+  const toArchive = records.slice(MAX_RECORDS, MAX_RECORDS + 50);
+  const archiveKey = `records_archive:${openid}:${childId}:${Date.now()}`;
+  await redisSet(archiveKey, toArchive, 365 * 86400); // 保留1年
+
+  // 主列表只保留最新 MAX_RECORDS 条
+  return records.slice(0, MAX_RECORDS);
+}
+
 // ─── 用户索引（注册/追加） ────────────────────────────────────────────────────
 // 用于 digest.js 遍历所有用户
 async function registerUser(openid) {
@@ -147,4 +163,5 @@ module.exports = {
   redisSet, redisGet,
   makeSessionToken, parseSessionToken, getSessionToken, getOpenid,
   generatePortrait, portraitNeedsRefresh, getGlobalPatterns, registerUser,
+  archiveRecordsIfNeeded, MAX_RECORDS,
 };

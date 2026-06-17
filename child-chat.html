@@ -324,9 +324,44 @@ body {
   cursor:pointer; white-space:nowrap; transition:background .15s;
 }
 .nudge-dismiss-btn:active { background:var(--ink-10); }
+
+/* ── 成长画像 Sheet ── */
+.portrait-sheet {
+  position:fixed; inset:0; z-index:200;
+  background:rgba(26,23,20,.5);
+  display:flex; align-items:flex-end;
+  opacity:0; pointer-events:none; transition:opacity .2s;
+}
+.portrait-sheet.open { opacity:1; pointer-events:all; }
+.portrait-inner {
+  background:var(--cream); border-radius:24px 24px 0 0;
+  padding:28px 24px calc(32px + env(safe-area-inset-bottom));
+  width:100%; max-height:80vh; overflow-y:auto;
+  transform:translateY(100%); transition:transform .3s var(--ease);
+}
+.portrait-sheet.open .portrait-inner { transform:translateY(0); }
+.portrait-handle { width:36px; height:4px; background:var(--ink-10); border-radius:2px; margin:0 auto 20px; }
+.portrait-title { font-family:var(--font-serif); font-size:20px; font-weight:normal; color:var(--ink); margin-bottom:6px; }
+.portrait-meta  { font-size:12px; color:var(--ink-40); margin-bottom:20px; }
+.portrait-body  { font-size:14px; line-height:1.85; color:var(--ink-70); white-space:pre-wrap; }
+.portrait-empty { text-align:center; padding:32px 0; color:var(--ink-40); font-size:14px; line-height:1.7; }
+.portrait-btn {
+  display:flex; align-items:center; gap:6px;
+  padding:6px 14px; border-radius:20px;
+  background:var(--cream-deep); border:1.5px solid var(--ink-10);
+  cursor:pointer; font-size:12px; color:var(--ink-70);
+  white-space:nowrap; flex-shrink:0; transition:all .15s;
+}
+.portrait-btn:active { border-color:var(--amber); color:var(--amber); }
+.portrait-close {
+  width:100%; background:var(--cream-deep); color:var(--ink-70); border:none;
+  border-radius:var(--r-md); padding:13px; font-size:14px; cursor:pointer;
+  margin-top:24px; transition:background .15s;
+}
+.portrait-close:active { background:var(--ink-10); }
 </style>
 </head>
-<body>
+<body data-page="chat">
 
 <!-- ── HEADER ── -->
 <header class="site-header">
@@ -358,6 +393,17 @@ body {
 <!-- ── 孩子选择栏 ── -->
 <div class="child-selector" id="child-selector" style="display:none">
   <!-- 动态生成 -->
+</div>
+
+<!-- ── 成长画像 Sheet ── -->
+<div class="portrait-sheet" id="portrait-sheet" onclick="closePortrait(event)">
+  <div class="portrait-inner">
+    <div class="portrait-handle"></div>
+    <h3 class="portrait-title" id="portrait-title">成长画像</h3>
+    <p class="portrait-meta" id="portrait-meta"></p>
+    <div id="portrait-body"></div>
+    <button class="portrait-close" onclick="closePortraitDirect()">关闭</button>
+  </div>
 </div>
 
 <!-- ── 主内容区 ── -->
@@ -523,9 +569,54 @@ function renderChildSelector() {
   `).join('');
 
   sel.innerHTML = chips + `
-    <button class="add-child-btn" onclick="openAddChild()">
-      ＋ 添加孩子
+    <button class="add-child-btn" onclick="openAddChild()">＋ 添加孩子</button>
+    <button class="portrait-btn" id="portrait-btn" onclick="openPortrait()" style="display:none">
+      ✦ 成长画像
     </button>`;
+}
+
+// ── 查看成长画像 ──────────────────────────────────────────────────────────
+async function openPortrait() {
+  if (!currentChildId) return;
+  const child = children.find(c => c.id === currentChildId);
+
+  document.getElementById('portrait-title').textContent = `${child?.name || '孩子'}的成长画像`;
+  document.getElementById('portrait-meta').textContent  = '加载中…';
+  document.getElementById('portrait-body').innerHTML    = '';
+  document.getElementById('portrait-sheet').classList.add('open');
+
+  try {
+    const res  = await fetch(`/api/children?action=portrait&id=${currentChildId}`);
+    const data = await res.json();
+
+    if (data.portrait?.summary) {
+      const p = data.portrait;
+      const date = p.generatedAt ? new Date(p.generatedAt).toLocaleDateString('zh-CN') : '';
+      document.getElementById('portrait-meta').textContent =
+        `基于${p.recordCount}条记录生成${date ? ' · ' + date : ''}`;
+      document.getElementById('portrait-body').innerHTML =
+        `<div class="portrait-body">${escapeHtml(p.summary)}</div>`;
+    } else {
+      const count = data.recordCount || 0;
+      document.getElementById('portrait-meta').textContent = '';
+      document.getElementById('portrait-body').innerHTML = `
+        <div class="portrait-empty">
+          <div style="font-size:40px;margin-bottom:12px">🌱</div>
+          <p>还需要 <strong>${Math.max(0, 3 - count)}</strong> 条对话记录才能生成画像</p>
+          <p style="margin-top:8px;font-size:12px">多和 AI 聊聊孩子的日常，画像会自动生成</p>
+        </div>`;
+    }
+  } catch (e) {
+    document.getElementById('portrait-meta').textContent = '加载失败，请重试';
+  }
+}
+
+function closePortrait(e) {
+  if (e && !e.target.classList.contains('portrait-sheet')) return;
+  document.getElementById('portrait-sheet').classList.remove('open');
+}
+function closePortraitDirect() {
+  document.getElementById('portrait-sheet').classList.remove('open');
 }
 
 // ── 选择孩子 ─────────────────────────────────────────────────────────────
@@ -544,7 +635,9 @@ async function selectChild(id) {
     el.classList.toggle('active', el.dataset.id === id);
   });
 
-  // 显示聊天区和输入栏
+  // 显示聊天区和输入栏，以及画像按钮
+  const portraitBtn = document.getElementById('portrait-btn');
+  if (portraitBtn) portraitBtn.style.display = 'flex';
   showChat();
   await loadRecords();
 }
@@ -659,6 +752,10 @@ async function sendMessage() {
     }));
     scrollToBottom();
 
+    // 埋点
+    if (window.aipiwen) {
+      window.aipiwen.track(isGuest ? 'chat_guest' : 'chat_member');
+    }
     // 访客：发了3轮后显示登录提示
     if (isGuest) {
       guestRounds++;
@@ -791,6 +888,11 @@ function formatTime(iso) {
 }
 
 // ── 启动 ─────────────────────────────────────────────────────────────────
+// 引入埋点
+const _trackScript = document.createElement('script');
+_trackScript.src = '/js/track.js';
+document.head.appendChild(_trackScript);
+
 init();
 </script>
 </body>

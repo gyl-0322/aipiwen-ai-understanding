@@ -5,12 +5,29 @@
  * body: { content, history: [{role, content}] }
  */
 
-const { getGlobalPatterns } = require('./_lib');
+const { getGlobalPatterns, redisSet, redisGet } = require('./_lib');
+
+// ── IP 限流：每个 IP 每分钟最多10次 ─────────────────────────────────────────
+async function checkRateLimit(ip) {
+  const minute = Math.floor(Date.now() / 60000);
+  const key    = `ratelimit:${ip}:${minute}`;
+  const count  = (await redisGet(key)) || 0;
+  if (count >= 10) return false;
+  await redisSet(key, count + 1, 120); // TTL 2分钟
+  return true;
+}
 
 module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   if (req.method === 'OPTIONS') return res.status(204).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+
+  // 限流检查
+  const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket?.remoteAddress || 'unknown';
+  const allowed = await checkRateLimit(ip).catch(() => true); // 限流本身失败时放行
+  if (!allowed) {
+    return res.status(429).json({ error: '请求过于频繁，请稍后再试' });
+  }
 
   let body = '';
   await new Promise((resolve, reject) => {

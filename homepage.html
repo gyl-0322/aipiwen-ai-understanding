@@ -180,7 +180,7 @@ body {
 .footer-copy  { font-size:12px; color:var(--ink-20); }
 </style>
 </head>
-<body>
+<body data-page="homepage">
 
 <!-- ── HEADER ── -->
 <header class="site-header">
@@ -252,7 +252,7 @@ body {
       </div>
       <div class="product-cta-meta">
         <strong>免费使用</strong>
-        2分钟 · 无需注册
+        2分钟内看到结果
       </div>
     </div>
   </a>
@@ -328,14 +328,57 @@ body {
 <!-- ── FOOTER ── -->
 <footer class="site-footer">
   <div class="footer-logo">AIPIWEN</div>
-  <div class="footer-icp"><a href="https://beian.miit.gov.cn" target="_blank">陕ICP备2026008899号</a></div>
+  <div class="footer-icp"><a href="https://beian.miit.gov.cn" target="_blank">陕ICP备2026008899号-2</a></div>
   <div class="footer-copy">© 2026 沐海星辰</div>
 </footer>
 
-<script src="js/growth-tracker.js"></script>
+<script src="/js/growth-tracker.js"></script>
+<script src="/js/track.js"></script>
 <script>
 // UTM inbound attribution — captures QR scan traffic from poster shares
 if (window.GT) GT.captureInboundUTM();
+</script>
+
+<!-- ── 隐私同意 Banner ── -->
+<div id="privacy-banner" style="
+  display:none; position:fixed; bottom:0; left:0; right:0; z-index:999;
+  background:#1A1714; color:#FAF9F6; padding:16px 20px;
+  font-family:-apple-system,'PingFang SC',sans-serif; font-size:13px; line-height:1.6;
+  box-shadow:0 -4px 24px rgba(0,0,0,.25);
+">
+  <p style="margin-bottom:12px">
+    我们使用必要的 Cookie 保持您的登录状态，并收集您主动提供的孩子行为数据用于 AI 分析。
+    继续使用即表示您同意我们的
+    <a href="/privacy" style="color:#C2692A;text-decoration:none">《隐私政策》</a>。
+  </p>
+  <div style="display:flex;gap:10px;flex-wrap:wrap">
+    <button onclick="acceptPrivacy()" style="
+      background:#C2692A; color:#fff; border:none; border-radius:10px;
+      padding:9px 20px; font-size:13px; font-weight:600; cursor:pointer;
+    ">同意并继续</button>
+    <a href="/privacy" style="
+      background:transparent; color:#C8C3BC; border:1px solid #4A4540;
+      border-radius:10px; padding:9px 16px; font-size:13px; cursor:pointer;
+      text-decoration:none; display:inline-block; line-height:1.4;
+    ">查看详情</a>
+  </div>
+</div>
+<script>
+(function() {
+  // 用 cookie 存同意状态（不用 localStorage 以兼容隐私模式）
+  function getCookie(name) {
+    const m = document.cookie.match(new RegExp('(?:^|; )' + name + '=([^;]*)'));
+    return m ? decodeURIComponent(m[1]) : null;
+  }
+  if (!getCookie('aipiwen_consent')) {
+    document.getElementById('privacy-banner').style.display = 'block';
+  }
+  window.acceptPrivacy = function() {
+    const exp = new Date(Date.now() + 365 * 86400 * 1000).toUTCString();
+    document.cookie = 'aipiwen_consent=1; path=/; expires=' + exp + '; SameSite=Lax';
+    document.getElementById('privacy-banner').style.display = 'none';
+  };
+})();
 </script>
 </body>
 </html>

@@ -12,7 +12,7 @@
  */
 
 const crypto = require('crypto');
-const { redisSet, redisGet, getOpenid, generatePortrait, portraitNeedsRefresh, getGlobalPatterns } = require('./_lib');
+const { redisSet, redisGet, getOpenid, generatePortrait, portraitNeedsRefresh, getGlobalPatterns, archiveRecordsIfNeeded } = require('./_lib');
 
 function readBody(req) {
   return new Promise((resolve, reject) => {
@@ -96,6 +96,23 @@ module.exports = async function handler(req, res) {
     return res.status(200).json({ record });
   }
 
+  // ── 查看孩子成长画像 ─────────────────────────────────────────────────────
+  if (action === 'portrait' && id) {
+    const child = (user.children || []).find(c => c.id === id);
+    if (!child) return res.status(404).json({ error: '孩子不存在' });
+    const portrait = await redisGet(`portrait:${openid}:${id}`);
+    if (!portrait) {
+      // 尝试实时生成（如果记录够3条）
+      const records = await redisGet(`records:${openid}:${id}`) || [];
+      if (records.length >= 3) {
+        const newPortrait = await generatePortrait(openid, id);
+        return res.status(200).json({ portrait: newPortrait, fresh: true });
+      }
+      return res.status(200).json({ portrait: null, recordCount: records.length });
+    }
+    return res.status(200).json({ portrait });
+  }
+
   // ── AI综合分析 ───────────────────────────────────────────────────────────
   if (action === 'analyze' && id) {
     const child = (user.children || []).find(c => c.id === id);
@@ -165,11 +182,12 @@ ${recordsText}
     const child = (user.children || []).find(c => c.id === id);
     if (!child) return res.status(404).json({ error: '孩子不存在' });
 
-    // 并行读取：历史记录 + 孩子成长画像 + 全局高频模式
-    const [records, portrait, globalPatterns] = await Promise.all([
+    // 并行读取：历史记录 + 孩子成长画像 + 全局高频模式 + 专家知识检索
+    const [records, portrait, globalPatterns, knowledgeRes] = await Promise.all([
       redisGet(`records:${openid}:${id}`).then(r => r || []),
       redisGet(`portrait:${openid}:${id}`),
       getGlobalPatterns(),
+      fetch(`${process.env.VERCEL_URL ? 'https://' + process.env.VERCEL_URL : 'http://localhost:3000'}/api/knowledge?action=search&q=${encodeURIComponent(content.trim().slice(0, 50))}`).then(r => r.json()).catch(() => ({ chunks: [] })),
     ]);
 
     // 构建最近15条对话历史
@@ -192,15 +210,23 @@ ${recordsText}
       ? `\n【AIPIWEN平台近期家长最常提到的情境，供参考】\n${globalPatterns}\n`
       : '';
 
+    // 专家知识库片段（若检索到）
+    const expertChunks = knowledgeRes?.chunks || [];
+    const expertSection = expertChunks.length > 0
+      ? `\n【相关专家观点，仅供参考，不要直接引用，融入回答即可】\n` +
+        expertChunks.map(c => `[${c.source}] ${c.text}`).join('\n') + '\n'
+      : '';
+
     const prompt = `你是AIPIWEN的儿童行为理解顾问，专注帮助家长真正读懂孩子。
 
 孩子信息：姓名${child.name}，${child.age || ''}岁。${fingerprintDesc}
-${portraitSection}${patternsSection}
+${portraitSection}${patternsSection}${expertSection}
 ${historyText ? `此前对话记录（最近15条）：\n${historyText}\n` : ''}
 家长刚说：${content.trim()}
 
 请用温柔、有洞察力的语气回复这位家长。要求：
 - 优先结合成长画像摘要中已知的孩子特征来回应
+- 如有专家观点，自然融入回答，不要说"某某专家认为"，而是化为你自己的洞察
 - 先回应家长说的这件具体的事
 - 给出1-2条具体可操作的建议
 - 语气像真正关心这个家庭的朋友，不说教，不夸张
@@ -227,7 +253,9 @@ ${historyText ? `此前对话记录（最近15条）：\n${historyText}\n` : ''}
     const aiMsg     = { id: crypto.randomBytes(6).toString('hex'), role: 'ai',     content: aiReply,        createdAt: new Date().toISOString() };
     records.unshift(aiMsg);
     records.unshift(parentMsg);
-    await redisSet(`records:${openid}:${id}`, records);
+    // 归档检查（超过200条时自动压缩旧记录）
+    const trimmed = await archiveRecordsIfNeeded(openid, id, records);
+    await redisSet(`records:${openid}:${id}`, trimmed);
 
     // 异步触发画像刷新（不阻塞本次回复）
     // 每积累10条新记录、或画像超过3天，就重新生成

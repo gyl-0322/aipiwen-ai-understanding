@@ -103,5 +103,34 @@ module.exports = async function handler(req, res) {
     return res.status(200).json({ ok: true });
   }
 
+  // ── 5. 注销账号（删除全部数据）────────────────────────────────────────────
+  if (action === 'delete_account' && req.method === 'POST') {
+    const token  = getSessionToken(req);
+    if (!token) return res.status(401).json({ error: '未登录' });
+    const openid = parseSessionToken(token);
+    if (!openid) return res.status(401).json({ error: 'session无效' });
+
+    const user = await redisGet(`user:${openid}`);
+    if (user) {
+      // 删除每个孩子的记录和画像
+      for (const child of (user.children || [])) {
+        await redisSet(`records:${openid}:${child.id}`,  [], 1);
+        await redisSet(`portrait:${openid}:${child.id}`, null, 1);
+        await redisSet(`analysis:${openid}:${child.id}`, null, 1);
+      }
+      // 删除用户档案
+      await redisSet(`user:${openid}`, null, 1);
+
+      // 从用户索引移除
+      const list = await redisGet('users:all') || [];
+      await redisSet('users:all', list.filter(id => id !== openid));
+    }
+
+    // 清除 session
+    await redisSet(`session:${token}`, null, 1);
+    res.setHeader('Set-Cookie', 'aipiwen_session=; Path=/; Max-Age=0');
+    return res.status(200).json({ ok: true, message: '账号及全部数据已删除' });
+  }
+
   return res.status(400).json({ error: '无效的 action' });
 };
