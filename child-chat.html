@@ -888,12 +888,8 @@ function formatTime(iso) {
 }
 
 // ── 启动 ─────────────────────────────────────────────────────────────────
-// 引入埋点
-const _trackScript = document.createElement('script');
-_trackScript.src = '/js/track.js';
-document.head.appendChild(_trackScript);
-
 init();
 </script>
+<script src="/js/track.js"></script>
 </body>
 </html>

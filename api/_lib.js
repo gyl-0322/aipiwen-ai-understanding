@@ -149,6 +149,35 @@ async function archiveRecordsIfNeeded(openid, childId, records) {
   return records.slice(0, MAX_RECORDS);
 }
 
+// ─── 专家知识库搜索（直接读 Redis，不走 HTTP）────────────────────────────────
+function extractWords(text) {
+  const words = new Set();
+  (text.match(/[一-龥]{2,4}/g) || []).forEach(w => words.add(w));
+  (text.toLowerCase().match(/[a-z]{3,}/g) || []).forEach(w => words.add(w));
+  return [...words];
+}
+
+async function searchKnowledge(query) {
+  if (!query?.trim()) return [];
+  const queryWords = extractWords(query.slice(0, 80));
+  if (queryWords.length === 0) return [];
+
+  const candidateScores = {};
+  for (const word of queryWords.slice(0, 15)) {
+    const ids = await redisGet(`knowledge:index:${word}`) || [];
+    ids.forEach(id => { candidateScores[id] = (candidateScores[id] || 0) + 1; });
+  }
+  if (Object.keys(candidateScores).length === 0) return [];
+
+  const topIds = Object.entries(candidateScores)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3)
+    .map(([id]) => id);
+
+  const chunks = await redisGet('knowledge:chunks') || [];
+  return topIds.map(id => chunks.find(c => c.id === id)).filter(Boolean);
+}
+
 // ─── 用户索引（注册/追加） ────────────────────────────────────────────────────
 // 用于 digest.js 遍历所有用户
 async function registerUser(openid) {
@@ -164,4 +193,5 @@ module.exports = {
   makeSessionToken, parseSessionToken, getSessionToken, getOpenid,
   generatePortrait, portraitNeedsRefresh, getGlobalPatterns, registerUser,
   archiveRecordsIfNeeded, MAX_RECORDS,
+  searchKnowledge,
 };

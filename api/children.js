@@ -12,7 +12,7 @@
  */
 
 const crypto = require('crypto');
-const { redisSet, redisGet, getOpenid, generatePortrait, portraitNeedsRefresh, getGlobalPatterns, archiveRecordsIfNeeded } = require('./_lib');
+const { redisSet, redisGet, getOpenid, generatePortrait, portraitNeedsRefresh, getGlobalPatterns, archiveRecordsIfNeeded, searchKnowledge } = require('./_lib');
 
 function readBody(req) {
   return new Promise((resolve, reject) => {
@@ -183,11 +183,11 @@ ${recordsText}
     if (!child) return res.status(404).json({ error: '孩子不存在' });
 
     // 并行读取：历史记录 + 孩子成长画像 + 全局高频模式 + 专家知识检索
-    const [records, portrait, globalPatterns, knowledgeRes] = await Promise.all([
+    const [records, portrait, globalPatterns, expertChunksRaw] = await Promise.all([
       redisGet(`records:${openid}:${id}`).then(r => r || []),
       redisGet(`portrait:${openid}:${id}`),
       getGlobalPatterns(),
-      fetch(`${process.env.VERCEL_URL ? 'https://' + process.env.VERCEL_URL : 'http://localhost:3000'}/api/knowledge?action=search&q=${encodeURIComponent(content.trim().slice(0, 50))}`).then(r => r.json()).catch(() => ({ chunks: [] })),
+      searchKnowledge(content.trim()).catch(() => []),
     ]);
 
     // 构建最近15条对话历史
@@ -211,7 +211,7 @@ ${recordsText}
       : '';
 
     // 专家知识库片段（若检索到）
-    const expertChunks = knowledgeRes?.chunks || [];
+    const expertChunks = expertChunksRaw || [];
     const expertSection = expertChunks.length > 0
       ? `\n【相关专家观点，仅供参考，不要直接引用，融入回答即可】\n` +
         expertChunks.map(c => `[${c.source}] ${c.text}`).join('\n') + '\n'
