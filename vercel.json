@@ -16,18 +16,21 @@
     { "src": "/privacy.html",               "dest": "/privacy.html" },
     { "src": "/personality",                 "dest": "/personality.html" },
     { "src": "/personality.html",            "dest": "/personality.html" },
+    { "src": "/synthesis.html",              "dest": "/synthesis.html" },
+    { "src": "/synthesis",                   "dest": "/synthesis.html" },
     { "src": "/",                            "dest": "/homepage.html" },
     { "src": "/(.*)",                        "dest": "/homepage.html" }
   ],
   "functions": {
-    "api/wechat.js":     { "maxDuration": 10 },
-    "api/myip.js":       { "maxDuration": 5 },
-    "api/auth.js":       { "maxDuration": 10 },
-    "api/children.js":   { "maxDuration": 15 },
-    "api/guest-chat.js": { "maxDuration": 15 },
-    "api/digest.js":     { "maxDuration": 60 },
-    "api/stats.js":      { "maxDuration": 10 },
-    "api/knowledge.js":  { "maxDuration": 15 }
+    "api/wechat.js":      { "maxDuration": 10 },
+    "api/myip.js":        { "maxDuration": 5 },
+    "api/auth.js":        { "maxDuration": 10 },
+    "api/children.js":    { "maxDuration": 15 },
+    "api/guest-chat.js":  { "maxDuration": 15 },
+    "api/synthesize.js":  { "maxDuration": 30 },
+    "api/digest.js":      { "maxDuration": 60 },
+    "api/stats.js":       { "maxDuration": 10 },
+    "api/knowledge.js":   { "maxDuration": 15 }
   },
   "crons": [
     { "path": "/api/digest?action=portrait_all", "schedule": "0 2 * * *"   },

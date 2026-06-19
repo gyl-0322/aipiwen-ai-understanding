@@ -203,6 +203,23 @@ html,body { font-family: var(--font-sans); background: var(--cream); color: var(
   font-size: 11px; font-weight: 700; border-radius: 6px; padding: 4px 10px;
   letter-spacing: .06em;
 }
+.share-card-qr-row {
+  display: flex; align-items: center; gap: 14px;
+  margin-top: 18px; padding-top: 16px;
+  border-top: 1px solid rgba(255,255,255,.1);
+  position: relative; z-index: 1;
+}
+.share-card-qr-wrap {
+  background: white; border-radius: 8px; padding: 6px;
+  flex-shrink: 0; line-height: 0;
+}
+.share-card-qr-hint {
+  font-size: 12px; color: rgba(255,255,255,.55); line-height: 1.6;
+}
+.share-card-qr-hint span {
+  display: block; font-size: 10px; color: rgba(255,255,255,.3);
+  margin-top: 4px; letter-spacing: .04em;
+}
 
 /* Hint + copyable text */
 .share-hint {
@@ -422,9 +439,9 @@ html,body { font-family: var(--font-sans); background: var(--cream); color: var(
       </div>
     </div>
 
-    <!-- S2: 家长误区 -->
+    <!-- S2: 误区 -->
     <div class="section-card">
-      <div class="section-eyebrow">家长常见误区</div>
+      <div class="section-eyebrow" id="r-misconceptions-eyebrow">家长常见误区</div>
       <h2 class="section-heading">你看到的不是全部</h2>
       <div class="misconception-list" id="r-misconceptions"></div>
     </div>
@@ -475,19 +492,27 @@ html,body { font-family: var(--font-sans); background: var(--cream); color: var(
 
   <div class="share-page-wrap">
     <h2 class="share-heading">分享这份理解</h2>
-    <p class="share-sub">让更多人看见孩子背后的需求</p>
+    <p class="share-sub" id="share-sub-text">让更多人看见行为背后的真实需求</p>
 
     <!-- Share card (captured by html2canvas) -->
     <div class="share-card-wrap">
       <div class="share-card" id="share-card-el">
         <div class="share-card-orb share-card-orb-1"></div>
         <div class="share-card-orb share-card-orb-2"></div>
-        <div class="share-card-brand">AIPIWEN · AI 亲子理解</div>
-        <div class="share-card-insight" id="sc-insight">你看到的是行为，但孩子在表达你没看见的需求。</div>
+        <div class="share-card-brand" id="sc-brand">AIPIWEN · AI 行为理解</div>
+        <div class="share-card-insight" id="sc-insight">你看到的是行为，但背后藏着你还没看见的需求。</div>
         <div class="share-card-divider"></div>
         <div class="share-card-row">
           <div class="share-card-id" id="sc-reportid"></div>
           <div class="share-card-tag">AI 行为分析</div>
+        </div>
+        <!-- 扫码入口 -->
+        <div class="share-card-qr-row">
+          <div class="share-card-qr-wrap" id="sc-qr-wrap"></div>
+          <div class="share-card-qr-hint">
+            <span id="sc-qr-hint-main">扫码免费体验</span>
+            <span>aipiwen.cn · 免费 AI 行为分析</span>
+          </div>
         </div>
       </div>
     </div>
@@ -495,7 +520,7 @@ html,body { font-family: var(--font-sans); background: var(--cream); color: var(
     <div class="share-hint">长按截图保存，或点击下方按钮</div>
 
     <div class="share-copy-text" id="share-copy-text">
-      我刚用AI分析了孩子行为，发现很多问题不是孩子的问题，而是我们没看懂他。推荐你也试试：aipiwen.cn
+      我刚用AI分析了一个让我困惑的行为，瞬间看懂了很多。推荐你也试试：aipiwen.cn
     </div>
 
     <div class="share-btns">
@@ -556,8 +581,9 @@ html,body { font-family: var(--font-sans); background: var(--cream); color: var(
   </div>
 </div>
 
-<!-- html2canvas -->
+<!-- html2canvas + QRCode -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdn.bootcdn.net/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <!-- AIPIWEN 核心引擎 -->
 <script src="js/aipiwen-core.js"></script>
 <script>
@@ -700,9 +726,22 @@ function buildReport(reportId, behavior, type) {
   document.getElementById('sc-insight').textContent  = c.shareSummary;
   document.getElementById('sc-reportid').textContent = reportId;
 
+  // 海报二维码：扫码进入 aipiwen.cn 给自己测
+  try {
+    const qrWrap = document.getElementById('sc-qr-wrap');
+    if (qrWrap && typeof QRCode !== 'undefined') {
+      qrWrap.innerHTML = '';
+      new QRCode(qrWrap, {
+        text: 'https://aipiwen.cn',
+        width: 80, height: 80,
+        colorDark: '#1A1714', colorLight: '#FFFFFF',
+        correctLevel: QRCode.CorrectLevel.L
+      });
+    }
+  } catch(e) {}
+
   // ── 微信页面 ──
-  document.getElementById('wx-reportid').textContent   = reportId;
-  document.getElementById('wx-rid-inline').textContent = reportId;
+  document.getElementById('wx-reportid').textContent = reportId;
 }
 
 // ── Share functions ────────────────────────────────
@@ -1071,6 +1110,61 @@ window.addEventListener('DOMContentLoaded', function() {
 
   buildReport(gReportId, gBehavior, gType);
   updateLead({ clickedFullReport: true });
+
+  // ── 根据 ?for= 参数更新分享页文案 ──────────────────
+  const _for = params.get('for') || 'child';
+  const SHARE_COPY = {
+    child: {
+      sub:     '让更多人看见孩子背后的需求',
+      brand:   'AIPIWEN · AI 亲子理解',
+      insight: '你看到的是行为，但孩子在表达你没看见的需求。',
+      qrHint:  '扫码给孩子也测一测',
+      copy:    '我刚用AI分析了孩子行为，发现很多问题不是孩子的问题，而是我们没看懂他。推荐你也试试：aipiwen.cn',
+    },
+    self: {
+      sub:     '把这份自我理解，分享给也在寻找自己的人',
+      brand:   'AIPIWEN · AI 自我理解',
+      insight: '你看到的是表现，但背后是你还没读懂的自己。',
+      qrHint:  '扫码认识更真实的自己',
+      copy:    '我刚用AI读懂了一直困扰我的自己的行为，看清了很多之前想不明白的事。推荐你也试试：aipiwen.cn',
+    },
+    partner: {
+      sub:     '把这份理解，分享给也想读懂伴侣的人',
+      brand:   'AIPIWEN · AI 亲密关系理解',
+      insight: '你看到的是伴侣的行为，但背后是你们之间还没说清的需求。',
+      qrHint:  '扫码读懂你的伴侣',
+      copy:    '我刚用AI理解了伴侣一个让我困惑的行为，瞬间看懂了很多。推荐你也试试：aipiwen.cn',
+    },
+    business: {
+      sub:     '把这份理解，分享给也想读懂合伙人的人',
+      brand:   'AIPIWEN · AI 合伙关系理解',
+      insight: '你看到的是合伙人的行为，但背后是你们之间还没对齐的期待。',
+      qrHint:  '扫码读懂你的合伙人',
+      copy:    '我刚用AI理解了合伙人一个让我困惑的行为，看清了合作背后的真实逻辑。推荐你也试试：aipiwen.cn',
+    },
+  };
+  const sc = SHARE_COPY[_for] || SHARE_COPY.child;
+
+  // ── 报告内文案按场景调整 ────────────────────────────
+  const MISCONCEPTION_LABELS = {
+    child:    '家长常见误区',
+    self:     '常见自我误区',
+    partner:  '理解伴侣的常见误区',
+    business: '理解合伙人的常见误区',
+  };
+  const mEyebrow = document.getElementById('r-misconceptions-eyebrow');
+  if (mEyebrow) mEyebrow.textContent = MISCONCEPTION_LABELS[_for] || MISCONCEPTION_LABELS.child;
+  const subEl = document.getElementById('share-sub-text');
+  const brandEl = document.getElementById('sc-brand');
+  // sc-insight is set by buildReport from c.shareSummary — only override if child (buildReport is child-only engine)
+  const insightEl = document.getElementById('sc-insight');
+  const qrHintEl = document.getElementById('sc-qr-hint-main');
+  const copyEl = document.getElementById('share-copy-text');
+  if (subEl) subEl.textContent = sc.sub;
+  if (brandEl) brandEl.textContent = sc.brand;
+  if (_for !== 'child' && insightEl) insightEl.textContent = sc.insight;
+  if (qrHintEl) qrHintEl.textContent = sc.qrHint;
+  if (copyEl) copyEl.textContent = sc.copy;
 
   // ── Build retention module after report is built ──
   buildRetentionModule();

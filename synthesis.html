@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>综合关系分析 · AIPIWEN</title>
+<style>
+:root {
+  --bg:        #0C0A08;
+  --surface:   #141009;
+  --surface2:  #1C160C;
+  --amber:     #C2692A;
+  --amber2:    rgba(194,105,42,.18);
+  --amber3:    rgba(194,105,42,.08);
+  --gold:      #D4A453;
+  --gold-dim:  rgba(212,164,83,.6);
+  --border:    rgba(194,105,42,.16);
+  --border2:   rgba(255,255,255,.06);
+  --text:      rgba(255,255,255,.88);
+  --muted:     rgba(255,255,255,.38);
+  --muted2:    rgba(255,255,255,.18);
+  --cream:     #FDFCF8;
+  --font-serif: Georgia,'Noto Serif SC','Source Han Serif SC',serif;
+  --font-sans:  -apple-system,'PingFang SC','Hiragino Sans GB',sans-serif;
+  --font-mono:  'SF Mono','Menlo','Consolas',monospace;
+  --ease: cubic-bezier(.4,0,.2,1);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  font-family:var(--font-sans);
+  background:var(--bg);color:var(--text);
+  -webkit-font-smoothing:antialiased;
+  min-height:100vh;
+  padding-bottom:60px;
+}
+
+/* ── NAV ── */
+.top-nav{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:16px 20px;
+  border-bottom:1px solid var(--border2);
+  background:rgba(12,10,8,.92);
+  backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  position:sticky;top:0;z-index:10;
+}
+.nav-back{
+  display:flex;align-items:center;gap:5px;
+  font-size:14px;color:var(--muted);cursor:pointer;
+  text-decoration:none;border:none;background:none;
+  transition:color .15s;
+}
+.nav-back:active{color:var(--gold)}
+.nav-back svg{width:18px;height:18px}
+.nav-title{
+  font-size:12px;font-weight:800;letter-spacing:.22em;
+  text-transform:uppercase;color:var(--gold-dim);
+}
+.nav-spacer{width:56px}
+
+/* ── HERO ── */
+.hero{
+  padding:44px 24px 32px;
+  max-width:520px;margin:0 auto;
+  position:relative;
+}
+.hero::before{
+  content:'';
+  position:absolute;top:-20px;right:0;
+  width:280px;height:280px;border-radius:50%;
+  background:radial-gradient(circle,rgba(194,105,42,.1) 0%,transparent 70%);
+  pointer-events:none;
+}
+.hero-eyebrow{
+  font-family:var(--font-mono);
+  font-size:10px;font-weight:600;letter-spacing:.2em;
+  text-transform:uppercase;color:var(--amber);
+  margin-bottom:14px;opacity:.8;
+}
+.hero-title{
+  font-family:var(--font-serif);
+  font-size:clamp(28px,7vw,36px);
+  line-height:1.18;letter-spacing:-.4px;
+  color:var(--text);font-weight:normal;margin-bottom:14px;
+}
+.hero-title em{font-style:italic;color:var(--gold)}
+.hero-body{
+  font-size:14px;line-height:1.8;
+  color:var(--muted);max-width:340px;
+}
+
+/* ── SECTION LABEL ── */
+.section-label{
+  font-family:var(--font-mono);
+  font-size:9px;font-weight:700;letter-spacing:.22em;
+  text-transform:uppercase;color:var(--muted2);
+  padding:0 24px;margin-bottom:12px;
+  max-width:520px;margin-left:auto;margin-right:auto;
+}
+
+/* ── CONTEXT GRID ── */
+.context-grid{
+  display:grid;grid-template-columns:1fr 1fr;
+  gap:8px;padding:0 20px;margin-bottom:28px;
+  max-width:520px;margin-left:auto;margin-right:auto;
+}
+.ctx-card{
+  background:var(--surface);
+  border:1px solid var(--border2);
+  border-radius:14px;padding:16px 14px 14px;
+  display:flex;flex-direction:column;gap:7px;
+  min-height:100px;position:relative;overflow:hidden;
+  transition:border-color .2s,transform .15s;
+}
+.ctx-card.has-data{
+  border-color:var(--border);
+}
+.ctx-card.has-data::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,var(--amber),rgba(194,105,42,.3));
+}
+.ctx-card.no-data{
+  opacity:.45;cursor:pointer;
+}
+.ctx-card.no-data:active{transform:scale(.97)}
+.ctx-header{display:flex;align-items:center;gap:6px}
+.ctx-emoji{font-size:16px;line-height:1}
+.ctx-name{
+  font-family:var(--font-serif);font-size:13px;
+  color:rgba(255,255,255,.8);letter-spacing:-.1px;
+}
+.ctx-count{
+  margin-left:auto;
+  font-family:var(--font-mono);font-size:9px;font-weight:700;
+  color:var(--amber);letter-spacing:.05em;
+  background:var(--amber2);border-radius:20px;padding:2px 7px;
+}
+.ctx-preview{
+  font-size:11px;color:var(--muted);line-height:1.5;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+}
+.ctx-badge{
+  display:inline-block;font-family:var(--font-mono);
+  font-size:9px;font-weight:700;letter-spacing:.08em;
+  padding:2px 8px;border-radius:20px;width:fit-content;
+}
+.ctx-badge.active{background:var(--amber2);color:var(--amber)}
+.ctx-badge.empty{background:rgba(255,255,255,.05);color:var(--muted2)}
+
+/* ── NOTICE BAR ── */
+.notice-bar{
+  margin:0 0 14px;
+  background:rgba(194,105,42,.08);
+  border:1px solid rgba(194,105,42,.2);
+  border-radius:10px;padding:10px 14px;
+  font-size:12px;color:rgba(194,105,42,.85);line-height:1.5;
+}
+.notice-bar.error{
+  background:rgba(200,60,40,.08);border-color:rgba(200,60,40,.2);
+  color:rgba(240,100,80,.9);
+}
+
+/* ── CTA AREA ── */
+.action-area{
+  padding:0 20px;margin-bottom:32px;
+  max-width:520px;margin-left:auto;margin-right:auto;
+}
+.cta-btn{
+  display:block;width:100%;padding:16px 24px;
+  background:var(--amber);color:#fff;border:none;border-radius:14px;
+  font-family:var(--font-sans);font-size:15px;font-weight:700;
+  cursor:pointer;text-align:center;letter-spacing:.02em;
+  box-shadow:0 6px 24px rgba(194,105,42,.35),0 0 0 1px rgba(194,105,42,.5);
+  transition:transform .18s,box-shadow .18s,opacity .15s;
+}
+.cta-btn:active{transform:scale(.97);box-shadow:0 3px 12px rgba(194,105,42,.25)}
+.cta-btn:disabled{
+  background:var(--surface2);color:var(--muted2);
+  box-shadow:none;cursor:not-allowed;transform:none;
+}
+.btn-ghost{
+  display:block;width:100%;padding:12px;margin-top:10px;
+  background:none;border:1px solid var(--border2);border-radius:12px;
+  font-size:13px;color:var(--muted);cursor:pointer;
+  transition:border-color .15s;
+}
+.btn-ghost:active{border-color:rgba(255,255,255,.12)}
+
+/* ── LOADING ── */
+.loading-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:16px;padding:40px 20px;
+  text-align:center;margin-bottom:12px;
+  position:relative;overflow:hidden;
+}
+.loading-card::before{
+  content:'';position:absolute;top:0;left:-100%;width:200%;height:2px;
+  background:linear-gradient(90deg,transparent,var(--amber),transparent);
+  animation:scan 1.6s linear infinite;
+}
+@keyframes scan{to{left:100%}}
+.loading-spinner{
+  width:28px;height:28px;
+  border:1.5px solid var(--border2);border-top-color:var(--amber);
+  border-radius:50%;animation:spin .8s linear infinite;
+  margin:0 auto 14px;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-text{font-size:13px;color:var(--muted);letter-spacing:.02em}
+
+/* ── RESULT AREA ── */
+.result-area{
+  padding:0 20px;display:none;
+  max-width:520px;margin-left:auto;margin-right:auto;
+}
+.result-area.visible{display:block}
+
+/* Premium result cards */
+.result-card{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:16px;
+  margin-bottom:10px;
+  position:relative;overflow:hidden;
+}
+/* Amber left accent */
+.result-card::before{
+  content:'';position:absolute;
+  left:0;top:0;bottom:0;width:2px;
+  background:linear-gradient(to bottom,var(--amber) 0%,rgba(194,105,42,.15) 100%);
+}
+/* Ambient glow top-right */
+.result-card::after{
+  content:'';position:absolute;
+  top:-40px;right:-40px;
+  width:100px;height:100px;border-radius:50%;
+  background:rgba(194,105,42,.07);
+  filter:blur(24px);pointer-events:none;
+}
+.result-header{
+  display:flex;align-items:center;
+  padding:16px 18px 14px 20px;
+  border-bottom:1px solid rgba(194,105,42,.1);
+  gap:10px;position:relative;
+}
+.result-num{
+  font-family:var(--font-mono);
+  font-size:10px;color:rgba(194,105,42,.5);
+  letter-spacing:.05em;min-width:20px;
+}
+.result-icon{font-size:16px;line-height:1}
+.result-label{
+  font-family:var(--font-serif);font-size:15px;
+  color:var(--gold);letter-spacing:-.1px;
+}
+.result-body{
+  padding:16px 18px 20px 20px;
+  font-size:13.5px;line-height:1.82;
+  color:rgba(255,255,255,.72);
+  white-space:pre-line;position:relative;
+}
+
+/* Result footer */
+.result-meta{
+  font-family:var(--font-mono);
+  font-size:9px;color:var(--muted2);
+  text-align:center;padding:10px 0 16px;
+  letter-spacing:.1em;text-transform:uppercase;
+}
+.result-footer{display:flex;gap:8px}
+.btn-rerun{
+  flex:1;padding:12px;
+  background:var(--surface2);border:1px solid var(--border2);
+  border-radius:12px;font-size:13px;color:var(--muted);
+  font-weight:600;cursor:pointer;transition:border-color .15s;
+}
+.btn-rerun:active{border-color:rgba(255,255,255,.1)}
+.btn-continue{
+  flex:2;padding:12px;
+  background:var(--amber);color:#fff;
+  border:none;border-radius:12px;
+  font-size:13px;font-weight:700;
+  cursor:pointer;transition:opacity .15s;
+  letter-spacing:.02em;
+}
+.btn-continue:active{opacity:.85}
+
+/* ── EMPTY STATE ── */
+.empty-state{
+  padding:80px 24px 48px;text-align:center;
+  max-width:360px;margin:0 auto;
+}
+.empty-icon{font-size:48px;margin-bottom:20px;display:block;opacity:.6}
+.empty-title{
+  font-family:var(--font-serif);font-size:22px;
+  color:rgba(255,255,255,.8);font-weight:normal;margin-bottom:10px;
+}
+.empty-sub{
+  font-size:14px;line-height:1.8;color:var(--muted);margin-bottom:28px;
+}
+.btn-go{
+  display:inline-block;padding:13px 30px;
+  background:var(--amber);color:#fff;
+  font-size:14px;font-weight:700;
+  border-radius:100px;text-decoration:none;
+  box-shadow:0 4px 20px rgba(194,105,42,.35);
+}
+</style>
+</head>
+<body>
+
+<nav class="top-nav">
+  <a class="nav-back" href="homepage.html">
+    <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.8">
+      <path d="M11 14L6 9l5-5"/>
+    </svg>
+    返回
+  </a>
+  <span class="nav-title">AIPIWEN</span>
+  <div class="nav-spacer"></div>
+</nav>
+
+<div id="mainContent">
+
+  <div id="emptyState" class="empty-state" style="display:none">
+    <span class="empty-icon">🌱</span>
+    <div class="empty-title">先探索几段关系</div>
+    <div class="empty-sub">至少分析 2 个场景（比如孩子 + 自己），才能生成跨场景的系统洞察。</div>
+    <a href="homepage.html" class="btn-go">去开始探索</a>
+  </div>
+
+  <div id="dataContent" style="display:none">
+
+    <div class="hero">
+      <div class="hero-eyebrow">// FAMILY · SYSTEM · INSIGHT</div>
+      <h1 class="hero-title">跨场景<br><em>综合关系分析</em></h1>
+      <p class="hero-body">AI 把你在多个场景下描述的行为放在一起，找出跨场景的内在联系，告诉你改变哪一处可以同时改善多段关系。</p>
+    </div>
+
+    <div class="section-label">// 已收集的场景数据</div>
+    <div class="context-grid" id="contextGrid"></div>
+
+    <div class="action-area">
+      <div id="noticeBar" class="notice-bar" style="display:none"></div>
+      <button class="cta-btn" id="btnSynthesize" onclick="runSynthesis()">生成综合分析</button>
+      <button class="btn-ghost" id="btnClear" onclick="confirmClear()" style="display:none">清除所有场景记忆</button>
+    </div>
+
+    <div class="result-area" id="resultArea"></div>
+
+  </div>
+</div>
+
+<script>
+const CONTEXTS = [
+  { key:'child',    emoji:'👶', name:'理解孩子', href:'child-chat.html?for=child' },
+  { key:'self',     emoji:'🪞', name:'认识自己', href:'child-chat.html?for=self' },
+  { key:'partner',  emoji:'❤️', name:'理解伴侣', href:'child-chat.html?for=partner' },
+  { key:'business', emoji:'🤝', name:'理解伙伴', href:'child-chat.html?for=business' },
+];
+
+function loadMem(ctx) {
+  try { return JSON.parse(localStorage.getItem(`aipiwen_mem_${ctx}`) || '[]'); }
+  catch(e) { return []; }
+}
+function getAllMemories() {
+  const r = {};
+  CONTEXTS.forEach(c => { const m = loadMem(c.key); if (m.length > 0) r[c.key] = m; });
+  return r;
+}
+
+function renderContextGrid(mems) {
+  const grid = document.getElementById('contextGrid');
+  grid.innerHTML = '';
+  CONTEXTS.forEach(c => {
+    const entries = mems[c.key] || [];
+    const has = entries.length > 0;
+    const latest = has ? entries[0] : null;
+    const card = document.createElement('div');
+    card.className = `ctx-card ${has ? 'has-data' : 'no-data'}`;
+    card.innerHTML = `
+      <div class="ctx-header">
+        <span class="ctx-emoji">${c.emoji}</span>
+        <span class="ctx-name">${c.name}</span>
+        ${has ? `<span class="ctx-count">${entries.length}×</span>` : ''}
+      </div>
+      ${has
+        ? `<div class="ctx-preview">${escHtml(latest.behavior)}</div>
+           <span class="ctx-badge active">已有数据</span>`
+        : `<div class="ctx-preview" style="color:var(--muted2)">暂无记录</div>
+           <span class="ctx-badge empty">去探索 →</span>`}
+    `;
+    if (!has) card.onclick = () => window.location.href = c.href;
+    grid.appendChild(card);
+  });
+}
+
+let cachedMemories = {};
+const CACHE_KEY = 'aipiwen_synthesis_v1';
+
+function getCachedResult() {
+  try { return JSON.parse(localStorage.getItem(CACHE_KEY)); } catch(e) { return null; }
+}
+function setCachedResult(data) {
+  try { localStorage.setItem(CACHE_KEY, JSON.stringify({...data, generatedAt: new Date().toLocaleDateString('zh-CN')})); } catch(e) {}
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  cachedMemories = getAllMemories();
+  const count = Object.keys(cachedMemories).length;
+  if (count < 2) { document.getElementById('emptyState').style.display = 'block'; return; }
+  document.getElementById('dataContent').style.display = 'block';
+  document.getElementById('btnClear').style.display = 'block';
+  renderContextGrid(cachedMemories);
+  const cached = getCachedResult();
+  if (cached) { showNotice(`上次分析：${cached.generatedAt}，可重新生成`, false); renderResult(cached); }
+});
+
+async function runSynthesis() {
+  const btn = document.getElementById('btnSynthesize');
+  const resultArea = document.getElementById('resultArea');
+  btn.disabled = true; btn.textContent = '正在分析…'; hideNotice();
+  resultArea.className = 'result-area visible';
+  resultArea.innerHTML = `
+    <div class="loading-card">
+      <div class="loading-spinner"></div>
+      <div class="loading-text">AI 正在从多个关系视角综合分析…</div>
+    </div>
+  `;
+  try {
+    const res = await fetch('/api/synthesize', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({ contexts: cachedMemories }),
+    });
+    if (!res.ok) { const err = await res.json().catch(()=>({})); throw new Error(err.error||`HTTP ${res.status}`); }
+    const data = await res.json();
+    setCachedResult(data); renderResult(data); btn.textContent = '重新生成';
+  } catch(e) {
+    showNotice(`分析失败：${e.message}`, true);
+    resultArea.innerHTML = ''; resultArea.className = 'result-area';
+    btn.textContent = '生成综合分析';
+  } finally { btn.disabled = false; }
+}
+
+function renderResult(data) {
+  const resultArea = document.getElementById('resultArea');
+  resultArea.className = 'result-area visible';
+  const usedLabels = (data.contextsUsed||[]).map(k => CONTEXTS.find(c=>c.key===k)?.name||k).join(' · ');
+  const footer = `
+    <div class="result-meta">SYNTHESIZED FROM: ${escHtml(usedLabels)}</div>
+    <div class="result-footer">
+      <button class="btn-rerun" onclick="runSynthesis()">重新分析</button>
+      <button class="btn-continue" onclick="window.location.href='homepage.html'">继续探索关系 →</button>
+    </div>
+  `;
+  const parsedOk = data.theme && data.connections && data.advice;
+  if (parsedOk) {
+    resultArea.innerHTML = `
+      <div class="result-card">
+        <div class="result-header">
+          <span class="result-num">01</span>
+          <span class="result-icon">🎯</span>
+          <span class="result-label">系统主题</span>
+        </div>
+        <div class="result-body">${escHtml(data.theme)}</div>
+      </div>
+      <div class="result-card">
+        <div class="result-header">
+          <span class="result-num">02</span>
+          <span class="result-icon">🔗</span>
+          <span class="result-label">跨场景联系</span>
+        </div>
+        <div class="result-body">${escHtml(data.connections)}</div>
+      </div>
+      <div class="result-card">
+        <div class="result-header">
+          <span class="result-num">03</span>
+          <span class="result-icon">🪜</span>
+          <span class="result-label">优先改变建议</span>
+        </div>
+        <div class="result-body">${escHtml(data.advice)}</div>
+      </div>
+      ${footer}
+    `;
+  } else {
+    resultArea.innerHTML = `
+      <div class="result-card">
+        <div class="result-header">
+          <span class="result-num">AI</span>
+          <span class="result-icon">🔮</span>
+          <span class="result-label">综合分析</span>
+        </div>
+        <div class="result-body">${escHtml(data.raw||data.theme||data.connections||data.advice||'暂无内容')}</div>
+      </div>
+      ${footer}
+    `;
+  }
+}
+
+function confirmClear() {
+  if (!confirm('确认清除所有场景的历史记忆？')) return;
+  CONTEXTS.forEach(c => localStorage.removeItem(`aipiwen_mem_${c.key}`));
+  localStorage.removeItem(CACHE_KEY); window.location.reload();
+}
+function showNotice(msg, isError) {
+  const bar = document.getElementById('noticeBar');
+  bar.textContent = msg; bar.className = isError ? 'notice-bar error' : 'notice-bar';
+  bar.style.display = 'block';
+}
+function hideNotice() { document.getElementById('noticeBar').style.display = 'none'; }
+function escHtml(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
+}
+</script>
+</body>
+</html>
