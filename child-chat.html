@@ -277,44 +277,44 @@ const _for = new URLSearchParams(location.search).get('for') || 'child';
 
 const CONTEXTS = {
   child: {
-    pageTitle:   'AIPIWEN · 亲子理解',
-    eyebrow:     '行为理解 · 亲子',
-    title:       '描述一个让你<em>困惑</em>的<br>孩子行为',
-    sub:         '不需要完美描述，用你自己的话说就好。AI 会帮你读懂它背后的含义。',
-    label:       '孩子最近让你困惑的行为是？',
-    placeholder: '例如：孩子总是不肯写作业，一说就发脾气…',
-    ctaText:     '生成AI理解报告',
-    chips:       ['不写作业，一催就发脾气', '情绪容易崩溃，一点小事就哭', '沉迷手机，怎么说都不听', '回家就沉默，什么都不说', '在学校跟同学起冲突', '半夜睡不着，总是焦虑'],
+    pageTitle:   'AIPIWEN · 读懂孩子',
+    eyebrow:     '亲子行为解读',
+    title:       '那个让你揪心的<br><em>孩子行为</em>',
+    sub:         '用你自己的话说就好，不用分析，不用措辞准确。AI 会帮你听见孩子没有说出口的那句话。',
+    label:       '最近最让你困惑或揪心的，是孩子的什么？',
+    placeholder: '例如：孩子一催作业就崩溃发脾气，我说什么都没用，不知道哪里出了问题…',
+    ctaText:     '帮我读懂这个孩子',
+    chips:       ['一催作业就崩溃发脾气', '情绪突然失控，一点小事就哭闹', '手机停不下来，怎么说都不听', '放学回来什么都不说，沉默关门', '在学校跟同学起冲突', '半夜睡不着，总是很焦虑'],
   },
   self: {
-    pageTitle:   'AIPIWEN · 认识自己',
-    eyebrow:     '自我理解',
-    title:       '描述一个让你<em>困惑</em>的<br>自身行为',
-    sub:         'AI 帮你看见行为背后的心理规律，从而更好地理解自己。',
-    label:       '最近让你困惑的自身行为是？',
-    placeholder: '例如：明知道该做，却一直拖延，对自己也没有办法…',
-    ctaText:     '分析我的行为模式',
-    chips:       ['一直拖延，道理都懂就是做不到', '忍不住反复担心，停不下来', '总想讨好别人，很难拒绝', '遇到压力就想逃避', '情绪波动大，难以自控', '总是低估自己'],
+    pageTitle:   'AIPIWEN · 读懂自己',
+    eyebrow:     '自我行为解读',
+    title:       '那个你<em>改不掉</em>的<br>自己',
+    sub:         '描述那个反复出现、你自己都说不清为什么的模式。AI 帮你看清它从哪里来，为什么改不了。',
+    label:       '什么行为让你最困扰自己？',
+    placeholder: '例如：明知道要做，就是拖，对自己都说不清楚为什么…',
+    ctaText:     '读懂这个模式',
+    chips:       ['道理都懂，就是一直拖', '忍不住反复担心，停不下来', '总想让别人满意，很难拒绝', '一遇到压力就想逃开', '情绪波动很大，自己也控制不住', '总觉得自己不够好'],
   },
   partner: {
-    pageTitle:   'AIPIWEN · 理解伴侣',
-    eyebrow:     '亲密关系理解',
-    title:       '描述一个让你<em>困惑</em>的<br>伴侣行为',
-    sub:         'AI 帮你看见另一半行为背后的真实需求，找到更好的沟通方式。',
-    label:       '伴侣最近让你困惑的行为是？',
-    placeholder: '例如：一不开心就沉默，怎么问都说没事…',
-    ctaText:     '读懂这个行为',
-    chips:       ['一不开心就沉默说没事', '遇到冲突就回避，不正面解决', '情绪激烈但很快平复', '控制欲很强，干涉过多', '总说累了但不说具体原因', '对我忽冷忽热'],
+    pageTitle:   'AIPIWEN · 读懂伴侣',
+    eyebrow:     '亲密关系解读',
+    title:       '那个你怎么也<em>理解不了</em>的<br>TA',
+    sub:         '描述让你困惑的那个瞬间，不用评判，只用叙述。AI 带你站到TA的内心视角看一看。',
+    label:       '伴侣最近最让你困惑的是什么行为？',
+    placeholder: '例如：一不开心就沉默，问了说没事，但明显有情绪，完全不知道怎么接…',
+    ctaText:     '读懂TA',
+    chips:       ['一不开心就沉默，说没事', '遇到冲突就回避，绕着走', '情绪来得很猛，又平复很快', '控制欲强，事事要过问', '总说累了，但不说哪里累', '对我忽冷忽热，摸不准'],
   },
   business: {
-    pageTitle:   'AIPIWEN · 理解伙伴',
-    eyebrow:     '合伙关系理解',
-    title:       '描述一个影响合作的<br><em>伙伴行为</em>',
-    sub:         'AI 帮你看见合伙人行为背后的动因，化解合作中的分歧。',
-    label:       '合伙人让你困惑的行为是？',
-    placeholder: '例如：遇到压力就退缩，重要决策总是推不动…',
+    pageTitle:   'AIPIWEN · 读懂伙伴',
+    eyebrow:     '合伙关系解读',
+    title:       '那个让合作<em>说不通</em>的<br>伙伴',
+    sub:         '描述让你们陷入僵局的行为，不用评判对错。AI 帮你看清合伙人行为背后的逻辑，找到真正的破局点。',
+    label:       '最近让合作最卡壳的，是什么行为？',
+    placeholder: '例如：说好推进，到执行就拖，不知道他真正的顾虑是什么…',
     ctaText:     '分析这个行为',
-    chips:       ['遇到压力就退缩，难推进决策', '嘴上同意，行动上总是拖延', '有想法但执行时没有耐心', '分歧时情绪化、上升到个人', '对细节极度纠结，影响进度', '独自承担，不愿意分工'],
+    chips:       ['压力来了就退缩，推不动决策', '嘴上同意，行动一直拖', '有想法没耐心执行', '分歧时情绪化，上升到个人', '对细节纠结，影响整体进度', '什么都自己扛，不愿意分工'],
   },
 };
 
@@ -478,6 +478,8 @@ async function submitBehavior() {
     chatHistory.push({ role:'ai', content: reply });
     // 首次回复后保存本次 session 到记忆
     saveMemorySession(behavior, reply);
+    // 加企业微信引导（延迟2秒，让用户先读完 AI 回复）
+    showWechatNudge();
     // 检查是否可以引导到综合分析
     checkAndShowSynthesisNudge();
   } catch(e) {
@@ -588,6 +590,45 @@ function appendThinking() {
 
 function openReport() { window.location.href = `full-report.html?id=${encodeURIComponent(currentReportId)}&for=${_for}`; }
 function openShare()  { window.location.href = `full-report.html?id=${encodeURIComponent(currentReportId)}&for=${_for}&screen=share`; }
+
+// ── 加企业微信引导（AI 首次回复后出现）──────────────────────────
+function showWechatNudge() {
+  if (document.getElementById('wechat-nudge')) return; // 不重复
+  setTimeout(() => {
+    const WECHAT_LINK = 'YOUR_WECHAT_LINK'; // ← 替换为企业微信链接
+    const CTX_TIPS = {
+      child:    '孩子的这个模式，往往背后有更深的故事。',
+      self:     '你的这个模式，背后通常有更深的原因。',
+      partner:  'TA 的行为背后，往往有你还没看到的那一面。',
+      business: '合伙人的行为逻辑，值得更深入地一起拆解。',
+    };
+    const tip = CTX_TIPS[_for] || CTX_TIPS.child;
+    const nudge = document.createElement('div');
+    nudge.id = 'wechat-nudge';
+    nudge.style.cssText = `
+      margin:16px 0 8px;
+      padding:16px;
+      background:linear-gradient(135deg,#FBF6F0,#F5EDE4);
+      border:1px solid rgba(194,105,42,.25);
+      border-radius:16px;
+    `;
+    nudge.innerHTML = `
+      <div style="font-size:13px;font-weight:600;color:var(--ink);margin-bottom:6px;line-height:1.5">${tip}</div>
+      <div style="font-size:12px;color:var(--ink-70);line-height:1.6;margin-bottom:12px">如果你想和顾问深度聊一聊——了解、理解、谅解，一步步找到真正的和解——可以加我企业微信。</div>
+      <a href="${WECHAT_LINK}" target="_blank" style="
+        display:inline-flex;align-items:center;gap:6px;
+        padding:10px 16px;background:var(--amber);color:white;
+        border-radius:10px;font-size:13px;font-weight:600;
+        text-decoration:none;
+      ">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        加企业微信 · 免费深度聊一次
+      </a>
+    `;
+    chatArea().appendChild(nudge);
+    scrollBottom();
+  }, 2000);
+}
 
 // ── 跨场景综合分析引导 ─────────────────────────────────────────
 function checkAndShowSynthesisNudge() {

@@ -270,6 +270,21 @@ body {
 .about-text { font-family:var(--font-serif); font-size:20px; line-height:1.6; color:#EAE7E0; font-weight:normal; }
 .about-text em { font-style:italic; color:var(--amber); }
 
+/* ── WECHAT CTA ── */
+.wechat-strip { background:#F0EDE6; padding:32px 28px; }
+.wechat-strip-inner { max-width:520px; margin:0 auto; }
+.wechat-label { font-family:var(--font-serif); font-size:22px; color:var(--ink); margin-bottom:10px; font-weight:normal; }
+.wechat-desc { font-size:14px; line-height:1.75; color:var(--ink-70); margin-bottom:20px; }
+.wechat-btn {
+  display:inline-flex; align-items:center; gap:8px;
+  padding:14px 22px; background:var(--amber); color:white;
+  border-radius:12px; font-size:15px; font-weight:600;
+  text-decoration:none;
+  box-shadow:0 4px 16px rgba(194,105,42,.35);
+  transition:transform .15s, box-shadow .15s;
+}
+.wechat-btn:active { transform:scale(.97); box-shadow:0 2px 8px rgba(194,105,42,.2); }
+
 /* ── FOOTER ── */
 .site-footer { padding:28px 28px calc(28px + env(safe-area-inset-bottom)); max-width:520px; margin:0 auto; text-align:center; }
 .footer-logo  { font-size:13px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-40); margin-bottom:8px; }
@@ -305,11 +320,11 @@ body {
 <section class="hero">
   <div class="hero-eyebrow">AI 关系理解平台</div>
   <h1 class="hero-title">
-    读懂行为，<br>
-    <em>读懂身边的人</em>
+    他的行为，<br>
+    <em>是他说不出口的话</em>
   </h1>
   <p class="hero-body">
-    一个人的行为方式，是他内心世界最真实的语言。我们用 AI 帮你解读这些信号——读懂孩子、伴侣、自己，和你的合伙人，从而改善每一段重要的关系。
+    孩子为什么又崩溃了？伴侣为什么沉默不说？自己为什么一直改不了？每一个让你困惑的行为背后，都有一个清晰的原因。AIPIWEN 帮你找到它。
   </p>
 </section>
 
@@ -321,30 +336,30 @@ body {
 
     <a class="rel-card active" href="child-chat.html?for=child">
       <div class="rel-icon">🧸</div>
-      <div class="rel-label">理解孩子</div>
-      <div class="rel-sub">亲子关系</div>
-      <div class="rel-badge open">立即体验</div>
+      <div class="rel-label">读懂孩子</div>
+      <div class="rel-sub">为什么又这样了</div>
+      <div class="rel-badge open">说说看</div>
     </a>
 
     <a class="rel-card active" href="child-chat.html?for=self">
       <div class="rel-icon">🪞</div>
-      <div class="rel-label">认识自己</div>
-      <div class="rel-sub">自我理解</div>
-      <div class="rel-badge open">立即体验</div>
+      <div class="rel-label">读懂自己</div>
+      <div class="rel-sub">我为什么总是如此</div>
+      <div class="rel-badge open">说说看</div>
     </a>
 
     <a class="rel-card active" href="child-chat.html?for=partner">
       <div class="rel-icon">💑</div>
-      <div class="rel-label">理解伴侣</div>
-      <div class="rel-sub">亲密关系</div>
-      <div class="rel-badge open">立即体验</div>
+      <div class="rel-label">读懂伴侣</div>
+      <div class="rel-sub">TA为什么这样</div>
+      <div class="rel-badge open">说说看</div>
     </a>
 
     <a class="rel-card active" href="child-chat.html?for=business">
       <div class="rel-icon">🤝</div>
-      <div class="rel-label">理解伙伴</div>
-      <div class="rel-sub">事业关系</div>
-      <div class="rel-badge open">立即体验</div>
+      <div class="rel-label">读懂伙伴</div>
+      <div class="rel-sub">合作为什么这么难</div>
+      <div class="rel-badge open">说说看</div>
     </a>
 
   </div>
@@ -380,32 +395,32 @@ body {
       <span class="product-card-badge-dot"></span>
       <span class="product-card-badge-text">从这里开始</span>
     </div>
-    <h2 class="product-card-title">AI 行为理解 · 亲子版</h2>
-    <p class="product-card-desc">描述一个让你困惑的孩子行为，AI 秒出解读报告，告诉你行为背后的真实需求</p>
+    <h2 class="product-card-title">AI 行为深度解读</h2>
+    <p class="product-card-desc">那个反复让你困惑的行为，背后可能有你从未注意到的信号。描述它，AI 带你看见行为背后真正发生的事——以及你明天可以做的一件具体的事。</p>
     <div class="card-features">
       <div class="card-feature">
         <div class="card-feature-icon">🔍</div>
-        <div class="card-feature-text"><strong>读懂行为背后</strong><br>区分情绪敏感、自主冲突、压力回避</div>
+        <div class="card-feature-text"><strong>听懂行为背后那句话</strong><br>每个行为都在传递一个你还没接收到的信号</div>
       </div>
       <div class="card-feature">
         <div class="card-feature-icon">💬</div>
-        <div class="card-feature-text"><strong>持续对话理解</strong><br>AI 记住本次情境，你可以继续追问</div>
+        <div class="card-feature-text"><strong>越聊越懂你的情况</strong><br>AI 记住对话情境，持续追问越说越准</div>
       </div>
       <div class="card-feature">
         <div class="card-feature-icon">📋</div>
-        <div class="card-feature-text"><strong>可操作的建议</strong><br>怎么说、怎么做、怎么调整沟通方式</div>
+        <div class="card-feature-text"><strong>明天就能用的建议</strong><br>不是道理，是下一步具体怎么做</div>
       </div>
     </div>
     <div class="product-card-cta">
       <div class="product-cta-btn">
-        开始分析
+        开始理解
         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8">
           <path d="M3 8h10M9 4l4 4-4 4"/>
         </svg>
       </div>
       <div class="product-cta-meta">
-        <strong>免费使用</strong>
-        2分钟内看到结果
+        <strong>免费</strong>
+        你说，AI 帮你听见
       </div>
     </div>
   </a>
@@ -453,15 +468,15 @@ body {
   <div class="value-strip-inner">
     <div class="value-item">
       <span class="value-num">2min</span>
-      <span class="value-label">一份<br>AI 理解报告</span>
+      <span class="value-label">深度解读<br>一次</span>
     </div>
     <div class="value-item">
-      <span class="value-num">4种</span>
-      <span class="value-label">关系场景<br>全部开放</span>
+      <span class="value-num">4段</span>
+      <span class="value-label">最重要的<br>关系</span>
     </div>
     <div class="value-item">
       <span class="value-num">免费</span>
-      <span class="value-label">所有工具<br>均可使用</span>
+      <span class="value-label">无需注册<br>即可体验</span>
     </div>
   </div>
 </div>
@@ -471,10 +486,22 @@ body {
   <div class="about-inner">
     <div class="about-label">关于沐海星辰</div>
     <p class="about-text">
-      每一段关系里的困惑，背后都有它的道理。<br><br>
-      孩子的情绪崩溃、伴侣的沉默回避、自己反复的行为模式、合伙人的决策分歧——这些不是"对方有问题"，而是彼此还没读懂对方。<br><br>
-      沐海星辰将<em>脑科学、心理学、依恋理论、行为分析</em>融入 AI，帮你看见行为背后真正的信号。理解，是改善一切关系的起点。
+      你不是不够好，你是还没读懂他。<br><br>
+      孩子的崩溃、伴侣的冷漠、自己的拖延、合伙人的回避——不是性格问题，是每一段关系里都有一个没被接收到的信号。<br><br>
+      沐海星辰将<em>心理学、依恋理论、行为分析</em>融入 AI，帮你翻译这些信号。理解，才是真正改变的起点。
     </p>
+  </div>
+</section>
+
+<!-- ── WECHAT CTA ── -->
+<section class="wechat-strip">
+  <div class="wechat-strip-inner">
+    <div class="wechat-label">想聊得更深一些？</div>
+    <p class="wechat-desc">AI 给你的是一个理解入口。如果你想和真人顾问一起，深入拆解这段关系背后的模式——加我企业微信，免费聊一次。</p>
+    <a class="wechat-btn" href="YOUR_WECHAT_LINK" target="_blank">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="18" height="18"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      加企业微信 · 免费深度咨询一次
+    </a>
   </div>
 </section>
 

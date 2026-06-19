@@ -285,6 +285,29 @@ body{
 }
 .btn-continue:active{opacity:.85}
 
+/* ── WECHAT RESULT CARD ── */
+.wechat-result-card{
+  margin:24px 0 8px;
+  padding:20px;
+  background:linear-gradient(135deg,rgba(194,105,42,.12),rgba(194,105,42,.06));
+  border:1px solid rgba(194,105,42,.3);
+  border-radius:16px;
+}
+.wechat-result-title{
+  font-family:var(--font-serif);font-size:17px;
+  color:rgba(255,255,255,.9);font-weight:normal;margin-bottom:8px;
+}
+.wechat-result-desc{
+  font-size:13px;line-height:1.7;color:var(--muted);margin-bottom:16px;
+}
+.wechat-result-btn{
+  display:inline-block;padding:11px 18px;
+  background:var(--amber);color:#fff;
+  font-size:13px;font-weight:700;
+  border-radius:10px;text-decoration:none;
+  box-shadow:0 4px 16px rgba(194,105,42,.35);
+}
+
 /* ── EMPTY STATE ── */
 .empty-state{
   padding:80px 24px 48px;text-align:center;
@@ -450,7 +473,12 @@ function renderResult(data) {
     <div class="result-meta">SYNTHESIZED FROM: ${escHtml(usedLabels)}</div>
     <div class="result-footer">
       <button class="btn-rerun" onclick="runSynthesis()">重新分析</button>
-      <button class="btn-continue" onclick="window.location.href='homepage.html'">继续探索关系 →</button>
+      <button class="btn-continue" onclick="window.location.href='homepage.html'">继续探索 →</button>
+    </div>
+    <div class="wechat-result-card">
+      <div class="wechat-result-title">这份分析是你关系系统的一张地图</div>
+      <div class="wechat-result-desc">地图告诉你在哪，但怎么走，需要有人陪你一起拆解。加我企业微信，免费深度聊一次——了解、理解、到真正的谅解和和解。</div>
+      <a class="wechat-result-btn" href="YOUR_WECHAT_LINK" target="_blank">加企业微信 · 一起拆解你的关系系统</a>
     </div>
   `;
   const parsedOk = data.theme && data.connections && data.advice;
