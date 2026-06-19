@@ -478,8 +478,6 @@ async function submitBehavior() {
     chatHistory.push({ role:'ai', content: reply });
     // 首次回复后保存本次 session 到记忆
     saveMemorySession(behavior, reply);
-    // 加企业微信引导（延迟2秒，让用户先读完 AI 回复）
-    showWechatNudge();
     // 检查是否可以引导到综合分析
     checkAndShowSynthesisNudge();
   } catch(e) {
@@ -590,45 +588,6 @@ function appendThinking() {
 
 function openReport() { window.location.href = `full-report.html?id=${encodeURIComponent(currentReportId)}&for=${_for}`; }
 function openShare()  { window.location.href = `full-report.html?id=${encodeURIComponent(currentReportId)}&for=${_for}&screen=share`; }
-
-// ── 加企业微信引导（AI 首次回复后出现）──────────────────────────
-function showWechatNudge() {
-  if (document.getElementById('wechat-nudge')) return; // 不重复
-  setTimeout(() => {
-    const WECHAT_LINK = 'YOUR_WECHAT_LINK'; // ← 替换为企业微信链接
-    const CTX_TIPS = {
-      child:    '孩子的这个模式，往往背后有更深的故事。',
-      self:     '你的这个模式，背后通常有更深的原因。',
-      partner:  'TA 的行为背后，往往有你还没看到的那一面。',
-      business: '合伙人的行为逻辑，值得更深入地一起拆解。',
-    };
-    const tip = CTX_TIPS[_for] || CTX_TIPS.child;
-    const nudge = document.createElement('div');
-    nudge.id = 'wechat-nudge';
-    nudge.style.cssText = `
-      margin:16px 0 8px;
-      padding:16px;
-      background:linear-gradient(135deg,#FBF6F0,#F5EDE4);
-      border:1px solid rgba(194,105,42,.25);
-      border-radius:16px;
-    `;
-    nudge.innerHTML = `
-      <div style="font-size:13px;font-weight:600;color:var(--ink);margin-bottom:6px;line-height:1.5">${tip}</div>
-      <div style="font-size:12px;color:var(--ink-70);line-height:1.6;margin-bottom:12px">如果你想和顾问深度聊一聊——了解、理解、谅解，一步步找到真正的和解——可以加我企业微信。</div>
-      <a href="${WECHAT_LINK}" target="_blank" style="
-        display:inline-flex;align-items:center;gap:6px;
-        padding:10px 16px;background:var(--amber);color:white;
-        border-radius:10px;font-size:13px;font-weight:600;
-        text-decoration:none;
-      ">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-        加企业微信 · 免费深度聊一次
-      </a>
-    `;
-    chatArea().appendChild(nudge);
-    scrollBottom();
-  }, 2000);
-}
 
 // ── 跨场景综合分析引导 ─────────────────────────────────────────
 function checkAndShowSynthesisNudge() {
