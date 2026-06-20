@@ -459,6 +459,9 @@ html,body { font-family: var(--font-sans); background: var(--cream); color: var(
       <div id="r-pattern-summary-text" style="font-size:15px; line-height:1.8; color:var(--ink-70);"></div>
     </div>
 
+    <!-- ═══ TRC 天赋类型解读卡片 ═══ -->
+    <div id="trc-type-section" style="display:none;"></div>
+
     <!-- ═══ 行为变化趋势模块 ═══ -->
     <div class="retention-card" id="retention-module">
       <div class="retention-eyebrow">行为变化追踪</div>
@@ -1110,6 +1113,24 @@ window.addEventListener('DOMContentLoaded', function() {
 
   buildReport(gReportId, gBehavior, gType);
   updateLead({ clickedFullReport: true });
+
+  // ── TRC 天赋类型卡片注入 ─────────────────────────────
+  // 支持 URL ?trc=逆思型 或 localStorage trcType 两种来源
+  try {
+    const trcParam = params.get('trc') || '';
+    const trcStored = localStorage.getItem('aipiwen_trc_type') || '';
+    const trcType = trcParam || trcStored;
+    if (trcType && typeof AIPIWEN !== 'undefined' && AIPIWEN.TRCTypeLibrary) {
+      const card = AIPIWEN.TRCTypeLibrary.renderCard(trcType);
+      if (card) {
+        const section = document.getElementById('trc-type-section');
+        if (section) {
+          section.innerHTML = card;
+          section.style.display = 'block';
+        }
+      }
+    }
+  } catch(e) { console.warn('[TRC]', e); }
 
   // ── 根据 ?for= 参数更新分享页文案 ──────────────────
   const _for = params.get('for') || 'child';
