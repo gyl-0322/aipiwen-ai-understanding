@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>AIPIWEN · 孩子成长对话</title>
+<style>
+:root {
+  --cream:      #FDFCF8;
+  --cream-deep: #F5F3EE;
+  --ink:        #1A1714;
+  --ink-70:     #4A4540;
+  --ink-40:     #8C8580;
+  --ink-20:     #C8C3BC;
+  --ink-10:     #EAE7E2;
+  --amber:      #C2692A;
+  --amber-soft: #F5EDE4;
+  --amber-glow: rgba(194,105,42,.10);
+  --dark:       #1A1714;
+  --ok:         #3A7D5E;
+  --r-sm:  10px; --r-md: 16px; --r-lg: 24px;
+  --font-serif: Georgia,'Noto Serif SC','Source Han Serif SC',serif;
+  --font-sans:  -apple-system,'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif;
+  --ease: cubic-bezier(.4,0,.2,1);
+}
+
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+html,body { height:100%; overflow:hidden; }
+body {
+  font-family: var(--font-sans);
+  background: var(--cream); color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+  display: flex; flex-direction: column;
+}
+
+/* ── HEADER ── */
+.site-header {
+  display:flex; align-items:center; gap:14px;
+  padding:14px 20px;
+  background:rgba(253,252,248,.96);
+  backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--ink-10);
+  flex-shrink:0; z-index:100;
+}
+.back-btn {
+  display:flex; align-items:center; justify-content:center;
+  width:36px; height:36px; border-radius:50%;
+  background:var(--cream-deep); border:none; cursor:pointer;
+  color:var(--ink-70); flex-shrink:0;
+  transition:background .15s;
+}
+.back-btn:active { background:var(--ink-10); }
+.header-child-info { flex:1; min-width:0; }
+.header-child-name { font-size:16px; font-weight:700; color:var(--ink); line-height:1.2; }
+.header-child-meta { font-size:12px; color:var(--ink-40); margin-top:2px; }
+.logo-lockup { display:flex; align-items:center; gap:8px; text-decoration:none; flex-shrink:0; }
+.logo-svg    { width:28px; height:28px; }
+.wordmark    { font-size:13px; font-weight:800; letter-spacing:.14em; text-transform:uppercase; color:var(--ink); }
+.wm-e        { color:var(--amber); }
+
+/* ── CHILD SELECTOR ── */
+.child-selector {
+  padding:12px 20px;
+  border-bottom:1px solid var(--ink-10);
+  background:var(--cream);
+  flex-shrink:0;
+  overflow-x:auto;
+  display:flex; gap:10px; align-items:center;
+  scrollbar-width:none;
+}
+.child-selector::-webkit-scrollbar { display:none; }
+.child-chip {
+  display:flex; align-items:center; gap:8px;
+  padding:8px 16px; border-radius:20px;
+  background:var(--cream-deep); border:1.5px solid transparent;
+  cursor:pointer; white-space:nowrap; flex-shrink:0;
+  transition:all .15s var(--ease);
+  font-size:13px; font-weight:500; color:var(--ink-70);
+}
+.child-chip.active {
+  background:var(--amber-soft);
+  border-color:rgba(194,105,42,.3);
+  color:var(--amber);
+  font-weight:600;
+}
+.child-chip-avatar {
+  width:24px; height:24px; border-radius:50%;
+  background:var(--ink-10); display:flex; align-items:center;
+  justify-content:center; font-size:12px; flex-shrink:0;
+}
+.add-child-btn {
+  display:flex; align-items:center; gap:6px;
+  padding:8px 14px; border-radius:20px;
+  background:transparent; border:1.5px dashed var(--ink-20);
+  cursor:pointer; white-space:nowrap; flex-shrink:0;
+  font-size:12px; color:var(--ink-40);
+  transition:all .15s;
+}
+.add-child-btn:active { border-color:var(--amber); color:var(--amber); }
+
+/* ── CHAT AREA ── */
+.chat-wrap {
+  flex:1; overflow-y:auto;
+  padding:20px 20px 12px;
+  display:flex; flex-direction:column; gap:16px;
+  -webkit-overflow-scrolling:touch;
+}
+.chat-wrap::-webkit-scrollbar { width:3px; }
+.chat-wrap::-webkit-scrollbar-thumb { background:var(--ink-10); border-radius:2px; }
+
+/* 日期分割线 */
+.chat-date {
+  text-align:center; font-size:11px; color:var(--ink-20);
+  letter-spacing:.06em; margin:4px 0;
+}
+
+/* 消息气泡 */
+.msg { display:flex; gap:10px; max-width:100%; }
+.msg.parent { flex-direction:row-reverse; }
+
+.msg-avatar {
+  width:32px; height:32px; border-radius:50%; flex-shrink:0;
+  display:flex; align-items:center; justify-content:center;
+  font-size:14px; margin-top:2px;
+}
+.msg.ai .msg-avatar    { background:var(--amber-soft); }
+.msg.parent .msg-avatar { background:var(--ink-10); }
+
+.msg-bubble {
+  max-width:78%; padding:12px 16px;
+  border-radius:var(--r-lg); font-size:14px; line-height:1.75;
+  position:relative; word-break:break-word;
+}
+.msg.ai .msg-bubble {
+  background:#fff; border:1px solid var(--ink-10);
+  border-top-left-radius:4px; color:var(--ink-70);
+}
+.msg.parent .msg-bubble {
+  background:var(--amber); color:#fff;
+  border-top-right-radius:4px;
+}
+.msg-time {
+  font-size:11px; color:var(--ink-20);
+  margin-top:5px; display:block;
+}
+.msg.parent .msg-time { text-align:right; }
+
+/* AI 正在输入 */
+.typing-bubble {
+  background:#fff; border:1px solid var(--ink-10);
+  border-radius:var(--r-lg); border-top-left-radius:4px;
+  padding:12px 16px; display:flex; gap:5px; align-items:center;
+}
+.typing-dot {
+  width:6px; height:6px; border-radius:50%;
+  background:var(--ink-20);
+  animation:typing-bounce .9s ease-in-out infinite;
+}
+.typing-dot:nth-child(2) { animation-delay:.15s; }
+.typing-dot:nth-child(3) { animation-delay:.30s; }
+@keyframes typing-bounce {
+  0%,60%,100% { transform:translateY(0); }
+  30%          { transform:translateY(-5px); }
+}
+
+/* 空状态 */
+.empty-state {
+  flex:1; display:flex; flex-direction:column;
+  align-items:center; justify-content:center;
+  text-align:center; padding:40px 28px; gap:16px;
+  color:var(--ink-40);
+}
+.empty-icon { font-size:48px; opacity:.5; }
+.empty-title { font-family:var(--font-serif); font-size:20px; color:var(--ink-70); font-weight:normal; }
+.empty-body  { font-size:14px; line-height:1.7; max-width:280px; }
+
+/* 快捷提示 */
+.quick-hints {
+  display:flex; flex-wrap:wrap; gap:8px;
+  padding:0 20px 12px;
+  flex-shrink:0;
+}
+.hint-chip {
+  padding:7px 14px; border-radius:20px;
+  background:#fff; border:1px solid var(--ink-10);
+  font-size:12px; color:var(--ink-70);
+  cursor:pointer; transition:all .15s;
+  white-space:nowrap;
+}
+.hint-chip:active { border-color:var(--amber); color:var(--amber); background:var(--amber-soft); }
+
+/* ── INPUT BAR ── */
+.input-bar {
+  display:flex; align-items:flex-end; gap:10px;
+  padding:12px 16px calc(12px + env(safe-area-inset-bottom));
+  background:rgba(253,252,248,.98);
+  backdrop-filter:blur(12px);
+  border-top:1px solid var(--ink-10);
+  flex-shrink:0;
+}
+.input-field {
+  flex:1; background:#fff; border:1.5px solid var(--ink-10);
+  border-radius:22px; padding:10px 16px;
+  font-family:var(--font-sans); font-size:14px; color:var(--ink);
+  resize:none; outline:none; min-height:42px; max-height:120px;
+  line-height:1.55; transition:border-color .15s;
+  -webkit-appearance:none;
+  overflow-y:auto;
+}
+.input-field:focus { border-color:rgba(194,105,42,.5); }
+.input-field::placeholder { color:var(--ink-20); }
+.send-btn {
+  width:42px; height:42px; border-radius:50%;
+  background:var(--amber); border:none; cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+  flex-shrink:0; transition:background .15s, transform .1s;
+}
+.send-btn:active { background:#A85822; transform:scale(.93); }
+.send-btn:disabled { background:var(--ink-10); cursor:default; transform:none; }
+.send-btn svg { width:18px; height:18px; }
+
+/* ── 登录引导 ── */
+.login-wall {
+  flex:1; display:flex; flex-direction:column;
+  align-items:center; justify-content:center;
+  padding:40px 28px; text-align:center; gap:20px;
+}
+.login-icon { font-size:52px; }
+.login-title { font-family:var(--font-serif); font-size:24px; font-weight:normal; color:var(--ink); line-height:1.4; }
+.login-body  { font-size:14px; color:var(--ink-70); line-height:1.75; max-width:280px; }
+.login-btn {
+  display:flex; align-items:center; gap:10px;
+  background:var(--dark); color:#FAF9F6;
+  border:none; border-radius:var(--r-md);
+  padding:14px 28px; font-size:15px; font-weight:600;
+  cursor:pointer; transition:background .15s;
+  text-decoration:none;
+}
+.login-btn:active { background:#3A3530; }
+.login-btn-icon { font-size:20px; }
+
+/* ── 新增孩子弹窗 ── */
+.modal-overlay {
+  position:fixed; inset:0; background:rgba(26,23,20,.5);
+  z-index:200; display:flex; align-items:flex-end;
+  opacity:0; pointer-events:none; transition:opacity .2s;
+}
+.modal-overlay.open { opacity:1; pointer-events:all; }
+.modal-sheet {
+  background:var(--cream); border-radius:24px 24px 0 0;
+  padding:28px 24px calc(28px + env(safe-area-inset-bottom));
+  width:100%; transform:translateY(100%);
+  transition:transform .3s var(--ease);
+}
+.modal-overlay.open .modal-sheet { transform:translateY(0); }
+.modal-handle { width:36px; height:4px; background:var(--ink-10); border-radius:2px; margin:0 auto 24px; }
+.modal-title { font-family:var(--font-serif); font-size:22px; font-weight:normal; color:var(--ink); margin-bottom:20px; }
+.form-group { margin-bottom:16px; }
+.form-label { font-size:12px; font-weight:600; letter-spacing:.08em; color:var(--ink-40); margin-bottom:8px; display:block; text-transform:uppercase; }
+.form-input {
+  width:100%; background:#fff; border:1.5px solid var(--ink-10);
+  border-radius:var(--r-md); padding:12px 16px;
+  font-family:var(--font-sans); font-size:15px; color:var(--ink);
+  outline:none; transition:border-color .15s; -webkit-appearance:none;
+}
+.form-input:focus { border-color:rgba(194,105,42,.5); }
+.modal-submit {
+  width:100%; background:var(--amber); color:#fff; border:none;
+  border-radius:var(--r-md); padding:14px; font-size:15px;
+  font-weight:600; cursor:pointer; margin-top:8px;
+  transition:background .15s;
+}
+.modal-submit:active { background:#A85822; }
+.modal-cancel {
+  width:100%; background:transparent; color:var(--ink-40); border:none;
+  padding:12px; font-size:14px; cursor:pointer; margin-top:4px;
+}
+
+/* Logo 动画 */
+@keyframes logo-spin     { from{transform:rotate(0)} to{transform:rotate(360deg)} }
+@keyframes logo-spin-rev { from{transform:rotate(0)} to{transform:rotate(-360deg)} }
+@keyframes logo-breathe  { 0%,100%{opacity:.82;transform:scale(1)} 50%{opacity:1;transform:scale(1.04)} }
+.logo-ring-outer { transform-origin:18px 18px; animation:logo-spin 22s linear infinite; }
+.logo-petals     { transform-origin:18px 18px; animation:logo-spin-rev 14s linear infinite; }
+.logo-center     { transform-origin:18px 18px; animation:logo-breathe 3.5s ease-in-out infinite; }
+
+/* ── 访客模式标签 ── */
+.guest-badge {
+  display:inline-flex; align-items:center; gap:4px;
+  background:var(--amber-soft); color:var(--amber);
+  border-radius:10px; padding:2px 8px;
+  font-size:11px; font-weight:600; letter-spacing:.04em;
+}
+
+/* ── 访客登录提示条 ── */
+.guest-nudge {
+  position:fixed; bottom:0; left:0; right:0;
+  background:var(--cream);
+  border-top:2px solid var(--amber);
+  padding:16px 20px calc(16px + env(safe-area-inset-bottom));
+  z-index:150;
+  transform:translateY(100%);
+  transition:transform .3s var(--ease);
+  box-shadow:0 -4px 24px rgba(0,0,0,.10);
+}
+.guest-nudge.show { transform:translateY(0); }
+.guest-nudge-text {
+  font-size:14px; color:var(--ink-70); line-height:1.65;
+  margin-bottom:14px;
+}
+.guest-nudge-text strong { color:var(--ink); }
+.guest-nudge-actions { display:flex; gap:10px; }
+.nudge-login-btn {
+  flex:1; background:var(--amber); color:#fff; border:none;
+  border-radius:var(--r-md); padding:12px; font-size:14px;
+  font-weight:600; cursor:pointer; text-decoration:none;
+  display:flex; align-items:center; justify-content:center; gap:6px;
+  transition:background .15s;
+}
+.nudge-login-btn:active { background:#A85822; }
+.nudge-dismiss-btn {
+  background:var(--cream-deep); color:var(--ink-40); border:none;
+  border-radius:var(--r-md); padding:12px 16px; font-size:14px;
+  cursor:pointer; white-space:nowrap; transition:background .15s;
+}
+.nudge-dismiss-btn:active { background:var(--ink-10); }
+
+/* ── 成长画像 Sheet ── */
+.portrait-sheet {
+  position:fixed; inset:0; z-index:200;
+  background:rgba(26,23,20,.5);
+  display:flex; align-items:flex-end;
+  opacity:0; pointer-events:none; transition:opacity .2s;
+}
+.portrait-sheet.open { opacity:1; pointer-events:all; }
+.portrait-inner {
+  background:var(--cream); border-radius:24px 24px 0 0;
+  padding:28px 24px calc(32px + env(safe-area-inset-bottom));
+  width:100%; max-height:80vh; overflow-y:auto;
+  transform:translateY(100%); transition:transform .3s var(--ease);
+}
+.portrait-sheet.open .portrait-inner { transform:translateY(0); }
+.portrait-handle { width:36px; height:4px; background:var(--ink-10); border-radius:2px; margin:0 auto 20px; }
+.portrait-title { font-family:var(--font-serif); font-size:20px; font-weight:normal; color:var(--ink); margin-bottom:6px; }
+.portrait-meta  { font-size:12px; color:var(--ink-40); margin-bottom:20px; }
+.portrait-body  { font-size:14px; line-height:1.85; color:var(--ink-70); white-space:pre-wrap; }
+.portrait-empty { text-align:center; padding:32px 0; color:var(--ink-40); font-size:14px; line-height:1.7; }
+.portrait-btn {
+  display:flex; align-items:center; gap:6px;
+  padding:6px 14px; border-radius:20px;
+  background:var(--cream-deep); border:1.5px solid var(--ink-10);
+  cursor:pointer; font-size:12px; color:var(--ink-70);
+  white-space:nowrap; flex-shrink:0; transition:all .15s;
+}
+.portrait-btn:active { border-color:var(--amber); color:var(--amber); }
+.portrait-close {
+  width:100%; background:var(--cream-deep); color:var(--ink-70); border:none;
+  border-radius:var(--r-md); padding:13px; font-size:14px; cursor:pointer;
+  margin-top:24px; transition:background .15s;
+}
+.portrait-close:active { background:var(--ink-10); }
+</style>
+</head>
+<body data-page="chat">
+
+<!-- ── HEADER ── -->
+<header class="site-header">
+  <button class="back-btn" onclick="history.back()">
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8">
+      <path d="M10 3L5 8l5 5"/>
+    </svg>
+  </button>
+  <div class="header-child-info" id="header-child-info">
+    <div class="header-child-name">成长对话</div>
+    <div class="header-child-meta">选择一个孩子开始</div>
+  </div>
+  <a class="logo-lockup" href="/">
+    <svg class="logo-svg" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle class="logo-ring-outer" cx="18" cy="18" r="15.5"
+              stroke="#C2692A" stroke-width=".9" stroke-dasharray="2.5 6" opacity=".30"/>
+      <g class="logo-petals">
+        <ellipse cx="18" cy="12" rx="2.2" ry="6.5" fill="#C2692A" opacity=".75" transform="rotate(0 18 18)"/>
+        <ellipse cx="18" cy="12" rx="2.2" ry="6.5" fill="#C2692A" opacity=".50" transform="rotate(90 18 18)"/>
+        <ellipse cx="18" cy="12" rx="1.4" ry="5.5" fill="#C2692A" opacity=".35" transform="rotate(45 18 18)"/>
+        <ellipse cx="18" cy="12" rx="1.4" ry="5.5" fill="#C2692A" opacity=".35" transform="rotate(135 18 18)"/>
+      </g>
+      <circle class="logo-center" cx="18" cy="18" r="3" fill="#C2692A"/>
+    </svg>
+    <span class="wordmark">AIPIW<span class="wm-e">E</span>N</span>
+  </a>
+</header>
+
+<!-- ── 孩子选择栏 ── -->
+<div class="child-selector" id="child-selector" style="display:none">
+  <!-- 动态生成 -->
+</div>
+
+<!-- ── 成长画像 Sheet ── -->
+<div class="portrait-sheet" id="portrait-sheet" onclick="closePortrait(event)">
+  <div class="portrait-inner">
+    <div class="portrait-handle"></div>
+    <h3 class="portrait-title" id="portrait-title">成长画像</h3>
+    <p class="portrait-meta" id="portrait-meta"></p>
+    <div id="portrait-body"></div>
+    <button class="portrait-close" onclick="closePortraitDirect()">关闭</button>
+  </div>
+</div>
+
+<!-- ── 主内容区 ── -->
+<div id="main-content" style="flex:1;display:flex;flex-direction:column;overflow:hidden;">
+
+  <!-- 未登录 -->
+  <div class="login-wall" id="login-wall" style="display:none">
+    <div class="login-icon">🌱</div>
+    <h2 class="login-title">开始你和孩子的<br>成长对话</h2>
+    <p class="login-body">登录后，每一次观察都会被记住，AI 帮你从点滴中看见孩子的成长脉络。</p>
+    <a class="login-btn" id="login-btn" href="#">
+      <span class="login-btn-icon">💬</span>
+      微信扫码登录
+    </a>
+  </div>
+
+  <!-- 已登录，无孩子 -->
+  <div class="empty-state" id="empty-children" style="display:none">
+    <div class="empty-icon">👶</div>
+    <h3 class="empty-title">还没有孩子档案</h3>
+    <p class="empty-body">先添加一个孩子，以后每次对话都会针对他/她来分析。</p>
+    <button class="login-btn" onclick="openAddChild()" style="margin-top:8px">
+      <span>＋</span> 添加孩子
+    </button>
+  </div>
+
+  <!-- 聊天区 -->
+  <div class="chat-wrap" id="chat-wrap" style="display:none">
+    <!-- 动态生成 -->
+  </div>
+
+</div>
+
+<!-- 快捷提示 -->
+<div class="quick-hints" id="quick-hints" style="display:none">
+  <div class="hint-chip" onclick="fillHint(this)">最近总发脾气</div>
+  <div class="hint-chip" onclick="fillHint(this)">不爱写作业</div>
+  <div class="hint-chip" onclick="fillHint(this)">跟同学吵架了</div>
+  <div class="hint-chip" onclick="fillHint(this)">不愿意上学</div>
+  <div class="hint-chip" onclick="fillHint(this)">今天进步了</div>
+</div>
+
+<!-- ── 输入栏 ── -->
+<div class="input-bar" id="input-bar" style="display:none">
+  <textarea class="input-field" id="input-field"
+    placeholder="说说孩子最近发生了什么…"
+    rows="1"
+    oninput="autoResize(this)"
+    onkeydown="handleKey(event)"></textarea>
+  <button class="send-btn" id="send-btn" onclick="sendMessage()" disabled>
+    <svg viewBox="0 0 18 18" fill="none" stroke="white" stroke-width="1.8">
+      <path d="M3 9h12M10 4l5 5-5 5"/>
+    </svg>
+  </button>
+</div>
+
+<!-- ── 访客模式登录提示 ── -->
+<div class="guest-nudge" id="guest-nudge">
+  <p class="guest-nudge-text">
+    <strong>这次对话结束后记录会消失。</strong><br>
+    微信登录后，AI 可以持续跟踪孩子的成长。
+  </p>
+  <div class="guest-nudge-actions">
+    <a class="nudge-login-btn" id="nudge-login-btn" href="#">💬 登录保存</a>
+    <button class="nudge-dismiss-btn" onclick="dismissNudge()">继续访客模式</button>
+  </div>
+</div>
+
+<!-- ── 新增孩子弹窗 ── -->
+<div class="modal-overlay" id="modal-overlay" onclick="closeAddChild(event)">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <h3 class="modal-title">添加孩子档案</h3>
+    <div class="form-group">
+      <label class="form-label">孩子姓名</label>
+      <input class="form-input" id="child-name" type="text" placeholder="小明" maxlength="20">
+    </div>
+    <div class="form-group">
+      <label class="form-label">年龄（岁）</label>
+      <input class="form-input" id="child-age" type="number" placeholder="8" min="1" max="18">
+    </div>
+    <button class="modal-submit" onclick="addChild()">确认添加</button>
+    <button class="modal-cancel" onclick="closeAddChild()">取消</button>
+  </div>
+</div>
+
+<script>
+// ── 状态 ─────────────────────────────────────────────────────────────────
+let currentUser     = null;
+let children        = [];
+let currentChildId  = null;
+let isLoading       = false;
+let isGuest         = false;   // 未登录访客模式
+let guestRounds     = 0;       // 每发一条消息 +1，≥3 显示登录提示
+let guestHistory    = [];      // 访客对话历史（内存，页面关闭即消失）
+let nudgeDismissed  = false;   // 是否已手动关闭提示
+
+// ── 初始化 ───────────────────────────────────────────────────────────────
+async function init() {
+  try {
+    const res  = await fetch('/api/auth?action=me');
+    if (!res.ok) { enterGuestMode(); return; }
+    const data = await res.json();
+    currentUser = data.user;
+    await loadChildren();
+  } catch (e) {
+    enterGuestMode();
+  }
+}
+
+// ── 访客模式入口 ─────────────────────────────────────────────────────────
+function enterGuestMode() {
+  isGuest = true;
+  // header 显示访客标识
+  document.getElementById('header-child-info').innerHTML = `
+    <div class="header-child-name">成长对话 <span class="guest-badge">访客模式</span></div>
+    <div class="header-child-meta">对话记录仅保存在本次会话</div>`;
+  // 直接打开聊天区，不显示孩子选择栏
+  showChat();
+  // 显示访客欢迎空状态
+  const wrap = document.getElementById('chat-wrap');
+  wrap.innerHTML = `
+    <div class="empty-state" style="flex:1">
+      <div class="empty-icon">💬</div>
+      <h3 class="empty-title">和 AI 聊聊孩子吧</h3>
+      <p class="empty-body">说说孩子最近的一件事，AI 帮你理解背后的原因。<br>
+        <span style="color:var(--ink-20);font-size:12px;margin-top:6px;display:block">登录后可保存记录，持续追踪成长</span>
+      </p>
+    </div>`;
+  // 预载登录链接
+  fetch('/api/auth?action=login_url').then(r => r.json()).then(d => {
+    if (d.url) {
+      document.getElementById('nudge-login-btn').href = d.url;
+    }
+  }).catch(() => {});
+}
+
+async function loadChildren() {
+  const res  = await fetch('/api/children');
+  const data = await res.json();
+  children   = data.children || [];
+
+  if (children.length === 0) {
+    showEmptyChildren();
+    return;
+  }
+
+  renderChildSelector();
+  selectChild(children[0].id);
+}
+
+// ── 渲染孩子选择栏 ────────────────────────────────────────────────────────
+function renderChildSelector() {
+  const sel = document.getElementById('child-selector');
+  sel.style.display = 'flex';
+
+  const chips = children.map(c => `
+    <div class="child-chip ${c.id === currentChildId ? 'active' : ''}"
+         onclick="selectChild('${c.id}')" data-id="${c.id}">
+      <div class="child-chip-avatar">${c.name.charAt(0)}</div>
+      ${c.name}
+    </div>
+  `).join('');
+
+  sel.innerHTML = chips + `
+    <button class="add-child-btn" onclick="openAddChild()">＋ 添加孩子</button>
+    <button class="portrait-btn" id="portrait-btn" onclick="openPortrait()" style="display:none">
+      ✦ 成长画像
+    </button>`;
+}
+
+// ── 查看成长画像 ──────────────────────────────────────────────────────────
+async function openPortrait() {
+  if (!currentChildId) return;
+  const child = children.find(c => c.id === currentChildId);
+
+  document.getElementById('portrait-title').textContent = `${child?.name || '孩子'}的成长画像`;
+  document.getElementById('portrait-meta').textContent  = '加载中…';
+  document.getElementById('portrait-body').innerHTML    = '';
+  document.getElementById('portrait-sheet').classList.add('open');
+
+  try {
+    const res  = await fetch(`/api/children?action=portrait&id=${currentChildId}`);
+    const data = await res.json();
+
+    if (data.portrait?.summary) {
+      const p = data.portrait;
+      const date = p.generatedAt ? new Date(p.generatedAt).toLocaleDateString('zh-CN') : '';
+      document.getElementById('portrait-meta').textContent =
+        `基于${p.recordCount}条记录生成${date ? ' · ' + date : ''}`;
+      document.getElementById('portrait-body').innerHTML =
+        `<div class="portrait-body">${escapeHtml(p.summary)}</div>`;
+    } else {
+      const count = data.recordCount || 0;
+      document.getElementById('portrait-meta').textContent = '';
+      document.getElementById('portrait-body').innerHTML = `
+        <div class="portrait-empty">
+          <div style="font-size:40px;margin-bottom:12px">🌱</div>
+          <p>还需要 <strong>${Math.max(0, 3 - count)}</strong> 条对话记录才能生成画像</p>
+          <p style="margin-top:8px;font-size:12px">多和 AI 聊聊孩子的日常，画像会自动生成</p>
+        </div>`;
+    }
+  } catch (e) {
+    document.getElementById('portrait-meta').textContent = '加载失败，请重试';
+  }
+}
+
+function closePortrait(e) {
+  if (e && !e.target.classList.contains('portrait-sheet')) return;
+  document.getElementById('portrait-sheet').classList.remove('open');
+}
+function closePortraitDirect() {
+  document.getElementById('portrait-sheet').classList.remove('open');
+}
+
+// ── 选择孩子 ─────────────────────────────────────────────────────────────
+async function selectChild(id) {
+  currentChildId = id;
+  const child    = children.find(c => c.id === id);
+  if (!child) return;
+
+  // 更新 header
+  document.getElementById('header-child-info').innerHTML = `
+    <div class="header-child-name">${child.name}</div>
+    <div class="header-child-meta">${child.age ? child.age + '岁' : ''} · AI 成长顾问</div>`;
+
+  // 更新选中态
+  document.querySelectorAll('.child-chip').forEach(el => {
+    el.classList.toggle('active', el.dataset.id === id);
+  });
+
+  // 显示聊天区和输入栏，以及画像按钮
+  const portraitBtn = document.getElementById('portrait-btn');
+  if (portraitBtn) portraitBtn.style.display = 'flex';
+  showChat();
+  await loadRecords();
+}
+
+// ── 加载历史记录 ─────────────────────────────────────────────────────────
+async function loadRecords() {
+  const res     = await fetch(`/api/children?action=records&id=${currentChildId}`);
+  const data    = await res.json();
+  const records = (data.records || []).reverse(); // 时间正序
+
+  const wrap = document.getElementById('chat-wrap');
+  wrap.innerHTML = '';
+
+  if (records.length === 0) {
+    const child = children.find(c => c.id === currentChildId);
+    wrap.innerHTML = `
+      <div class="empty-state" style="flex:1">
+        <div class="empty-icon">💬</div>
+        <h3 class="empty-title">和 AI 聊聊${child?.name || '孩子'}</h3>
+        <p class="empty-body">描述孩子最近的一个行为或情况，AI 会帮你理解背后的原因并给出建议。</p>
+      </div>`;
+    return;
+  }
+
+  let lastDate = '';
+  records.forEach(r => {
+    const date = r.createdAt.slice(0, 10);
+    if (date !== lastDate) {
+      lastDate = date;
+      wrap.insertAdjacentHTML('beforeend', `<div class="chat-date">${formatDate(date)}</div>`);
+    }
+    wrap.insertAdjacentHTML('beforeend', renderMessage(r));
+  });
+
+  scrollToBottom();
+}
+
+// ── 渲染单条消息 ─────────────────────────────────────────────────────────
+function renderMessage(r) {
+  const isParent = r.role === 'parent';
+  const time     = formatTime(r.createdAt);
+  const avatar   = isParent ? '👤' : '✦';
+  return `
+    <div class="msg ${r.role}">
+      <div class="msg-avatar">${avatar}</div>
+      <div>
+        <div class="msg-bubble">${escapeHtml(r.content)}</div>
+        <span class="msg-time">${time}</span>
+      </div>
+    </div>`;
+}
+
+// ── 发送消息 ─────────────────────────────────────────────────────────────
+async function sendMessage() {
+  const field   = document.getElementById('input-field');
+  const content = field.value.trim();
+  if (!content || isLoading) return;
+
+  isLoading = true;
+  document.getElementById('send-btn').disabled = true;
+  field.value = ''; autoResize(field);
+
+  // 立即显示家长消息
+  const wrap = document.getElementById('chat-wrap');
+  const emptyEl = wrap.querySelector('.empty-state');
+  if (emptyEl) emptyEl.remove();
+
+  const now = new Date().toISOString();
+  wrap.insertAdjacentHTML('beforeend', renderMessage({ role: 'parent', content, createdAt: now }));
+
+  // 显示 AI 正在输入
+  wrap.insertAdjacentHTML('beforeend', `
+    <div class="msg ai" id="typing-indicator">
+      <div class="msg-avatar">✦</div>
+      <div class="typing-bubble">
+        <div class="typing-dot"></div>
+        <div class="typing-dot"></div>
+        <div class="typing-dot"></div>
+      </div>
+    </div>`);
+  scrollToBottom();
+
+  try {
+    let reply;
+
+    if (isGuest) {
+      // 访客模式：调用无需登录的 guest-chat 接口，历史存内存
+      const res  = await fetch('/api/guest-chat', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ content, history: guestHistory }),
+      });
+      const data = await res.json();
+      reply = data.reply || '收到，稍后为你分析…';
+      // 保存到内存历史
+      guestHistory.push({ role: 'parent', content });
+      guestHistory.push({ role: 'ai',     content: reply });
+    } else {
+      // 登录用户：保存到 Redis
+      const res  = await fetch(`/api/children?action=chat&id=${currentChildId}`, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ content }),
+      });
+      const data = await res.json();
+      reply = data.reply || '收到，稍后为你分析…';
+    }
+
+    document.getElementById('typing-indicator')?.remove();
+    wrap.insertAdjacentHTML('beforeend', renderMessage({
+      role: 'ai', content: reply, createdAt: new Date().toISOString()
+    }));
+    scrollToBottom();
+
+    // 埋点
+    if (window.aipiwen) {
+      window.aipiwen.track(isGuest ? 'chat_guest' : 'chat_member');
+    }
+    // 访客：发了3轮后显示登录提示
+    if (isGuest) {
+      guestRounds++;
+      if (guestRounds >= 3 && !nudgeDismissed) showLoginNudge();
+    }
+  } catch (e) {
+    document.getElementById('typing-indicator')?.remove();
+    wrap.insertAdjacentHTML('beforeend', renderMessage({
+      role: 'ai', content: '网络好像出了点问题，请稍后再试。', createdAt: new Date().toISOString()
+    }));
+  }
+
+  isLoading = false;
+  document.getElementById('send-btn').disabled = false;
+}
+
+// ── 登录提示 ─────────────────────────────────────────────────────────────
+function showLoginNudge() {
+  document.getElementById('guest-nudge').classList.add('show');
+}
+function dismissNudge() {
+  nudgeDismissed = true;
+  document.getElementById('guest-nudge').classList.remove('show');
+}
+
+// ── 新增孩子 ─────────────────────────────────────────────────────────────
+async function addChild() {
+  const name = document.getElementById('child-name').value.trim();
+  const age  = document.getElementById('child-age').value;
+  if (!name) { document.getElementById('child-name').focus(); return; }
+
+  const res  = await fetch('/api/children?action=add', {
+    method:  'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body:    JSON.stringify({ name, age }),
+  });
+  const data = await res.json();
+  if (data.child) {
+    children.push(data.child);
+    closeAddChild();
+    renderChildSelector();
+    selectChild(data.child.id);
+  }
+}
+
+// ── UI 状态切换 ──────────────────────────────────────────────────────────
+function showLoginWall() {
+  document.getElementById('login-wall').style.display = 'flex';
+  document.getElementById('empty-children').style.display = 'none';
+  document.getElementById('chat-wrap').style.display = 'none';
+  document.getElementById('input-bar').style.display = 'none';
+  document.getElementById('quick-hints').style.display = 'none';
+  // 获取微信登录 URL
+  fetch('/api/auth?action=login_url').then(r => r.json()).then(d => {
+    if (d.url) document.getElementById('login-btn').href = d.url;
+  });
+}
+
+function showEmptyChildren() {
+  document.getElementById('login-wall').style.display = 'none';
+  document.getElementById('empty-children').style.display = 'flex';
+  document.getElementById('chat-wrap').style.display = 'none';
+  document.getElementById('input-bar').style.display = 'none';
+  document.getElementById('quick-hints').style.display = 'none';
+}
+
+function showChat() {
+  document.getElementById('login-wall').style.display = 'none';
+  document.getElementById('empty-children').style.display = 'none';
+  document.getElementById('chat-wrap').style.display = 'flex';
+  document.getElementById('input-bar').style.display = 'flex';
+  document.getElementById('quick-hints').style.display = 'flex';
+}
+
+function openAddChild() {
+  document.getElementById('child-name').value = '';
+  document.getElementById('child-age').value  = '';
+  document.getElementById('modal-overlay').classList.add('open');
+  setTimeout(() => document.getElementById('child-name').focus(), 300);
+}
+
+function closeAddChild(e) {
+  if (e && e.target !== document.getElementById('modal-overlay')) return;
+  document.getElementById('modal-overlay').classList.remove('open');
+}
+
+// ── 工具函数 ─────────────────────────────────────────────────────────────
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+  document.getElementById('send-btn').disabled = !el.value.trim();
+}
+
+function handleKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
+  }
+}
+
+function fillHint(el) {
+  const field = document.getElementById('input-field');
+  field.value = el.textContent.trim();
+  autoResize(field);
+  field.focus();
+}
+
+function scrollToBottom() {
+  const wrap = document.getElementById('chat-wrap');
+  setTimeout(() => { wrap.scrollTop = wrap.scrollHeight; }, 50);
+}
+
+function escapeHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+          .replace(/\n/g,'<br>');
+}
+
+function formatDate(dateStr) {
+  const d   = new Date(dateStr);
+  const now = new Date();
+  const diff = Math.floor((now - d) / 86400000);
+  if (diff === 0) return '今天';
+  if (diff === 1) return '昨天';
+  return `${d.getMonth()+1}月${d.getDate()}日`;
+}
+
+function formatTime(iso) {
+  const d = new Date(iso);
+  return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+}
+
+// ── 启动 ─────────────────────────────────────────────────────────────────
+init();
+</script>
+<script src="/js/track.js"></script>
+</body>
+</html>
