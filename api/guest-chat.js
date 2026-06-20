@@ -1,11 +1,35 @@
 /**
  * AIPIWEN 访客对话接口
- * 无需登录，不保存记录，仅返回 AI 回复
+ * 无需登录，仅返回 AI 回复，同时将对话日志写入 Redis
  * POST /api/guest-chat
- * body: { content, history: [{role, content}] }
+ * body: { content, history: [{role, content}], context, previousContext, sessionId }
  */
 
 const { getGlobalPatterns, redisSet, redisGet } = require('./_lib');
+
+// ── 对话日志：保存每次对话到 Redis，供管理员查看 ──────────────────────────────
+async function logConversation(sessionId, context, userMsg, aiReply, ip) {
+  if (!sessionId) return;
+  try {
+    const ts = Date.now();
+    const msgsKey = `convlog:msgs:${sessionId}`;
+    const msgs = await redisGet(msgsKey) || [];
+    const isNew = msgs.length === 0;
+
+    msgs.push({ role: 'user', content: userMsg.slice(0, 1000), ts });
+    msgs.push({ role: 'ai',   content: aiReply.slice(0, 1000), ts: ts + 1 });
+    await redisSet(msgsKey, msgs, 60 * 86400); // 保留60天
+
+    if (isNew) {
+      const index = await redisGet('convlog:index') || [];
+      index.unshift({ sessionId, context, ts, firstMsg: userMsg.slice(0, 120), ip: (ip || '').slice(0, 20) });
+      if (index.length > 500) index.splice(500);
+      await redisSet('convlog:index', index);
+    }
+  } catch(e) {
+    console.error('[convlog]', e.message);
+  }
+}
 
 // ── IP 限流：每个 IP 每分钟最多10次 ─────────────────────────────────────────
 async function checkRateLimit(ip) {
@@ -39,7 +63,7 @@ module.exports = async function handler(req, res) {
   let payload = {};
   try { payload = JSON.parse(body); } catch {}
 
-  const { content, history = [], context = 'child', previousContext = '' } = payload;
+  const { content, history = [], context = 'child', previousContext = '', sessionId = '' } = payload;
   if (!content?.trim()) return res.status(400).json({ error: '内容不能为空' });
 
   // 全局高频模式（仅亲子场景使用）
@@ -163,5 +187,10 @@ ${NO_FILLER}`,
     console.error('DashScope fetch error:', err.message);
   }
 
-  return res.status(200).json({ reply: reply || '你说的这些，我需要多一点时间去感受。能再多描述一个细节吗——这个行为通常发生在什么时候？' });
+  const finalReply = reply || '你说的这些，我需要多一点时间去感受。能再多描述一个细节吗——这个行为通常发生在什么时候？';
+
+  // 异步记录对话日志，不阻塞返回
+  logConversation(sessionId, context, content, finalReply, ip).catch(() => {});
+
+  return res.status(200).json({ reply: finalReply });
 };

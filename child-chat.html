@@ -359,6 +359,7 @@ function backToForm() {
   currentReportId   = '';
   sessionPrevContext = '';
   isProcessing      = false;
+  _sessionId        = '';
   document.getElementById('chat-scroll').innerHTML = '';
 
   document.getElementById('phase-chat').style.display = 'none';
@@ -414,10 +415,16 @@ let chatHistory = [];
 let currentReportId = '';
 let isProcessing = false;
 let sessionPrevContext = ''; // 每次 session 开始时设置，全程复用
+let _sessionId = '';          // 每次对话唯一ID，用于服务端日志
 
 async function submitBehavior() {
   const behavior = document.getElementById('behavior-input').value.trim();
   if (behavior.length < 4) return;
+
+  // 生成本次会话唯一ID（用于服务端日志）
+  if (!_sessionId) {
+    _sessionId = Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
+  }
 
   // Save to localStorage
   try {
@@ -525,7 +532,8 @@ async function callAPI(content) {
     content,
     history:         chatHistory.slice(-8),
     context:         _for,
-    previousContext: sessionPrevContext, // 注入历史记忆（非亲子场景有值）
+    previousContext: sessionPrevContext,
+    sessionId:       _sessionId,         // 服务端日志用
   };
   const res = await fetch('/api/guest-chat', {
     method: 'POST',

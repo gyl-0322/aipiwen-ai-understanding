@@ -5,6 +5,8 @@
     { "src": "/js/(.*)",                     "dest": "/js/$1" },
     { "src": "/patterns/(.*)",               "dest": "/patterns/$1" },
     { "src": "/admin.html",                  "dest": "/admin.html" },
+    { "src": "/admin-convs.html",            "dest": "/admin-convs.html" },
+    { "src": "/admin-convs",                 "dest": "/admin-convs.html" },
     { "src": "/homepage.html",               "dest": "/homepage.html" },
     { "src": "/behavior-input.html",         "dest": "/behavior-input.html" },
     { "src": "/light-report.html",           "dest": "/light-report.html" },
@@ -30,7 +32,8 @@
     "api/synthesize.js":  { "maxDuration": 30 },
     "api/digest.js":      { "maxDuration": 60 },
     "api/stats.js":       { "maxDuration": 10 },
-    "api/knowledge.js":   { "maxDuration": 15 }
+    "api/knowledge.js":   { "maxDuration": 15 },
+    "api/admin-convs.js": { "maxDuration": 10 }
   },
   "crons": [
     { "path": "/api/digest?action=portrait_all", "schedule": "0 2 * * *"   },
