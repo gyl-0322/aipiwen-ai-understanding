@@ -1343,9 +1343,8 @@ body {
 <div class="modal" id="posterModal">
   <div class="modal-card">
     <div class="modal-title">分享海报 <button class="modal-close" onclick="closePoster()">×</button></div>
-    <p class="poster-hint" style="font-size:12px;text-align:center;margin-bottom:14px;">长按图片保存，分享给朋友</p>
+    <p class="poster-hint" style="font-size:12px;text-align:center;margin-bottom:14px;">📸 截图保存整个页面，分享给朋友</p>
     <div id="posterPreview"></div>
-    <button id="posterDownloadBtn" onclick="downloadPoster()" style="display:none;margin:14px auto 0;padding:10px 24px;background:#C2692A;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;width:100%;">保存海报到手机</button>
   </div>
 </div>
 
@@ -2096,26 +2095,15 @@ async function generatePoster() {
 
   document.getElementById('posterModal').classList.add('show');
   if (window.GT) GT.track('poster_open', { type: result.key });
-  const preview = document.getElementById('posterPreview');
-  preview.innerHTML = '<div style="padding:40px;text-align:center;color:rgba(253,252,248,.3)">正在生成海报…</div>';
 
-  try {
-    await new Promise(r=>setTimeout(r,60));
-    const canvas = await html2canvas(posterBg, {
-      width:375, scale:2, backgroundColor:'#0E0C0A',
-      useCORS:true, allowTaint:true, logging:false
-    });
-    const dataUrl = canvas.toDataURL('image/png');
-    preview.innerHTML = `<img src="${dataUrl}" style="max-width:100%;border-radius:12px;display:block;" alt="分享海报">`;
-    // Show download button + store dataUrl for download
-    window._posterDataUrl = dataUrl;
-    const dlBtn = document.getElementById('posterDownloadBtn');
-    if (dlBtn) dlBtn.style.display = 'block';
-  } catch(e) {
-    preview.innerHTML = '<div style="padding:40px;text-align:center;color:#e74c3c">海报生成失败，请重试</div>';
-  } finally {
-    _restoreBtn();
-  }
+  // 直接把海报模板克隆到预览区，不依赖 html2canvas（微信浏览器不稳定）
+  const preview = document.getElementById('posterPreview');
+  const cloned  = posterBg.cloneNode(true);
+  cloned.style.cssText = 'position:relative;left:auto;top:auto;width:100%;max-width:340px;margin:0 auto;display:block;border-radius:16px;overflow:hidden;';
+  preview.innerHTML = '';
+  preview.appendChild(cloned);
+
+  _restoreBtn();
 }
 
 function downloadPoster() {
