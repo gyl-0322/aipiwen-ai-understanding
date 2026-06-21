@@ -297,18 +297,19 @@
 
   <!-- Report type preview -->
   <div class="report-types-preview">
-    <div class="rtp-title">上传后可选择的解读方向</div>
+    <div class="rtp-title">上传后可以选择这些解读方向 →</div>
     <div class="rtp-grid">
-      <div class="rtp-item">📊 基础版个人报告</div>
-      <div class="rtp-item">👨‍👩‍👧 亲子合盘报告</div>
-      <div class="rtp-item">💑 亲密关系（未婚）</div>
-      <div class="rtp-item">💍 亲密关系（已婚）</div>
-      <div class="rtp-item custom">💼 职业规划报告</div>
-      <div class="rtp-item custom">🧠 学习能力提升</div>
-      <div class="rtp-item custom">📚 全阶段学业规划</div>
-      <div class="rtp-item custom">🎓 高考志愿报读</div>
-      <div class="rtp-item custom">🎨 兴趣班选择</div>
-      <div class="rtp-item custom">🧘 身心健康报告</div>
+      <div class="rtp-item">📊 读懂我的天赋数据</div>
+      <div class="rtp-item">👨‍👩‍👧 亲子天赋哪里不同</div>
+      <div class="rtp-item">💑 我们俩天赋合不合</div>
+      <div class="rtp-item">💍 更了解我的配偶</div>
+      <div class="rtp-item custom">🎨 孩子该学什么兴趣班</div>
+      <div class="rtp-item custom">🧠 孩子学习方法为什么没用</div>
+      <div class="rtp-item custom">📚 孩子学业怎么规划</div>
+      <div class="rtp-item custom">🎓 高考报什么专业最合适</div>
+      <div class="rtp-item custom">🚀 毕业了该去哪里工作</div>
+      <div class="rtp-item custom">💼 职场下一步怎么走</div>
+      <div class="rtp-item custom">🧘 情绪总不稳定怎么办</div>
     </div>
   </div>
 </div>
@@ -334,32 +335,47 @@
   <!-- Bottom bar -->
   <div class="chat-bottom">
 
-    <!-- 基础解读 chips -->
+    <!-- 基础解读：读懂报告数据 -->
     <div class="chip-group">
-      <div class="chip-group-label">基础解读</div>
+      <div class="chip-group-label">读懂报告数据</div>
       <div class="chip-row">
-        <button class="chip" onclick="selectReport('基础版个人报告')">📊 基础版个人</button>
-        <button class="chip" onclick="selectReport('亲子合盘报告')">👨‍👩‍👧 亲子合盘</button>
-        <button class="chip" onclick="selectReport('亲密关系合盘（未婚）')">💑 亲密关系·未婚</button>
-        <button class="chip" onclick="selectReport('亲密关系合盘（已婚）')">💍 亲密关系·已婚</button>
+        <button class="chip" onclick="selectReport('天赋数据全解读', '读懂我的每一项数据')">📊 读懂我的天赋数据</button>
+        <button class="chip" onclick="selectReport('亲子天赋差异对比', '亲子合盘数据对比')">👨‍👩‍👧 亲子天赋哪里不同</button>
+        <button class="chip" onclick="selectReport('恋人天赋匹配分析', '未婚伴侣天赋匹配')">💑 我们俩天赋合不合</button>
+        <button class="chip" onclick="selectReport('夫妻天赋深度解析', '已婚夫妻天赋差异')">💍 更了解我的配偶</button>
       </div>
     </div>
 
-    <!-- 定制版 chips -->
+    <!-- 孩子培养方向 -->
     <div class="chip-group">
-      <div class="chip-group-label">定制版报告</div>
+      <div class="chip-group-label">孩子往哪里培养</div>
       <div class="chip-row">
-        <button class="chip custom" onclick="selectReport('职业规划个性化报告')">💼 职业规划</button>
-        <button class="chip custom" onclick="selectReport('学习能力提升个性化报告')">🧠 学习能力提升</button>
-        <button class="chip custom" onclick="selectReport('全阶段学业规划个性化报告')">📚 全阶段学业规划</button>
-        <button class="chip custom" onclick="selectReport('高考志愿报读个性化报告')">🎓 高考志愿报读</button>
-        <button class="chip custom" onclick="selectReport('兴趣班选择个性化报告')">🎨 兴趣班选择</button>
-        <button class="chip custom" onclick="selectReport('身心健康个性化报告')">🧘 身心健康</button>
+        <button class="chip custom" onclick="selectReport('孩子兴趣班方向建议', '孩子兴趣班选择方向')">🎨 孩子该学什么兴趣班</button>
+        <button class="chip custom" onclick="selectReport('孩子学习方法匹配方案', '孩子学习通道匹配')">🧠 孩子学习方法为什么没用</button>
+        <button class="chip custom" onclick="selectReport('孩子学业发展路径规划', '全阶段学业路径规划')">📚 孩子学业怎么一步步规划</button>
+      </div>
+    </div>
+
+    <!-- 人生关键决策 -->
+    <div class="chip-group">
+      <div class="chip-group-label">人生关键决策</div>
+      <div class="chip-row">
+        <button class="chip custom" onclick="selectReport('高考选专业与志愿方向', '高考填报专业方向建议')">🎓 高考报什么专业最合适</button>
+        <button class="chip custom" onclick="selectReport('毕业生求职方向与行业选择', '初入职场就业方向')">🚀 毕业了该去哪里工作</button>
+        <button class="chip custom" onclick="selectReport('职业发展路径与晋升方向', '职业规划与发展方向')">💼 职场下一步怎么走</button>
+      </div>
+    </div>
+
+    <!-- 情绪与身心 -->
+    <div class="chip-group" style="margin-bottom:0">
+      <div class="chip-group-label">情绪与身心</div>
+      <div class="chip-row">
+        <button class="chip custom" onclick="selectReport('情绪管理与压力疏导方案', '情绪与压力管理方案')">🧘 情绪总是不稳定怎么办</button>
       </div>
     </div>
 
     <!-- Text input -->
-    <div class="input-row">
+    <div class="input-row" style="margin-top:8px">
       <textarea
         class="chat-input"
         id="chatInput"
@@ -462,12 +478,11 @@ function resetToUpload() {
 }
 
 // ── Report Type Chip Selection ───────────────────────────────────────────────
-function selectReport(type) {
+// type = 报告类型名（发给AI），displayText = 用户看到的气泡文字
+function selectReport(type, displayText) {
   if (!imageBase64) return;
-  // Display text shown in chat bubble
-  const display = '我想要：' + type;
-  // Actual content sent to API includes instruction
-  const content = `请根据上传的测评报告，为我生成【${type}】。请结合报告数据和知识库，输出完整、个性化的${type}内容。`;
+  const display = displayText || type;
+  const content = `请根据上传的测评报告，为我生成【${type}】。结合报告数据和知识库，输出完整、针对性强的内容。`;
   sendMessage(content, display);
 }
 
