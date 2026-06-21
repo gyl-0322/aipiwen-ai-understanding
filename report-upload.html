@@ -433,25 +433,40 @@ function handleFile(file) {
     return;
   }
   hideError();
-  imageMimeType = file.type || 'image/jpeg';
 
   const reader = new FileReader();
   reader.onload = e => {
-    const dataUrl = e.target.result;
-    imageBase64 = dataUrl.split(',')[1];
+    const originalDataUrl = e.target.result;
 
-    // Setup chat page header
-    reportThumb.src = dataUrl;
-    const n = file.name;
-    reportName.textContent = n.length > 24 ? n.slice(0, 22) + '…' : n;
+    // ── 压缩图片：最长边≤1280px，JPEG 0.82 质量，减少 base64 体积 ──
+    const img = new Image();
+    img.onload = () => {
+      const MAX = 1280;
+      let w = img.width, h = img.height;
+      if (w > MAX || h > MAX) {
+        if (w >= h) { h = Math.round(h * MAX / w); w = MAX; }
+        else        { w = Math.round(w * MAX / h); h = MAX; }
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.82);
+      imageBase64   = compressedDataUrl.split(',')[1];
+      imageMimeType = 'image/jpeg';
 
-    // Switch to chat
-    preUpload.classList.add('hidden');
-    chatPage.classList.add('active');
+      // Setup chat page header（缩略图用原图）
+      reportThumb.src = originalDataUrl;
+      const n = file.name;
+      reportName.textContent = n.length > 24 ? n.slice(0, 22) + '…' : n;
 
-    // Show AI welcome
-    appendAI('您好！我已收到这份测评报告 📋\n\n请从下方选择解读方向——\n• 基础解读：读懂报告中的天赋数据\n• 定制版报告：针对具体人生场景生成专属内容\n\n也可以直接在对话框提问。');
-    sendBtn.disabled = false;
+      // Switch to chat
+      preUpload.classList.add('hidden');
+      chatPage.classList.add('active');
+
+      appendAI('您好！我已收到这份测评报告 📋\n\n请从下方选择解读方向——\n• 基础解读：读懂报告中的天赋数据\n• 定制版报告：针对具体人生场景生成专属内容\n\n也可以直接在对话框提问。');
+      sendBtn.disabled = false;
+    };
+    img.src = originalDataUrl;
   };
   reader.readAsDataURL(file);
 }
