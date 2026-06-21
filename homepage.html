@@ -623,19 +623,41 @@ function switchReview(idx) {
 }
 setInterval(() => switchReview((_reviewIdx + 1) % 3), 5000);
 
-// ── 用户计数动画 ──────────────────────────────────────────────
+// ── 用户计数（动态，从 Redis 读取真实访客数，基数 12638）──────
 (function() {
   const el = document.getElementById('proofNum');
   if (!el) return;
-  const target = 12638;
-  const start  = Math.floor(target * 0.92);
-  let cur = start;
-  const step = Math.ceil((target - start) / 40);
-  const timer = setInterval(() => {
-    cur = Math.min(cur + step, target);
-    el.textContent = cur.toLocaleString('zh-CN');
-    if (cur >= target) clearInterval(timer);
-  }, 30);
+  const BASE = 12638;
+
+  function animate(target) {
+    const start = Math.floor(target * 0.97);
+    let cur = start;
+    const step = Math.max(1, Math.ceil((target - start) / 40));
+    const timer = setInterval(() => {
+      cur = Math.min(cur + step, target);
+      el.textContent = cur.toLocaleString('zh-CN');
+      if (cur >= target) clearInterval(timer);
+    }, 30);
+  }
+
+  // 每个设备每天只计一次，避免刷新重复计数
+  try {
+    const TODAY = new Date().toISOString().slice(0, 10);
+    if (localStorage.getItem('aipiwen_visit') !== TODAY) {
+      localStorage.setItem('aipiwen_visit', TODAY);
+      fetch('/api/track', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ event: 'homepage_visit', ts: Date.now() })
+      }).catch(() => {});
+    }
+  } catch(e) {}
+
+  // 拉取当前计数，动画到真实总数
+  fetch('/api/track')
+    .then(r => r.json())
+    .then(d => animate(BASE + (d.count || 0)))
+    .catch(() => animate(BASE));
 })();
 </script>
 

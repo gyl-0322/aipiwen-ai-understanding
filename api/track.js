@@ -48,10 +48,18 @@ async function kvPipeline(commands) {
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
   if (req.method === 'OPTIONS') return res.status(204).end();
+
+  // ── GET: 返回 homepage_visit 累计计数（首页社会证明用）────────────────────
+  if (req.method === 'GET') {
+    const data = await kvPipeline([['HGET', 'gt:funnel', 'homepage_visit']]);
+    const count = parseInt((data && data[0] && data[0].result) || 0, 10) || 0;
+    return res.status(200).json({ ok: true, count });
+  }
+
   if (req.method !== 'POST')   return res.status(405).json({ error: 'Method not allowed' });
 
   let payload;
