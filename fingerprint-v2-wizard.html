@@ -562,110 +562,102 @@ body {
 .poster-bg {
   --pc: #C2692A;
   width: 375px;
-  background: #0E0C0A;
+  background: #090704;
   display: flex; flex-direction: column;
   position: relative; overflow: hidden;
   font-family: -apple-system, 'PingFang SC', 'Helvetica Neue', sans-serif;
 }
 .poster-glow-top {
-  position: absolute; top: -50px; right: -50px;
-  width: 300px; height: 300px; border-radius: 50%;
+  position: absolute; top: -70px; right: -70px;
+  width: 340px; height: 340px; border-radius: 50%;
   pointer-events: none; z-index: 0;
 }
 .poster-glow-bot {
-  position: absolute; bottom: -60px; left: -60px;
-  width: 220px; height: 220px; border-radius: 50%;
+  position: absolute; bottom: -100px; left: -80px;
+  width: 280px; height: 280px; border-radius: 50%;
   pointer-events: none; z-index: 0;
 }
 .poster-accent-bar {
-  height: 3px;
-  background: linear-gradient(90deg, var(--pc) 0%, rgba(194,105,42,.3) 65%, transparent 100%);
+  height: 2px;
+  background: linear-gradient(90deg, var(--pc) 0%, rgba(194,105,42,.18) 70%, transparent 100%);
   flex-shrink: 0; position: relative; z-index: 1;
 }
 .poster-header {
   display: flex; justify-content: space-between; align-items: center;
-  padding: 14px 24px 12px; flex-shrink: 0; position: relative; z-index: 1;
+  padding: 18px 28px 14px; flex-shrink: 0; position: relative; z-index: 1;
 }
-.poster-brand { font-size: 8.5px; color: rgba(253,252,248,.22); letter-spacing: .5em; }
-.poster-brand-mark { font-size: 10px; color: rgba(194,105,42,.38); }
+.poster-brand { font-size: 8px; color: rgba(253,252,248,.16); letter-spacing: .58em; }
+.poster-brand-mark { font-size: 9px; color: rgba(194,105,42,.28); }
 .poster-header-rule {
-  height: 1px; background: rgba(255,255,255,.05);
-  margin: 0 24px; flex-shrink: 0; position: relative; z-index: 1;
+  height: 1px; background: rgba(255,255,255,.04);
+  margin: 0 28px; flex-shrink: 0; position: relative; z-index: 1;
 }
-.poster-mini-tag {
-  font-size: 9px; color: rgba(253,252,248,.28); letter-spacing: .35em;
-  text-align: center; padding: 12px 0 6px; position: relative; z-index: 1;
-}
+.poster-mini-tag { display: none; }
 .poster-hook {
-  font-size: 25px; font-weight: 700; color: #FDFCF8;
-  text-align: center; line-height: 1.45; padding: 2px 32px 0;
-  position: relative; z-index: 1; letter-spacing: .02em;
+  font-size: 28px; font-weight: 700; color: #FDFCF8;
+  text-align: center; line-height: 1.5; padding: 22px 36px 0;
+  position: relative; z-index: 1; letter-spacing: .025em;
 }
 .poster-fp-wrap {
   display: flex; justify-content: center; align-items: center;
-  padding: 14px 0 6px; position: relative; z-index: 1; flex-shrink: 0;
+  padding: 20px 0 8px; position: relative; z-index: 1; flex-shrink: 0;
 }
 .poster-type-badge {
   display: flex; justify-content: center;
-  padding: 0 0 8px; position: relative; z-index: 1;
+  padding: 0 0 6px; position: relative; z-index: 1;
 }
 .poster-type-pill {
   display: inline-flex; align-items: center;
-  border: 1px solid var(--pc); border-radius: 24px;
-  padding: 7px 22px; background: rgba(0,0,0,.3);
+  border: 1px solid rgba(194,105,42,.55); border-radius: 28px;
+  padding: 9px 30px; background: rgba(194,105,42,.07);
 }
 .poster-type-name {
-  font-size: 17px; font-weight: 600; color: #FDFCF8; letter-spacing: .06em;
+  font-size: 19px; font-weight: 600; color: #FDFCF8; letter-spacing: .09em;
 }
-.poster-benefit {
-  font-size: 10px; color: rgba(253,252,248,.38); letter-spacing: .06em; line-height: 1.6;
-  text-align: center; padding: 6px 28px 0; position: relative; z-index: 1;
-}
+.poster-benefit { display: none; }
 .poster-tagline {
-  font-size: 10px; color: rgba(253,252,248,.22); letter-spacing: .18em; line-height: 2;
-  text-align: center; padding: 2px 28px 0; position: relative; z-index: 1;
+  font-size: 10px; color: rgba(194,105,42,.7); letter-spacing: .24em; line-height: 2;
+  text-align: center; padding: 4px 28px 0; position: relative; z-index: 1;
 }
 .poster-divider {
-  display: flex; align-items: center; margin: 14px 24px 12px;
+  display: flex; align-items: center; margin: 18px 28px 14px;
   flex-shrink: 0; position: relative; z-index: 1;
 }
-.poster-divider::before { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, transparent, rgba(194,105,42,.35)); }
-.poster-divider::after  { content: ''; flex: 1; height: 1px; background: linear-gradient(270deg, transparent, rgba(194,105,42,.35)); }
+.poster-divider::before { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, transparent, rgba(194,105,42,.28)); }
+.poster-divider::after  { content: ''; flex: 1; height: 1px; background: linear-gradient(270deg, transparent, rgba(194,105,42,.28)); }
 .poster-divider-label {
-  font-size: 8.5px; color: rgba(194,105,42,.5); letter-spacing: .5em;
+  font-size: 8px; color: rgba(194,105,42,.42); letter-spacing: .55em;
   padding: 0 12px; white-space: nowrap;
 }
 .poster-talents {
-  padding: 0 32px 12px;
-  display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+  padding: 0 36px 18px;
+  display: grid; grid-template-columns: 1fr 1fr; gap: 13px;
   flex-shrink: 0; position: relative; z-index: 1;
 }
 .poster-talent {
-  display: flex; align-items: center; gap: 7px;
-  font-size: 11.5px; color: rgba(253,252,248,.58); letter-spacing: .04em;
+  display: flex; align-items: center; gap: 8px;
+  font-size: 12px; color: rgba(253,252,248,.62); letter-spacing: .04em;
 }
-.poster-talent::before { content: '◆'; font-size: 4.5px; color: var(--pc); flex-shrink: 0; }
-.poster-stats {
-  margin: 0 20px 14px;
-  border: 1px solid rgba(255,255,255,.05); border-radius: 8px;
-  padding: 10px 0; display: flex; align-items: center; justify-content: space-around;
-  background: rgba(255,255,255,.02); flex-shrink: 0; position: relative; z-index: 1;
+.poster-talent::before { content: '◆'; font-size: 5px; color: var(--pc); flex-shrink: 0; }
+.poster-stats { display: none; }
+.poster-science-strip {
+  margin: 0 28px 18px;
+  border-top: 1px solid rgba(255,255,255,.05);
+  padding-top: 14px; position: relative; z-index: 1; text-align: center;
 }
-.poster-stat { display: flex; flex-direction: column; align-items: center; gap: 3px; }
-.poster-stat-num { font-size: 19px; font-weight: 700; color: var(--pc); line-height: 1; }
-.poster-stat-ico { font-size: 14px; color: var(--pc); line-height: 1; }
-.poster-stat-lbl { font-size: 8.5px; color: rgba(253,252,248,.25); letter-spacing: .06em; }
-.poster-stat-sep { width: 1px; height: 28px; background: rgba(255,255,255,.05); }
+.poster-science-text {
+  font-size: 9px; color: rgba(253,252,248,.2); letter-spacing: .16em; line-height: 2;
+}
 .poster-footer {
-  margin: 0 20px 20px; border: 1px solid rgba(194,105,42,.18); border-radius: 10px;
-  padding: 12px 16px; display: flex; align-items: center; gap: 14px;
+  margin: 0 22px 24px; border: 1px solid rgba(194,105,42,.14); border-radius: 12px;
+  padding: 14px 18px; display: flex; align-items: center; gap: 16px;
   background: rgba(255,255,255,.02); flex-shrink: 0; position: relative; z-index: 1;
 }
-.poster-qr-wrap { flex-shrink: 0; background: #FDFCF8; border-radius: 6px; padding: 4px; }
-.poster-qr-wrap img { width: 56px; height: 56px; display: block; }
-.poster-cta { font-size: 12px; font-weight: 600; color: rgba(253,252,248,.88); line-height: 1.4; margin-bottom: 2px; }
-.poster-cta-sub { font-size: 11px; color: rgba(253,252,248,.38); margin-bottom: 4px; }
-.poster-url { font-size: 10px; color: var(--pc); letter-spacing: .12em; }
+.poster-qr-wrap { flex-shrink: 0; background: #FDFCF8; border-radius: 7px; padding: 5px; }
+.poster-qr-wrap img { width: 58px; height: 58px; display: block; }
+.poster-cta { font-size: 13px; font-weight: 600; color: rgba(253,252,248,.9); line-height: 1.4; margin-bottom: 3px; }
+.poster-cta-sub { font-size: 10.5px; color: rgba(253,252,248,.32); margin-bottom: 5px; }
+.poster-url { font-size: 9.5px; color: var(--pc); letter-spacing: .15em; }
 
 /* ─── THUMB CONFIRM (step 6) ─── */
 .thumb-confirm {
@@ -1296,7 +1288,6 @@ body {
       <span class="poster-brand-mark">✦</span>
     </div>
     <div class="poster-header-rule"></div>
-    <div class="poster-mini-tag">1分钟 · 发现孩子的天赋密码</div>
     <div class="poster-hook" id="pHook"></div>
     <div class="poster-fp-wrap" id="pFpWrap"></div>
     <div class="poster-type-badge">
@@ -1304,36 +1295,22 @@ body {
         <span class="poster-type-name" id="pType"></span>
       </div>
     </div>
-    <div class="poster-benefit" id="pBenefit"></div>
     <div class="poster-tagline" id="pTagline"></div>
     <div class="poster-divider">
       <span class="poster-divider-label">核 心 天 赋</span>
     </div>
     <div class="poster-talents" id="pTags"></div>
-    <div class="poster-stats">
-      <div class="poster-stat">
-        <div class="poster-stat-num">5</div>
-        <div class="poster-stat-lbl">大天赋类型</div>
-      </div>
-      <div class="poster-stat-sep"></div>
-      <div class="poster-stat">
-        <div class="poster-stat-ico">◈</div>
-        <div class="poster-stat-lbl">权威算法分析</div>
-      </div>
-      <div class="poster-stat-sep"></div>
-      <div class="poster-stat">
-        <div class="poster-stat-ico">⊙</div>
-        <div class="poster-stat-lbl">保护隐私安全</div>
-      </div>
+    <div class="poster-science-strip">
+      <div class="poster-science-text">指纹先天形成（胎儿第13–19周）· 皮纹遗传度 >95% · 终生不变<br>——《指纹的奥秘》《指纹无谎言》刘持平 / 《世界指纹史》[德]海因德尔</div>
     </div>
     <div class="poster-footer">
       <div class="poster-qr-wrap">
         <img id="posterQR" src="" alt="QR">
       </div>
       <div>
-        <div class="poster-cta">测一测，看看孩子为什么总是这样</div>
-        <div class="poster-cta-sub">1分钟 · 找到行为背后的原因</div>
-        <div class="poster-url">aipiwen.cn · 免费测试</div>
+        <div class="poster-cta">你家孩子是什么类型？</div>
+        <div class="poster-cta-sub">指纹速测 · 1分钟 · 免费</div>
+        <div class="poster-url">aipiwen.cn · 扫码即测</div>
       </div>
     </div>
   </div>
@@ -1996,7 +1973,7 @@ function _fpSVG(color) {
   const els = rings.map(({rx,ry,rot,op,sw}) =>
     `<ellipse cx="0" cy="0" rx="${rx}" ry="${ry}" fill="none" stroke="${color}" stroke-width="${sw}" opacity="${op}" transform="rotate(${rot})"/>`
   ).join('');
-  return `<svg width="250" height="200" viewBox="-125 -100 250 200" xmlns="http://www.w3.org/2000/svg" style="display:block">
+  return `<svg width="280" height="224" viewBox="-125 -100 250 200" xmlns="http://www.w3.org/2000/svg" style="display:block">
 <defs>
   <radialGradient id="fpg" cx="50%" cy="50%" r="50%">
     <stop offset="0%" stop-color="${color}" stop-opacity="0.32"/>
@@ -2075,7 +2052,6 @@ async function generatePoster() {
   // Content
   document.getElementById('pHook').innerHTML = cfg.hook.replace(/\n/g,'<br>');
   document.getElementById('pType').textContent = cfg.humanName;
-  document.getElementById('pBenefit').textContent = cfg.benefit;
   document.getElementById('pTagline').textContent = result.tagline;
   document.getElementById('pFpWrap').innerHTML = _fpSVG(cfg.color);
 
@@ -2092,7 +2068,7 @@ async function generatePoster() {
       tmp.style.cssText = 'position:fixed;left:-9999px;top:-9999px;width:80px;height:80px';
       document.body.appendChild(tmp);
       const uid = _getOrCreateFpUid();
-      const qrUrl = `https://aipiwen.cn/personality?type=${result.key}&user_id=${uid}&from=poster`;
+      const qrUrl = `https://aipiwen.cn/fingerprint-v2-wizard.html?from=poster&ref=${result.key}`;
       try {
         new QRCode(tmp, { text:qrUrl, width:80, height:80, colorDark:'#1A1714', colorLight:'#FFFFFF', correctLevel: QRCode.CorrectLevel.L });
       } catch(e) { document.body.removeChild(tmp); resolve(); return; }
