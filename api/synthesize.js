@@ -7,7 +7,7 @@
  */
 
 const { redisSet, redisGet } = require('./_lib');
-const { buildTypeReferenceForPrompt } = require('./personality-types');
+const { buildTypeReferenceForPrompt } = require('./_personality-types');
 
 // 综合分析限流：每 IP 每分钟最多 3 次（成本比 guest-chat 高）
 async function checkRateLimit(ip) {
