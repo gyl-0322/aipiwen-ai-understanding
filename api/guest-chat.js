@@ -6,7 +6,7 @@
  */
 
 const { getGlobalPatterns, redisSet, redisGet } = require('./_lib');
-const { buildTypeReferenceForPrompt } = require('./personality-types');
+const { buildTypeReferenceForPrompt } = require('./_personality-types');
 
 // TRC类型参考框架（仅生成一次，复用）
 const TRC_REFERENCE = buildTypeReferenceForPrompt();
