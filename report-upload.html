@@ -578,6 +578,9 @@ async function sendMessage(content, displayText) {
   history.push({ role: 'user', content });
   showTyping();
 
+  // 本次是否携带图片（只有第一次成功后才标记 imageUsed）
+  const sendingImage = !imageUsed && !!imageBase64;
+
   try {
     const body = {
       context:  'report',
@@ -586,11 +589,9 @@ async function sendMessage(content, displayText) {
       history:  history.slice(-8),
     };
 
-    // Send image only on the first API call
-    if (!imageUsed && imageBase64) {
+    if (sendingImage) {
       body.imageBase64   = imageBase64;
       body.imageMimeType = imageMimeType;
-      imageUsed = true;
     }
 
     const res = await fetch('/api/guest-chat', {
@@ -603,6 +604,9 @@ async function sendMessage(content, displayText) {
     const data = await res.json();
     if (data.error) throw new Error(data.error);
 
+    // 只有成功后才标记图片已用，失败可重试
+    if (sendingImage) imageUsed = true;
+
     const reply = data.reply || '请稍后再试。';
     hideTyping();
     appendAI(reply);
@@ -611,6 +615,8 @@ async function sendMessage(content, displayText) {
   } catch (err) {
     hideTyping();
     appendAI('出了点问题，请稍后再试。（' + (err.message || '网络错误') + '）');
+    // 如果是视觉模式失败，重置让下次重试时仍携带图片
+    // （sendingImage 为 true 说明本次带了图，失败后 imageUsed 保持 false）
   }
 
   // Re-enable input
