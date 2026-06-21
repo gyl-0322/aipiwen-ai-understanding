@@ -746,6 +746,40 @@ body {
 }
 .s6-whorl-card .wn { font-size: 8px; color: var(--ink); font-weight: 600; line-height: 1.3; }
 
+/* ─── STEP 6: ARC SUB-PICKER ─── */
+.s6-arc-sub {
+  display: none;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  margin-bottom: 8px;
+  padding: 10px;
+  background: white;
+  border-radius: 10px;
+  border: 1px solid var(--ink-10);
+}
+.s6-arc-sub.show { display: grid; }
+.s6-arc-card {
+  border: 2px solid var(--ink-10);
+  border-radius: 8px;
+  padding: 8px 4px 6px;
+  cursor: pointer;
+  text-align: center;
+  background: var(--cream);
+  transition: all .18s;
+}
+.s6-arc-card:hover { border-color: var(--amber); background: var(--amber-soft); }
+.s6-arc-card.selected { border-color: var(--amber); background: var(--amber-soft); }
+.s6-arc-card img {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+  border-radius: 4px;
+  background: white;
+  margin: 0 auto 4px;
+  display: block;
+}
+.s6-arc-card .wn { font-size: 10px; color: var(--ink); font-weight: 600; line-height: 1.4; }
+
 /* ─── ZOOM MODAL ─── */
 .zoomable { cursor: zoom-in; transition: transform .18s; }
 .zoomable:hover { transform: scale(1.08); }
@@ -837,8 +871,8 @@ body {
     <!-- Compare: Lu vs Rl -->
     <div class="compare-panel">
       <div class="compare-item">
-        <img src="patterns/Lu.jpg" alt="大正箕" class="zoomable" onclick="showZoom('patterns/Lu.jpg','大正箕（Lu）')">
-        <p><span class="compare-badge-bad">常见 · 大正箕</span><br>开口朝小指方向</p>
+        <img src="patterns/Lu.jpg" alt="箕形纹" class="zoomable" onclick="showZoom('patterns/Lu.jpg','箕形纹（Lu）')">
+        <p><span class="compare-badge-bad">常见 · 箕形纹</span><br>开口朝小指方向</p>
       </div>
       <div class="compare-vs">VS</div>
       <div class="compare-item">
@@ -1026,25 +1060,25 @@ body {
   </div>
 
   <!-- ══════════════════════════════════════
-       STEP 5 — 大正箕（Lu）
+       STEP 5 — 箕形纹（Lu）
   ══════════════════════════════════════ -->
   <div class="step-screen" id="screen-s5">
     <button class="btn-back" onclick="s5Back()">← 返回</button>
     <div class="step-label">第 5 步</div>
-    <div class="step-title">找"簸箕"形状：大正箕</div>
-    <div class="step-sub">大正箕（Lu）是最常见的纹型，像朝小指方向开口的簸箕。反箕和弧形纹的手指已变灰。</div>
+    <div class="step-title">找"簸箕"形状：箕形纹</div>
+    <div class="step-sub">箕形纹（L）是最常见的纹型，像朝小指方向开口的簸箕。反箕和弧形纹的手指已变灰。</div>
 
     <div class="teach-box">
       <div class="teach-img-wrap">
-        <img src="patterns/Lu.jpg" alt="大正箕" class="zoomable" onclick="showZoom('patterns/Lu.jpg','大正箕（Lu）')">
+        <img src="patterns/Lu.jpg" alt="箕形纹" class="zoomable" onclick="showZoom('patterns/Lu.jpg','箕形纹（Lu）')">
       </div>
       <div class="teach-text">
-        <h3>大正箕（Lu）· 点图放大</h3>
+        <h3>箕形纹（Lu）· 点图放大</h3>
         <p>纹路像簸箕，开口朝向小指方向。是概率最高的纹型，大多数手指都会有。</p>
       </div>
     </div>
 
-    <p style="font-size:14px;color:var(--ink);font-weight:600;margin-bottom:4px;">哪些手指是大正箕？</p>
+    <p style="font-size:14px;color:var(--ink);font-weight:600;margin-bottom:4px;">哪些手指是箕形纹？</p>
     <p style="font-size:12px;color:var(--ink-40);margin-bottom:14px;">灰色手指已在前面步骤中选过，不能重复</p>
 
     <div class="finger-diagram-wrap">
@@ -1066,7 +1100,7 @@ body {
       </div>
     </div>
     <button class="btn-primary" onclick="s5Next()">确认，继续</button>
-    <button class="btn-secondary" onclick="s5None()">没有大正箕，跳过</button>
+    <button class="btn-secondary" onclick="s5None()">没有箕形纹，跳过</button>
   </div>
 
   <!-- ══════════════════════════════════════
@@ -1087,14 +1121,22 @@ body {
           <img src="patterns/Ws.jpg" alt="斗">斗形纹 W▼
         </button>
         <button class="s6-cat-btn" data-hand="rt" data-cat="Lu" onclick="s6CatSelect('rt','Lu')">
-          <img src="patterns/Lu.jpg" alt="箕">大正箕 Lu
+          <img src="patterns/Lu.jpg" alt="箕">箕形纹 L
         </button>
-        <button class="s6-cat-btn" data-hand="rt" data-cat="X" onclick="s6CatSelect('rt','X')">
-          <img src="patterns/X.jpg" alt="弧">简单弧 X
+        <button class="s6-cat-btn" data-hand="rt" data-cat="ARC" onclick="s6CatSelect('rt','ARC')">
+          <img src="patterns/X.jpg" alt="弧">弧纹▼
         </button>
-        <button class="s6-cat-btn" data-hand="rt" data-cat="Xn" onclick="s6CatSelect('rt','Xn')">
-          <img src="patterns/Xn.jpg" alt="帐">帐篷弧 Xn
-        </button>
+      </div>
+      <!-- Arc sub-picker for right thumb -->
+      <div class="s6-arc-sub" id="s6-rt-asub">
+        <div class="s6-arc-card" data-type="X" onclick="s6ArcSelect('rt','X')">
+          <img src="patterns/X.jpg" class="zoomable" onclick="event.stopPropagation();showZoom('patterns/X.jpg','简单弧（X）')">
+          <div class="wn">简单弧 X<br><span style="font-weight:400;color:var(--ink-40)">小山丘，无尖顶</span></div>
+        </div>
+        <div class="s6-arc-card" data-type="Xn" onclick="s6ArcSelect('rt','Xn')">
+          <img src="patterns/Xn.jpg" class="zoomable" onclick="event.stopPropagation();showZoom('patterns/Xn.jpg','帐篷弧（Xn）')">
+          <div class="wn">帐篷弧 Xn<br><span style="font-weight:400;color:var(--ink-40)">中间有竖直尖顶</span></div>
+        </div>
       </div>
       <!-- W subtype picker for right thumb -->
       <div class="s6-whorl-sub" id="s6-rt-wsub">
@@ -1142,14 +1184,22 @@ body {
           <img src="patterns/Ws.jpg" alt="斗">斗形纹 W▼
         </button>
         <button class="s6-cat-btn" data-hand="lt" data-cat="Lu" onclick="s6CatSelect('lt','Lu')">
-          <img src="patterns/Lu.jpg" alt="箕">大正箕 Lu
+          <img src="patterns/Lu.jpg" alt="箕">箕形纹 L
         </button>
-        <button class="s6-cat-btn" data-hand="lt" data-cat="X" onclick="s6CatSelect('lt','X')">
-          <img src="patterns/X.jpg" alt="弧">简单弧 X
+        <button class="s6-cat-btn" data-hand="lt" data-cat="ARC" onclick="s6CatSelect('lt','ARC')">
+          <img src="patterns/X.jpg" alt="弧">弧纹▼
         </button>
-        <button class="s6-cat-btn" data-hand="lt" data-cat="Xn" onclick="s6CatSelect('lt','Xn')">
-          <img src="patterns/Xn.jpg" alt="帐">帐篷弧 Xn
-        </button>
+      </div>
+      <!-- Arc sub-picker for left thumb -->
+      <div class="s6-arc-sub" id="s6-lt-asub">
+        <div class="s6-arc-card" data-type="X" onclick="s6ArcSelect('lt','X')">
+          <img src="patterns/X.jpg" class="zoomable" onclick="event.stopPropagation();showZoom('patterns/X.jpg','简单弧（X）')">
+          <div class="wn">简单弧 X<br><span style="font-weight:400;color:var(--ink-40)">小山丘，无尖顶</span></div>
+        </div>
+        <div class="s6-arc-card" data-type="Xn" onclick="s6ArcSelect('lt','Xn')">
+          <img src="patterns/Xn.jpg" class="zoomable" onclick="event.stopPropagation();showZoom('patterns/Xn.jpg','帐篷弧（Xn）')">
+          <div class="wn">帐篷弧 Xn<br><span style="font-weight:400;color:var(--ink-40)">中间有竖直尖顶</span></div>
+        </div>
       </div>
       <!-- W subtype picker for left thumb -->
       <div class="s6-whorl-sub" id="s6-lt-wsub">
@@ -1334,7 +1384,7 @@ const IS_W = v => v && ['Ws','Wt','We','Wc','Wd','Wpe','Wsp','Wsp-r'].includes(v
 const FINGER_NAMES = ['右大拇','右食指','右中指','右无名','右小指',
                       '左大拇','左食指','左中指','左无名','左小指'];
 
-const TYPE_NAMES = { X:'简单弧', Xn:'帐篷弧', Lu:'大正箕',
+const TYPE_NAMES = { X:'简单弧', Xn:'帐篷弧', Lu:'箕形纹',
   Ws:'螺旋斗', Wt:'靶心斗', Wc:'双斗上下', Wd:'双斗左右',
   Wpe:'孔雀眼', We:'伸长斗', Wsp:'侧向斗', 'Wsp-r':'反侧向斗' };
 
@@ -1361,7 +1411,7 @@ const STEP_MAP = {
   's2':    {step:2, name:'斗形纹识别'},
   's3':    {step:3, name:'简单弧'},
   's4':    {step:4, name:'帐篷弧'},
-  's5':    {step:5, name:'大正箕'},
+  's5':    {step:5, name:'箕形纹'},
   's6':    {step:6, name:'大拇指类型'},
   's7':    {step:7, name:'其他斗形纹'},
   'result':{step:7, name:'分析结果'},
@@ -1494,7 +1544,7 @@ function s4None() {
 }
 
 /* ═══════════════════════════════════════════════
-   STEP 5 — Lu (大正箕)
+   STEP 5 — Lu (箕形纹)
 ═══════════════════════════════════════════════ */
 function s5Init() {
   // Blocked: Rl + X + Xn
@@ -1559,10 +1609,12 @@ function s6RenderThumb(hand, type, fi) {
   document.querySelectorAll(`#screen-s6 [data-hand="${hand}"][data-cat]`).forEach(b => b.classList.remove('selected'));
   document.getElementById(`s6-${hand}-wsub`).classList.remove('show');
   document.querySelectorAll(`#s6-${hand}-wsub .s6-whorl-card`).forEach(c => c.classList.remove('selected'));
+  document.getElementById(`s6-${hand}-asub`).classList.remove('show');
+  document.querySelectorAll(`#s6-${hand}-asub .s6-arc-card`).forEach(c => c.classList.remove('selected'));
 
   // Show pre-note if came from earlier step classification
   const preNote = document.getElementById(`s6-${hand}-pre`);
-  const preTypes = { X:'简单弧', Xn:'帐篷弧', Lu:'大正箕' };
+  const preTypes = { X:'简单弧', Xn:'帐篷弧', Lu:'箕形纹' };
   const origInPrev = state.data.xFingers.has(fi) || state.data.xnFingers.has(fi) || state.data.luFingers.has(fi);
   if (origInPrev && type && !IS_W(type) && preTypes[type]) {
     preNote.textContent = `已在上面步骤选过：${preTypes[type]}（可修改）`;
@@ -1572,7 +1624,12 @@ function s6RenderThumb(hand, type, fi) {
   }
 
   if (!type) return;
-  const cat = IS_W(type) ? 'W' : type;
+
+  let cat;
+  if (IS_W(type)) cat = 'W';
+  else if (type === 'X' || type === 'Xn') cat = 'ARC';
+  else cat = type;
+
   const catBtn = document.querySelector(`#screen-s6 [data-hand="${hand}"][data-cat="${cat}"]`);
   if (catBtn) catBtn.classList.add('selected');
 
@@ -1581,32 +1638,53 @@ function s6RenderThumb(hand, type, fi) {
     sub.classList.add('show');
     const card = sub.querySelector(`[data-type="${type}"]`);
     if (card) card.classList.add('selected');
+  } else if (type === 'X' || type === 'Xn') {
+    const asub = document.getElementById(`s6-${hand}-asub`);
+    asub.classList.add('show');
+    const card = asub.querySelector(`[data-type="${type}"]`);
+    if (card) card.classList.add('selected');
   }
 }
 
 function s6CatSelect(hand, cat) {
-  const fi = hand === 'rt' ? 0 : 5;
-
   // Highlight category buttons
   document.querySelectorAll(`#screen-s6 [data-hand="${hand}"][data-cat]`).forEach(b => {
     b.classList.toggle('selected', b.dataset.cat === cat);
   });
 
-  const sub = document.getElementById(`s6-${hand}-wsub`);
+  const wsub = document.getElementById(`s6-${hand}-wsub`);
+  const asub = document.getElementById(`s6-${hand}-asub`);
 
   if (cat === 'W') {
-    sub.classList.add('show');
+    wsub.classList.add('show');
+    asub.classList.remove('show');
+    document.querySelectorAll(`#s6-${hand}-asub .s6-arc-card`).forEach(c => c.classList.remove('selected'));
     // Don't set thumb type yet — wait for W subtype selection
-    // Clear type if it was non-W
     const curType = hand === 'rt' ? state.data.rtThumb : state.data.ltThumb;
-    if (curType && !IS_W(curType)) {
-      s6SetThumbType(hand, null);
-    }
-  } else {
-    sub.classList.remove('show');
+    if (curType && !IS_W(curType)) s6SetThumbType(hand, null);
+  } else if (cat === 'ARC') {
+    wsub.classList.remove('show');
+    asub.classList.add('show');
     document.querySelectorAll(`#s6-${hand}-wsub .s6-whorl-card`).forEach(c => c.classList.remove('selected'));
+    // Don't set thumb type yet — wait for arc sub-selection
+    const curType = hand === 'rt' ? state.data.rtThumb : state.data.ltThumb;
+    if (curType && curType !== 'X' && curType !== 'Xn') s6SetThumbType(hand, null);
+  } else {
+    wsub.classList.remove('show');
+    asub.classList.remove('show');
+    document.querySelectorAll(`#s6-${hand}-wsub .s6-whorl-card`).forEach(c => c.classList.remove('selected'));
+    document.querySelectorAll(`#s6-${hand}-asub .s6-arc-card`).forEach(c => c.classList.remove('selected'));
     s6SetThumbType(hand, cat);
   }
+  s6UpdateBtn();
+}
+
+function s6ArcSelect(hand, type) {
+  s6SetThumbType(hand, type);
+  const asub = document.getElementById(`s6-${hand}-asub`);
+  asub.querySelectorAll('.s6-arc-card').forEach(c => {
+    c.classList.toggle('selected', c.dataset.type === type);
+  });
   s6UpdateBtn();
 }
 
