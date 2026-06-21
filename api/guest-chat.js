@@ -67,8 +67,15 @@ module.exports = async function handler(req, res) {
   let payload = {};
   try { payload = JSON.parse(body); } catch {}
 
-  const { content, history = [], context = 'child', previousContext = '', sessionId = '' } = payload;
-  if (!content?.trim()) return res.status(400).json({ error: '内容不能为空' });
+  const {
+    content, history = [], context = 'child',
+    previousContext = '', sessionId = '',
+    imageBase64 = null, imageMimeType = 'image/jpeg',
+  } = payload;
+
+  // 图片上传模式：content 可以为空（纯看图）或追加问题
+  const isVisionMode = !!imageBase64;
+  if (!isVisionMode && !content?.trim()) return res.status(400).json({ error: '内容不能为空' });
 
   // 全局高频模式（仅亲子场景使用）
   const globalPatterns = context === 'child'
@@ -161,23 +168,68 @@ ${TRC_SECTION}
 回复语气：商业洞察与人性理解并重，不评判，着眼于找到真正的解法
 字数：200字以内。如果合伙人行为匹配某TRC类型，可以引入类型视角来解释其决策逻辑："从天赋认知角度看，你的合伙人可能是【XX型】——他们天生……这解释了为什么他……"
 ${NO_FILLER}`,
+
+    // ── 报告解读模式（视觉AI读取测评报告图片）─────────────────────────────────
+    report: `你是AIPIWEN的指纹天赋报告解读专家。用户上传了一张TRC天赋认知测评报告图片，你需要：
+
+第一步：从图片中提取关键信息
+- 被测者姓名、年龄、性别（如有）
+- TRC天赋认知类型名称
+- 指纹数据摘要（如可见）
+
+第二步：根据年龄段调整解读语气
+- 12岁及以下（儿童）：对家长说，用"你的孩子"，聚焦学习、情绪、亲子相处
+- 13-18岁（青少年）：同时对孩子和家长说，聚焦自我认知、升学方向
+- 19岁及以上（成人）：直接对本人说，用"你"，聚焦职业、关系、自我成长
+
+第三步：输出解读内容，包含以下四个部分
+【天赋核心】这个类型最本质的认知特质（2句话，要让人觉得"说到我了"）
+【典型表现】在日常生活/学习/工作中最常见的3个具体表现（要具体，不要抽象）
+【发展关键】最重要的1-2个成长建议（具体可执行，不是泛泛而谈）
+【天赋宣言】一句话，说出这个类型的核心力量（让人想截图收藏的那种）
+
+${TRC_REFERENCE}
+
+格式要求：不要用markdown标题符号（#），直接用【】标注各部分。语气温暖有力，像真正了解这个人的朋友在说话。总字数350字以内。
+${NO_FILLER}`,
   };
 
   const systemPrompt = SYSTEM[context] || SYSTEM.child;
 
-  // ── 构建标准 system/user/assistant 多轮消息结构 ──────
+  // ── 构建消息结构 ──────────────────────────────────────────────────────────────
   const messages = [{ role: 'system', content: systemPrompt }];
 
-  // 注入历史对话（最多8轮）
-  history.slice(-8).forEach(m => {
-    messages.push({
-      role:    m.role === 'ai' ? 'assistant' : 'user',
-      content: m.content,
+  // 注入历史对话（最多8轮，视觉模式不注入历史）
+  if (!isVisionMode) {
+    history.slice(-8).forEach(m => {
+      messages.push({
+        role:    m.role === 'ai' ? 'assistant' : 'user',
+        content: m.content,
+      });
     });
-  });
+  }
 
-  // 当前用户消息
-  messages.push({ role: 'user', content: content.trim() });
+  // 构建用户消息：视觉模式用多模态格式，普通模式用纯文字
+  if (isVisionMode) {
+    const userContent = [
+      {
+        type: 'image_url',
+        image_url: { url: `data:${imageMimeType};base64,${imageBase64}` },
+      },
+    ];
+    if (content?.trim()) {
+      userContent.push({ type: 'text', text: content.trim() });
+    } else {
+      userContent.push({ type: 'text', text: '请解读这份测评报告。' });
+    }
+    messages.push({ role: 'user', content: userContent });
+  } else {
+    messages.push({ role: 'user', content: content.trim() });
+  }
+
+  // 视觉模式用 qwen3.6-plus，普通对话用 qwen-turbo
+  const model     = isVisionMode ? 'qwen3.6-plus' : 'qwen-turbo';
+  const maxTokens = isVisionMode ? 800 : 400;
 
   let reply = null;
 
@@ -188,7 +240,7 @@ ${NO_FILLER}`,
         'Authorization': `Bearer ${process.env.DASHSCOPE_API_KEY || ''}`,
         'Content-Type':  'application/json',
       },
-      body: JSON.stringify({ model:'qwen-turbo', max_tokens:400, messages }),
+      body: JSON.stringify({ model, max_tokens: maxTokens, messages }),
     });
 
     const rawText = await aiRes.text();

@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>上传报告 · AI解读 | AIPIWEN</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino Sans GB', sans-serif;
+    background: #f5f5f7;
+    color: #1d1d1f;
+    min-height: 100vh;
+  }
+
+  /* ── 顶部导航 ── */
+  .nav {
+    background: rgba(255,255,255,0.85);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(0,0,0,0.08);
+    padding: 0 20px;
+    height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .nav-logo {
+    font-size: 17px;
+    font-weight: 700;
+    color: #1d1d1f;
+    letter-spacing: -0.3px;
+  }
+  .nav-logo span { color: #6366f1; }
+  .nav-back {
+    font-size: 14px;
+    color: #6366f1;
+    text-decoration: none;
+  }
+
+  /* ── 主体 ── */
+  .container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 24px 16px 60px;
+  }
+
+  /* ── 页头 ── */
+  .page-header {
+    text-align: center;
+    margin-bottom: 28px;
+  }
+  .page-header h1 {
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    margin-bottom: 8px;
+  }
+  .page-header p {
+    font-size: 14px;
+    color: #6e6e73;
+    line-height: 1.6;
+  }
+
+  /* ── 上传区 ── */
+  .upload-area {
+    background: #fff;
+    border: 2px dashed #d1d1d6;
+    border-radius: 20px;
+    padding: 40px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+  }
+  .upload-area:hover,
+  .upload-area.drag-over {
+    border-color: #6366f1;
+    background: #f5f4ff;
+  }
+  .upload-area input[type="file"] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+  }
+  .upload-icon {
+    font-size: 48px;
+    margin-bottom: 12px;
+  }
+  .upload-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1d1d1f;
+    margin-bottom: 6px;
+  }
+  .upload-hint {
+    font-size: 13px;
+    color: #8e8e93;
+  }
+  .upload-formats {
+    margin-top: 10px;
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .format-tag {
+    background: #f2f2f7;
+    border-radius: 6px;
+    padding: 3px 10px;
+    font-size: 12px;
+    color: #6e6e73;
+  }
+
+  /* ── 预览区 ── */
+  .preview-section {
+    display: none;
+    margin-top: 16px;
+    background: #fff;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  }
+  .preview-section.visible { display: block; }
+  .preview-header {
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid #f2f2f7;
+  }
+  .preview-filename {
+    font-size: 14px;
+    font-weight: 500;
+    color: #1d1d1f;
+  }
+  .preview-change {
+    font-size: 13px;
+    color: #6366f1;
+    cursor: pointer;
+    background: none;
+    border: none;
+    padding: 0;
+  }
+  .preview-img {
+    width: 100%;
+    display: block;
+    max-height: 400px;
+    object-fit: contain;
+    background: #f5f5f7;
+  }
+
+  /* ── 问题输入 ── */
+  .question-section {
+    display: none;
+    margin-top: 16px;
+  }
+  .question-section.visible { display: block; }
+  .question-label {
+    font-size: 13px;
+    color: #6e6e73;
+    margin-bottom: 8px;
+  }
+  .question-input {
+    width: 100%;
+    background: #fff;
+    border: 1.5px solid #e5e5ea;
+    border-radius: 14px;
+    padding: 12px 16px;
+    font-size: 15px;
+    font-family: inherit;
+    color: #1d1d1f;
+    outline: none;
+    resize: none;
+    min-height: 60px;
+    line-height: 1.5;
+    transition: border-color 0.2s;
+  }
+  .question-input:focus { border-color: #6366f1; }
+  .question-input::placeholder { color: #c7c7cc; }
+
+  /* ── 解读按钮 ── */
+  .interpret-btn {
+    display: none;
+    width: 100%;
+    margin-top: 16px;
+    padding: 15px;
+    background: #6366f1;
+    color: #fff;
+    border: none;
+    border-radius: 14px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: inherit;
+  }
+  .interpret-btn.visible { display: block; }
+  .interpret-btn:hover { background: #4f46e5; }
+  .interpret-btn:disabled {
+    background: #a5b4fc;
+    cursor: not-allowed;
+  }
+  .interpret-btn .btn-icon { margin-right: 6px; }
+
+  /* ── 加载态 ── */
+  .loading-section {
+    display: none;
+    text-align: center;
+    padding: 32px 20px;
+  }
+  .loading-section.visible { display: block; }
+  .loading-spinner {
+    width: 36px;
+    height: 36px;
+    border: 3px solid #e5e5ea;
+    border-top-color: #6366f1;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 14px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-text { font-size: 14px; color: #6e6e73; }
+
+  /* ── 结果区 ── */
+  .result-section {
+    display: none;
+    margin-top: 16px;
+  }
+  .result-section.visible { display: block; }
+
+  .result-card {
+    background: #fff;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 2px 12px rgba(99,102,241,0.08);
+  }
+  .result-card-header {
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    padding: 20px;
+    color: #fff;
+  }
+  .result-card-header h2 {
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+  .result-card-header p {
+    font-size: 13px;
+    opacity: 0.85;
+  }
+  .result-body {
+    padding: 20px;
+  }
+  .result-text {
+    font-size: 15px;
+    line-height: 1.75;
+    color: #1d1d1f;
+    white-space: pre-wrap;
+  }
+
+  /* ── 后续追问 ── */
+  .followup-section {
+    display: none;
+    margin-top: 16px;
+  }
+  .followup-section.visible { display: block; }
+  .followup-label {
+    font-size: 13px;
+    color: #6e6e73;
+    margin-bottom: 8px;
+  }
+  .followup-chips {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+  }
+  .chip {
+    background: #f2f2f7;
+    border: 1.5px solid #e5e5ea;
+    border-radius: 20px;
+    padding: 7px 14px;
+    font-size: 13px;
+    color: #3c3c43;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .chip:hover {
+    background: #eef2ff;
+    border-color: #6366f1;
+    color: #6366f1;
+  }
+  .followup-row {
+    display: flex;
+    gap: 8px;
+  }
+  .followup-input {
+    flex: 1;
+    background: #fff;
+    border: 1.5px solid #e5e5ea;
+    border-radius: 12px;
+    padding: 10px 14px;
+    font-size: 14px;
+    font-family: inherit;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .followup-input:focus { border-color: #6366f1; }
+  .followup-send {
+    background: #6366f1;
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    padding: 10px 18px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.2s;
+  }
+  .followup-send:hover { background: #4f46e5; }
+  .followup-send:disabled { background: #a5b4fc; cursor: not-allowed; }
+
+  /* ── 追问结果 ── */
+  .followup-messages {
+    margin-top: 12px;
+  }
+  .msg-bubble {
+    margin-bottom: 12px;
+    padding: 12px 16px;
+    border-radius: 14px;
+    font-size: 14px;
+    line-height: 1.65;
+  }
+  .msg-user {
+    background: #eef2ff;
+    color: #3730a3;
+    align-self: flex-end;
+    margin-left: 40px;
+  }
+  .msg-ai {
+    background: #f9fafb;
+    color: #1d1d1f;
+    border: 1px solid #e5e5ea;
+    margin-right: 40px;
+    white-space: pre-wrap;
+  }
+
+  /* ── 重置 ── */
+  .reset-btn {
+    display: none;
+    margin-top: 16px;
+    width: 100%;
+    padding: 12px;
+    background: #f2f2f7;
+    color: #6e6e73;
+    border: none;
+    border-radius: 12px;
+    font-size: 14px;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .reset-btn.visible { display: block; }
+  .reset-btn:hover { background: #e5e5ea; }
+
+  /* ── 错误提示 ── */
+  .error-msg {
+    display: none;
+    background: #fff5f5;
+    border: 1px solid #fed7d7;
+    border-radius: 12px;
+    padding: 12px 16px;
+    font-size: 14px;
+    color: #c53030;
+    margin-top: 12px;
+    text-align: center;
+  }
+  .error-msg.visible { display: block; }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <a href="/" class="nav-back">← 首页</a>
+  <div class="nav-logo">AIPI<span>WEN</span></div>
+  <div style="width:48px"></div>
+</nav>
+
+<div class="container">
+
+  <!-- 页头 -->
+  <div class="page-header">
+    <h1>📋 报告AI解读</h1>
+    <p>上传你的TRC指纹天赋测评报告<br>AI为你做专属深度解读</p>
+  </div>
+
+  <!-- 上传区 -->
+  <div class="upload-area" id="uploadArea">
+    <input type="file" id="fileInput" accept="image/*,.pdf" />
+    <div class="upload-icon">📁</div>
+    <div class="upload-title">点击上传 或 拖拽图片至此</div>
+    <div class="upload-hint">支持拍照上传报告截图</div>
+    <div class="upload-formats">
+      <span class="format-tag">JPG</span>
+      <span class="format-tag">PNG</span>
+      <span class="format-tag">HEIC</span>
+      <span class="format-tag">截图</span>
+    </div>
+  </div>
+
+  <!-- 预览 -->
+  <div class="preview-section" id="previewSection">
+    <div class="preview-header">
+      <span class="preview-filename" id="previewFilename">report.jpg</span>
+      <button class="preview-change" id="changeFileBtn">更换图片</button>
+    </div>
+    <img class="preview-img" id="previewImg" src="" alt="报告预览" />
+  </div>
+
+  <!-- 可选问题 -->
+  <div class="question-section" id="questionSection">
+    <div class="question-label">有特别想了解的？（可选）</div>
+    <textarea
+      class="question-input"
+      id="questionInput"
+      placeholder="例如：这个类型的孩子在学习上有什么特点？"
+      rows="2"
+    ></textarea>
+  </div>
+
+  <!-- 解读按钮 -->
+  <button class="interpret-btn" id="interpretBtn">
+    <span class="btn-icon">✨</span>开始AI解读
+  </button>
+
+  <!-- 错误提示 -->
+  <div class="error-msg" id="errorMsg"></div>
+
+  <!-- 加载态 -->
+  <div class="loading-section" id="loadingSection">
+    <div class="loading-spinner"></div>
+    <div class="loading-text">AI正在读取报告，解读中…</div>
+  </div>
+
+  <!-- 解读结果 -->
+  <div class="result-section" id="resultSection">
+    <div class="result-card">
+      <div class="result-card-header">
+        <h2>✨ 天赋解读报告</h2>
+        <p>基于你上传的TRC指纹测评报告</p>
+      </div>
+      <div class="result-body">
+        <div class="result-text" id="resultText"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 追问区 -->
+  <div class="followup-section" id="followupSection">
+    <div class="followup-label">还有疑问？继续问</div>
+    <div class="followup-chips" id="followupChips">
+      <div class="chip">这个类型适合什么职业？</div>
+      <div class="chip">怎么发挥这个天赋？</div>
+      <div class="chip">和什么类型的人最合拍？</div>
+    </div>
+    <div class="followup-messages" id="followupMessages"></div>
+    <div class="followup-row">
+      <input
+        class="followup-input"
+        id="followupInput"
+        type="text"
+        placeholder="输入你的问题…"
+      />
+      <button class="followup-send" id="followupSend">发送</button>
+    </div>
+  </div>
+
+  <!-- 重新上传 -->
+  <button class="reset-btn" id="resetBtn">重新上传另一份报告</button>
+
+</div>
+
+<script>
+// ── 状态 ──────────────────────────────────────────────────────────────────────
+let uploadedFile   = null;
+let imageBase64    = null;
+let imageMimeType  = 'image/jpeg';
+let firstInterpretation = '';
+let followupHistory    = [];
+
+// ── DOM ───────────────────────────────────────────────────────────────────────
+const uploadArea     = document.getElementById('uploadArea');
+const fileInput      = document.getElementById('fileInput');
+const previewSection = document.getElementById('previewSection');
+const previewImg     = document.getElementById('previewImg');
+const previewFilename= document.getElementById('previewFilename');
+const changeFileBtn  = document.getElementById('changeFileBtn');
+const questionSection= document.getElementById('questionSection');
+const questionInput  = document.getElementById('questionInput');
+const interpretBtn   = document.getElementById('interpretBtn');
+const errorMsg       = document.getElementById('errorMsg');
+const loadingSection = document.getElementById('loadingSection');
+const resultSection  = document.getElementById('resultSection');
+const resultText     = document.getElementById('resultText');
+const followupSection= document.getElementById('followupSection');
+const followupChips  = document.getElementById('followupChips');
+const followupMessages= document.getElementById('followupMessages');
+const followupInput  = document.getElementById('followupInput');
+const followupSend   = document.getElementById('followupSend');
+const resetBtn       = document.getElementById('resetBtn');
+
+// ── 文件处理 ──────────────────────────────────────────────────────────────────
+function handleFile(file) {
+  if (!file) return;
+
+  // 只处理图片（PDF暂不支持，提示用截图）
+  if (file.type === 'application/pdf') {
+    showError('PDF请先截图或拍照后上传，暂不支持直接上传PDF文件。');
+    return;
+  }
+  if (!file.type.startsWith('image/')) {
+    showError('请上传图片文件（JPG、PNG、截图等）。');
+    return;
+  }
+  if (file.size > 10 * 1024 * 1024) {
+    showError('图片太大了（上限10MB），请压缩后再试。');
+    return;
+  }
+
+  hideError();
+  uploadedFile  = file;
+  imageMimeType = file.type || 'image/jpeg';
+  previewFilename.textContent = file.name;
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const dataUrl = e.target.result;
+    // 提取 base64 部分（去掉 data:image/xxx;base64, 前缀）
+    imageBase64 = dataUrl.split(',')[1];
+    previewImg.src = dataUrl;
+    showPreview();
+  };
+  reader.readAsDataURL(file);
+}
+
+fileInput.addEventListener('change', () => {
+  if (fileInput.files[0]) handleFile(fileInput.files[0]);
+});
+
+// 拖拽支持
+uploadArea.addEventListener('dragover', (e) => {
+  e.preventDefault();
+  uploadArea.classList.add('drag-over');
+});
+uploadArea.addEventListener('dragleave', () => {
+  uploadArea.classList.remove('drag-over');
+});
+uploadArea.addEventListener('drop', (e) => {
+  e.preventDefault();
+  uploadArea.classList.remove('drag-over');
+  if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+});
+
+changeFileBtn.addEventListener('click', () => {
+  fileInput.value = '';
+  fileInput.click();
+});
+
+// ── 显示/隐藏控件 ──────────────────────────────────────────────────────────────
+function showPreview() {
+  previewSection.classList.add('visible');
+  questionSection.classList.add('visible');
+  interpretBtn.classList.add('visible');
+  uploadArea.style.display = 'none';
+}
+
+function hideError() {
+  errorMsg.classList.remove('visible');
+}
+function showError(msg) {
+  errorMsg.textContent = msg;
+  errorMsg.classList.add('visible');
+}
+
+// ── 主解读 ────────────────────────────────────────────────────────────────────
+interpretBtn.addEventListener('click', async () => {
+  if (!imageBase64) return;
+
+  interpretBtn.disabled = true;
+  loadingSection.classList.add('visible');
+  hideError();
+
+  try {
+    const question = questionInput.value.trim();
+    const res = await fetch('/api/guest-chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        context:      'report',
+        content:      question || '',
+        imageBase64,
+        imageMimeType,
+        sessionId:    'report_' + Date.now(),
+      }),
+    });
+
+    if (!res.ok) throw new Error('服务器错误 ' + res.status);
+    const data = await res.json();
+
+    if (data.error) throw new Error(data.error);
+
+    firstInterpretation = data.reply;
+    resultText.textContent = data.reply;
+
+    // 将首次解读加入追问历史
+    followupHistory = [
+      { role: 'ai', content: data.reply }
+    ];
+
+    // 显示结果
+    loadingSection.classList.remove('visible');
+    resultSection.classList.add('visible');
+    followupSection.classList.add('visible');
+    resetBtn.classList.add('visible');
+    interpretBtn.style.display = 'none';
+    questionSection.style.display = 'none';
+
+    // 滚动到结果
+    resultSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  } catch (err) {
+    loadingSection.classList.remove('visible');
+    showError('解读失败：' + (err.message || '请稍后再试'));
+    interpretBtn.disabled = false;
+  }
+});
+
+// ── 追问预设 chip ─────────────────────────────────────────────────────────────
+followupChips.querySelectorAll('.chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    followupInput.value = chip.textContent;
+    sendFollowup();
+  });
+});
+
+// ── 追问发送 ──────────────────────────────────────────────────────────────────
+followupSend.addEventListener('click', sendFollowup);
+followupInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendFollowup(); }
+});
+
+async function sendFollowup() {
+  const q = followupInput.value.trim();
+  if (!q) return;
+
+  followupInput.value = '';
+  followupSend.disabled = true;
+
+  // 显示用户气泡
+  const userBubble = document.createElement('div');
+  userBubble.className = 'msg-bubble msg-user';
+  userBubble.textContent = q;
+  followupMessages.appendChild(userBubble);
+
+  // AI 加载中气泡
+  const aiBubble = document.createElement('div');
+  aiBubble.className = 'msg-bubble msg-ai';
+  aiBubble.textContent = '…';
+  followupMessages.appendChild(aiBubble);
+  aiBubble.scrollIntoView({ behavior: 'smooth' });
+
+  try {
+    followupHistory.push({ role: 'user', content: q });
+
+    const res = await fetch('/api/guest-chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        context: 'report',
+        content: q,
+        history: followupHistory.slice(-6),
+        // 追问时不再发图片，只发文字 + 历史
+      }),
+    });
+
+    const data = await res.json();
+    const reply = data.reply || '我需要更多信息才能回答这个问题。';
+    aiBubble.textContent = reply;
+    followupHistory.push({ role: 'ai', content: reply });
+    aiBubble.scrollIntoView({ behavior: 'smooth' });
+
+  } catch (err) {
+    aiBubble.textContent = '出了点问题，请稍后再试。';
+  }
+
+  followupSend.disabled = false;
+}
+
+// ── 重置 ─────────────────────────────────────────────────────────────────────
+resetBtn.addEventListener('click', () => {
+  uploadedFile   = null;
+  imageBase64    = null;
+  firstInterpretation = '';
+  followupHistory    = [];
+
+  fileInput.value = '';
+  previewImg.src  = '';
+  questionInput.value = '';
+  resultText.textContent = '';
+  followupMessages.innerHTML = '';
+
+  previewSection.classList.remove('visible');
+  questionSection.classList.remove('visible');
+  interpretBtn.classList.remove('visible');
+  interpretBtn.style.display = '';
+  interpretBtn.disabled = false;
+  questionSection.style.display = '';
+  loadingSection.classList.remove('visible');
+  resultSection.classList.remove('visible');
+  followupSection.classList.remove('visible');
+  resetBtn.classList.remove('visible');
+  uploadArea.style.display = '';
+  hideError();
+
+  uploadArea.scrollIntoView({ behavior: 'smooth' });
+});
+</script>
+</body>
+</html>
