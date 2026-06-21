@@ -20,9 +20,12 @@ module.exports = async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(204).end();
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
 
-  // 鉴权
-  const adminSecret = process.env.ADMIN_SECRET || 'aipiwen2024';
-  const provided    = req.query.secret || req.headers['x-admin-secret'] || '';
+  // 鉴权：ADMIN_SECRET 未配置时直接拒绝，不使用默认值
+  const adminSecret = process.env.ADMIN_SECRET;
+  if (!adminSecret) {
+    return res.status(500).json({ error: '管理密钥未配置，请在 Vercel 环境变量中设置 ADMIN_SECRET' });
+  }
+  const provided = req.query.secret || req.headers['x-admin-secret'] || '';
   if (provided !== adminSecret) {
     return res.status(401).json({ error: '未授权' });
   }

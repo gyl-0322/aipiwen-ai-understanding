@@ -386,6 +386,7 @@ html,body {
 
 <script>
 // ── State ───────────────────────────────────────────────────────────────────
+let reportSummary = null; // 首次vision解读后缓存的报告数据摘要，后续追问传给服务端
 let imageBase64   = null;
 let imageMimeType = 'image/jpeg';
 let sessionId     = 'report_' + Date.now();
@@ -463,7 +464,7 @@ function handleFile(file) {
       preUpload.classList.add('hidden');
       chatPage.classList.add('active');
 
-      appendAI('您好！我已收到这份测评报告 📋\n\n请从下方选择解读方向——\n• 基础解读：读懂报告中的天赋数据\n• 定制版报告：针对具体人生场景生成专属内容\n\n也可以直接在对话框提问。');
+      appendAI('你好！报告已收到 📋\n\n从下方选一个解读方向，AI 立刻为你生成专属内容。也可以直接在对话框提问。');
       sendBtn.disabled = false;
     };
     img.src = originalDataUrl;
@@ -474,6 +475,7 @@ function handleFile(file) {
 function resetToUpload() {
   imageBase64 = null;
   imageUsed = false;
+  reportSummary = null;
   history = [];
   sessionId = 'report_' + Date.now();
   fileInput.value = '';
@@ -575,7 +577,6 @@ async function sendMessage(content, displayText) {
   sendBtn.disabled = true;
 
   appendUser(display);
-  history.push({ role: 'user', content });
   showTyping();
 
   // 本次是否携带图片（只有第一次成功后才标记 imageUsed）
@@ -586,13 +587,15 @@ async function sendMessage(content, displayText) {
       context:  'report',
       content,
       sessionId,
-      history:  history.slice(-8),
+      history:  history.slice(-8), // 传入当前 history（不含本次 user 消息）
     };
 
     if (sendingImage) {
       body.imageBase64   = imageBase64;
       body.imageMimeType = imageMimeType;
     }
+    // 传入已缓存的报告摘要（首次vision成功后可用，让后续追问无需重新读图）
+    if (reportSummary) body.reportSummary = reportSummary;
 
     const res = await fetch('/api/guest-chat', {
       method:  'POST',
@@ -604,8 +607,14 @@ async function sendMessage(content, displayText) {
     const data = await res.json();
     if (data.error) throw new Error(data.error);
 
-    // 只有成功后才标记图片已用，失败可重试
-    if (sendingImage) imageUsed = true;
+    // 成功且 API 明确返回 ok:true 时才标记图片已用
+    // ok:false 说明 DashScope 实际失败（即使 HTTP 200），下次仍需重新带图
+    if (sendingImage && data.ok !== false) {
+      imageUsed = true;
+      // 缓存报告摘要，后续追问直接用（服务端从 vision 回复中解析出来的结构化数据）
+      if (data.reportSummary) reportSummary = data.reportSummary;
+    }
+    history.push({ role: 'user', content });
 
     const reply = data.reply || '请稍后再试。';
     hideTyping();
@@ -615,8 +624,7 @@ async function sendMessage(content, displayText) {
   } catch (err) {
     hideTyping();
     appendAI('出了点问题，请稍后再试。（' + (err.message || '网络错误') + '）');
-    // 如果是视觉模式失败，重置让下次重试时仍携带图片
-    // （sendingImage 为 true 说明本次带了图，失败后 imageUsed 保持 false）
+    // history 不 push，失败的消息不污染上下文，下次点击可以干净重试
   }
 
   // Re-enable input

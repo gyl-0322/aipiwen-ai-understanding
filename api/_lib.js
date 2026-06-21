@@ -6,7 +6,11 @@
 
 const crypto = require('crypto');
 
-const SESSION_KEY = process.env.SESSION_SECRET || 'aipiwen-session-secret';
+// SESSION_SECRET 未配置时不允许使用默认值，防止生产环境 session 被伪造
+const SESSION_KEY = process.env.SESSION_SECRET;
+if (!SESSION_KEY) {
+  console.error('[FATAL] SESSION_SECRET 未配置，请在 Vercel 环境变量中设置');
+}
 
 // ─── Redis 封装 ───────────────────────────────────────────────────────────────
 function kvUrl()   { return process.env.KV_REST_API_URL   || process.env.REDIS_URL  || ''; }
