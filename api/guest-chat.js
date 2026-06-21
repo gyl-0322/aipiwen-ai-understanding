@@ -551,10 +551,10 @@ X值=未激活潜力，不是缺陷。语气温暖专业，用【】标注段落
     messages.push({ role: 'user', content: content.trim() });
   }
 
-  // 视觉模式用 qwen-vl-max（支持图片），报告追问用 qwen-plus，普通对话用 qwen-turbo
+  // 视觉模式用 qwen-vl-plus（支持图片，稳定），报告追问用 qwen-plus，普通对话用 qwen-turbo
   const isReportContext = context === 'report';
-  const model     = isVisionMode ? 'qwen-vl-max' : (isReportContext ? 'qwen-plus' : 'qwen-turbo');
-  const maxTokens = isVisionMode ? 1200 : (isReportContext ? 1200 : 400);
+  const model     = isVisionMode ? 'qwen-vl-plus' : (isReportContext ? 'qwen-plus' : 'qwen-turbo');
+  const maxTokens = isVisionMode ? 800 : (isReportContext ? 1200 : 400);
 
   let reply = null;
 
@@ -575,20 +575,31 @@ X值=未激活潜力，不是缺陷。语气温暖专业，用【】标注段落
     const rawText = await aiRes.text();
 
     if (!aiRes.ok) {
-      console.error('DashScope HTTP:', aiRes.status, rawText.slice(0, 300));
+      const errSnip = rawText.slice(0, 400);
+      console.error('DashScope HTTP:', aiRes.status, errSnip);
+      // 把 DashScope 错误透传给前端，方便排查
+      return res.status(200).json({ reply: `解读遇到了问题（${aiRes.status}）：${errSnip}` });
     } else {
       let aiData;
       try { aiData = JSON.parse(rawText); } catch(e) { /* ignore */ }
       if (aiData) {
         reply = aiData.choices?.[0]?.message?.content?.trim() || null;
-        if (!reply) console.error('DashScope empty choices:', JSON.stringify(aiData).slice(0, 300));
+        if (!reply) console.error('DashScope empty choices:', JSON.stringify(aiData).slice(0, 400));
       }
     }
   } catch(err) {
     console.error('DashScope fetch error:', err.message);
+    return res.status(200).json({ reply: `网络请求失败：${err.message}` });
   }
 
-  const finalReply = reply || '你说的这些，我需要多一点时间去感受。能再多描述一个细节吗——这个行为通常发生在什么时候？';
+  const FALLBACK = {
+    report:   '报告图片已收到，但解读暂时遇到了问题，请重新点击下方的解读方向再试一次。',
+    child:    '你说的这些，我需要多一点时间去感受。能再多描述一个细节吗——这个行为通常发生在什么时候？',
+    self:     '你说的这些，我听见了。能再多说一点吗——这个模式通常在什么情况下出现？',
+    partner:  '你说的这些，我在认真感受。能再描述一个具体的场景吗？',
+    business: '我在思考你说的这些。能再说说这个行为在什么情况下最明显吗？',
+  };
+  const finalReply = reply || FALLBACK[context] || FALLBACK.child;
 
   // 异步记录对话日志，不阻塞返回
   logConversation(sessionId, context, content, finalReply, ip).catch(() => {});
