@@ -20,6 +20,8 @@
     { "src": "/personality.html",            "dest": "/personality.html" },
     { "src": "/synthesis.html",              "dest": "/synthesis.html" },
     { "src": "/synthesis",                   "dest": "/synthesis.html" },
+    { "src": "/report-upload.html",          "dest": "/report-upload.html" },
+    { "src": "/report-upload",               "dest": "/report-upload.html" },
     { "src": "/",                            "dest": "/homepage.html" },
     { "src": "/(.*)",                        "dest": "/homepage.html" }
   ],
