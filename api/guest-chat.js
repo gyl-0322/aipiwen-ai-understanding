@@ -538,9 +538,9 @@ ${NO_FILLER}`,
     messages.push({ role: 'user', content: content.trim() });
   }
 
-  // 视觉模式用 qwen3.6-plus，报告追问用 qwen-plus（需要更长输出），普通对话用 qwen-turbo
+  // 视觉模式用 qwen-vl-max（支持图片），报告追问用 qwen-plus，普通对话用 qwen-turbo
   const isReportContext = context === 'report';
-  const model     = isVisionMode ? 'qwen3.6-plus' : (isReportContext ? 'qwen-plus' : 'qwen-turbo');
+  const model     = isVisionMode ? 'qwen-vl-max' : (isReportContext ? 'qwen-plus' : 'qwen-turbo');
   const maxTokens = isVisionMode ? 1200 : (isReportContext ? 1200 : 400);
 
   let reply = null;
