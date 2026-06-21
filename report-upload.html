@@ -6,15 +6,15 @@
 <title>报告AI解读 · AIPIWEN</title>
 <style>
   :root {
-    --brand: #6366f1;
-    --brand-dark: #4f46e5;
-    --brand-light: #eef2ff;
-    --purple: #7c3aed;
-    --purple-light: #f5f3ff;
+    --brand: #C2692A;
+    --brand-dark: #A3561F;
+    --brand-light: #F5EDE4;
+    --amber-soft: #E8C4A0;
+    --amber-muted: #8B5E3C;
     --ink: #1d1d1f;
     --ink-60: #6e6e73;
     --ink-30: #aeaeb2;
-    --surface: #f5f5f7;
+    --surface: #faf8f5;
     --card: #ffffff;
     --border: #e5e5ea;
   }
@@ -101,7 +101,7 @@
     color: var(--ink-60);
     display: flex; align-items: center; gap: 6px;
   }
-  .rtp-item.custom { color: var(--purple); background: var(--purple-light); }
+  .rtp-item.custom { color: var(--amber-muted); background: #FDF0E8; }
 
   .error-bar {
     display: none; margin: 12px 16px;
@@ -154,7 +154,7 @@
 
   .msg-avatar {
     width: 28px; height: 28px; border-radius: 50%;
-    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    background: linear-gradient(135deg, #C2692A, #E8895A);
     display: flex; align-items: center; justify-content: center;
     font-size: 13px; flex-shrink: 0; margin-top: 2px;
   }
@@ -219,7 +219,7 @@
   .chip {
     flex-shrink: 0;
     background: var(--brand-light);
-    border: 1.5px solid #c7d2fe;
+    border: 1.5px solid var(--amber-soft);
     border-radius: 20px;
     padding: 6px 12px;
     font-size: 13px; color: var(--brand);
@@ -232,11 +232,11 @@
   .chip:active { transform: scale(0.96); }
 
   .chip.custom {
-    background: var(--purple-light);
-    border-color: #ddd6fe;
-    color: var(--purple);
+    background: #FDF0E8;
+    border-color: #DCAB85;
+    color: var(--amber-muted);
   }
-  .chip.custom:hover { background: var(--purple); color: #fff; border-color: var(--purple); }
+  .chip.custom:hover { background: var(--brand-dark); color: #fff; border-color: var(--brand-dark); }
 
   /* Text input row */
   .input-row { display: flex; gap: 8px; align-items: flex-end; margin-top: 8px; }
@@ -283,7 +283,7 @@
   <div class="upload-zone" id="uploadZone">
     <input type="file" id="fileInput" accept="image/*" />
     <div class="upload-icon">📁</div>
-    <div class="upload-title">点击上传 或 拖拽图片至此</div>
+    <div class="upload-title">上传报告总表</div>
     <div class="upload-hint">推荐清晰正面拍摄 · 截图也可以</div>
     <div class="upload-formats">
       <span class="format-tag">JPG</span>
