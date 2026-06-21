@@ -71,11 +71,45 @@ module.exports = async function handler(req, res) {
     content, history = [], context = 'child',
     previousContext = '', sessionId = '',
     imageBase64 = null, imageMimeType = 'image/jpeg',
+    subjectAge = null,   // 被测者年龄（数字），用于年龄分层解读
   } = payload;
 
   // 图片上传模式：content 可以为空（纯看图）或追加问题
   const isVisionMode = !!imageBase64;
   if (!isVisionMode && !content?.trim()) return res.status(400).json({ error: '内容不能为空' });
+
+  // ── 年龄分层：根据 subjectAge 决定 AI 解读语气和场景聚焦 ────────────────────
+  function getAgeTier(age) {
+    const n = Number(age);
+    if (!age || isNaN(n) || n < 0) return null;
+    if (n <= 6)  return 'preschool';
+    if (n <= 12) return 'school';
+    if (n <= 18) return 'teen';
+    return 'adult';
+  }
+  const ageTier = getAgeTier(subjectAge);
+
+  const AGE_CONTEXT = {
+    preschool: `【被测者年龄：学前期（0-6岁）】
+语言要求：极度具体，帮家长识别孩子天赋在日常生活中的早期信号（吃饭、睡觉、情绪、探索行为）。
+用词方式：对家长说"你的孩子/他/她"。避免：学业类建议、抽象概念、升学话题。`,
+
+    school: `【被测者年龄：学童期（7-12岁）】
+语言要求：聚焦学校场景，帮家长读懂孩子学习行为背后的天赋逻辑（作业、课堂、同伴关系、兴趣班）。
+用词方式：对家长说"你的孩子/他/她"。避免：成人化表达、过度升学焦虑。`,
+
+    teen: `【被测者年龄：青少年期（13-18岁）】
+语言要求：双轨输出——既有对家长的"你的孩子是这样的"，也有直接对青少年本人说的"作为一个X型的你"。
+聚焦：自我认知觉醒、情绪管理、升学方向选择、理解与父母的分歧根源。`,
+
+    adult: `【被测者年龄：成人（19岁以上）】
+语言要求：直接对本人说，全程使用"你"而非"孩子"。
+聚焦：职业匹配与发展、亲密关系、自我理解与接纳、天赋如何在工作和生活中发挥。`,
+  };
+
+  const ageContextNote = ageTier && AGE_CONTEXT[ageTier]
+    ? `\n${AGE_CONTEXT[ageTier]}\n`
+    : '';
 
   // 全局高频模式（仅亲子场景使用）
   const globalPatterns = context === 'child'
@@ -130,7 +164,7 @@ ${TRC_REFERENCE}
 
   const SYSTEM = {
     child: `你是AIPIWEN的亲子关系顾问。你的核心信念：孩子每一个"问题行为"，都是孩子在用他能找到的唯一方式，向父母传递一个还没被接收到的信号——不是叛逆，是呼唤。
-${patternsSection}${memSection}
+${ageContextNote}${patternsSection}${memSection}
 行为解读链路（内化于心，不要逐条列出）：
 行为表象 → 行为背后的情绪 → 这个情绪指向什么未被满足的需求（安全感？连接感？自主权？被看见？）→ 什么样的家庭互动方式让这个信号没有被接到 → 孩子真正想对父母说的那句话是什么
 ${FIVE_STEPS}
@@ -171,13 +205,13 @@ ${NO_FILLER}`,
 
     // ── 报告解读模式（视觉AI读取测评报告图片）─────────────────────────────────
     report: `你是AIPIWEN的指纹天赋报告解读专家。用户上传了一张TRC天赋认知测评报告图片，你需要：
-
+${ageContextNote}
 第一步：从图片中提取关键信息
 - 被测者姓名、年龄、性别（如有）
 - TRC天赋认知类型名称
 - 指纹数据摘要（如可见）
 
-第二步：根据年龄段调整解读语气
+第二步：根据年龄段调整解读语气（如已知年龄优先按上方年龄层级要求，否则从报告图片推断）
 - 12岁及以下（儿童）：对家长说，用"你的孩子"，聚焦学习、情绪、亲子相处
 - 13-18岁（青少年）：同时对孩子和家长说，聚焦自我认知、升学方向
 - 19岁及以上（成人）：直接对本人说，用"你"，聚焦职业、关系、自我成长
