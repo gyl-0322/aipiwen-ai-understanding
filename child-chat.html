@@ -79,6 +79,14 @@ body {
 .input-counter { text-align:right; font-size:11px; color:var(--ink-20); margin-top:8px; }
 
 .examples-label { font-size:12px; font-weight:600; letter-spacing:.06em; color:var(--ink-40); text-transform:uppercase; margin-bottom:10px; }
+.age-chip {
+  padding:5px 12px; background:var(--cream-deep); border:1px solid var(--ink-10);
+  border-radius:20px; font-size:12px; color:var(--ink-70); cursor:pointer;
+  transition:background .15s, border-color .15s;
+}
+.age-chip:hover   { background:var(--amber-soft); border-color:var(--amber); color:var(--amber); }
+.age-chip.selected { background:var(--amber); border-color:var(--amber); color:white; font-weight:600; }
+
 .example-chips { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:32px; }
 .example-chip {
   padding:7px 14px; background:var(--cream-deep); border:1px solid var(--ink-10);
@@ -284,6 +292,17 @@ body {
         placeholder="例如：孩子总是不肯写作业，一说就发脾气…"
         maxlength="300" oninput="onInput(this)"></textarea>
       <div class="input-counter"><span id="char-count">0</span> / 300</div>
+
+      <!-- 年龄快选 -->
+      <div id="age-row" style="margin-top:14px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+        <span style="font-size:12px;color:var(--ink-40);white-space:nowrap;" id="age-label">TA 几岁？（选填）</span>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;" id="age-chips">
+          <button type="button" class="age-chip" onclick="setAge(this,4)">4-6岁</button>
+          <button type="button" class="age-chip" onclick="setAge(this,9)">7-12岁</button>
+          <button type="button" class="age-chip" onclick="setAge(this,15)">13-18岁</button>
+          <button type="button" class="age-chip" onclick="setAge(this,25)">19岁+</button>
+        </div>
+      </div>
     </div>
 
     <div class="examples-label">常见场景，点击填入</div>
@@ -325,6 +344,13 @@ body {
 <script>
 // ── Context config ────────────────────────────────────────────
 const _for = new URLSearchParams(location.search).get('for') || 'child';
+let _subjectAge = null;   // 被测者年龄，由年龄芯片选择设置
+
+function setAge(btn, age) {
+  _subjectAge = age;
+  document.querySelectorAll('.age-chip').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+}
 
 const CONTEXTS = {
   child: {
@@ -374,6 +400,22 @@ document.title = CTX.pageTitle;
 document.getElementById('form-eyebrow').textContent  = CTX.eyebrow;
 document.getElementById('form-title').innerHTML      = CTX.title;
 document.getElementById('form-sub').textContent      = CTX.sub;
+
+// 年龄选择：根据 context 调整标签文字和芯片内容
+(function setupAgeRow() {
+  const ageRow   = document.getElementById('age-row');
+  const ageLabel = document.getElementById('age-label');
+  if (_for === 'child') {
+    ageLabel.textContent = '孩子几岁？（选填）';
+  } else if (_for === 'self') {
+    ageLabel.textContent = '你的年龄段？（选填）';
+  } else if (_for === 'partner') {
+    ageLabel.textContent = 'TA 的年龄段？（选填）';
+  } else {
+    // business 等场景隐藏年龄选择
+    ageRow.style.display = 'none';
+  }
+})();
 document.getElementById('form-label').textContent    = CTX.label;
 document.getElementById('behavior-input').placeholder = CTX.placeholder;
 document.getElementById('cta-text').textContent      = CTX.ctaText;
@@ -586,7 +628,8 @@ async function callAPI(content) {
     history:         chatHistory.slice(-8),
     context:         _for,
     previousContext: sessionPrevContext,
-    sessionId:       _sessionId,         // 服务端日志用
+    sessionId:       _sessionId,
+    subjectAge:      _subjectAge,        // 年龄分层：AI 自动调整解读语气
   };
   const res = await fetch('/api/guest-chat', {
     method: 'POST',
