@@ -3,410 +3,288 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>上传报告 · AI解读 | AIPIWEN</title>
+<title>报告AI解读 · AIPIWEN</title>
 <style>
+  :root {
+    --brand: #6366f1;
+    --brand-dark: #4f46e5;
+    --brand-light: #eef2ff;
+    --purple: #7c3aed;
+    --purple-light: #f5f3ff;
+    --ink: #1d1d1f;
+    --ink-60: #6e6e73;
+    --ink-30: #aeaeb2;
+    --surface: #f5f5f7;
+    --card: #ffffff;
+    --border: #e5e5ea;
+  }
   * { box-sizing: border-box; margin: 0; padding: 0; }
-
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino Sans GB', sans-serif;
-    background: #f5f5f7;
-    color: #1d1d1f;
-    min-height: 100vh;
-  }
-
-  /* ── 顶部导航 ── */
-  .nav {
-    background: rgba(255,255,255,0.85);
-    backdrop-filter: blur(20px);
-    border-bottom: 1px solid rgba(0,0,0,0.08);
-    padding: 0 20px;
-    height: 52px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    position: sticky;
-    top: 0;
-    z-index: 100;
-  }
-  .nav-logo {
-    font-size: 17px;
-    font-weight: 700;
-    color: #1d1d1f;
-    letter-spacing: -0.3px;
-  }
-  .nav-logo span { color: #6366f1; }
-  .nav-back {
-    font-size: 14px;
-    color: #6366f1;
-    text-decoration: none;
-  }
-
-  /* ── 主体 ── */
-  .container {
-    max-width: 600px;
-    margin: 0 auto;
-    padding: 24px 16px 60px;
-  }
-
-  /* ── 页头 ── */
-  .page-header {
-    text-align: center;
-    margin-bottom: 28px;
-  }
-  .page-header h1 {
-    font-size: 24px;
-    font-weight: 700;
-    letter-spacing: -0.5px;
-    margin-bottom: 8px;
-  }
-  .page-header p {
-    font-size: 14px;
-    color: #6e6e73;
-    line-height: 1.6;
-  }
-
-  /* ── 上传区 ── */
-  .upload-area {
-    background: #fff;
-    border: 2px dashed #d1d1d6;
-    border-radius: 20px;
-    padding: 40px 20px;
-    text-align: center;
-    cursor: pointer;
-    transition: all 0.2s;
-    position: relative;
-  }
-  .upload-area:hover,
-  .upload-area.drag-over {
-    border-color: #6366f1;
-    background: #f5f4ff;
-  }
-  .upload-area input[type="file"] {
-    position: absolute;
-    inset: 0;
-    opacity: 0;
-    cursor: pointer;
-    width: 100%;
+  html, body {
     height: 100%;
-  }
-  .upload-icon {
-    font-size: 48px;
-    margin-bottom: 12px;
-  }
-  .upload-title {
-    font-size: 16px;
-    font-weight: 600;
-    color: #1d1d1f;
-    margin-bottom: 6px;
-  }
-  .upload-hint {
-    font-size: 13px;
-    color: #8e8e93;
-  }
-  .upload-formats {
-    margin-top: 10px;
-    display: flex;
-    gap: 8px;
-    justify-content: center;
-    flex-wrap: wrap;
-  }
-  .format-tag {
-    background: #f2f2f7;
-    border-radius: 6px;
-    padding: 3px 10px;
-    font-size: 12px;
-    color: #6e6e73;
-  }
-
-  /* ── 预览区 ── */
-  .preview-section {
-    display: none;
-    margin-top: 16px;
-    background: #fff;
-    border-radius: 20px;
+    font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Helvetica Neue', sans-serif;
+    background: var(--surface);
+    color: var(--ink);
     overflow: hidden;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
-  }
-  .preview-section.visible { display: block; }
-  .preview-header {
-    padding: 14px 16px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    border-bottom: 1px solid #f2f2f7;
-  }
-  .preview-filename {
-    font-size: 14px;
-    font-weight: 500;
-    color: #1d1d1f;
-  }
-  .preview-change {
-    font-size: 13px;
-    color: #6366f1;
-    cursor: pointer;
-    background: none;
-    border: none;
-    padding: 0;
-  }
-  .preview-img {
-    width: 100%;
-    display: block;
-    max-height: 400px;
-    object-fit: contain;
-    background: #f5f5f7;
   }
 
-  /* ── 问题输入 ── */
-  .question-section {
-    display: none;
-    margin-top: 16px;
+  /* ── Nav ── */
+  .nav {
+    position: fixed; top: 0; left: 0; right: 0;
+    height: 52px;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 16px;
+    background: rgba(255,255,255,0.92);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    z-index: 200;
   }
-  .question-section.visible { display: block; }
-  .question-label {
-    font-size: 13px;
-    color: #6e6e73;
-    margin-bottom: 8px;
-  }
-  .question-input {
-    width: 100%;
-    background: #fff;
-    border: 1.5px solid #e5e5ea;
-    border-radius: 14px;
-    padding: 12px 16px;
-    font-size: 15px;
-    font-family: inherit;
-    color: #1d1d1f;
-    outline: none;
-    resize: none;
-    min-height: 60px;
-    line-height: 1.5;
-    transition: border-color 0.2s;
-  }
-  .question-input:focus { border-color: #6366f1; }
-  .question-input::placeholder { color: #c7c7cc; }
+  .nav-back { font-size: 14px; color: var(--brand); text-decoration: none; }
+  .nav-logo { font-size: 16px; font-weight: 700; letter-spacing: -0.5px; }
+  .nav-logo span { color: var(--brand); }
 
-  /* ── 解读按钮 ── */
-  .interpret-btn {
-    display: none;
-    width: 100%;
-    margin-top: 16px;
-    padding: 15px;
-    background: #6366f1;
-    color: #fff;
-    border: none;
-    border-radius: 14px;
-    font-size: 16px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s;
-    font-family: inherit;
+  /* ── PRE-UPLOAD PAGE ── */
+  .pre-upload {
+    position: fixed; inset: 0;
+    display: flex; flex-direction: column;
+    background: var(--surface);
+    overflow-y: auto;
+    z-index: 10;
   }
-  .interpret-btn.visible { display: block; }
-  .interpret-btn:hover { background: #4f46e5; }
-  .interpret-btn:disabled {
-    background: #a5b4fc;
-    cursor: not-allowed;
-  }
-  .interpret-btn .btn-icon { margin-right: 6px; }
+  .pre-upload.hidden { display: none; }
 
-  /* ── 加载态 ── */
-  .loading-section {
-    display: none;
+  .page-header {
+    padding: 76px 20px 20px;
     text-align: center;
-    padding: 32px 20px;
   }
-  .loading-section.visible { display: block; }
-  .loading-spinner {
-    width: 36px;
-    height: 36px;
-    border: 3px solid #e5e5ea;
-    border-top-color: #6366f1;
-    border-radius: 50%;
-    animation: spin 0.8s linear infinite;
-    margin: 0 auto 14px;
-  }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  .loading-text { font-size: 14px; color: #6e6e73; }
+  .page-header h1 { font-size: 22px; font-weight: 700; margin-bottom: 6px; }
+  .page-header p { font-size: 14px; color: var(--ink-60); line-height: 1.6; }
 
-  /* ── 结果区 ── */
-  .result-section {
+  .upload-zone {
+    margin: 0 16px 16px;
+    border: 2px dashed var(--border);
+    border-radius: 16px;
+    padding: 36px 20px;
+    text-align: center;
+    background: var(--card);
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+  }
+  .upload-zone:hover, .upload-zone.drag-over {
+    border-color: var(--brand);
+    background: var(--brand-light);
+  }
+  .upload-zone input[type=file] { display: none; }
+  .upload-icon { font-size: 40px; margin-bottom: 12px; }
+  .upload-title { font-size: 16px; font-weight: 600; margin-bottom: 6px; }
+  .upload-hint { font-size: 13px; color: var(--ink-60); margin-bottom: 14px; }
+  .upload-formats { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; }
+  .format-tag {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 6px; padding: 3px 8px; font-size: 11px; color: var(--ink-60);
+  }
+
+  /* Report type preview on pre-upload page */
+  .report-types-preview {
+    margin: 0 16px;
+    background: var(--card);
+    border-radius: 14px;
+    padding: 16px;
+    border: 1px solid var(--border);
+  }
+  .rtp-title { font-size: 12px; color: var(--ink-60); margin-bottom: 10px; font-weight: 500; }
+  .rtp-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .rtp-item {
+    background: var(--surface);
+    border-radius: 10px;
+    padding: 8px 10px;
+    font-size: 12px;
+    color: var(--ink-60);
+    display: flex; align-items: center; gap: 6px;
+  }
+  .rtp-item.custom { color: var(--purple); background: var(--purple-light); }
+
+  .error-bar {
+    display: none; margin: 12px 16px;
+    background: #fff5f5; border: 1px solid #fed7d7;
+    border-radius: 10px; padding: 10px 14px;
+    font-size: 13px; color: #c53030;
+  }
+  .error-bar.visible { display: block; }
+
+  /* ── CHAT PAGE ── */
+  .chat-page {
     display: none;
-    margin-top: 16px;
+    position: fixed; inset: 0;
+    flex-direction: column;
+    background: var(--surface);
   }
-  .result-section.visible { display: block; }
+  .chat-page.active { display: flex; }
 
-  .result-card {
-    background: #fff;
-    border-radius: 20px;
-    overflow: hidden;
-    box-shadow: 0 2px 12px rgba(99,102,241,0.08);
+  /* Mini report bar */
+  .report-bar {
+    position: relative;
+    top: 52px;
+    background: var(--card);
+    border-bottom: 1px solid var(--border);
+    padding: 8px 14px;
+    display: flex; align-items: center; gap: 10px;
+    flex-shrink: 0;
+    margin-top: 52px;
   }
-  .result-card-header {
-    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-    padding: 20px;
-    color: #fff;
+  .report-thumb { width: 36px; height: 36px; border-radius: 6px; object-fit: cover; flex-shrink: 0; }
+  .report-info { flex: 1; min-width: 0; }
+  .report-name { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .report-status { font-size: 11px; color: var(--ink-60); }
+  .reupload-btn { font-size: 12px; color: var(--brand); background: none; border: none; cursor: pointer; padding: 4px; flex-shrink: 0; font-family: inherit; }
+
+  /* Messages */
+  .chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px 16px 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    -webkit-overflow-scrolling: touch;
   }
-  .result-card-header h2 {
-    font-size: 18px;
-    font-weight: 700;
-    margin-bottom: 4px;
+
+  .msg { display: flex; gap: 8px; max-width: 90%; }
+  .msg.ai { align-self: flex-start; }
+  .msg.user { align-self: flex-end; flex-direction: row-reverse; }
+
+  .msg-avatar {
+    width: 28px; height: 28px; border-radius: 50%;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; flex-shrink: 0; margin-top: 2px;
   }
-  .result-card-header p {
-    font-size: 13px;
-    opacity: 0.85;
+
+  .msg-bubble {
+    padding: 10px 14px;
+    border-radius: 16px;
+    font-size: 14px;
+    line-height: 1.7;
   }
-  .result-body {
-    padding: 20px;
-  }
-  .result-text {
-    font-size: 15px;
-    line-height: 1.75;
-    color: #1d1d1f;
+  .msg.ai .msg-bubble {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-bottom-left-radius: 4px;
+    color: var(--ink);
     white-space: pre-wrap;
   }
+  .msg.user .msg-bubble {
+    background: var(--brand);
+    color: #fff;
+    border-bottom-right-radius: 4px;
+  }
 
-  /* ── 后续追问 ── */
-  .followup-section {
-    display: none;
-    margin-top: 16px;
+  /* Typing indicator */
+  .typing { display: none; align-self: flex-start; gap: 8px; align-items: center; }
+  .typing.show { display: flex; }
+  .typing-inner {
+    display: flex; gap: 4px; align-items: center;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px; border-bottom-left-radius: 4px;
+    padding: 10px 14px;
   }
-  .followup-section.visible { display: block; }
-  .followup-label {
-    font-size: 13px;
-    color: #6e6e73;
-    margin-bottom: 8px;
+  .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--ink-30); animation: bounce 1.2s infinite; }
+  .dot:nth-child(2) { animation-delay: 0.2s; }
+  .dot:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes bounce { 0%,60%,100% { transform: translateY(0); } 30% { transform: translateY(-5px); } }
+
+  /* ── BOTTOM BAR ── */
+  .chat-bottom {
+    background: var(--card);
+    border-top: 1px solid var(--border);
+    padding: 10px 12px;
+    padding-bottom: calc(10px + env(safe-area-inset-bottom));
+    flex-shrink: 0;
   }
-  .followup-chips {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-    margin-bottom: 12px;
+
+  /* Chip groups */
+  .chip-group { margin-bottom: 7px; }
+  .chip-group-label {
+    font-size: 10px; font-weight: 600; letter-spacing: 0.4px;
+    color: var(--ink-30); text-transform: uppercase;
+    margin-bottom: 5px; padding-left: 2px;
   }
+  .chip-row {
+    display: flex; gap: 6px;
+    overflow-x: auto; padding-bottom: 2px;
+    scrollbar-width: none;
+  }
+  .chip-row::-webkit-scrollbar { display: none; }
+
   .chip {
-    background: #f2f2f7;
-    border: 1.5px solid #e5e5ea;
+    flex-shrink: 0;
+    background: var(--brand-light);
+    border: 1.5px solid #c7d2fe;
     border-radius: 20px;
-    padding: 7px 14px;
-    font-size: 13px;
-    color: #3c3c43;
+    padding: 6px 12px;
+    font-size: 13px; color: var(--brand);
     cursor: pointer;
     transition: all 0.15s;
-  }
-  .chip:hover {
-    background: #eef2ff;
-    border-color: #6366f1;
-    color: #6366f1;
-  }
-  .followup-row {
-    display: flex;
-    gap: 8px;
-  }
-  .followup-input {
-    flex: 1;
-    background: #fff;
-    border: 1.5px solid #e5e5ea;
-    border-radius: 12px;
-    padding: 10px 14px;
-    font-size: 14px;
+    white-space: nowrap;
     font-family: inherit;
-    outline: none;
+  }
+  .chip:hover { background: var(--brand); color: #fff; border-color: var(--brand); }
+  .chip:active { transform: scale(0.96); }
+
+  .chip.custom {
+    background: var(--purple-light);
+    border-color: #ddd6fe;
+    color: var(--purple);
+  }
+  .chip.custom:hover { background: var(--purple); color: #fff; border-color: var(--purple); }
+
+  /* Text input row */
+  .input-row { display: flex; gap: 8px; align-items: flex-end; margin-top: 8px; }
+  .chat-input {
+    flex: 1;
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    padding: 9px 12px;
+    font-size: 15px; font-family: inherit;
+    outline: none; resize: none;
+    max-height: 100px; line-height: 1.4;
     transition: border-color 0.2s;
   }
-  .followup-input:focus { border-color: #6366f1; }
-  .followup-send {
-    background: #6366f1;
-    color: #fff;
-    border: none;
-    border-radius: 12px;
-    padding: 10px 18px;
-    font-size: 14px;
-    font-weight: 500;
-    cursor: pointer;
-    font-family: inherit;
-    transition: background 0.2s;
+  .chat-input:focus { border-color: var(--brand); }
+  .send-btn {
+    width: 40px; height: 40px;
+    border-radius: 12px; background: var(--brand);
+    border: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; transition: background 0.2s;
   }
-  .followup-send:hover { background: #4f46e5; }
-  .followup-send:disabled { background: #a5b4fc; cursor: not-allowed; }
-
-  /* ── 追问结果 ── */
-  .followup-messages {
-    margin-top: 12px;
-  }
-  .msg-bubble {
-    margin-bottom: 12px;
-    padding: 12px 16px;
-    border-radius: 14px;
-    font-size: 14px;
-    line-height: 1.65;
-  }
-  .msg-user {
-    background: #eef2ff;
-    color: #3730a3;
-    align-self: flex-end;
-    margin-left: 40px;
-  }
-  .msg-ai {
-    background: #f9fafb;
-    color: #1d1d1f;
-    border: 1px solid #e5e5ea;
-    margin-right: 40px;
-    white-space: pre-wrap;
-  }
-
-  /* ── 重置 ── */
-  .reset-btn {
-    display: none;
-    margin-top: 16px;
-    width: 100%;
-    padding: 12px;
-    background: #f2f2f7;
-    color: #6e6e73;
-    border: none;
-    border-radius: 12px;
-    font-size: 14px;
-    cursor: pointer;
-    font-family: inherit;
-  }
-  .reset-btn.visible { display: block; }
-  .reset-btn:hover { background: #e5e5ea; }
-
-  /* ── 错误提示 ── */
-  .error-msg {
-    display: none;
-    background: #fff5f5;
-    border: 1px solid #fed7d7;
-    border-radius: 12px;
-    padding: 12px 16px;
-    font-size: 14px;
-    color: #c53030;
-    margin-top: 12px;
-    text-align: center;
-  }
-  .error-msg.visible { display: block; }
+  .send-btn:hover { background: var(--brand-dark); }
+  .send-btn:disabled { background: var(--ink-30); cursor: not-allowed; }
+  .send-btn svg { fill: #fff; }
 </style>
 </head>
 <body>
 
+<!-- Nav -->
 <nav class="nav">
   <a href="/" class="nav-back">← 首页</a>
   <div class="nav-logo">AIPI<span>WEN</span></div>
   <div style="width:48px"></div>
 </nav>
 
-<div class="container">
-
-  <!-- 页头 -->
+<!-- ── PRE-UPLOAD PAGE ── -->
+<div class="pre-upload" id="preUpload">
   <div class="page-header">
-    <h1>📋 报告AI解读</h1>
-    <p>上传你的TRC指纹天赋测评报告<br>AI为你做专属深度解读</p>
+    <h1>📋 报告 AI 解读</h1>
+    <p>上传TRC指纹天赋测评报告截图<br>选择解读方向，AI即时生成专属内容</p>
   </div>
 
-  <!-- 上传区 -->
-  <div class="upload-area" id="uploadArea">
-    <input type="file" id="fileInput" accept="image/*,.pdf" />
+  <div class="upload-zone" id="uploadZone">
+    <input type="file" id="fileInput" accept="image/*" />
     <div class="upload-icon">📁</div>
     <div class="upload-title">点击上传 或 拖拽图片至此</div>
-    <div class="upload-hint">支持拍照上传报告截图</div>
+    <div class="upload-hint">推荐清晰正面拍摄 · 截图也可以</div>
     <div class="upload-formats">
       <span class="format-tag">JPG</span>
       <span class="format-tag">PNG</span>
@@ -415,322 +293,315 @@
     </div>
   </div>
 
-  <!-- 预览 -->
-  <div class="preview-section" id="previewSection">
-    <div class="preview-header">
-      <span class="preview-filename" id="previewFilename">report.jpg</span>
-      <button class="preview-change" id="changeFileBtn">更换图片</button>
+  <div class="error-bar" id="errorBar"></div>
+
+  <!-- Report type preview -->
+  <div class="report-types-preview">
+    <div class="rtp-title">上传后可选择的解读方向</div>
+    <div class="rtp-grid">
+      <div class="rtp-item">📊 基础版个人报告</div>
+      <div class="rtp-item">👨‍👩‍👧 亲子合盘报告</div>
+      <div class="rtp-item">💑 亲密关系（未婚）</div>
+      <div class="rtp-item">💍 亲密关系（已婚）</div>
+      <div class="rtp-item custom">💼 职业规划报告</div>
+      <div class="rtp-item custom">🧠 学习能力提升</div>
+      <div class="rtp-item custom">📚 全阶段学业规划</div>
+      <div class="rtp-item custom">🎓 高考志愿报读</div>
+      <div class="rtp-item custom">🎨 兴趣班选择</div>
+      <div class="rtp-item custom">🧘 身心健康报告</div>
     </div>
-    <img class="preview-img" id="previewImg" src="" alt="报告预览" />
+  </div>
+</div>
+
+<!-- ── CHAT PAGE ── -->
+<div class="chat-page" id="chatPage">
+
+  <!-- Mini report bar -->
+  <div class="report-bar">
+    <img class="report-thumb" id="reportThumb" src="" alt="" />
+    <div class="report-info">
+      <div class="report-name" id="reportName">报告已上传</div>
+      <div class="report-status">选择下方解读方向，AI即时输出专属内容</div>
+    </div>
+    <button class="reupload-btn" id="reuploadBtn">换一份</button>
   </div>
 
-  <!-- 可选问题 -->
-  <div class="question-section" id="questionSection">
-    <div class="question-label">有特别想了解的？（可选）</div>
-    <textarea
-      class="question-input"
-      id="questionInput"
-      placeholder="例如：这个类型的孩子在学习上有什么特点？"
-      rows="2"
-    ></textarea>
+  <!-- Messages -->
+  <div class="chat-messages" id="chatMessages">
+    <!-- messages inserted here -->
   </div>
 
-  <!-- 解读按钮 -->
-  <button class="interpret-btn" id="interpretBtn">
-    <span class="btn-icon">✨</span>开始AI解读
-  </button>
+  <!-- Bottom bar -->
+  <div class="chat-bottom">
 
-  <!-- 错误提示 -->
-  <div class="error-msg" id="errorMsg"></div>
-
-  <!-- 加载态 -->
-  <div class="loading-section" id="loadingSection">
-    <div class="loading-spinner"></div>
-    <div class="loading-text">AI正在读取报告，解读中…</div>
-  </div>
-
-  <!-- 解读结果 -->
-  <div class="result-section" id="resultSection">
-    <div class="result-card">
-      <div class="result-card-header">
-        <h2>✨ 天赋解读报告</h2>
-        <p>基于你上传的TRC指纹测评报告</p>
+    <!-- 基础解读 chips -->
+    <div class="chip-group">
+      <div class="chip-group-label">基础解读</div>
+      <div class="chip-row">
+        <button class="chip" onclick="selectReport('基础版个人报告')">📊 基础版个人</button>
+        <button class="chip" onclick="selectReport('亲子合盘报告')">👨‍👩‍👧 亲子合盘</button>
+        <button class="chip" onclick="selectReport('亲密关系合盘（未婚）')">💑 亲密关系·未婚</button>
+        <button class="chip" onclick="selectReport('亲密关系合盘（已婚）')">💍 亲密关系·已婚</button>
       </div>
-      <div class="result-body">
-        <div class="result-text" id="resultText"></div>
+    </div>
+
+    <!-- 定制版 chips -->
+    <div class="chip-group">
+      <div class="chip-group-label">定制版报告</div>
+      <div class="chip-row">
+        <button class="chip custom" onclick="selectReport('职业规划个性化报告')">💼 职业规划</button>
+        <button class="chip custom" onclick="selectReport('学习能力提升个性化报告')">🧠 学习能力提升</button>
+        <button class="chip custom" onclick="selectReport('全阶段学业规划个性化报告')">📚 全阶段学业规划</button>
+        <button class="chip custom" onclick="selectReport('高考志愿报读个性化报告')">🎓 高考志愿报读</button>
+        <button class="chip custom" onclick="selectReport('兴趣班选择个性化报告')">🎨 兴趣班选择</button>
+        <button class="chip custom" onclick="selectReport('身心健康个性化报告')">🧘 身心健康</button>
       </div>
     </div>
-  </div>
 
-  <!-- 追问区 -->
-  <div class="followup-section" id="followupSection">
-    <div class="followup-label">还有疑问？继续问</div>
-    <div class="followup-chips" id="followupChips">
-      <div class="chip">这个类型适合什么职业？</div>
-      <div class="chip">怎么发挥这个天赋？</div>
-      <div class="chip">和什么类型的人最合拍？</div>
-    </div>
-    <div class="followup-messages" id="followupMessages"></div>
-    <div class="followup-row">
-      <input
-        class="followup-input"
-        id="followupInput"
-        type="text"
-        placeholder="输入你的问题…"
-      />
-      <button class="followup-send" id="followupSend">发送</button>
+    <!-- Text input -->
+    <div class="input-row">
+      <textarea
+        class="chat-input"
+        id="chatInput"
+        placeholder="或直接输入你的问题…"
+        rows="1"
+      ></textarea>
+      <button class="send-btn" id="sendBtn" disabled>
+        <svg width="18" height="18" viewBox="0 0 24 24">
+          <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+        </svg>
+      </button>
     </div>
   </div>
-
-  <!-- 重新上传 -->
-  <button class="reset-btn" id="resetBtn">重新上传另一份报告</button>
-
 </div>
 
 <script>
-// ── 状态 ──────────────────────────────────────────────────────────────────────
-let uploadedFile   = null;
-let imageBase64    = null;
-let imageMimeType  = 'image/jpeg';
-let firstInterpretation = '';
-let followupHistory    = [];
+// ── State ───────────────────────────────────────────────────────────────────
+let imageBase64   = null;
+let imageMimeType = 'image/jpeg';
+let sessionId     = 'report_' + Date.now();
+let history       = [];
+let imageUsed     = false;
 
-// ── DOM ───────────────────────────────────────────────────────────────────────
-const uploadArea     = document.getElementById('uploadArea');
-const fileInput      = document.getElementById('fileInput');
-const previewSection = document.getElementById('previewSection');
-const previewImg     = document.getElementById('previewImg');
-const previewFilename= document.getElementById('previewFilename');
-const changeFileBtn  = document.getElementById('changeFileBtn');
-const questionSection= document.getElementById('questionSection');
-const questionInput  = document.getElementById('questionInput');
-const interpretBtn   = document.getElementById('interpretBtn');
-const errorMsg       = document.getElementById('errorMsg');
-const loadingSection = document.getElementById('loadingSection');
-const resultSection  = document.getElementById('resultSection');
-const resultText     = document.getElementById('resultText');
-const followupSection= document.getElementById('followupSection');
-const followupChips  = document.getElementById('followupChips');
-const followupMessages= document.getElementById('followupMessages');
-const followupInput  = document.getElementById('followupInput');
-const followupSend   = document.getElementById('followupSend');
-const resetBtn       = document.getElementById('resetBtn');
+// ── DOM ─────────────────────────────────────────────────────────────────────
+const preUpload    = document.getElementById('preUpload');
+const uploadZone   = document.getElementById('uploadZone');
+const fileInput    = document.getElementById('fileInput');
+const errorBar     = document.getElementById('errorBar');
+const chatPage     = document.getElementById('chatPage');
+const reportThumb  = document.getElementById('reportThumb');
+const reportName   = document.getElementById('reportName');
+const reuploadBtn  = document.getElementById('reuploadBtn');
+const chatMessages = document.getElementById('chatMessages');
+const chatInput    = document.getElementById('chatInput');
+const sendBtn      = document.getElementById('sendBtn');
 
-// ── 文件处理 ──────────────────────────────────────────────────────────────────
+// ── File Handling ────────────────────────────────────────────────────────────
+uploadZone.addEventListener('click', () => fileInput.click());
+
+uploadZone.addEventListener('dragover', e => {
+  e.preventDefault();
+  uploadZone.classList.add('drag-over');
+});
+uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('drag-over'));
+uploadZone.addEventListener('drop', e => {
+  e.preventDefault();
+  uploadZone.classList.remove('drag-over');
+  if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+});
+fileInput.addEventListener('change', () => {
+  if (fileInput.files[0]) handleFile(fileInput.files[0]);
+});
+reuploadBtn.addEventListener('click', resetToUpload);
+
 function handleFile(file) {
-  if (!file) return;
-
-  // 只处理图片（PDF暂不支持，提示用截图）
-  if (file.type === 'application/pdf') {
-    showError('PDF请先截图或拍照后上传，暂不支持直接上传PDF文件。');
-    return;
-  }
   if (!file.type.startsWith('image/')) {
-    showError('请上传图片文件（JPG、PNG、截图等）。');
+    showError('请上传图片文件（JPG、PNG、截图等）。PDF请先截图后上传。');
     return;
   }
   if (file.size > 10 * 1024 * 1024) {
-    showError('图片太大了（上限10MB），请压缩后再试。');
+    showError('图片太大（上限10MB），请压缩后再试。');
     return;
   }
-
   hideError();
-  uploadedFile  = file;
   imageMimeType = file.type || 'image/jpeg';
-  previewFilename.textContent = file.name;
 
   const reader = new FileReader();
-  reader.onload = (e) => {
+  reader.onload = e => {
     const dataUrl = e.target.result;
-    // 提取 base64 部分（去掉 data:image/xxx;base64, 前缀）
     imageBase64 = dataUrl.split(',')[1];
-    previewImg.src = dataUrl;
-    showPreview();
+
+    // Setup chat page header
+    reportThumb.src = dataUrl;
+    const n = file.name;
+    reportName.textContent = n.length > 24 ? n.slice(0, 22) + '…' : n;
+
+    // Switch to chat
+    preUpload.classList.add('hidden');
+    chatPage.classList.add('active');
+
+    // Show AI welcome
+    appendAI('您好！我已收到这份测评报告 📋\n\n请从下方选择解读方向——\n• 基础解读：读懂报告中的天赋数据\n• 定制版报告：针对具体人生场景生成专属内容\n\n也可以直接在对话框提问。');
+    sendBtn.disabled = false;
   };
   reader.readAsDataURL(file);
 }
 
-fileInput.addEventListener('change', () => {
-  if (fileInput.files[0]) handleFile(fileInput.files[0]);
-});
-
-// 拖拽支持
-uploadArea.addEventListener('dragover', (e) => {
-  e.preventDefault();
-  uploadArea.classList.add('drag-over');
-});
-uploadArea.addEventListener('dragleave', () => {
-  uploadArea.classList.remove('drag-over');
-});
-uploadArea.addEventListener('drop', (e) => {
-  e.preventDefault();
-  uploadArea.classList.remove('drag-over');
-  if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
-});
-
-changeFileBtn.addEventListener('click', () => {
+function resetToUpload() {
+  imageBase64 = null;
+  imageUsed = false;
+  history = [];
+  sessionId = 'report_' + Date.now();
   fileInput.value = '';
-  fileInput.click();
+  chatMessages.innerHTML = '';
+  chatInput.value = '';
+  chatInput.style.height = 'auto';
+  sendBtn.disabled = true;
+  chatPage.classList.remove('active');
+  preUpload.classList.remove('hidden');
+}
+
+// ── Report Type Chip Selection ───────────────────────────────────────────────
+function selectReport(type) {
+  if (!imageBase64) return;
+  // Display text shown in chat bubble
+  const display = '我想要：' + type;
+  // Actual content sent to API includes instruction
+  const content = `请根据上传的测评报告，为我生成【${type}】。请结合报告数据和知识库，输出完整、个性化的${type}内容。`;
+  sendMessage(content, display);
+}
+
+// ── Message Display ──────────────────────────────────────────────────────────
+function appendAI(text) {
+  // Remove any pending typing indicator
+  const t = document.getElementById('typingNow');
+  if (t) t.remove();
+
+  const div = document.createElement('div');
+  div.className = 'msg ai';
+  div.innerHTML = `
+    <div class="msg-avatar">✨</div>
+    <div class="msg-bubble">${esc(text)}</div>`;
+  chatMessages.appendChild(div);
+  scrollToBottom();
+}
+
+function appendUser(text) {
+  const div = document.createElement('div');
+  div.className = 'msg user';
+  div.innerHTML = `<div class="msg-bubble">${esc(text)}</div>`;
+  chatMessages.appendChild(div);
+  scrollToBottom();
+}
+
+function showTyping() {
+  const t = document.createElement('div');
+  t.id = 'typingNow';
+  t.className = 'typing show';
+  t.innerHTML = `
+    <div class="msg-avatar">✨</div>
+    <div class="typing-inner">
+      <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+    </div>`;
+  chatMessages.appendChild(t);
+  scrollToBottom();
+}
+
+function hideTyping() {
+  const t = document.getElementById('typingNow');
+  if (t) t.remove();
+}
+
+function scrollToBottom() {
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+function esc(s) {
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/\n/g, '<br>');
+}
+
+// ── Input ────────────────────────────────────────────────────────────────────
+chatInput.addEventListener('input', () => {
+  chatInput.style.height = 'auto';
+  chatInput.style.height = Math.min(chatInput.scrollHeight, 100) + 'px';
+  sendBtn.disabled = !chatInput.value.trim() || !imageBase64;
 });
 
-// ── 显示/隐藏控件 ──────────────────────────────────────────────────────────────
-function showPreview() {
-  previewSection.classList.add('visible');
-  questionSection.classList.add('visible');
-  interpretBtn.classList.add('visible');
-  uploadArea.style.display = 'none';
-}
+chatInput.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    if (chatInput.value.trim()) sendMessage(chatInput.value.trim());
+  }
+});
 
-function hideError() {
-  errorMsg.classList.remove('visible');
-}
-function showError(msg) {
-  errorMsg.textContent = msg;
-  errorMsg.classList.add('visible');
-}
+sendBtn.addEventListener('click', () => {
+  if (chatInput.value.trim()) sendMessage(chatInput.value.trim());
+});
 
-// ── 主解读 ────────────────────────────────────────────────────────────────────
-interpretBtn.addEventListener('click', async () => {
+// ── API Call ─────────────────────────────────────────────────────────────────
+async function sendMessage(content, displayText) {
   if (!imageBase64) return;
 
-  interpretBtn.disabled = true;
-  loadingSection.classList.add('visible');
-  hideError();
+  const display = displayText || content;
+  chatInput.value = '';
+  chatInput.style.height = 'auto';
+  sendBtn.disabled = true;
+
+  appendUser(display);
+  history.push({ role: 'user', content });
+  showTyping();
 
   try {
-    const question = questionInput.value.trim();
+    const body = {
+      context:  'report',
+      content,
+      sessionId,
+      history:  history.slice(-8),
+    };
+
+    // Send image only on the first API call
+    if (!imageUsed && imageBase64) {
+      body.imageBase64   = imageBase64;
+      body.imageMimeType = imageMimeType;
+      imageUsed = true;
+    }
+
     const res = await fetch('/api/guest-chat', {
-      method: 'POST',
+      method:  'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        context:      'report',
-        content:      question || '',
-        imageBase64,
-        imageMimeType,
-        sessionId:    'report_' + Date.now(),
-      }),
+      body:    JSON.stringify(body),
     });
 
     if (!res.ok) throw new Error('服务器错误 ' + res.status);
     const data = await res.json();
-
     if (data.error) throw new Error(data.error);
 
-    firstInterpretation = data.reply;
-    resultText.textContent = data.reply;
-
-    // 将首次解读加入追问历史
-    followupHistory = [
-      { role: 'ai', content: data.reply }
-    ];
-
-    // 显示结果
-    loadingSection.classList.remove('visible');
-    resultSection.classList.add('visible');
-    followupSection.classList.add('visible');
-    resetBtn.classList.add('visible');
-    interpretBtn.style.display = 'none';
-    questionSection.style.display = 'none';
-
-    // 滚动到结果
-    resultSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    const reply = data.reply || '请稍后再试。';
+    hideTyping();
+    appendAI(reply);
+    history.push({ role: 'assistant', content: reply });
 
   } catch (err) {
-    loadingSection.classList.remove('visible');
-    showError('解读失败：' + (err.message || '请稍后再试'));
-    interpretBtn.disabled = false;
-  }
-});
-
-// ── 追问预设 chip ─────────────────────────────────────────────────────────────
-followupChips.querySelectorAll('.chip').forEach(chip => {
-  chip.addEventListener('click', () => {
-    followupInput.value = chip.textContent;
-    sendFollowup();
-  });
-});
-
-// ── 追问发送 ──────────────────────────────────────────────────────────────────
-followupSend.addEventListener('click', sendFollowup);
-followupInput.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendFollowup(); }
-});
-
-async function sendFollowup() {
-  const q = followupInput.value.trim();
-  if (!q) return;
-
-  followupInput.value = '';
-  followupSend.disabled = true;
-
-  // 显示用户气泡
-  const userBubble = document.createElement('div');
-  userBubble.className = 'msg-bubble msg-user';
-  userBubble.textContent = q;
-  followupMessages.appendChild(userBubble);
-
-  // AI 加载中气泡
-  const aiBubble = document.createElement('div');
-  aiBubble.className = 'msg-bubble msg-ai';
-  aiBubble.textContent = '…';
-  followupMessages.appendChild(aiBubble);
-  aiBubble.scrollIntoView({ behavior: 'smooth' });
-
-  try {
-    followupHistory.push({ role: 'user', content: q });
-
-    const res = await fetch('/api/guest-chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        context: 'report',
-        content: q,
-        history: followupHistory.slice(-6),
-        // 追问时不再发图片，只发文字 + 历史
-      }),
-    });
-
-    const data = await res.json();
-    const reply = data.reply || '我需要更多信息才能回答这个问题。';
-    aiBubble.textContent = reply;
-    followupHistory.push({ role: 'ai', content: reply });
-    aiBubble.scrollIntoView({ behavior: 'smooth' });
-
-  } catch (err) {
-    aiBubble.textContent = '出了点问题，请稍后再试。';
+    hideTyping();
+    appendAI('出了点问题，请稍后再试。（' + (err.message || '网络错误') + '）');
   }
 
-  followupSend.disabled = false;
+  // Re-enable input
+  sendBtn.disabled = !chatInput.value.trim();
 }
 
-// ── 重置 ─────────────────────────────────────────────────────────────────────
-resetBtn.addEventListener('click', () => {
-  uploadedFile   = null;
-  imageBase64    = null;
-  firstInterpretation = '';
-  followupHistory    = [];
-
-  fileInput.value = '';
-  previewImg.src  = '';
-  questionInput.value = '';
-  resultText.textContent = '';
-  followupMessages.innerHTML = '';
-
-  previewSection.classList.remove('visible');
-  questionSection.classList.remove('visible');
-  interpretBtn.classList.remove('visible');
-  interpretBtn.style.display = '';
-  interpretBtn.disabled = false;
-  questionSection.style.display = '';
-  loadingSection.classList.remove('visible');
-  resultSection.classList.remove('visible');
-  followupSection.classList.remove('visible');
-  resetBtn.classList.remove('visible');
-  uploadArea.style.display = '';
-  hideError();
-
-  uploadArea.scrollIntoView({ behavior: 'smooth' });
-});
+// ── Errors ───────────────────────────────────────────────────────────────────
+function showError(msg) {
+  errorBar.textContent = msg;
+  errorBar.classList.add('visible');
+}
+function hideError() {
+  errorBar.classList.remove('visible');
+}
 </script>
 </body>
 </html>
