@@ -93,7 +93,25 @@ body {
   color:var(--ink); font-weight:normal; margin-bottom:18px;
 }
 .hero-title em { font-style:italic; color:var(--amber); }
-.hero-body { font-size:16px; line-height:1.8; color:var(--ink-70); max-width:380px; }
+.hero-body { font-size:16px; line-height:1.8; color:var(--ink-70); max-width:380px; margin-bottom:24px; }
+
+/* Hero 三大卖点 */
+.hero-features { display:flex; flex-direction:column; gap:14px; margin-bottom:28px; }
+.hero-feature  { display:flex; align-items:flex-start; gap:12px; }
+.hf-icon { font-size:18px; flex-shrink:0; margin-top:2px; }
+.hf-text strong { display:block; font-size:14px; font-weight:600; color:var(--ink); margin-bottom:2px; }
+.hf-text span { font-size:13px; color:var(--ink-40); line-height:1.5; }
+
+/* Hero 引导词（不是按钮） */
+.hero-guide {
+  display:inline-flex; align-items:center; gap:6px;
+  font-size:15px; font-weight:500;
+  color:var(--amber); text-decoration:none;
+  cursor:pointer; letter-spacing:.01em;
+}
+.hero-guide:hover { opacity:.75; }
+.guide-arrow { display:inline-block; animation:guide-bounce 2s ease-in-out infinite; }
+@keyframes guide-bounce { 0%,100%{transform:translateY(0)} 55%{transform:translateY(5px)} }
 
 /* ── DIVIDER ── */
 .section-divider {
@@ -351,8 +369,37 @@ body {
     <em>是他说不出口的话</em>
   </h1>
   <p class="hero-body">
-    孩子为什么又崩溃了？伴侣为什么沉默不说？自己为什么一直改不了？每一个让你困惑的行为背后，都有一个清晰的原因。AIPIWEN 帮你找到它。
+    那个反复让你困惑的行为，背后可能有你从未注意到的信号。描述它，AI 带你看见行为背后真正发生的事——以及你明天可以做的一件具体的事。
   </p>
+
+  <div class="hero-features">
+    <div class="hero-feature">
+      <span class="hf-icon">🔍</span>
+      <div class="hf-text">
+        <strong>听懂行为背后那句话</strong>
+        <span>每个行为都在传递一个你还没接收到的信号</span>
+      </div>
+    </div>
+    <div class="hero-feature">
+      <span class="hf-icon">💬</span>
+      <div class="hf-text">
+        <strong>越聊越懂你的情况</strong>
+        <span>AI 记住对话情境，持续追问越说越准</span>
+      </div>
+    </div>
+    <div class="hero-feature">
+      <span class="hf-icon">📋</span>
+      <div class="hf-text">
+        <strong>明天就能用的建议</strong>
+        <span>不是道理，是下一步具体怎么做</span>
+      </div>
+    </div>
+  </div>
+
+  <a class="hero-guide" href="#relation-section">
+    开始理解
+    <span class="guide-arrow">↓</span>
+  </a>
 </section>
 
 <!-- ── SOCIAL PROOF ── -->
@@ -394,7 +441,7 @@ body {
 <!-- ── RELATION GRID ── -->
 <div class="section-divider"><span class="section-divider-label">你想读懂谁</span></div>
 
-<div class="relation-section">
+<div class="relation-section" id="relation-section">
   <div class="relation-grid">
 
     <a class="rel-card active" href="child-chat.html?for=child">
