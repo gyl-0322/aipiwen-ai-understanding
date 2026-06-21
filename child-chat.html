@@ -297,10 +297,10 @@ body {
       <div id="age-row" style="margin-top:16px;border-top:1px solid var(--ink-10);padding-top:14px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
         <span style="font-size:12px;color:var(--amber);font-weight:600;white-space:nowrap;" id="age-label">TA 几岁？（必选）</span>
         <div style="display:flex;gap:6px;flex-wrap:wrap;" id="age-chips">
-          <button type="button" class="age-chip" onclick="setAge(this,4)">4-6岁</button>
-          <button type="button" class="age-chip" onclick="setAge(this,9)">7-12岁</button>
-          <button type="button" class="age-chip" onclick="setAge(this,15)">13-18岁</button>
-          <button type="button" class="age-chip" onclick="setAge(this,25)">19岁+</button>
+          <button type="button" class="age-chip" onclick="setAge(this,'4-6岁')">4-6岁</button>
+          <button type="button" class="age-chip" onclick="setAge(this,'7-12岁')">7-12岁</button>
+          <button type="button" class="age-chip" onclick="setAge(this,'13-18岁')">13-18岁</button>
+          <button type="button" class="age-chip" onclick="setAge(this,'19岁+')">19岁+</button>
         </div>
       </div>
     </div>
@@ -402,18 +402,44 @@ document.getElementById('form-eyebrow').textContent  = CTX.eyebrow;
 document.getElementById('form-title').innerHTML      = CTX.title;
 document.getElementById('form-sub').textContent      = CTX.sub;
 
-// 年龄选择：根据 context 调整标签文字和芯片内容
+// 年龄/阶段选择：根据 context 调整标签和芯片
 (function setupAgeRow() {
   const ageRow   = document.getElementById('age-row');
   const ageLabel = document.getElementById('age-label');
+  const ageChips = document.getElementById('age-chips');
+
+  function renderChips(items) {
+    ageChips.innerHTML = '';
+    items.forEach(([label, value]) => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'age-chip';
+      btn.textContent = label;
+      btn.onclick = () => setAge(btn, value);
+      ageChips.appendChild(btn);
+    });
+  }
+
   if (_for === 'child') {
     ageLabel.textContent = '孩子几岁？（必选）';
+    renderChips([['4-6岁','4-6岁'],['7-12岁','7-12岁'],['13-18岁','13-18岁'],['19岁+','19岁+']]);
   } else if (_for === 'self') {
-    ageLabel.textContent = '你的年龄段？（必选）';
+    ageLabel.textContent = '你现在处于？（必选）';
+    renderChips([
+      ['学生/刚毕业','学生或刚毕业阶段'],
+      ['职场打拼期','职场打拼阶段'],
+      ['成家育儿期','成家育儿阶段'],
+      ['人生中场期','人生中场阶段'],
+    ]);
   } else if (_for === 'partner') {
-    ageLabel.textContent = 'TA 的年龄段？（必选）';
+    ageLabel.textContent = '你们在一起多久了？（必选）';
+    renderChips([
+      ['恋爱中','恋爱阶段'],
+      ['新婚/3年内','新婚或结婚3年内'],
+      ['结婚3-10年','结婚3到10年'],
+      ['结婚10年以上','结婚10年以上'],
+    ]);
   } else {
-    // business 等场景隐藏年龄选择
     ageRow.style.display = 'none';
   }
 })();

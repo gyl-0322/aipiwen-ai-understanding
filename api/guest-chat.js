@@ -78,14 +78,23 @@ module.exports = async function handler(req, res) {
   const isVisionMode = !!imageBase64;
   if (!isVisionMode && !content?.trim()) return res.status(400).json({ error: '内容不能为空' });
 
-  // ── 年龄分层：根据 subjectAge 决定 AI 解读语气和场景聚焦 ────────────────────
+  // ── 年龄/阶段分层：根据 subjectAge / context 决定 AI 解读语气和场景聚焦 ──────
   function getAgeTier(age) {
+    if (!age) return null;
+    const s = String(age);
+    // 儿童年龄段（数字或中文描述）
+    if (s.includes('4-6') || s === '4') return 'preschool';
+    if (s.includes('7-12') || s === '9') return 'school';
+    if (s.includes('13-18') || s === '15') return 'teen';
+    if (s.includes('19') || s === '25') return 'adult';
     const n = Number(age);
-    if (!age || isNaN(n) || n < 0) return null;
-    if (n <= 6)  return 'preschool';
-    if (n <= 12) return 'school';
-    if (n <= 18) return 'teen';
-    return 'adult';
+    if (!isNaN(n)) {
+      if (n <= 6) return 'preschool';
+      if (n <= 12) return 'school';
+      if (n <= 18) return 'teen';
+      return 'adult';
+    }
+    return null;
   }
   const ageTier = getAgeTier(subjectAge);
 
@@ -109,6 +118,70 @@ module.exports = async function handler(req, res) {
 
   const ageContextNote = ageTier && AGE_CONTEXT[ageTier]
     ? `\n${AGE_CONTEXT[ageTier]}\n`
+    : '';
+
+  // ── 自我理解场景：人生阶段分层 ──────────────────────────────────────────────
+  function getSelfStage(age) {
+    if (!age) return null;
+    const s = String(age);
+    if (s.includes('学生') || s.includes('毕业')) return 'early';
+    if (s.includes('职场') || s.includes('打拼')) return 'career';
+    if (s.includes('成家') || s.includes('育儿')) return 'family';
+    if (s.includes('中场')) return 'midlife';
+    return null;
+  }
+  const SELF_STAGE_CONTEXT = {
+    early: `【用户人生阶段：学生/初入社会】
+聚焦：身份认同、方向迷茫、学习方式、第一份工作的摸索、和父母期待的拉锯。
+语气：陪伴式，承认"不知道想做什么"是这个阶段的正常感受，而非问题。`,
+
+    career: `【用户人生阶段：职场打拼期】
+聚焦：职场困境（与上司/同事冲突/升职卡壳）、工作与自我价值感的绑定与松绑、驱动力/耗竭感。
+语气：真实、精准，承认职场不讲情怀，但天赋特质在职场中是真实的竞争力。`,
+
+    family: `【用户人生阶段：成家育儿期】
+聚焦：在伴侣/孩子/工作的多重角色中迷失自我、身份感被稀释、育儿压力与自我成长的拉扯。
+语气：理解多角色的重量，帮用户重新找到"我是谁"的稳固感。`,
+
+    midlife: `【用户人生阶段：人生中场期】
+聚焦：意义感缺失（"我这辈子到底在做什么"）、关系模式固化、对已走的路的重新评估、第二人生的可能性。
+语气：沉稳而有力，看见走过的路的重量，也看见还有的可能。`,
+  };
+  const selfStage = context === 'self' ? getSelfStage(subjectAge) : null;
+  const selfStageNote = selfStage && SELF_STAGE_CONTEXT[selfStage]
+    ? `\n${SELF_STAGE_CONTEXT[selfStage]}\n`
+    : '';
+
+  // ── 伴侣理解场景：关系阶段分层 ──────────────────────────────────────────────
+  function getRelationStage(age) {
+    if (!age) return null;
+    const s = String(age);
+    if (s.includes('恋爱')) return 'dating';
+    if (s.includes('新婚') || s.includes('3年内')) return 'newlywed';
+    if (s.includes('3-10') || s.includes('3到10')) return 'stable';
+    if (s.includes('10年以上') || s.includes('10年')) return 'longterm';
+    return null;
+  }
+  const RELATION_STAGE_CONTEXT = {
+    dating: `【关系阶段：恋爱中】
+聚焦：这个人"是否适合我"、行为背后是否有深层不安全感、对方的行为模式是天赋差异还是价值观冲突、如何识别真实的TA vs 热恋期的TA。
+语气：清醒而温柔，帮用户既看见对方，也看见自己在关系中的期待模式。`,
+
+    newlywed: `【关系阶段：新婚/结婚3年内】
+聚焦：生活习惯碰撞、角色期待落差、原生家庭模式的浮现、第一次感到"原来你是这样的人"的震惊与失望。
+语气：正常化这些碰撞，帮用户理解这是天赋差异，而非错误选择。`,
+
+    stable: `【关系阶段：结婚3-10年】
+聚焦：激情退去后的疏离感、沟通变成事务性的、彼此都忙各自的、情绪积压变成偶尔爆发、"我们之间还剩什么"的困惑。
+语气：直面这种平淡，帮用户看见伴侣行为背后的疲惫和未被看见的需求。`,
+
+    longterm: `【关系阶段：结婚10年以上】
+聚焦：角色固化（他就是那样了）、互相视而不见、关系维持靠惯性、重新看见彼此的可能性、如何在长期关系中找回真实的连接。
+语气：深沉，看见"我们都走了这么远"，也看见"其实还有新的可能"。`,
+  };
+  const relationStage = context === 'partner' ? getRelationStage(subjectAge) : null;
+  const relationStageNote = relationStage && RELATION_STAGE_CONTEXT[relationStage]
+    ? `\n${RELATION_STAGE_CONTEXT[relationStage]}\n`
     : '';
 
   // 全局高频模式（仅亲子场景使用）
@@ -242,7 +315,7 @@ ${TRC_SECTION}
 ${NO_FILLER}`,
 
     self: `你是AIPIWEN的自我理解顾问。你的核心信念：一个人当下反复出现的行为模式，几乎都是过去某个艰难时期里最聪明的应对策略——它曾经保护过你，但现在可能在消耗你。你不需要被"修复"，你需要被理解。
-${memSection}
+${selfStageNote}${memSection}
 行为解读链路（内化于心，不要逐条列出）：
 行为表象 → 这个行为在调节什么情绪或回避什么感受 → 这个情绪/恐惧在什么样的成长或关系环境中形成 → 这个模式当时保护了什么、现在的代价是什么 → 如果这个模式"会说话"，它在问你：我还需要继续保护你吗？
 ${FIVE_STEPS}
@@ -252,7 +325,7 @@ ${TRC_SECTION}
 ${NO_FILLER}`,
 
     partner: `你是AIPIWEN的亲密关系理解顾问。你的核心信念：伴侣令人费解的行为，几乎从不是"针对你"的——它更多是伴侣在用他/她唯一学会的方式，表达一种深层的需求或恐惧。真正理解它，才能真正回应它。
-${memSection}
+${relationStageNote}${memSection}
 行为解读链路（内化于心，不要逐条列出）：
 行为表象 → 伴侣内心真实的情绪（不是表演出来的那个）→ 这个情绪指向什么深层需求（被看见？安全感？被尊重？不被抛弃？）→ 伴侣在原生家庭或过去的关系中，学到了什么"安全感获取方式"？这个行为是不是这种方式的呈现 → 这个行为其实在用什么方式呼唤什么
 ${FIVE_STEPS}
