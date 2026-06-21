@@ -505,7 +505,20 @@ ${WU_DA_GONG_NENG}
 ${NO_FILLER}`,
   };
 
-  const systemPrompt = SYSTEM[context] || SYSTEM.child;
+  // 视觉模式用精简提示词（避免大prompt+大图导致超时）
+  const VISION_SYSTEM = `你是AIPIWEN的TRC指纹天赋报告解读助手。用户上传了一张测评报告图片。
+
+第一步：仔细读取图片，提取以下数据：
+- 被测者姓名/年龄（如有）
+- TRC天赋认知类型名称
+- ATD角度数值
+- 五大功能区数值（沟通管理/空间心像/听觉辨识/监控管理/记忆能力，标注高/等/低/X）
+
+第二步：根据用户选择的解读方向，结合提取的数据给出针对性分析。
+
+X值=未激活潜力，不是缺陷。语气温暖专业，用【】标注段落，直接进入内容不用开场白。`;
+
+  const systemPrompt = isVisionMode ? VISION_SYSTEM : (SYSTEM[context] || SYSTEM.child);
 
   // ── 构建消息结构 ──────────────────────────────────────────────────────────────
   const messages = [{ role: 'system', content: systemPrompt }];
@@ -546,14 +559,18 @@ ${NO_FILLER}`,
   let reply = null;
 
   try {
+    const controller = new AbortController();
+    const fetchTimer = setTimeout(() => controller.abort(), 25000); // 25s 硬超时
     const aiRes = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
       method:  'POST',
       headers: {
         'Authorization': `Bearer ${process.env.DASHSCOPE_API_KEY || ''}`,
         'Content-Type':  'application/json',
       },
-      body: JSON.stringify({ model, max_tokens: maxTokens, messages }),
+      body:   JSON.stringify({ model, max_tokens: maxTokens, messages }),
+      signal: controller.signal,
     });
+    clearTimeout(fetchTimer);
 
     const rawText = await aiRes.text();
 
