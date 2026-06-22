@@ -80,10 +80,9 @@ body {
 
 .examples-label { font-size:12px; font-weight:600; letter-spacing:.06em; color:var(--ink-40); text-transform:uppercase; margin-bottom:10px; }
 .age-chip {
-  flex:1; min-width:0; text-align:center;
-  padding:5px 6px; background:rgba(194,105,42,.07); border:1px solid rgba(194,105,42,.38);
+  padding:6px 4px; background:rgba(194,105,42,.07); border:1px solid rgba(194,105,42,.38);
   border-radius:20px; font-size:11.5px; color:var(--amber-dark); cursor:pointer;
-  transition:background .15s, border-color .15s; white-space:nowrap;
+  transition:background .15s, border-color .15s; text-align:center; white-space:nowrap;
 }
 .age-chip.selected { background:var(--amber); border-color:var(--amber); color:white; font-weight:600; }
 
@@ -295,8 +294,8 @@ body {
 
       <!-- 年龄快选（必选） -->
       <div id="age-row" style="margin-top:16px;border-top:1px solid var(--ink-10);padding-top:12px;">
-        <div style="display:flex;align-items:center;gap:7px;" id="age-chips">
-          <span style="font-size:11px;color:var(--amber);font-weight:700;white-space:nowrap;">&#42;必选</span>
+        <div style="font-size:11px;color:var(--amber);font-weight:700;margin-bottom:7px;">&#42;必选</div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;" id="age-chips">
           <button type="button" class="age-chip" onclick="setAge(this,'幼儿3-6岁')">幼儿3-6岁</button>
           <button type="button" class="age-chip" onclick="setAge(this,'小学7-12岁')">小学7-12岁</button>
           <button type="button" class="age-chip" onclick="setAge(this,'初中13-15岁')">初中13-15岁</button>

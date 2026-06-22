@@ -845,9 +845,7 @@ body {
 
 /* Age chip — inline on step 1 */
 .age-chip-inline {
-  flex: 1;
-  min-width: 0;
-  padding: 5px 6px;
+  padding: 6px 4px;
   background: rgba(194,105,42,.07);
   border: 1px solid rgba(194,105,42,.38);
   border-radius: 20px;
@@ -893,8 +891,8 @@ body {
   <div class="step-screen active" id="screen-s1">
     <!-- 年龄必选（行内芯片） -->
     <div style="padding:0 0 14px;" id="s1AgeChips">
-      <div style="display:flex;align-items:center;flex-wrap:wrap;gap:7px;">
-        <span style="font-size:11px;font-weight:700;color:var(--amber);white-space:nowrap;">&#42;必选</span>
+      <div style="font-size:11px;font-weight:700;color:var(--amber);margin-bottom:7px;">&#42;必选</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;">
         <button class="age-chip-inline" onclick="setWizardAge(this,'幼儿 3-6岁')">幼儿 3-6岁</button>
         <button class="age-chip-inline" onclick="setWizardAge(this,'小学 7-12岁')">小学 7-12岁</button>
         <button class="age-chip-inline" onclick="setWizardAge(this,'初中 13-15岁')">初中 13-15岁</button>
