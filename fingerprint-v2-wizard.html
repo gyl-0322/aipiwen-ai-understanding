@@ -843,25 +843,20 @@ body {
   .s6-whorl-card img { width: 32px; height: 32px; }
 }
 
-/* Age chip — inline on step 1 */
+/* Age chip — inline on step 1（同 child-chat.html .age-chip） */
 .age-chip-inline {
   padding: 4px 10px;
-  background: rgba(194,105,42,.15);
-  border: 1.5px solid rgba(194,105,42,.45);
+  background: var(--cream-deep);
+  border: 1px solid var(--ink-10);
   border-radius: 20px;
-  color: rgba(194,105,42,.8);
   font-size: 11.5px;
+  color: var(--ink-70);
   cursor: pointer;
   transition: .15s;
   white-space: nowrap;
 }
-.age-chip-inline.selected {
-  background: rgba(194,105,42,.4);
-  border-color: #C2692A;
-  color: #C2692A;
-  font-weight: 700;
-}
-.age-chip-inline:active { opacity: .7; }
+.age-chip-inline:hover { background: var(--amber-soft); border-color: var(--amber); color: var(--amber); }
+.age-chip-inline.selected { background: var(--amber); border-color: var(--amber); color: white; font-weight: 600; }
 </style>
 </head>
 <body>
@@ -903,6 +898,7 @@ body {
         <button class="age-chip-inline" onclick="setWizardAge(this,'初中 13-15岁')">初中 13-15岁</button>
         <button class="age-chip-inline" onclick="setWizardAge(this,'高中 16-18岁')">高中 16-18岁</button>
         <button class="age-chip-inline" onclick="setWizardAge(this,'大学+ 18岁以上')">大学+</button>
+        <button class="age-chip-inline" onclick="setWizardAge(this,'职场成人')">职场</button>
       </div>
     </div>
 
@@ -2200,6 +2196,7 @@ async function generatePoster() {
     '初中 13-15岁':   c => `进了初中就变了个人？\n先测清楚孩子是${c.humanName}`,
     '高中 16-18岁':   c => `高考志愿怎么填？\n先确认孩子是${c.humanName}`,
     '大学+ 18岁以上': c => `毕业迷茫不知做什么？\n先测你的${c.humanName.replace('孩子','').replace('型','')}思维方向`,
+    '职场成人':       c => `一直在努力，却感觉在错的地方使劲？\n先测你的${c.humanName.replace('孩子','').replace('型','')}天赋方向`,
   };
   const _ageHookFn = _wizardAge && _AGE_HOOK_FNS[_wizardAge] ? _AGE_HOOK_FNS[_wizardAge] : (c => c.hook);
   document.getElementById('pHook').innerHTML = _ageHookFn(cfg).replace(/\n/g,'<br>');

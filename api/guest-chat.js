@@ -108,6 +108,7 @@ module.exports = async function handler(req, res) {
     if (s.includes('初中') || s.includes('13-15')) return 'junior_teen';
     if (s.includes('高中') || s.includes('16-18')) return 'senior_teen';
     if (s.includes('13-18') || s === '15') return 'junior_teen'; // 旧格式兼容
+    if (s.includes('职场')) return 'adult';
     if (s.includes('19') || s === '25') return 'adult';
     const n = Number(age);
     if (!isNaN(n)) {
