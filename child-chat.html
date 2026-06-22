@@ -88,13 +88,13 @@ body {
 
 .example-chips { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:32px; }
 .example-chip {
-  padding:7px 14px; background:var(--cream-deep); border:1px solid var(--ink-10);
-  border-radius:20px; font-size:13px; color:var(--ink-70); cursor:pointer;
+  padding:7px 14px; background:rgba(194,105,42,.07); border:1px solid rgba(194,105,42,.38);
+  border-radius:20px; font-size:13px; color:var(--amber-dark); cursor:pointer;
   transition:background .15s, border-color .15s;
 }
 .example-chip:active,
-.example-chip:hover   { background:var(--amber-soft); border-color:var(--amber); color:var(--amber); }
-.example-chip.selected { background:var(--amber); border-color:var(--amber); color:white; }
+.example-chip:hover   { background:rgba(194,105,42,.14); border-color:var(--amber); }
+.example-chip.selected { background:var(--amber); border-color:var(--amber); color:white; font-weight:600; }
 
 .cta-btn {
   display:block; width:100%; padding:18px 24px;
@@ -294,7 +294,7 @@ body {
 
       <!-- 年龄快选（必选） -->
       <div id="age-row" style="margin-top:16px;border-top:1px solid var(--ink-10);padding-top:12px;">
-        <div style="font-size:11px;color:var(--amber);font-weight:700;margin-bottom:7px;">&#42;必选</div>
+        <div id="age-label" style="font-size:11px;color:var(--amber);font-weight:700;margin-bottom:7px;">&#42;必选</div>
         <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:5px;" id="age-chips">
           <button type="button" class="age-chip" onclick="setAge(this,'幼儿3-6岁')">幼儿3-6岁</button>
           <button type="button" class="age-chip" onclick="setAge(this,'小学7-12岁')">小学7-12岁</button>
@@ -410,6 +410,7 @@ document.getElementById('form-sub').textContent      = CTX.sub;
   const ageChips = document.getElementById('age-chips');
 
   function renderChips(items) {
+    ageChips.style.gridTemplateColumns = 'repeat(' + items.length + ',1fr)';
     ageChips.innerHTML = '';
     items.forEach(([label, value]) => {
       const btn = document.createElement('button');
@@ -423,7 +424,7 @@ document.getElementById('form-sub').textContent      = CTX.sub;
 
   if (_for === 'child') {
     ageLabel.textContent = '孩子几岁？（必选）';
-    renderChips([['4-6岁','4-6岁'],['7-12岁','7-12岁'],['初中13-15岁','初中13-15岁'],['高中16-18岁','高中16-18岁'],['19岁+','19岁+']]);
+    renderChips([['幼儿3-6岁','幼儿3-6岁'],['小学7-12岁','小学7-12岁'],['初中13-15岁','初中13-15岁'],['高中16-18岁','高中16-18岁'],['大学+','大学+'],['职场成人','职场成人']]);
   } else if (_for === 'self') {
     ageLabel.textContent = '你现在处于？（必选）';
     renderChips([
