@@ -102,8 +102,9 @@ module.exports = async function handler(req, res) {
     if (!age) return null;
     const s = String(age);
     // 儿童年龄段（数字或中文描述）
-    if (s.includes('4-6') || s === '4') return 'preschool';
-    if (s.includes('7-12') || s === '9') return 'school';
+    if (s.includes('幼儿') || s.includes('4-6') || s.includes('3-6') || s === '4') return 'preschool';
+    if (s.includes('小学') || s.includes('7-12') || s === '9') return 'school';
+    if (s.includes('大学') || s.includes('18岁以上') || s.includes('大学+')) return 'adult';
     // 初中/高中分开
     if (s.includes('初中') || s.includes('13-15')) return 'junior_teen';
     if (s.includes('高中') || s.includes('16-18')) return 'senior_teen';
