@@ -35,13 +35,15 @@
     "api/digest.js":      { "maxDuration": 60 },
     "api/stats.js":       { "maxDuration": 10 },
     "api/knowledge.js":   { "maxDuration": 15 },
-    "api/admin-convs.js": { "maxDuration": 10 },
+    "api/admin-convs.js": { "maxDuration": 30 },
+    "api/log-session.js": { "maxDuration": 10 },
     "api/growth.js":      { "maxDuration": 15 },
     "api/track.js":       { "maxDuration": 10 }
   },
   "crons": [
-    { "path": "/api/digest?action=portrait_all", "schedule": "0 2 * * *"   },
-    { "path": "/api/digest?action=patterns",     "schedule": "0 3 * * 0"   },
-    { "path": "/api/digest?action=weekly",       "schedule": "0 4 * * 0"   }
+    { "path": "/api/digest?action=portrait_all",   "schedule": "0 2 * * *" },
+    { "path": "/api/digest?action=patterns",       "schedule": "0 3 * * 0" },
+    { "path": "/api/digest?action=weekly",         "schedule": "0 4 * * 0" },
+    { "path": "/api/digest?action=analyze_convs",  "schedule": "0 3 * * 1" }
   ]
 }

@@ -228,5 +228,86 @@ ${samplesText}
     return res.status(200).json({ ok: true, action: 'weekly', sent, skipped, total: openids.length });
   }
 
-  return res.status(400).json({ error: '无效的 action，支持：portrait_all / patterns / weekly' });
+  // ── Action 4: 全域会话分析 → 更新 global:patterns ────────────────────────
+  // 读取近7天所有 convlog 会话（含皮纹速测、报告解读、行为分析）
+  // AI 提炼跨页面高频模式，写入 global:patterns，自动注入全域对话
+  if (action === 'analyze_convs') {
+    const index = await redisGet('convlog:index') || [];
+    if (index.length === 0) {
+      return res.status(200).json({ ok: true, action: 'analyze_convs', message: '暂无会话数据' });
+    }
+
+    const cutoff = Date.now() - 7 * 24 * 3600 * 1000;
+    const recent = index.filter(s => s.ts && s.ts > cutoff).slice(0, 200);
+
+    if (recent.length < 3) {
+      return res.status(200).json({ ok: true, action: 'analyze_convs', message: '近7天样本不足' });
+    }
+
+    // 按 context 分组，收集用户消息
+    const grouped = {};
+    for (const s of recent) {
+      const ctx = s.context || 'unknown';
+      if (!grouped[ctx]) grouped[ctx] = [];
+      const msgs = await redisGet(`convlog:msgs:${s.sessionId}`) || [];
+      const userMsgs = msgs.filter(m => m.role === 'user').map(m => m.content);
+      if (userMsgs.length > 0) grouped[ctx].push(...userMsgs.slice(0, 2));
+    }
+
+    const CTX_NAMES = {
+      child: '亲子行为', self: '自我解读', partner: '伴侣解读',
+      business: '合伙解读', fingerprint: '皮纹速测', report: '报告解读',
+    };
+
+    // 组装分析文本
+    const sections = Object.entries(grouped).map(([ctx, msgs]) => {
+      const name = CTX_NAMES[ctx] || ctx;
+      const sample = msgs.slice(0, 40).map((m, i) => `${i + 1}. ${m.slice(0, 80)}`).join('\n');
+      return `【${name}】共${msgs.length}条\n${sample}`;
+    }).join('\n\n');
+
+    const prompt = `以下是AIPIWEN平台近7天来自各功能模块的用户行为样本（匿名）：
+
+${sections}
+
+请完成以下分析，输出格式严格遵循：
+
+# 高频需求TOP5
+1. [需求]：[15字内描述]
+2. ...
+
+# 各模块用户特征
+- 皮纹速测：[1句话]
+- 行为分析：[1句话]
+- 报告解读：[1句话]
+
+# AI回复建议
+针对本周高频需求，AI应重点强调的1-2个回答方向（各20字内）：
+1. [方向]
+2. [方向]
+
+只输出以上内容，不要额外说明。`;
+
+    const aiRes = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
+      method:  'POST',
+      headers: { Authorization: `Bearer ${process.env.DASHSCOPE_API_KEY || ''}`, 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ model: 'qwen-plus', max_tokens: 600, messages: [{ role: 'user', content: prompt }] }),
+    });
+
+    const aiData   = await aiRes.json();
+    const analysis = aiData.choices?.[0]?.message?.content || '';
+    if (!analysis) return res.status(500).json({ error: 'AI 返回为空' });
+
+    // 写入 global:patterns（已被 guest-chat.js 注入全域对话）
+    await redisSet('global:patterns', {
+      patterns:    analysis,
+      generatedAt: new Date().toISOString(),
+      sampleCount: recent.length,
+      source:      'analyze_convs',
+    });
+
+    return res.status(200).json({ ok: true, action: 'analyze_convs', analysis, sampleCount: recent.length });
+  }
+
+  return res.status(400).json({ error: '无效的 action，支持：portrait_all / patterns / weekly / analyze_convs' });
 };

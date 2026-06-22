@@ -2091,6 +2091,28 @@ function showResult() {
     if (dot) dot.className = 'progress-dot done';
   }
   if (window.GT) GT.track('result_view', { type: result.key });
+  _logFingerprintSession(result);
+}
+
+// ── 皮纹速测会话日志 ─────────────────────────────────────────────────────────
+function _logFingerprintSession(result) {
+  try {
+    const sessionId = 'fp_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
+    const age = _wizardAge || '未选择';
+    const d   = state.data;
+    const IS_W_fn = t => t && t.startsWith('W');
+    const wCount  = (IS_W_fn(d.rtThumb) ? 1 : 0) + (IS_W_fn(d.ltThumb) ? 1 : 0) + (d.wOtherFingers?.size || 0);
+    const lCount  = d.luFingers?.size  || 0;
+    const rlCount = d.rlFingers?.size  || 0;
+    const xCount  = (d.xFingers?.size  || 0) + (d.xnFingers?.size || 0);
+    const summary = `皮纹速测 | 年龄:${age} | 斗:${wCount} 箕:${lCount} 反箕:${rlCount} 弧:${xCount} | 结果:${result.mainType}`;
+    const detail  = `类型:${result.mainType} | 标签:${result.tagline} | key:${result.key}`;
+    fetch('/api/log-session', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sessionId, context: 'fingerprint', summary, detail }),
+    }).catch(() => {});
+  } catch (e) { /* 日志失败不影响主流程 */ }
 }
 
 /* ═══════════════════════════════════════════════
