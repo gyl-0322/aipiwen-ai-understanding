@@ -578,8 +578,8 @@ body {
   pointer-events: none; z-index: 0;
 }
 .poster-accent-bar {
-  height: 2px;
-  background: linear-gradient(90deg, var(--pc) 0%, rgba(194,105,42,.18) 70%, transparent 100%);
+  height: 3px;
+  background: linear-gradient(90deg, var(--pc) 0%, rgba(194,105,42,.22) 75%, transparent 100%);
   flex-shrink: 0; position: relative; z-index: 1;
 }
 .poster-header {
@@ -594,9 +594,10 @@ body {
 }
 .poster-mini-tag { display: none; }
 .poster-hook {
-  font-size: 28px; font-weight: 700; color: #FDFCF8;
-  text-align: center; line-height: 1.5; padding: 22px 36px 0;
-  position: relative; z-index: 1; letter-spacing: .025em;
+  font-size: 30px; font-weight: 700; color: #FDFCF8;
+  text-align: center; line-height: 1.45; padding: 22px 36px 0;
+  position: relative; z-index: 1; letter-spacing: .02em;
+  text-shadow: 0 2px 28px rgba(0,0,0,.55);
 }
 .poster-fp-wrap {
   display: flex; justify-content: center; align-items: center;
@@ -608,8 +609,9 @@ body {
 }
 .poster-type-pill {
   display: inline-flex; align-items: center;
-  border: 1px solid rgba(194,105,42,.55); border-radius: 28px;
-  padding: 9px 30px; background: rgba(194,105,42,.07);
+  border: 1px solid rgba(194,105,42,.7); border-radius: 28px;
+  padding: 9px 30px; background: rgba(194,105,42,.1);
+  box-shadow: 0 0 20px rgba(194,105,42,.14);
 }
 .poster-type-name {
   font-size: 19px; font-weight: 600; color: #FDFCF8; letter-spacing: .09em;
@@ -649,9 +651,9 @@ body {
   font-size: 9px; color: rgba(253,252,248,.2); letter-spacing: .16em; line-height: 2;
 }
 .poster-footer {
-  margin: 0 22px 24px; border: 1px solid rgba(194,105,42,.14); border-radius: 12px;
+  margin: 0 22px 24px; border: 1px solid rgba(194,105,42,.22); border-radius: 12px;
   padding: 14px 18px; display: flex; align-items: center; gap: 16px;
-  background: rgba(255,255,255,.02); flex-shrink: 0; position: relative; z-index: 1;
+  background: rgba(194,105,42,.04); flex-shrink: 0; position: relative; z-index: 1;
 }
 .poster-qr-wrap { flex-shrink: 0; background: #FDFCF8; border-radius: 7px; padding: 5px; }
 .poster-qr-wrap img { width: 58px; height: 58px; display: block; }
@@ -1386,8 +1388,9 @@ body {
 <div class="modal" id="posterModal">
   <div class="modal-card">
     <div class="modal-title">分享海报 <button class="modal-close" onclick="closePoster()">×</button></div>
-    <p class="poster-hint" style="font-size:12px;text-align:center;margin-bottom:14px;">📸 截图保存整个页面，分享给朋友</p>
+    <p class="poster-hint" style="font-size:12px;text-align:center;margin-bottom:14px;">生成中…</p>
     <div id="posterPreview"></div>
+    <button onclick="downloadPoster()" style="display:block;width:100%;margin-top:12px;padding:10px;background:rgba(194,105,42,.12);border:1px solid rgba(194,105,42,.35);border-radius:10px;color:rgba(253,252,248,.65);font-size:13px;cursor:pointer;transition:.2s;" onmouseover="this.style.background='rgba(194,105,42,.22)'" onmouseout="this.style.background='rgba(194,105,42,.12)'">⬇ 保存图片到设备</button>
   </div>
 </div>
 
@@ -2185,14 +2188,108 @@ async function generatePoster() {
   document.getElementById('posterModal').classList.add('show');
   if (window.GT) GT.track('poster_open', { type: result.key });
 
-  // 直接把海报模板克隆到预览区，不依赖 html2canvas（微信浏览器不稳定）
+  // 生成图片（html2canvas → <img>，支持手机长按保存）
   const preview = document.getElementById('posterPreview');
-  const cloned  = posterBg.cloneNode(true);
-  cloned.style.cssText = 'position:relative;left:auto;top:auto;width:100%;max-width:340px;margin:0 auto;display:block;border-radius:16px;overflow:hidden;';
-  preview.innerHTML = '';
-  preview.appendChild(cloned);
+  const hintEl  = document.querySelector('#posterModal .poster-hint');
+  preview.innerHTML = '<div style="text-align:center;color:rgba(253,252,248,.32);padding:24px;font-size:13px;">生成中…</div>';
+
+  try {
+    const canvas = await html2canvas(posterBg, {
+      scale: 2, useCORS: true, backgroundColor: null,
+      logging: false, allowTaint: false,
+    });
+    const dataUrl = canvas.toDataURL('image/png');
+    window._posterDataUrl = dataUrl;
+
+    const img = document.createElement('img');
+    img.src = dataUrl;
+    img.style.cssText = 'width:100%;max-width:340px;display:block;margin:0 auto;border-radius:12px;';
+    img.alt = '分享海报';
+    preview.innerHTML = '';
+    preview.appendChild(img);
+    if (hintEl) hintEl.textContent = '📲 长按图片保存到相册';
+
+    // 年龄场景切换芯片
+    _renderAgeChips(result, cfg, posterBg, preview, hintEl);
+
+  } catch(e) {
+    // 降级：DOM clone（微信/部分 WebView 兼容）
+    const cloned = posterBg.cloneNode(true);
+    cloned.style.cssText = 'position:relative;left:auto;top:auto;width:100%;max-width:340px;margin:0 auto;display:block;border-radius:16px;overflow:hidden;';
+    preview.innerHTML = '';
+    preview.appendChild(cloned);
+    if (hintEl) hintEl.textContent = '📸 截图整个页面保存海报';
+  }
 
   _restoreBtn();
+}
+
+// ── 年龄芯片：点击切换钩子文案后重新生成图片 ────────────────────────
+async function _renderAgeChips(result, cfg, posterBg, preview, hintEl) {
+  const AGE_CHIPS = [
+    { label:'幼儿 3-6岁',     hookFn: c => c.hook },
+    { label:'小学 7-12岁',    hookFn: c => `孩子怎么学最有效？\n先看清${c.humanName.replace('孩子','').replace('型','')}天赋` },
+    { label:'初中 13-15岁',   hookFn: c => `进了初中就变了个人？\n先测清楚孩子是${c.humanName}` },
+    { label:'高中 16-18岁',   hookFn: c => `高考志愿怎么填？\n先确认孩子是${c.humanName}` },
+    { label:'大学+ 18岁以上', hookFn: c => `毕业迷茫不知做什么？\n先测你的${c.humanName.replace('孩子','').replace('型','')}思维方向` },
+  ];
+
+  const old = document.getElementById('posterAgeChips');
+  if (old) old.remove();
+
+  const chipRow = document.createElement('div');
+  chipRow.id = 'posterAgeChips';
+  chipRow.style.cssText = 'display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;justify-content:center;';
+
+  const BASE   = 'border:1px solid rgba(194,105,42,.3);background:transparent;color:rgba(253,252,248,.45);border-radius:20px;padding:4px 10px;font-size:10.5px;cursor:pointer;transition:.18s;';
+  const ACTIVE = 'border:1px solid #C2692A;background:rgba(194,105,42,.1);color:#C2692A;border-radius:20px;padding:4px 10px;font-size:10.5px;cursor:pointer;transition:.18s;';
+
+  AGE_CHIPS.forEach(ac => {
+    const btn = document.createElement('button');
+    btn.textContent = ac.label;
+    btn.style.cssText = BASE;
+
+    btn.onclick = async () => {
+      chipRow.querySelectorAll('button').forEach(b => { b.style.cssText = BASE; });
+      btn.style.cssText = ACTIVE;
+
+      // 更新海报 hook 文案
+      document.getElementById('pHook').innerHTML = ac.hookFn(cfg).replace(/\n/g,'<br>');
+
+      preview.innerHTML = '<div style="text-align:center;color:rgba(253,252,248,.32);padding:24px;font-size:13px;">生成中…</div>';
+      if (hintEl) hintEl.textContent = '生成中…';
+
+      try {
+        const c2 = await html2canvas(posterBg, { scale:2, useCORS:true, backgroundColor:null, logging:false });
+        const du = c2.toDataURL('image/png');
+        window._posterDataUrl = du;
+        const img2 = document.createElement('img');
+        img2.src = du;
+        img2.style.cssText = 'width:100%;max-width:340px;display:block;margin:0 auto;border-radius:12px;';
+        preview.innerHTML = '';
+        preview.appendChild(img2);
+        if (hintEl) hintEl.textContent = '📲 长按图片保存到相册';
+      } catch(e) {
+        if (hintEl) hintEl.textContent = '📸 截图整个页面保存海报';
+      }
+
+      // 保持芯片行在预览后
+      const mc = document.querySelector('#posterModal .modal-card');
+      if (mc && !mc.contains(chipRow)) {
+        const dlBtn = mc.querySelector('button[onclick="downloadPoster()"]');
+        if (dlBtn) mc.insertBefore(chipRow, dlBtn);
+        else mc.appendChild(chipRow);
+      }
+    };
+
+    chipRow.appendChild(btn);
+  });
+
+  // 插入到 posterPreview 后、下载按钮前
+  const mc = document.querySelector('#posterModal .modal-card');
+  const dlBtn = mc ? mc.querySelector('button[onclick="downloadPoster()"]') : null;
+  if (dlBtn) dlBtn.parentNode.insertBefore(chipRow, dlBtn);
+  else if (preview.parentNode) preview.parentNode.insertBefore(chipRow, preview.nextSibling);
 }
 
 function downloadPoster() {

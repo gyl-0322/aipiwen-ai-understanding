@@ -1187,6 +1187,29 @@ window.addEventListener('DOMContentLoaded', function() {
   if (qrHintEl) qrHintEl.textContent = sc.qrHint;
   if (copyEl) copyEl.textContent = sc.copy;
 
+  // ── 年龄分层钩子覆盖（传入 age= 参数时生效）────────────────────
+  const _age = params.get('age') || '';
+  const AGE_HOOKS = {
+    child: {
+      '4-6岁':   { insight: '3-6岁是天赋发现的黄金窗口\n你真的读懂他的行为密码了吗？',           copy: '我用AI读懂了孩子的行为，发现3-6岁就已经藏着天赋方向。推荐你也试试：aipiwen.cn' },
+      '7-12岁':  { insight: '为什么有的孩子越学越开窍？\n差距不在努力，在行为背后的学习密码',   copy: '我用AI读懂了孩子行为背后的信号，帮他找到最适合的学习方式。推荐你也试试：aipiwen.cn' },
+      '初中13-15岁': { insight: '孩子进了初中就变了个人？\n叛逆、沉迷手机、不想学——行为背后是你没看懂的信号', copy: '初中孩子最难带，我用AI读懂了孩子行为背后的真实原因，不是骂他，是看懂他。推荐你也试试：aipiwen.cn' },
+      '高中16-18岁': { insight: '高考志愿怎么填？\n先读懂孩子的行为密码，方向才不会跑偏',           copy: '高考填志愿前，我用AI读懂了孩子的行为模式，帮他找清楚了方向。推荐你也试试：aipiwen.cn' },
+      '19岁+':   { insight: '毕业了不知道做什么方向？\n行为背后藏着你最真实的天赋信号',         copy: '我用AI读懂了孩子行为背后的模式，帮他找到了真正适合的方向。推荐你也试试：aipiwen.cn' },
+    },
+    self: {
+      '学生/刚毕业': { insight: '不知道毕业后做什么？\n你的行为模式已经给出了答案',               copy: '我用AI读懂了自己的行为模式，终于搞清楚了方向。推荐你也试试：aipiwen.cn' },
+      '职场打拼期':  { insight: '一直在努力，却感觉在错的地方用力\n先读懂自己的行为密码',         copy: '我用AI看清了自己行为背后的真实需求，终于知道该把力气用在哪里了。推荐你也试试：aipiwen.cn' },
+      '成家育儿期':  { insight: '读懂孩子之前\n先读懂自己的行为密码',                             copy: '我用AI理解了自己的行为模式，很多亲子关系里的困惑瞬间清晰了。推荐你也试试：aipiwen.cn' },
+      '人生中场期':  { insight: '人到中场，终于该读懂自己了\n别再用别人的标准衡量你的选择',       copy: '我用AI读懂了困扰我多年的自己的行为模式，终于看清了方向。推荐你也试试：aipiwen.cn' },
+    },
+  };
+  if (_age && AGE_HOOKS[_for] && AGE_HOOKS[_for][_age]) {
+    const h = AGE_HOOKS[_for][_age];
+    if (h.insight && insightEl) insightEl.textContent = h.insight;
+    if (h.copy    && copyEl)    copyEl.textContent    = h.copy;
+  }
+
   // ── Build retention module after report is built ──
   buildRetentionModule();
 });

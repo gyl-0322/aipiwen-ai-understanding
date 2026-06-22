@@ -299,7 +299,8 @@ body {
         <div style="display:flex;gap:6px;flex-wrap:wrap;" id="age-chips">
           <button type="button" class="age-chip" onclick="setAge(this,'4-6岁')">4-6岁</button>
           <button type="button" class="age-chip" onclick="setAge(this,'7-12岁')">7-12岁</button>
-          <button type="button" class="age-chip" onclick="setAge(this,'13-18岁')">13-18岁</button>
+          <button type="button" class="age-chip" onclick="setAge(this,'初中13-15岁')">初中13-15岁</button>
+          <button type="button" class="age-chip" onclick="setAge(this,'高中16-18岁')">高中16-18岁</button>
           <button type="button" class="age-chip" onclick="setAge(this,'19岁+')">19岁+</button>
         </div>
       </div>
@@ -422,7 +423,7 @@ document.getElementById('form-sub').textContent      = CTX.sub;
 
   if (_for === 'child') {
     ageLabel.textContent = '孩子几岁？（必选）';
-    renderChips([['4-6岁','4-6岁'],['7-12岁','7-12岁'],['13-18岁','13-18岁'],['19岁+','19岁+']]);
+    renderChips([['4-6岁','4-6岁'],['7-12岁','7-12岁'],['初中13-15岁','初中13-15岁'],['高中16-18岁','高中16-18岁'],['19岁+','19岁+']]);
   } else if (_for === 'self') {
     ageLabel.textContent = '你现在处于？（必选）';
     renderChips([
@@ -725,7 +726,10 @@ function appendThinking() {
 }
 
 function openReport() { window.location.href = `full-report.html?id=${encodeURIComponent(currentReportId)}&for=${_for}`; }
-function openShare()  { window.location.href = `full-report.html?id=${encodeURIComponent(currentReportId)}&for=${_for}&screen=share`; }
+function openShare()  {
+  const ageParam = _subjectAge ? `&age=${encodeURIComponent(_subjectAge)}` : '';
+  window.location.href = `full-report.html?id=${encodeURIComponent(currentReportId)}&for=${_for}${ageParam}&screen=share`;
+}
 
 // ── 跨场景综合分析引导 ─────────────────────────────────────────
 function checkAndShowSynthesisNudge() {
