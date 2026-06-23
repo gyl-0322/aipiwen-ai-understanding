@@ -626,6 +626,27 @@ body {
 <script>
 if (window.GT) GT.captureInboundUTM();
 
+// ── VIP 激活：?vip=TOKEN → localStorage，自动弹提示 ──
+(function() {
+  try {
+    const vip = new URLSearchParams(location.search).get('vip');
+    if (vip && vip.length >= 8) {
+      localStorage.setItem('aipiwen_vip', vip);
+      setTimeout(function() {
+        const tip = document.createElement('div');
+        tip.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#1A1714;color:#C2692A;font-size:13px;font-weight:600;padding:10px 20px;border-radius:20px;border:1px solid rgba(194,105,42,.4);z-index:9999;letter-spacing:.04em;';
+        tip.textContent = '✓ 内部体验权限已激活';
+        document.body.appendChild(tip);
+        setTimeout(function() { tip.remove(); }, 3000);
+        // 清除URL中的vip参数，避免被分享出去
+        const url = new URL(location.href);
+        url.searchParams.delete('vip');
+        history.replaceState(null, '', url.toString());
+      }, 500);
+    }
+  } catch(e) {}
+})();
+
 // ── 邀请来源捕获：?ref=TOKEN → localStorage（供后续页面传给 API 积分） ──
 (function() {
   try {
