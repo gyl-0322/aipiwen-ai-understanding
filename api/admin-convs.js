@@ -93,7 +93,45 @@ module.exports = async function handler(req, res) {
     return res.status(401).json({ error: '未授权' });
   }
 
-  const { sid, action } = req.query;
+  const { sid, action, ip: targetIp, bonus, token: vipToken, label: vipLabel } = req.query;
+
+  // ── VIP token 管理 ──────────────────────────────────────────────────────────
+  // GET /api/admin-convs?secret=xxx&action=vip_list         → 列出所有VIP token
+  // GET /api/admin-convs?secret=xxx&action=vip_create&label=姓名 → 创建新VIP token
+  // GET /api/admin-convs?secret=xxx&action=vip_delete&token=xxx → 删除VIP token
+  if (action === 'vip_list') {
+    const list = await redisGet('vip:token:index').catch(() => []) || [];
+    return res.status(200).json({ ok: true, vips: list });
+  }
+  if (action === 'vip_create') {
+    const newToken = Math.random().toString(36).slice(2, 10) + Math.random().toString(36).slice(2, 10);
+    const entry = { token: newToken, label: vipLabel || '内部用户', createdAt: new Date().toISOString() };
+    await redisSet(`vip:token:${newToken}`, entry, 0); // 永不过期（TTL=0不支持，用很大值）
+    await redisSet(`vip:token:${newToken}`, entry, 365 * 24 * 3600 * 10); // 10年
+    const list = await redisGet('vip:token:index').catch(() => []) || [];
+    list.push(entry);
+    await redisSet('vip:token:index', list, 365 * 24 * 3600 * 10);
+    return res.status(200).json({ ok: true, token: newToken, label: entry.label });
+  }
+  if (action === 'vip_delete') {
+    if (!vipToken) return res.status(400).json({ error: '缺少token参数' });
+    await redisSet(`vip:token:${vipToken}`, null, 1).catch(() => {}); // 1秒后过期=删除
+    const list = await redisGet('vip:token:index').catch(() => []) || [];
+    const newList = list.filter(e => e.token !== vipToken);
+    await redisSet('vip:token:index', newList, 365 * 24 * 3600 * 10);
+    return res.status(200).json({ ok: true, deleted: vipToken });
+  }
+
+  // ── 手动加次数（给指定 IP 增加 bonus 配额）──────────────────────────────────
+  // GET /api/admin-convs?secret=xxx&action=add_quota&ip=1.2.3.4&bonus=20
+  if (action === 'add_quota') {
+    if (!targetIp) return res.status(400).json({ error: '缺少ip参数' });
+    const addCount = parseInt(bonus || '10', 10);
+    const bonusKey = `quota:bonus:chat:${targetIp}`;
+    const existing = await redisGet(bonusKey).catch(() => 0) || 0;
+    await redisSet(bonusKey, existing + addCount, 365 * 24 * 3600);
+    return res.status(200).json({ ok: true, ip: targetIp, totalBonus: existing + addCount });
+  }
 
   // ── 单次会话完整对话 ────────────────────────────────────────────────────────
   if (sid) {

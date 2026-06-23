@@ -927,7 +927,11 @@ body {
 <div class="container">
 
   <!-- HEADER -->
-  <div class="header">
+  <div class="header" style="position:relative;">
+    <a href="/" style="position:absolute;top:14px;left:16px;display:flex;align-items:center;gap:4px;font-size:13px;color:rgba(253,252,248,.45);text-decoration:none;letter-spacing:.02em;" onclick="history.length>1?history.back():window.location='/';">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+      返回
+    </a>
     <h1>AI 皮纹天<em>赋</em>速测</h1>
     <p>指尖携带的遗传密码 · 揭示与生俱来的天赋图谱</p>
   </div>

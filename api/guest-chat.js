@@ -87,6 +87,13 @@ async function logConversation(sessionId, context, userMsg, aiReply, ip) {
   }
 }
 
+// ── VIP 白名单：token 存 Redis，永久免限流免限额 ──────────────────────────
+async function isVipToken(token) {
+  if (!token || typeof token !== 'string' || token.length < 6) return false;
+  const val = await redisGet(`vip:token:${token.trim()}`).catch(() => null);
+  return !!val;
+}
+
 // ── IP 限流：每个 IP 每分钟最多10次（防滥用） ────────────────────────────────
 async function checkRateLimit(ip) {
   const minute = Math.floor(Date.now() / 60000);
@@ -125,16 +132,24 @@ module.exports = async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(204).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  // 限流检查
+  // VIP token 检查（内部人员/白名单，免所有限流）
   const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket?.remoteAddress || 'unknown';
-  const allowed = await checkRateLimit(ip).catch(() => true); // 限流本身失败时放行
-  if (!allowed) {
-    return res.status(429).json({ error: '请求过于频繁，请稍后再试' });
-  }
-  // 每日软限额检查（10次/天）
-  const quota = await checkDailyQuota(ip).catch(() => ({ ok: true }));
-  if (!quota.ok) {
-    return res.status(200).json({ ok: false, soft: true, reply: SOFT_LIMIT_MSG });
+
+  // 先读 body 中的 vipToken（需在限流前解析header里的token做快速判断）
+  const vipTokenFromHeader = req.headers['x-vip-token'] || '';
+  const vipPass = await isVipToken(vipTokenFromHeader).catch(() => false);
+
+  if (!vipPass) {
+    // 限流检查
+    const allowed = await checkRateLimit(ip).catch(() => true); // 限流本身失败时放行
+    if (!allowed) {
+      return res.status(429).json({ error: '请求过于频繁，请稍后再试' });
+    }
+    // 每日软限额检查（10次/天）
+    const quota = await checkDailyQuota(ip).catch(() => ({ ok: true }));
+    if (!quota.ok) {
+      return res.status(200).json({ ok: false, soft: true, reply: SOFT_LIMIT_MSG });
+    }
   }
 
   // P0: 请求体大小限制（Vision 请求含图片，2MB；普通请求 50KB）

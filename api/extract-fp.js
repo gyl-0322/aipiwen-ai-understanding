@@ -140,14 +140,25 @@ module.exports = async function handler(req, res) {
   // 限流
   const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim()
            || req.socket?.remoteAddress || 'unknown';
-  const allowed = await checkRate(ip).catch(() => true);
-  if (!allowed) {
-    return res.status(429).json({ ok: false, error: '请求过于频繁，请稍后再试' });
+
+  // VIP bypass（与 guest-chat 共用同一 Redis key 规则）
+  const vipToken = req.headers['x-vip-token'] || '';
+  let vipPass = false;
+  if (vipToken) {
+    const vipVal = await redisGet(`vip:token:${vipToken.trim()}`).catch(() => null);
+    vipPass = !!vipVal;
   }
-  // 每日软限额（3次/天）
-  const quotaOk = await checkDailyQuota(ip).catch(() => true);
-  if (!quotaOk) {
-    return res.status(200).json({ ok: false, soft: true, error: SOFT_LIMIT_MSG });
+
+  if (!vipPass) {
+    const allowed = await checkRate(ip).catch(() => true);
+    if (!allowed) {
+      return res.status(429).json({ ok: false, error: '请求过于频繁，请稍后再试' });
+    }
+    // 每日软限额（3次/天）
+    const quotaOk = await checkDailyQuota(ip).catch(() => true);
+    if (!quotaOk) {
+      return res.status(200).json({ ok: false, soft: true, error: SOFT_LIMIT_MSG });
+    }
   }
 
   // 读取 body（最大 4MB，图片可能较大）

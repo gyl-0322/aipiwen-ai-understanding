@@ -769,9 +769,12 @@ async function callAPI(content) {
     subjectAge:      _subjectAge,        // 年龄分层：AI 自动调整解读语气
     refToken:        _refToken,          // 邀请来源 token（服务端积分，去重安全）
   };
+  const headers = { 'Content-Type': 'application/json' };
+  const _vip = localStorage.getItem('aipiwen_vip') || '';
+  if (_vip) headers['x-vip-token'] = _vip;
   const res = await fetch('/api/guest-chat', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers,
     body: JSON.stringify(body),
   });
   if (!res.ok) throw new Error('HTTP ' + res.status);

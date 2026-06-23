@@ -628,9 +628,12 @@ qs('#s1-extract-btn').addEventListener('click', async () => {
   qs('#s1-status').textContent = 'AI 正在读取总表数据，约需 10-20 秒…';
 
   try {
+    const _vipHdr = {};
+    const _vipTok = localStorage.getItem('aipiwen_vip') || '';
+    if (_vipTok) _vipHdr['x-vip-token'] = _vipTok;
     const res = await fetch('/api/extract-fp', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ..._vipHdr },
       body: JSON.stringify({ imageBase64: ST.imageBase64, imageMimeType: ST.imageMimeType }),
     });
     const data = await res.json();
