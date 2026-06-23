@@ -146,7 +146,7 @@ body { background:var(--cream); color:var(--ink); font-family:var(--font-sans); 
 
 <div class="cta-section">
   <div class="cta-hint">加微信说一句"从业者体验"即可开通</div>
-  <a class="cta-wechat" id="wechat-btn" href="weixin://dl/chat?username=aipiwen2026" onclick="copyWechat(event)">添加微信开通体验</a>
+  <a class="cta-wechat" id="wechat-btn" href="https://work.weixin.qq.com/kfid/kfc6ce446e6e057c683" target="_blank">添加微信开通体验</a>
   <div class="cta-sub">微信号：aipiwen2026 · 工作日当天回复</div>
 </div>
 
@@ -201,51 +201,6 @@ async function copyInvite() {
   }
 }
 
-function copyWechat(e) {
-  const btn = document.getElementById('wechat-btn');
-  const wid = 'aipiwen2026';
-
-  function showToast(msg) {
-    const t = document.createElement('div');
-    t.style.cssText = 'position:fixed;top:24px;left:50%;transform:translateX(-50%);background:#1A1714;color:#C2692A;font-size:13px;font-weight:600;padding:10px 20px;border-radius:20px;border:1px solid rgba(194,105,42,.4);z-index:9999;letter-spacing:.04em;white-space:nowrap;';
-    t.textContent = msg;
-    document.body.appendChild(t);
-    setTimeout(() => t.remove(), 2500);
-  }
-
-  function afterCopy(ok) {
-    if (ok) {
-      showToast('✓ 微信号已复制：aipiwen2026');
-      if (btn) { const orig = btn.textContent; btn.textContent = '已复制微信号'; setTimeout(() => { btn.textContent = orig; }, 2000); }
-    } else {
-      // 最后兜底：弹 prompt 让用户手动复制
-      prompt('请复制以下微信号添加好友：', wid);
-    }
-  }
-
-  if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(wid).then(() => afterCopy(true)).catch(() => {
-      // iOS 有时即使有权限也失败，fallback execCommand
-      try {
-        const ta = document.createElement('textarea');
-        ta.value = wid; ta.style.position = 'fixed'; ta.style.opacity = '0';
-        document.body.appendChild(ta); ta.focus(); ta.select();
-        const ok = document.execCommand('copy');
-        ta.remove();
-        afterCopy(ok);
-      } catch(e2) { afterCopy(false); }
-    });
-  } else {
-    try {
-      const ta = document.createElement('textarea');
-      ta.value = wid; ta.style.position = 'fixed'; ta.style.opacity = '0';
-      document.body.appendChild(ta); ta.focus(); ta.select();
-      const ok = document.execCommand('copy');
-      ta.remove();
-      afterCopy(ok);
-    } catch(e) { afterCopy(false); }
-  }
-}
 </script>
 </body>
 </html>
