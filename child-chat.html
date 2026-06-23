@@ -35,6 +35,8 @@ body {
   min-height:100vh;
   display:flex; flex-direction:column;
 }
+/* 聊天模式：锁定高度，让内部chat-scroll滚动 */
+body.chat-mode { height:100vh; overflow:hidden; }
 
 /* ── NAV ── */
 .top-nav {
@@ -56,6 +58,7 @@ body {
 /* ── PHASE 1: FORM ── */
 #phase-form {
   flex:1; overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
 }
 .page-wrap { max-width:520px; margin:0 auto; padding:40px 24px 80px; }
 .page-eyebrow { font-size:11px; font-weight:600; letter-spacing:.14em; text-transform:uppercase; color:var(--amber); margin-bottom:14px; }
@@ -141,7 +144,7 @@ body {
 }
 
 /* ── 离屏渲染区（html2canvas 用，不可见） ── */
-#share-render-zone { position:fixed; left:-9999px; top:0; z-index:-999; width:360px; pointer-events:none; }
+#share-render-zone { position:absolute; left:-9999px; top:0; z-index:0; width:360px; pointer-events:none; opacity:0; }
 
 /* ── PHASE 1.5: LOADING ── */
 #phase-loading {
@@ -235,6 +238,7 @@ body {
 .card-btn {
   flex:1; padding:9px 8px; border-radius:10px; font-size:12px; font-weight:600;
   border:none; cursor:pointer; text-align:center; transition:opacity .15s;
+  touch-action:manipulation; -webkit-tap-highlight-color:transparent;
 }
 .card-btn:active { opacity:.75; }
 .card-btn.primary { background:var(--amber); color:white; }
@@ -585,6 +589,7 @@ function backToForm() {
   document.getElementById('phase-chat').style.display = 'none';
   document.getElementById('phase-loading').style.display = 'none';
   document.getElementById('phase-form').style.display = 'block';
+  document.body.classList.remove('chat-mode');
 }
 
 // ── 历史记忆（非亲子场景）────────────────────────────────────
@@ -685,6 +690,7 @@ async function submitBehavior() {
   document.getElementById('phase-loading').style.display = 'none';
   const chatEl = document.getElementById('phase-chat');
   chatEl.style.display = 'flex';
+  document.body.classList.add('chat-mode');
 
   // Show user bubble
   appendUserBubble(behavior);
@@ -965,7 +971,7 @@ function showShareCard(insight) {
 
   document.getElementById('share-overlay').classList.add('show');
 
-  // 等 QR 渲染完后 html2canvas
+  // 等 QR 渲染完后 html2canvas（增大超时确保QR码canvas已绘制）
   setTimeout(() => {
     const cardEl = document.getElementById('share-card-for-canvas');
     if (typeof html2canvas === 'undefined') {
@@ -974,21 +980,32 @@ function showShareCard(insight) {
       if (window.SHARE) SHARE.renderCaptionPicker(capArea, _for, _subjectAge, snippet);
       return;
     }
+    // 把QR码canvas内容转为img，避免html2canvas跨域canvas问题
+    const qrCanvas = document.querySelector('#src-qr canvas');
+    if (qrCanvas) {
+      try {
+        const qrImg = document.createElement('img');
+        qrImg.src = qrCanvas.toDataURL('image/png');
+        qrImg.style.cssText = qrCanvas.style.cssText + ';width:64px;height:64px;display:block;';
+        qrCanvas.parentNode.replaceChild(qrImg, qrCanvas);
+      } catch(e) {}
+    }
     html2canvas(cardEl, {
-      scale: 3, useCORS: true, allowTaint: true,
-      backgroundColor: null, logging: false,
+      scale: 2, useCORS: true, allowTaint: true,
+      backgroundColor: '#1A1714', logging: false,
     }).then(canvas => {
       const dataUrl = canvas.toDataURL('image/png');
       document.getElementById('share-img-area').innerHTML =
-        `<img src="${dataUrl}" alt="分享图">`;
+        `<img src="${dataUrl}" alt="分享图" style="border-radius:16px;">`;
       document.getElementById('share-img-hint').style.display = 'block';
       if (window.SHARE) SHARE.renderCaptionPicker(capArea, _for, _subjectAge, snippet);
-    }).catch(() => {
+    }).catch(err => {
+      console.warn('html2canvas failed:', err);
       document.getElementById('share-img-area').innerHTML =
         '<div style="color:rgba(255,255,255,.35);font-size:13px;padding:20px;text-align:center;">请截图保存</div>';
       if (window.SHARE) SHARE.renderCaptionPicker(capArea, _for, _subjectAge, snippet);
     });
-  }, 380);
+  }, 700);
 }
 
 function closeShareCard() {

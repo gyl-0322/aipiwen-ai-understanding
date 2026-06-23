@@ -136,7 +136,7 @@ body {
   display:flex; flex-direction:column; align-items:center;
   position:relative; overflow:hidden;
 }
-.rel-card.active {
+.rel-card.active { touch-action:manipulation;
   border-color:rgba(194,105,42,.30);
   box-shadow:0 2px 16px rgba(194,105,42,.08);
   cursor:pointer;
@@ -167,7 +167,7 @@ body {
 /* ── PRODUCT CARDS ── */
 .products { padding:0 20px 48px; max-width:520px; margin:0 auto; display:flex; flex-direction:column; gap:16px; }
 
-.product-card {
+.product-card { touch-action:manipulation;
   background:#FFFEFB; border:1px solid var(--ink-10);
   border-radius:var(--r-lg); padding:28px 24px;
   text-decoration:none; color:inherit; display:block;
@@ -180,6 +180,7 @@ body {
   background:var(--amber); opacity:0; transition:opacity .2s;
 }
 .product-card:hover::before { opacity:1; }
+@media (hover:none) { .product-card::before { display:none; } }
 
 .product-card-badge {
   display:inline-flex; align-items:center; gap:6px;
