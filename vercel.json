@@ -141,6 +141,9 @@
     },
     "api/track.js": {
       "maxDuration": 10
+    },
+    "api/extract-fp.js": {
+      "maxDuration": 30
     }
   },
   "crons": [
