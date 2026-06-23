@@ -586,109 +586,59 @@ body {
   color: rgba(253,252,248,.32);
 }
 
-/* ─── POSTER TEMPLATE (hidden) ─── */
+/* ─── POSTER CARD v2 ─── */
 #posterTemplate { position: fixed; left: -9999px; top: -9999px; }
-.poster-bg {
-  --pc: #C2692A;
-  width: 375px;
-  background: #090704;
+.fp-card {
+  width: 390px; background: #0E1118;
   display: flex; flex-direction: column;
   position: relative; overflow: hidden;
   font-family: -apple-system, 'PingFang SC', 'Helvetica Neue', sans-serif;
+  padding: 28px 28px 24px; min-height: 693px;
 }
-.poster-glow-top {
-  position: absolute; top: -70px; right: -70px;
-  width: 340px; height: 340px; border-radius: 50%;
-  pointer-events: none; z-index: 0;
+.fp-card-header {
+  display: flex; justify-content: space-between; align-items: flex-start;
+  margin-bottom: 28px;
 }
-.poster-glow-bot {
-  position: absolute; bottom: -100px; left: -80px;
-  width: 280px; height: 280px; border-radius: 50%;
-  pointer-events: none; z-index: 0;
+.fp-card-brand-name { font-size: 14px; font-weight: 700; color: #C2692A; letter-spacing: .1em; }
+.fp-card-brand-sub  { font-size: 9px; color: rgba(253,252,248,.3); letter-spacing: .08em; margin-top: 2px; }
+.fp-card-report { text-align: right; }
+.fp-card-report-label { font-size: 9px; color: rgba(253,252,248,.28); letter-spacing: .06em; }
+.fp-card-report-id    { font-size: 10px; color: rgba(253,252,248,.42); font-family: monospace; margin-top: 2px; }
+.fp-card-fp { display: flex; justify-content: center; margin-bottom: 22px; }
+.fp-card-fp img {
+  width: 190px; height: 190px; object-fit: contain;
+  filter: drop-shadow(0 0 24px rgba(185,100,35,.55));
 }
-.poster-accent-bar {
-  height: 3px;
-  background: linear-gradient(90deg, var(--pc) 0%, rgba(194,105,42,.22) 75%, transparent 100%);
-  flex-shrink: 0; position: relative; z-index: 1;
+.fp-card-type-label {
+  font-size: 10px; color: rgba(194,105,42,.65); letter-spacing: .22em; margin-bottom: 8px;
 }
-.poster-header {
+.fp-card-type-name {
+  font-family: Georgia, 'Noto Serif SC', serif;
+  font-size: 38px; font-weight: 700; color: #FDFCF8; margin-bottom: 14px; line-height: 1.1;
+}
+.fp-card-hook {
+  font-size: 13.5px; color: rgba(253,252,248,.55); line-height: 1.85;
+  margin-bottom: 22px; white-space: pre-line;
+}
+.fp-card-tags { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; }
+.fp-card-tag {
+  font-size: 11px; color: rgba(194,105,42,.9);
+  border: 1px solid rgba(194,105,42,.32); border-radius: 20px;
+  padding: 4px 13px; background: rgba(194,105,42,.07);
+}
+.fp-card-sci {
+  font-size: 9px; color: rgba(253,252,248,.18); letter-spacing: .08em; line-height: 1.8;
+  border-top: 1px solid rgba(255,255,255,.05); padding-top: 12px; margin-bottom: 20px;
+}
+.fp-card-footer {
   display: flex; justify-content: space-between; align-items: center;
-  padding: 18px 28px 14px; flex-shrink: 0; position: relative; z-index: 1;
+  background: rgba(194,105,42,.05); border: 1px solid rgba(194,105,42,.18);
+  border-radius: 12px; padding: 14px 16px; margin-top: auto;
 }
-.poster-brand { font-size: 8px; color: rgba(253,252,248,.16); letter-spacing: .58em; }
-.poster-brand-mark { font-size: 9px; color: rgba(194,105,42,.28); }
-.poster-header-rule {
-  height: 1px; background: rgba(255,255,255,.04);
-  margin: 0 28px; flex-shrink: 0; position: relative; z-index: 1;
-}
-.poster-mini-tag { display: none; }
-.poster-hook {
-  font-size: 30px; font-weight: 700; color: #FDFCF8;
-  text-align: center; line-height: 1.45; padding: 22px 36px 0;
-  position: relative; z-index: 1; letter-spacing: .02em;
-  text-shadow: 0 2px 28px rgba(0,0,0,.55);
-}
-.poster-fp-wrap {
-  display: flex; justify-content: center; align-items: center;
-  padding: 20px 0 8px; position: relative; z-index: 1; flex-shrink: 0;
-}
-.poster-type-badge {
-  display: flex; justify-content: center;
-  padding: 0 0 6px; position: relative; z-index: 1;
-}
-.poster-type-pill {
-  display: inline-flex; align-items: center;
-  border: 1px solid rgba(194,105,42,.7); border-radius: 28px;
-  padding: 9px 30px; background: rgba(194,105,42,.1);
-  box-shadow: 0 0 20px rgba(194,105,42,.14);
-}
-.poster-type-name {
-  font-size: 19px; font-weight: 600; color: #FDFCF8; letter-spacing: .09em;
-}
-.poster-benefit { display: none; }
-.poster-tagline {
-  font-size: 10px; color: rgba(194,105,42,.7); letter-spacing: .24em; line-height: 2;
-  text-align: center; padding: 4px 28px 0; position: relative; z-index: 1;
-}
-.poster-divider {
-  display: flex; align-items: center; margin: 18px 28px 14px;
-  flex-shrink: 0; position: relative; z-index: 1;
-}
-.poster-divider::before { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, transparent, rgba(194,105,42,.28)); }
-.poster-divider::after  { content: ''; flex: 1; height: 1px; background: linear-gradient(270deg, transparent, rgba(194,105,42,.28)); }
-.poster-divider-label {
-  font-size: 8px; color: rgba(194,105,42,.42); letter-spacing: .55em;
-  padding: 0 12px; white-space: nowrap;
-}
-.poster-talents {
-  padding: 0 36px 18px;
-  display: grid; grid-template-columns: 1fr 1fr; gap: 13px;
-  flex-shrink: 0; position: relative; z-index: 1;
-}
-.poster-talent {
-  display: flex; align-items: center; gap: 8px;
-  font-size: 12px; color: rgba(253,252,248,.62); letter-spacing: .04em;
-}
-.poster-talent::before { content: '◆'; font-size: 5px; color: var(--pc); flex-shrink: 0; }
-.poster-stats { display: none; }
-.poster-science-strip {
-  margin: 0 28px 18px;
-  border-top: 1px solid rgba(255,255,255,.05);
-  padding-top: 14px; position: relative; z-index: 1; text-align: center;
-}
-.poster-science-text {
-  font-size: 9px; color: rgba(253,252,248,.2); letter-spacing: .16em; line-height: 2;
-}
-.poster-footer {
-  margin: 0 22px 24px; border: 1px solid rgba(194,105,42,.22); border-radius: 12px;
-  padding: 14px 18px; display: flex; align-items: center; gap: 16px;
-  background: rgba(194,105,42,.04); flex-shrink: 0; position: relative; z-index: 1;
-}
-.poster-qr-wrap { flex-shrink: 0; background: #FDFCF8; border-radius: 7px; padding: 5px; }
-.poster-qr-wrap img { width: 58px; height: 58px; display: block; }
-.poster-cta { font-size: 13px; font-weight: 600; color: rgba(253,252,248,.9); line-height: 1.4; margin-bottom: 3px; }
-.poster-cta-sub { font-size: 10.5px; color: rgba(253,252,248,.32); margin-bottom: 5px; }
-.poster-url { font-size: 9.5px; color: var(--pc); letter-spacing: .15em; }
+.fp-card-cta-main { font-size: 13px; font-weight: 600; color: rgba(253,252,248,.9); margin-bottom: 3px; }
+.fp-card-cta-sub  { font-size: 10px; color: #C2692A; letter-spacing: .12em; }
+.poster-qr-wrap { flex-shrink: 0; background: #FDFCF8; border-radius: 6px; padding: 4px; }
+.poster-qr-wrap img { width: 54px; height: 54px; display: block; }
 
 /* ─── THUMB CONFIRM (step 6) ─── */
 .thumb-confirm {
@@ -1408,38 +1358,30 @@ body {
 
 <!-- POSTER TEMPLATE (off-screen) -->
 <div id="posterTemplate">
-  <div class="poster-bg">
-    <div class="poster-glow-top" id="pGlowTop"></div>
-    <div class="poster-glow-bot" id="pGlowBot"></div>
-    <div class="poster-accent-bar"></div>
-    <div class="poster-header">
-      <span class="poster-brand">AI PIWEN · 皮纹天赋</span>
-      <span class="poster-brand-mark">✦</span>
-    </div>
-    <div class="poster-header-rule"></div>
-    <div class="poster-hook" id="pHook"></div>
-    <div class="poster-fp-wrap" id="pFpWrap"></div>
-    <div class="poster-type-badge">
-      <div class="poster-type-pill">
-        <span class="poster-type-name" id="pType"></span>
+  <div class="fp-card">
+    <div class="fp-card-header">
+      <div>
+        <div class="fp-card-brand-name">AIPIWEN</div>
+        <div class="fp-card-brand-sub">皮纹天赋分析</div>
+      </div>
+      <div class="fp-card-report">
+        <div class="fp-card-report-label">测评报告</div>
+        <div class="fp-card-report-id" id="pReportId">FP-2026-W001</div>
       </div>
     </div>
-    <div class="poster-tagline" id="pTagline"></div>
-    <div class="poster-divider">
-      <span class="poster-divider-label">核 心 天 赋</span>
-    </div>
-    <div class="poster-talents" id="pTags"></div>
-    <div class="poster-science-strip">
-      <div class="poster-science-text">指纹先天形成（胎儿第13–19周）· 皮纹遗传度 >95% · 终生不变<br>——《指纹的奥秘》《指纹无谎言》刘持平 / 《世界指纹史》[德]海因德尔</div>
-    </div>
-    <div class="poster-footer">
+    <div class="fp-card-fp" id="pFpWrap"></div>
+    <div class="fp-card-type-label">天赋类型</div>
+    <div class="fp-card-type-name" id="pType"></div>
+    <div class="fp-card-hook" id="pHook"></div>
+    <div class="fp-card-tags" id="pTags"></div>
+    <div class="fp-card-sci">皮纹遗传度 &gt;95% · 胎儿第13—19周形成 · 终生不变</div>
+    <div class="fp-card-footer">
+      <div>
+        <div class="fp-card-cta-main">你家孩子是什么类型？</div>
+        <div class="fp-card-cta-sub">aipiwen.cn · 免费 · 1分钟</div>
+      </div>
       <div class="poster-qr-wrap">
         <img id="posterQR" src="" alt="QR">
-      </div>
-      <div>
-        <div class="poster-cta">你家孩子是什么类型？</div>
-        <div class="poster-cta-sub">指纹速测 · 1分钟 · 免费</div>
-        <div class="poster-url">aipiwen.cn · 扫码即测</div>
       </div>
     </div>
   </div>
@@ -2235,36 +2177,36 @@ async function generatePoster() {
   };
   const cfg = PCFG[result.key] || PCFG['w'];
 
-  // Apply type color via CSS custom property
-  const posterBg = document.querySelector('#posterTemplate .poster-bg');
-  posterBg.style.setProperty('--pc', cfg.color);
+  const posterBg = document.querySelector('#posterTemplate .fp-card');
 
-  // Background glows
-  const hx = cfg.color.replace('#','');
-  const r=parseInt(hx.slice(0,2),16), g=parseInt(hx.slice(2,4),16), b=parseInt(hx.slice(4,6),16);
-  document.getElementById('pGlowTop').style.background =
-    `radial-gradient(circle, rgba(${r},${g},${b},.22) 0%, transparent 70%)`;
-  document.getElementById('pGlowBot').style.background =
-    `radial-gradient(circle, rgba(${r},${g},${b},.12) 0%, transparent 70%)`;
+  // Report ID
+  const _year = new Date().getFullYear();
+  const _rnd  = Math.floor(Math.random()*900+100);
+  document.getElementById('pReportId').textContent = `FP-${_year}-${result.key.slice(0,2).toUpperCase()}${_rnd}`;
 
-  // Content — apply age-specific hook if wizard age was set
-  const _AGE_HOOK_FNS = {
-    '幼儿 3-6岁':     c => c.hook,
-    '小学 7-12岁':    c => `孩子怎么学最有效？\n先看清${c.humanName.replace('孩子','').replace('型','')}天赋`,
-    '初中 13-15岁':   c => `进了初中就变了个人？\n先测清楚孩子是${c.humanName}`,
-    '高中 16-18岁':   c => `高考志愿怎么填？\n先确认孩子是${c.humanName}`,
-    '大学+ 18岁以上': c => `毕业迷茫不知做什么？\n先测你的${c.humanName.replace('孩子','').replace('型','')}思维方向`,
-    '职场成人':       c => `一直在努力，却感觉在错的地方使劲？\n先测你的${c.humanName.replace('孩子','').replace('型','')}天赋方向`,
+  // Hook copy per type
+  const POSTER_HOOKS = {
+    w:'别人放弃的地方，\n正是他真正开始的地方。',
+    wc:'别人看到的是碎片，\n他看到的是整体。',
+    perfect_w:'他眼里没有\u201c够了\u201d，\n只有\u201c还可以更好\u201d。',
+    l:'他是天生的学习者——\n给他榜样，他会超越榜样。',
+    x:'他从不设限，\n所以他的上限，没有人能预测。',
+    rl:'他最爱问的问题是：\n\u201c为什么不能反过来？\u201d',
+    super_w_a:'有些孩子，\n出生就带着方向感。',
+    super_w_b:'左脑逻辑，右脑创意，\n他同时拥有。',
+    super_w_c:'完美不是他的目标，\n那是他的起点。',
+    super_l:'他把给予当成天赋，\n而不是负担。',
+    combo_open:'思考越深，吸收越广，\n两种天赋，同向生长。',
+    combo_w_l:'能独行，也能师从最强，\n两种能力同时开花。',
+    combo_w:'深得进去，也出得来，\n这种人，很稀缺。',
   };
-  const _ageHookFn = _wizardAge && _AGE_HOOK_FNS[_wizardAge] ? _AGE_HOOK_FNS[_wizardAge] : (c => c.hook);
-  document.getElementById('pHook').innerHTML = _ageHookFn(cfg).replace(/\n/g,'<br>');
-  document.getElementById('pType').textContent = cfg.humanName;
-  document.getElementById('pTagline').textContent = result.tagline;
-  document.getElementById('pFpWrap').innerHTML = _fpIMG(result.key);
+  document.getElementById('pHook').textContent = POSTER_HOOKS[result.key] || POSTER_HOOKS['w'];
+  document.getElementById('pType').textContent  = result.mainType;
+  document.getElementById('pFpWrap').innerHTML  = _fpIMG(result.key);
 
-  const tags = document.querySelectorAll('.advantage-tags .tag');
-  document.getElementById('pTags').innerHTML = Array.from(tags).slice(0,4)
-    .map(t=>`<div class="poster-talent">${t.textContent.trim()}</div>`).join('');
+  // Tags from tagline
+  const _tagItems = result.tagline.split(' · ').slice(0, 4);
+  document.getElementById('pTags').innerHTML = _tagItems.map(t=>`<div class="fp-card-tag">${t}</div>`).join('');
 
   // QR — try-catch 防止 CDN 加载失败导致整体崩溃
   let qrDataUrl = '';
@@ -2291,7 +2233,7 @@ async function generatePoster() {
     posterQREl.src = qrDataUrl;
   } else {
     // QR 不可用时隐藏 QR 区域，避免空白块
-    const qrWrap = document.querySelector('.poster-qr-wrap');
+    const qrWrap = document.querySelector('#posterTemplate .poster-qr-wrap');
     if (qrWrap) qrWrap.style.display = 'none';
   }
 
