@@ -113,6 +113,10 @@
       "dest": "/api/invite.js"
     },
     {
+      "src": "/api/report-store",
+      "dest": "/api/report-store.js"
+    },
+    {
       "src": "/practitioner",
       "dest": "/practitioner.html"
     },
@@ -169,6 +173,9 @@
       "maxDuration": 60
     },
     "api/invite.js": {
+      "maxDuration": 10
+    },
+    "api/report-store.js": {
       "maxDuration": 10
     }
   },

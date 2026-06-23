@@ -256,6 +256,26 @@ html,body{height:100%;overflow:hidden;background:#060810;
   font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;}
 #sm-save{background:var(--amber);color:var(--bg);}
 #sm-close{background:rgba(255,255,255,.08);color:var(--dim);}
+/* ─── CLIENT SHARE MODAL ─────────────────────────────────── */
+#cmodal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);
+  backdrop-filter:blur(12px);z-index:1000;align-items:center;
+  justify-content:center;padding:24px;}
+#cmodal.open{display:flex;}
+.cmodal-box{width:300px;background:var(--bg);border:1px solid rgba(194,105,42,.2);
+  border-radius:18px;padding:24px 20px;display:flex;flex-direction:column;}
+.cmodal-title{font-size:15px;font-weight:700;color:var(--text);margin-bottom:4px;}
+.cmodal-sub{font-size:12px;color:var(--dim);line-height:1.6;margin-bottom:16px;}
+#cmodal-qr{margin:0 auto 14px;width:160px;height:160px;background:#fff;
+  border-radius:10px;padding:6px;display:flex;align-items:center;justify-content:center;}
+#cmodal-qr canvas,#cmodal-qr img{width:148px!important;height:148px!important;}
+.cmodal-url{font-size:11px;color:var(--faint);word-break:break-all;line-height:1.5;
+  background:rgba(255,255,255,.04);border:1px solid var(--border);
+  border-radius:8px;padding:8px 12px;margin-bottom:14px;}
+.cmodal-btns{display:flex;gap:8px;}
+.cmodal-btns button{flex:1;padding:12px;border:none;border-radius:12px;
+  font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;}
+#cmodal-copy{background:var(--amber);color:var(--bg);}
+#cmodal-close-btn{background:rgba(255,255,255,.08);color:var(--dim);}
 </style>
 </head>
 <body>
@@ -367,6 +387,7 @@ html,body{height:100%;overflow:hidden;background:#060810;
     <div id="rv-topbar">
       <button class="rv-tbtn" id="rv-toc-btn">☰ 目录</button>
       <div style="display:flex;gap:6px;">
+        <button class="rv-tbtn" id="rv-client-btn" style="display:none">📤 发客户</button>
         <button class="rv-tbtn" id="rv-dl-btn">↓ PDF</button>
         <button class="rv-tbtn" id="rv-share-btn">↑ 分享</button>
       </div>
@@ -400,9 +421,24 @@ html,body{height:100%;overflow:hidden;background:#060810;
   </div>
 </div>
 
+<!-- Client Link Modal -->
+<div id="cmodal">
+  <div class="cmodal-box">
+    <div class="cmodal-title">发给客户</div>
+    <div class="cmodal-sub">客户扫码或点链接，直接打开专属翻页报告<br>链接 30 天内有效</div>
+    <div id="cmodal-qr"></div>
+    <div class="cmodal-url" id="cmodal-url-text">生成中…</div>
+    <div class="cmodal-btns">
+      <button id="cmodal-copy">复制链接</button>
+      <button id="cmodal-close-btn">关闭</button>
+    </div>
+  </div>
+</div>
+
 <script src="lib/trc-engine.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script>
 // ─── CONSTANTS ────────────────────────────────────────────────────────────
 const FP_IMGS = {
@@ -481,6 +517,30 @@ async function getMyInviteToken() {
     }
   } catch(e) {}
   return _myInviteToken;
+}
+
+// ─── 报告存档 & 客户分享链接 ───────────────────────────────────────────────────
+let _clientShareUrl = '';
+
+async function _saveReportForClient(sections) {
+  try {
+    const r = await fetch('/api/report-store', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sections, engineResult: ST.engineResult, fingers: ST.fingers }),
+    });
+    const d = await r.json();
+    if (!d.ok || !d.id) return;
+    const shareUrl = `https://aipiwen.cn/report-upload.html?rid=${d.id}`;
+    _clientShareUrl = shareUrl;
+    qs('#cmodal-url-text').textContent = shareUrl;
+    const qrEl = qs('#cmodal-qr');
+    qrEl.innerHTML = '';
+    /* global QRCode */
+    new QRCode(qrEl, { text: shareUrl, width: 148, height: 148,
+      colorDark: '#000000', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.M });
+    qs('#rv-client-btn').style.display = '';
+  } catch(e) { console.warn('report-store error:', e); }
 }
 
 // ─── UTILITIES ────────────────────────────────────────────────────────────
@@ -759,6 +819,7 @@ qs('#gen-btn').addEventListener('click', async () => {
 
     buildReportFlipBook(data.sections);
     goScreen('s4');
+    _saveReportForClient(data.sections); // 后台存档，生成客户分享链接
   } catch(err) {
     qs('#gen-status').textContent = '❌ 网络错误，请重试';
     btn.disabled = false;
@@ -1006,6 +1067,57 @@ qs('#sm-save').addEventListener('click', async () => {
 
 // Screen 1 share btn (in report, added lazily)
 qs('#rv-share-btn').addEventListener('click', () => qs('#smodal').classList.add('open'));
+
+// ─── 客户分享弹窗 ─────────────────────────────────────────────────────────
+qs('#rv-client-btn').addEventListener('click', () => qs('#cmodal').classList.add('open'));
+qs('#cmodal').addEventListener('click', e => { if (e.target===qs('#cmodal')) qs('#cmodal').classList.remove('open'); });
+qs('#cmodal-close-btn').addEventListener('click', () => qs('#cmodal').classList.remove('open'));
+qs('#cmodal-copy').addEventListener('click', () => {
+  if (!_clientShareUrl) return;
+  const btn = qs('#cmodal-copy');
+  navigator.clipboard.writeText(_clientShareUrl)
+    .then(() => { btn.textContent = '已复制 ✓'; setTimeout(() => { btn.textContent = '复制链接'; }, 2000); })
+    .catch(() => {
+      const ta = Object.assign(document.createElement('textarea'),
+        { value: _clientShareUrl });
+      ta.style.cssText = 'position:fixed;left:-9999px;opacity:0;';
+      document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+      btn.textContent = '已复制 ✓'; setTimeout(() => { btn.textContent = '复制链接'; }, 2000);
+    });
+});
+
+// ─── 客户打开分享链接：?rid=xxx 直接显示报告 ─────────────────────────────
+(function() {
+  const rid = new URLSearchParams(location.search).get('rid');
+  if (!rid) return;
+  // 立即清屏，显示加载提示
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  const loadEl = document.createElement('div');
+  loadEl.style.cssText = 'position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#0E1118;color:#C2692A;font-size:14px;letter-spacing:.05em;';
+  loadEl.textContent = '加载专属报告中…';
+  qs('#card').appendChild(loadEl);
+
+  fetch(`/api/report-store?id=${rid}`)
+    .then(r => r.json())
+    .then(d => {
+      loadEl.remove();
+      if (!d.ok || !d.report) {
+        qs('#card').innerHTML = '<div style="height:100%;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px;padding:40px;text-align:center"><div style="color:#C2692A;font-size:14px">报告不存在或已过期</div><div style="color:rgba(253,252,248,.45);font-size:12px">报告链接有效期为 30 天</div><a href="/" style="color:#C2692A;font-size:12px;margin-top:8px">返回首页</a></div>';
+        return;
+      }
+      const rep = d.report;
+      ST.engineResult = rep.engineResult;
+      ST.fingers      = rep.fingers || [];
+      ST.age          = rep.engineResult?.age || 6;
+      buildReportFlipBook(rep.sections);
+      goScreen('s4');
+      qs('#rv-client-btn').style.display = 'none'; // 客户不看"发客户"按钮
+    })
+    .catch(() => {
+      loadEl.remove();
+      qs('#card').innerHTML = '<div style="height:100%;display:flex;align-items:center;justify-content:center;padding:40px;text-align:center;color:#C2692A;font-size:13px">加载失败，请联系从业者重新发送链接。</div>';
+    });
+})();
 </script>
 
 </body>
