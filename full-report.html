@@ -520,15 +520,13 @@ html,body { font-family: var(--font-sans); background: var(--cream); color: var(
       </div>
     </div>
 
-    <div class="share-hint">长按截图保存，或点击下方按钮</div>
+    <div class="share-hint">📱 长按图片保存，选一句转发语复制发给朋友</div>
 
-    <div class="share-copy-text" id="share-copy-text">
-      我刚用AI分析了一个让我困惑的行为，瞬间看懂了很多。推荐你也试试：aipiwen.cn
-    </div>
+    <!-- 转发语选择器（由 share-utils.js 动态注入，浅色主题）-->
+    <div id="report-caption-area" style="margin-bottom:12px;"></div>
 
     <div class="share-btns">
-      <button class="btn-copy" id="copy-btn" onclick="copyShareText()">复制分享文案</button>
-      <button class="btn-save-img" onclick="saveShareImage()">生成分享海报</button>
+      <button class="btn-save-img" onclick="saveShareImage()">生成分享海报图</button>
       <button class="btn-secondary" onclick="goToWeChat()" style="margin-top:4px">获取更深解读 →</button>
     </div>
   </div>
@@ -584,9 +582,10 @@ html,body { font-family: var(--font-sans); background: var(--cream); color: var(
   </div>
 </div>
 
-<!-- html2canvas + QRCode -->
+<!-- html2canvas + QRCode + 分享工具 -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdn.bootcdn.net/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="/js/share-utils.js"></script>
 <!-- AIPIWEN 核心引擎 -->
 <script src="js/aipiwen-core.js"></script>
 <script>
@@ -612,6 +611,15 @@ function showScreen(id) {
 function goToShare() {
   updateLead({ clickedShareFamily: true });
   showScreen('screen-share');
+  // 初始化转发语（浅色主题，isDark=false）
+  const capArea = document.getElementById('report-caption-area');
+  if (capArea && window.SHARE && !capArea.dataset.ready) {
+    capArea.dataset.ready = '1';
+    const ctx     = (new URLSearchParams(location.search).get('for')) || 'child';
+    const age     = (new URLSearchParams(location.search).get('age')) || '';
+    const snippet = (document.getElementById('sc-insight') || {}).textContent || '';
+    SHARE.renderCaptionPicker(capArea, ctx, age, snippet.slice(0, 30), false);
+  }
 }
 
 function goToWeChat() {

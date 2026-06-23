@@ -109,7 +109,7 @@ body {
 .cta-note { text-align:center; font-size:12px; color:var(--ink-40); margin-top:12px; line-height:1.6; }
 .privacy-bar { margin-top:36px; padding-top:24px; border-top:1px solid var(--ink-10); font-size:12px; color:var(--ink-40); line-height:1.7; text-align:center; }
 
-/* ── 分享卡片 ── */
+/* ── 分享按钮 ── */
 .share-btn {
   display:flex; align-items:center; gap:6px; margin:16px auto 0;
   padding:10px 18px; background:transparent;
@@ -118,41 +118,30 @@ body {
   transition:background .15s;
 }
 .share-btn:active { background:rgba(194,105,42,.08); }
+
+/* ── 分享弹层 ── */
 #share-overlay {
   display:none; position:fixed; inset:0; z-index:200;
-  background:rgba(0,0,0,.85); align-items:center; justify-content:center;
-  padding:24px;
+  background:rgba(0,0,0,.9);
+  overflow-y:auto; -webkit-overflow-scrolling:touch;
+  padding:28px 16px 56px;
 }
-#share-overlay.show { display:flex; }
-.share-card {
-  width:100%; max-width:360px;
-  background:linear-gradient(145deg,#1A1714,#242017);
-  border:1px solid rgba(194,105,42,.3);
-  border-radius:24px; padding:32px 28px; position:relative;
-  box-shadow:0 20px 60px rgba(0,0,0,.6);
+#share-overlay.show { display:block; }
+#share-scroll-wrap {
+  max-width:400px; margin:0 auto;
+  display:flex; flex-direction:column; align-items:center; gap:16px;
 }
-.share-card-logo { font-size:11px; letter-spacing:.2em; color:var(--amber); margin-bottom:24px; font-weight:600; }
-.share-card-insight {
-  font-family:var(--font-serif); font-size:17px; line-height:1.7;
-  color:#EAE7E0; margin-bottom:24px;
-  display:-webkit-box; -webkit-line-clamp:6; -webkit-box-orient:vertical; overflow:hidden;
+#share-img-area img { max-width:100%; border-radius:18px; display:block; }
+#share-img-hint { display:none; font-size:12px; color:rgba(255,255,255,.4); text-align:center; }
+#share-caption-area { width:100%; }
+#share-close-btn {
+  padding:10px 36px;
+  background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.14);
+  border-radius:20px; color:rgba(255,255,255,.5); font-size:14px; cursor:pointer;
 }
-.share-card-insight em { color:var(--amber); font-style:normal; }
-.share-card-footer { display:flex; align-items:center; justify-content:space-between; }
-.share-card-url { font-size:11px; color:rgba(234,231,224,.4); }
-.share-card-tag {
-  font-size:11px; padding:4px 10px; border-radius:10px;
-  background:rgba(194,105,42,.15); color:var(--amber); font-weight:600;
-}
-.share-close {
-  position:absolute; top:16px; right:16px;
-  width:28px; height:28px; border-radius:50%;
-  background:rgba(255,255,255,.1); border:none; color:#fff;
-  font-size:16px; cursor:pointer; display:flex; align-items:center; justify-content:center;
-}
-.share-tip {
-  text-align:center; color:rgba(234,231,224,.5); font-size:12px; margin-top:16px;
-}
+
+/* ── 离屏渲染区（html2canvas 用，不可见） ── */
+#share-render-zone { position:fixed; left:-9999px; top:0; z-index:-999; width:360px; pointer-events:none; }
 
 /* ── PHASE 2: CHAT ── */
 #phase-chat { flex:1; display:none; flex-direction:column; overflow:hidden; }
@@ -811,23 +800,73 @@ function showShareButton(insight) {
   }, 800);
 }
 
-// ── 分享卡片 ─────────────────────────────────────────────────
+// ── 分享卡片（html2canvas → 可长按保存的图 + 转发语选择器）────────
 function showShareCard(insight) {
-  const CTX_TAG = { child:'亲子理解', self:'自我理解', partner:'伴侣理解', business:'合伙理解' };
-  const card = document.getElementById('share-card-content');
-  // 取最有力的一句：找第一个句号/换行前的内容，最多120字
+  const CTX_TAG    = { child:'亲子理解', self:'自我理解', partner:'伴侣理解', business:'合伙理解' };
+  const CTX_MODULE = { child:'亲子行为解读', self:'自我行为解读', partner:'伴侣行为解读', business:'合伙行为解读' };
+
+  // 提取洞察片段（去 HTML 标签）
   const clean = insight.replace(/<br>/g,'\n').replace(/<[^>]+>/g,'');
-  const first = (clean.match(/^(.{20,120})[。！？\n]/) || [,''])[1] || clean.slice(0,120);
-  card.textContent = first + '……';
-  document.getElementById('share-tag').textContent = CTX_TAG[_for] || '行为理解';
+  const first = (clean.match(/^(.{20,120})[。！？\n]/) || [,''])[1] || clean.slice(0, 120);
+  const snippet = first;
+
+  // 填入离屏渲染卡
+  document.getElementById('src-content').textContent = first + '……';
+  document.getElementById('src-tag').textContent     = CTX_TAG[_for]    || '行为理解';
+  document.getElementById('src-module').textContent  = CTX_MODULE[_for] || '行为深度解读';
+
+  // 生成二维码
+  const qrEl = document.getElementById('src-qr');
+  qrEl.innerHTML = '';
+  if (window.QRCode) {
+    new QRCode(qrEl, {
+      text: 'https://aipiwen.cn',
+      width: 64, height: 64,
+      colorDark:  '#C2692A',
+      colorLight: '#2A2420',
+      correctLevel: QRCode.CorrectLevel.M,
+    });
+  }
+
+  // 重置弹层为加载态
+  document.getElementById('share-img-area').innerHTML =
+    '<div style="color:rgba(255,255,255,.35);font-size:13px;padding:60px 0;text-align:center;">⏳ 生成分享图…</div>';
+  document.getElementById('share-img-hint').style.display = 'none';
+  const capArea = document.getElementById('share-caption-area');
+  capArea.innerHTML = '';
+
   document.getElementById('share-overlay').classList.add('show');
+
+  // 等 QR 渲染完后 html2canvas
+  setTimeout(() => {
+    const cardEl = document.getElementById('share-card-for-canvas');
+    if (typeof html2canvas === 'undefined') {
+      document.getElementById('share-img-area').innerHTML =
+        '<div style="color:rgba(255,255,255,.35);font-size:13px;padding:20px;text-align:center;">请截图保存</div>';
+      if (window.SHARE) SHARE.renderCaptionPicker(capArea, _for, _subjectAge, snippet);
+      return;
+    }
+    html2canvas(cardEl, {
+      scale: 3, useCORS: true, allowTaint: true,
+      backgroundColor: null, logging: false,
+    }).then(canvas => {
+      const dataUrl = canvas.toDataURL('image/png');
+      document.getElementById('share-img-area').innerHTML =
+        `<img src="${dataUrl}" alt="分享图">`;
+      document.getElementById('share-img-hint').style.display = 'block';
+      if (window.SHARE) SHARE.renderCaptionPicker(capArea, _for, _subjectAge, snippet);
+    }).catch(() => {
+      document.getElementById('share-img-area').innerHTML =
+        '<div style="color:rgba(255,255,255,.35);font-size:13px;padding:20px;text-align:center;">请截图保存</div>';
+      if (window.SHARE) SHARE.renderCaptionPicker(capArea, _for, _subjectAge, snippet);
+    });
+  }, 380);
 }
 
 function closeShareCard() {
   document.getElementById('share-overlay').classList.remove('show');
 }
 
-// 点击蒙层关闭
 document.getElementById('share-overlay').addEventListener('click', function(e) {
   if (e.target === this) closeShareCard();
 });
@@ -877,22 +916,47 @@ document.getElementById('share-overlay').addEventListener('click', function(e) {
 })();
 </script>
 
-<!-- 分享卡片蒙层 -->
-<div id="share-overlay">
-  <div>
-    <div class="share-card">
-      <button class="share-close" onclick="closeShareCard()">×</button>
-      <div class="share-card-logo">AIPIWEN · 行为深度解读</div>
-      <div class="share-card-insight" id="share-card-content"></div>
-      <div class="share-card-footer">
-        <span class="share-card-url">aipiwen.cn</span>
-        <span class="share-card-tag" id="share-tag">亲子理解</span>
-      </div>
+<!-- ── 离屏渲染区：html2canvas 在这里抓图，用户看不到 ── -->
+<div id="share-render-zone">
+  <div id="share-card-for-canvas" style="
+    width:360px;
+    background:linear-gradient(145deg,#1A1714,#242017);
+    border:1px solid rgba(194,105,42,.35);
+    border-radius:24px; padding:32px 28px 28px; position:relative;
+    font-family:-apple-system,PingFang SC,Helvetica,Arial,sans-serif;
+  ">
+    <div style="font-size:11px;letter-spacing:.2em;color:#C2692A;margin-bottom:20px;font-weight:700;">
+      AIPIWEN · <span id="src-module">行为深度解读</span>
     </div>
-    <div class="share-tip">📸 截图保存，分享给也在困惑的朋友</div>
+    <div id="src-content" style="
+      font-size:17px;line-height:1.75;color:#EAE7E0;margin-bottom:24px;
+      display:-webkit-box;-webkit-line-clamp:6;-webkit-box-orient:vertical;overflow:hidden;
+    "></div>
+    <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:16px;">
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <span id="src-tag" style="font-size:11px;padding:4px 12px;border-radius:10px;display:inline-block;background:rgba(194,105,42,.18);color:#C2692A;font-weight:700;"></span>
+        <span style="font-size:11px;color:rgba(234,231,224,.35);letter-spacing:.04em;">aipiwen.cn</span>
+      </div>
+      <div id="src-qr" style="width:72px;height:72px;flex-shrink:0;border-radius:10px;overflow:hidden;padding:4px;background:#2A2420;"></div>
+    </div>
   </div>
 </div>
 
+<!-- ── 分享弹层：显示生成图片 + 转发语 ── -->
+<div id="share-overlay">
+  <div id="share-scroll-wrap">
+    <div id="share-img-area">
+      <div style="color:rgba(255,255,255,.35);font-size:13px;padding:60px 0;text-align:center;">⏳ 生成分享图…</div>
+    </div>
+    <div id="share-img-hint">📱 长按图片保存到相册</div>
+    <div id="share-caption-area"></div>
+    <button id="share-close-btn" onclick="closeShareCard()">关闭</button>
+  </div>
+</div>
+
+<script src="https://cdn.bootcdn.net/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdn.bootcdn.net/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="/js/share-utils.js"></script>
 <script src="/js/track.js"></script>
 </body>
 </html>

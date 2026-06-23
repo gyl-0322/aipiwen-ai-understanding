@@ -6,6 +6,7 @@
 <title>AI皮纹天赋速测 · 向导版</title>
 <script src="https://cdn.bootcdn.net/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdn.bootcdn.net/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="/js/share-utils.js"></script>
 <style>
 /* ─── DESIGN TOKENS ─── */
 :root {
@@ -1418,7 +1419,9 @@ body {
     <div class="modal-title">分享海报 <button class="modal-close" onclick="closePoster()">×</button></div>
     <p class="poster-hint" style="font-size:12px;text-align:center;margin-bottom:14px;">生成中…</p>
     <div id="posterPreview"></div>
-    <button onclick="downloadPoster()" style="display:block;width:100%;margin-top:12px;padding:10px;background:rgba(194,105,42,.12);border:1px solid rgba(194,105,42,.35);border-radius:10px;color:rgba(253,252,248,.65);font-size:13px;cursor:pointer;transition:.2s;" onmouseover="this.style.background='rgba(194,105,42,.22)'" onmouseout="this.style.background='rgba(194,105,42,.12)'">⬇ 保存图片到设备</button>
+    <div id="poster-img-hint" style="display:none;font-size:12px;color:rgba(253,252,248,.3);text-align:center;margin:10px 0 4px;">📱 长按图片保存到相册</div>
+    <button onclick="downloadPoster()" style="display:block;width:100%;margin-top:10px;padding:10px;background:rgba(194,105,42,.12);border:1px solid rgba(194,105,42,.35);border-radius:10px;color:rgba(253,252,248,.65);font-size:13px;cursor:pointer;transition:.2s;" onmouseover="this.style.background='rgba(194,105,42,.22)'" onmouseout="this.style.background='rgba(194,105,42,.12)'">⬇ 保存图片到设备</button>
+    <div id="poster-caption-area" style="margin-top:18px;padding-top:16px;border-top:1px solid rgba(255,255,255,.06);"></div>
   </div>
 </div>
 
@@ -2281,7 +2284,16 @@ async function generatePoster() {
     img.alt = '分享海报';
     preview.innerHTML = '';
     preview.appendChild(img);
-    if (hintEl) hintEl.textContent = '📲 长按图片保存到相册';
+    if (hintEl) hintEl.textContent = '';
+    document.getElementById('poster-img-hint').style.display = 'block';
+
+    // 转发语
+    const capArea = document.getElementById('poster-caption-area');
+    capArea.innerHTML = '';
+    if (window.SHARE) {
+      const snippet = (result.mainType || result.tagline || '').slice(0, 30);
+      SHARE.renderCaptionPicker(capArea, 'fingerprint', _wizardAge || '', snippet);
+    }
 
   } catch(e) {
     // 降级：DOM clone（微信/部分 WebView 兼容）
