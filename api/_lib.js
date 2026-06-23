@@ -208,7 +208,7 @@ async function createInviteToken(ip) {
 }
 
 // 给邀请人积分
-// callerIp = 被邀请人IP，token = 邀请 token，event = 'chat' | 'report'
+// callerIp = 被邀请人IP，token = 邀请 token，event = 'chat' | 'report' | 'practitioner'
 // 返回 true=积分成功，false=已积分/无效/自邀
 async function creditReferral(callerIp, token, event) {
   if (!token || !REFERRAL_REWARDS[event]) return false;
@@ -221,13 +221,13 @@ async function creditReferral(callerIp, token, event) {
     if (alreadyUsed || !invite?.ip) return false;
     if (invite.ip === callerIp) return false; // 自邀无效
 
+    // ⚠️ 先写 usedKey 防重（写成功后即使 bonus 写失败也不会双倍积分）
+    await redisSet(usedKey, 1, 30 * 86400);
+
     const { bonusKey, amount } = REFERRAL_REWARDS[event];
     const bk  = bonusKey(invite.ip);
     const cur = (await redisGet(bk)) || 0;
-    await Promise.all([
-      redisSet(bk, cur + amount, 30 * 86400), // 奖励 30 天有效
-      redisSet(usedKey, 1, 30 * 86400),        // 防重复积分
-    ]);
+    await redisSet(bk, cur + amount, 30 * 86400); // 奖励 30 天有效
     return true;
   } catch { return false; }
 }

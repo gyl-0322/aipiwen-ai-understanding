@@ -770,11 +770,11 @@ async function callAPI(content) {
   });
   if (!res.ok) throw new Error('HTTP ' + res.status);
   const data = await res.json();
-  // 软限额提醒：获取邀请链接后拼入引导文案
+  // 软限额提醒：等 token 拿到再拼链接
   if (data.soft) {
-    getMyInviteToken().then(tok => {}).catch(() => {}); // 预热
-    const inviteUrl = _myInviteToken
-      ? `https://aipiwen.cn?ref=${_myInviteToken}`
+    const tok = await getMyInviteToken().catch(() => null);
+    const inviteUrl = tok
+      ? `https://aipiwen.cn?ref=${tok}`
       : 'https://aipiwen.cn';
     return (data.reply || '') + `\n\n👉 邀请朋友体验（+3次）：${inviteUrl}`;
   }

@@ -163,6 +163,9 @@
     },
     "api/generate-report.js": {
       "maxDuration": 60
+    },
+    "api/invite.js": {
+      "maxDuration": 10
     }
   },
   "crons": [
