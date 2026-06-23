@@ -459,6 +459,91 @@ body {
 .tag { font-size: 12px; padding: 5px 12px; border-radius: 20px; }
 .tag-primary { background: var(--amber-soft); color: var(--amber); border: 1px solid rgba(194,105,42,.2); }
 
+/* ─── UPSELL CARD ─── */
+.upsell-card {
+  background: linear-gradient(135deg,rgba(194,105,42,.1),rgba(194,105,42,.03));
+  border: 1.5px solid rgba(194,105,42,.35);
+  border-radius: 18px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+.upsell-eyebrow {
+  font-size: 10px;
+  letter-spacing: .2em;
+  color: var(--amber);
+  text-transform: uppercase;
+  font-weight: 700;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.upsell-eyebrow::before { content:''; display:inline-block; width:14px; height:1px; background:var(--amber); }
+.upsell-title {
+  font-family: var(--font-serif);
+  font-size: 18px;
+  color: var(--cream);
+  margin-bottom: 4px;
+  line-height: 1.4;
+}
+.upsell-sub {
+  font-size: 12px;
+  color: var(--ink-30);
+  margin-bottom: 16px;
+  line-height: 1.65;
+}
+.upsell-vs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.uv-col {
+  background: rgba(0,0,0,.25);
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+.uv-col.hi {
+  background: rgba(194,105,42,.15);
+  border: 1px solid rgba(194,105,42,.28);
+}
+.uv-head {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--ink-40);
+  margin-bottom: 8px;
+}
+.uv-col.hi .uv-head { color: var(--amber); }
+.uv-item {
+  font-size: 11.5px;
+  color: var(--ink-40);
+  line-height: 1.9;
+  display: flex;
+  align-items: flex-start;
+  gap: 5px;
+}
+.uv-col.hi .uv-item { color: var(--cream); }
+.uv-dot { flex-shrink: 0; margin-top: 2px; }
+.upsell-btn {
+  display: block;
+  width: 100%;
+  padding: 13px;
+  background: var(--amber);
+  color: #0E1118;
+  border: none;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 700;
+  text-align: center;
+  cursor: pointer;
+  text-decoration: none;
+  font-family: var(--font-sans);
+  transition: opacity .2s;
+}
+.upsell-btn:hover { opacity: .88; }
+
 /* ─── LEAD MAGNET ─── */
 .lead-box {
   background: var(--ink);
@@ -1333,6 +1418,30 @@ body {
     </div>
 
     <div id="reportContent"></div>
+
+    <!-- Upsell → report-upload.html -->
+    <div class="upsell-card">
+      <div class="upsell-eyebrow">精确完整版</div>
+      <div class="upsell-title">上传总表，解锁你的专属报告</div>
+      <div class="upsell-sub">速测只能看到类型轮廓。上传你的10指TRC总表，AI 精确计算五大功能区、学习通道、ATD反应速度，给你一份真正拴在数据上的解读。</div>
+      <div class="upsell-vs">
+        <div class="uv-col">
+          <div class="uv-head">现在（速测版）</div>
+          <div class="uv-item"><span class="uv-dot">·</span>主性格类型</div>
+          <div class="uv-item"><span class="uv-dot">·</span>基础优势标签</div>
+          <div class="uv-item"><span class="uv-dot">·</span>学习风格方向</div>
+        </div>
+        <div class="uv-col hi">
+          <div class="uv-head">完整版</div>
+          <div class="uv-item"><span class="uv-dot">✓</span>精确五大功能区</div>
+          <div class="uv-item"><span class="uv-dot">✓</span>学习通道占比</div>
+          <div class="uv-item"><span class="uv-dot">✓</span>ATD反应速度</div>
+          <div class="uv-item"><span class="uv-dot">✓</span>高频问题四段式解读</div>
+          <div class="uv-item"><span class="uv-dot">✓</span>可下载翻页报告</div>
+        </div>
+      </div>
+      <a href="/report-upload.html" class="upsell-btn" onclick="if(window.GT)GT.track('upsell_click',{from:'wizard_result'})">上传总表，获取专属报告 →</a>
+    </div>
 
     <!-- Lead magnet -->
     <div class="lead-box">
