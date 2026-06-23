@@ -587,7 +587,10 @@ async function submitBehavior() {
   thinking.remove();
 
   // 亲子场景才显示分析卡片
-  if (cardData?.insight) appendAnalysisCard(cardData);
+  if (cardData?.insight) {
+    appendAnalysisCard(cardData);
+    window._cardInsight = cardData.insight; // 供 openShare() 兜底用
+  }
 
   // 显示记忆提示（非亲子）
   showMemoryNotice();
@@ -717,8 +720,8 @@ function appendThinking() {
 
 function openReport() { window.location.href = `full-report.html?id=${encodeURIComponent(currentReportId)}&for=${_for}`; }
 function openShare()  {
-  const ageParam = _subjectAge ? `&age=${encodeURIComponent(_subjectAge)}` : '';
-  window.location.href = `full-report.html?id=${encodeURIComponent(currentReportId)}&for=${_for}${ageParam}&screen=share`;
+  // 直接在本页弹分享海报，不跳转 full-report
+  showShareCard(window._lastInsight || window._cardInsight || '');
 }
 
 // ── 跨场景综合分析引导 ─────────────────────────────────────────
