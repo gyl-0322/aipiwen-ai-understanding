@@ -15,7 +15,7 @@
  * 失败: { ok: false, error: string }
  */
 
-const { redisGet, redisSet } = require('./_lib');
+const { redisGet, redisSet, creditReferral } = require('./_lib');
 
 // ── 限流：每 IP 每分钟最多 3 次（防滥用） ──────────────────────────────
 async function checkRate(ip) {
@@ -32,10 +32,15 @@ const SOFT_LIMIT_MSG = `你今天已经深度使用很多次了。\n为了保证
 
 async function checkDailyQuota(ip) {
   const yyyymmdd = new Date(Date.now() + 8 * 3600 * 1000).toISOString().slice(0, 10).replace(/-/g, '');
-  const key   = `quota:genrpt:${ip}:${yyyymmdd}`;
-  const count = (await redisGet(key).catch(() => 0)) || 0;
-  if (count >= 3) return false;
-  await redisSet(key, count + 1, 90000); // TTL 25小时
+  const key      = `quota:genrpt:${ip}:${yyyymmdd}`;
+  const bonusKey = `quota:bonus:report:${ip}`;
+  const [count, bonus] = await Promise.all([
+    redisGet(key).catch(() => 0),
+    redisGet(bonusKey).catch(() => 0),
+  ]);
+  const limit = 3 + (bonus || 0);
+  if ((count || 0) >= limit) return false;
+  await redisSet(key, (count || 0) + 1, 90000);
   return true;
 }
 
@@ -224,8 +229,11 @@ module.exports = async function handler(req, res) {
     return res.status(400).json({ ok:false, error:'请求格式错误' });
   }
 
-  const { engineResult, age, name, selectedIssues = [] } = payload;
+  const { engineResult, age, name, selectedIssues = [], refToken = null } = payload;
   if (!engineResult) return res.status(400).json({ ok:false, error:'缺少 engineResult' });
+
+  // 邀请积分（异步，不阻塞主流程）
+  if (refToken) creditReferral(ip, refToken, 'report').catch(() => {});
 
   const tier          = getAgeTier(age);
   const requiredMods  = REQUIRED_BY_TIER[tier] || REQUIRED_BY_TIER.adult;

@@ -82,10 +82,15 @@ const SOFT_LIMIT_MSG = `你今天已经深度使用很多次了。\n为了保证
 
 async function checkDailyQuota(ip) {
   const yyyymmdd = new Date(Date.now() + 8 * 3600 * 1000).toISOString().slice(0, 10).replace(/-/g, '');
-  const key   = `quota:extract:${ip}:${yyyymmdd}`;
-  const count = (await redisGet(key).catch(() => 0)) || 0;
-  if (count >= 3) return false;
-  await redisSet(key, count + 1, 90000); // TTL 25小时
+  const key      = `quota:extract:${ip}:${yyyymmdd}`;
+  const bonusKey = `quota:bonus:report:${ip}`; // 报告邀请奖励同时覆盖 extract
+  const [count, bonus] = await Promise.all([
+    redisGet(key).catch(() => 0),
+    redisGet(bonusKey).catch(() => 0),
+  ]);
+  const limit = 3 + (bonus || 0);
+  if ((count || 0) >= limit) return false;
+  await redisSet(key, (count || 0) + 1, 90000);
   return true;
 }
 

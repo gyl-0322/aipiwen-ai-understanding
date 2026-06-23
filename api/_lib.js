@@ -192,10 +192,50 @@ async function registerUser(openid) {
   }
 }
 
+// ─── 邀请裂变 ─────────────────────────────────────────────────────────────────
+// event → { bonusKey(ip), amount }
+const REFERRAL_REWARDS = {
+  chat:   { bonusKey: (ip) => `quota:bonus:chat:${ip}`,   amount: 3 },
+  report: { bonusKey: (ip) => `quota:bonus:report:${ip}`, amount: 1 },
+};
+
+// 创建邀请 token（10位hex，TTL 30天）
+async function createInviteToken(ip) {
+  const token = crypto.randomBytes(5).toString('hex'); // 10 chars
+  await redisSet(`invite:${token}`, { ip, created: Date.now() }, 30 * 86400);
+  return token;
+}
+
+// 给邀请人积分
+// callerIp = 被邀请人IP，token = 邀请 token，event = 'chat' | 'report'
+// 返回 true=积分成功，false=已积分/无效/自邀
+async function creditReferral(callerIp, token, event) {
+  if (!token || !REFERRAL_REWARDS[event]) return false;
+  const usedKey = `invite:used:${token}:${callerIp}:${event}`;
+  try {
+    const [alreadyUsed, invite] = await Promise.all([
+      redisGet(usedKey),
+      redisGet(`invite:${token}`),
+    ]);
+    if (alreadyUsed || !invite?.ip) return false;
+    if (invite.ip === callerIp) return false; // 自邀无效
+
+    const { bonusKey, amount } = REFERRAL_REWARDS[event];
+    const bk  = bonusKey(invite.ip);
+    const cur = (await redisGet(bk)) || 0;
+    await Promise.all([
+      redisSet(bk, cur + amount, 30 * 86400), // 奖励 30 天有效
+      redisSet(usedKey, 1, 30 * 86400),        // 防重复积分
+    ]);
+    return true;
+  } catch { return false; }
+}
+
 module.exports = {
   redisSet, redisGet,
   makeSessionToken, parseSessionToken, getSessionToken, getOpenid,
   generatePortrait, portraitNeedsRefresh, getGlobalPatterns, registerUser,
   archiveRecordsIfNeeded, MAX_RECORDS,
   searchKnowledge,
+  createInviteToken, creditReferral,
 };

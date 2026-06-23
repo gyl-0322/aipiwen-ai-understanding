@@ -375,6 +375,34 @@ body {
 const _for = new URLSearchParams(location.search).get('for') || 'child';
 let _subjectAge = null;   // 被测者年龄，由年龄芯片选择设置
 
+// ── 邀请来源捕获 & 本机邀请 token ─────────────────────────────
+(function() {
+  try {
+    // 被邀请人：保存来源 token
+    const ref = new URLSearchParams(location.search).get('ref');
+    if (ref && /^[0-9a-f]{10}$/.test(ref)) localStorage.setItem('aipiwen_ref', ref);
+  } catch(e) {}
+})();
+// 读取来源 token（会在首次 API 调用时传给服务端以积分邀请人）
+let _refToken = null;
+try { _refToken = localStorage.getItem('aipiwen_ref') || null; } catch(e) {}
+// 本机生成的邀请 token（懒加载，分享时用）
+let _myInviteToken = null;
+try { _myInviteToken = localStorage.getItem('aipiwen_invite_token') || null; } catch(e) {}
+
+async function getMyInviteToken() {
+  if (_myInviteToken) return _myInviteToken;
+  try {
+    const r = await fetch('/api/invite?action=create');
+    const d = await r.json();
+    if (d.ok && d.token) {
+      _myInviteToken = d.token;
+      localStorage.setItem('aipiwen_invite_token', d.token);
+    }
+  } catch(e) {}
+  return _myInviteToken;
+}
+
 function setAge(btn, age) {
   _subjectAge = age;
   document.querySelectorAll('.age-chip').forEach(b => b.classList.remove('selected'));
@@ -733,6 +761,7 @@ async function callAPI(content) {
     previousContext: sessionPrevContext,
     sessionId:       _sessionId,
     subjectAge:      _subjectAge,        // 年龄分层：AI 自动调整解读语气
+    refToken:        _refToken,          // 邀请来源 token（服务端积分，去重安全）
   };
   const res = await fetch('/api/guest-chat', {
     method: 'POST',
@@ -741,9 +770,13 @@ async function callAPI(content) {
   });
   if (!res.ok) throw new Error('HTTP ' + res.status);
   const data = await res.json();
-  // 软限额提醒：拼接邀请链接引导
+  // 软限额提醒：获取邀请链接后拼入引导文案
   if (data.soft) {
-    return (data.reply || '') + '\n\n👉 分享给朋友：https://aipiwen.cn';
+    getMyInviteToken().then(tok => {}).catch(() => {}); // 预热
+    const inviteUrl = _myInviteToken
+      ? `https://aipiwen.cn?ref=${_myInviteToken}`
+      : 'https://aipiwen.cn';
+    return (data.reply || '') + `\n\n👉 邀请朋友体验（+3次）：${inviteUrl}`;
   }
   return data.reply || '…';
 }
@@ -897,18 +930,31 @@ function showShareCard(insight) {
   document.getElementById('src-tag').textContent     = CTX_TAG[_for]    || '行为理解';
   document.getElementById('src-module').textContent  = CTX_MODULE[_for] || '行为深度解读';
 
-  // 生成二维码
+  // 生成二维码（带邀请 token，朋友扫码进来后积分给当前用户）
   const qrEl = document.getElementById('src-qr');
   qrEl.innerHTML = '';
-  if (window.QRCode) {
-    new QRCode(qrEl, {
-      text: 'https://aipiwen.cn',
-      width: 64, height: 64,
-      colorDark:  '#C2692A',
-      colorLight: '#2A2420',
-      correctLevel: QRCode.CorrectLevel.M,
-    });
-  }
+  getMyInviteToken().then(tok => {
+    const shareUrl = tok ? `https://aipiwen.cn?ref=${tok}` : 'https://aipiwen.cn';
+    if (window.QRCode) {
+      qrEl.innerHTML = '';
+      new QRCode(qrEl, {
+        text: shareUrl,
+        width: 64, height: 64,
+        colorDark:  '#C2692A',
+        colorLight: '#2A2420',
+        correctLevel: QRCode.CorrectLevel.M,
+      });
+    }
+  }).catch(() => {
+    if (window.QRCode) {
+      new QRCode(qrEl, {
+        text: 'https://aipiwen.cn',
+        width: 64, height: 64,
+        colorDark: '#C2692A', colorLight: '#2A2420',
+        correctLevel: QRCode.CorrectLevel.M,
+      });
+    }
+  });
 
   // 重置弹层为加载态
   document.getElementById('share-img-area').innerHTML =

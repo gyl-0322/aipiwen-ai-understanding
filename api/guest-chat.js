@@ -5,7 +5,7 @@
  * body: { content, history: [{role, content}], context, previousContext, sessionId }
  */
 
-const { getGlobalPatterns, redisSet, redisGet } = require('./_lib');
+const { getGlobalPatterns, redisSet, redisGet, creditReferral } = require('./_lib');
 const { buildTypeReferenceForPrompt } = require('../lib/trc-knowledge-adapter');
 
 // TRC类型参考框架（仅生成一次，复用）
@@ -51,12 +51,16 @@ const SOFT_LIMIT_MSG = `你今天已经深度使用很多次了。
 如果你愿意邀请朋友一起体验，也可以获得更多免费次数。`;
 
 async function checkDailyQuota(ip) {
-  // 使用北京时间日期作为 key 后缀
   const yyyymmdd = new Date(Date.now() + 8 * 3600 * 1000).toISOString().slice(0, 10).replace(/-/g, '');
-  const key   = `quota:chat:${ip}:${yyyymmdd}`;
-  const count = (await redisGet(key).catch(() => 0)) || 0;
-  if (count >= 10) return { ok: false };
-  await redisSet(key, count + 1, 90000); // TTL 25小时
+  const key      = `quota:chat:${ip}:${yyyymmdd}`;
+  const bonusKey = `quota:bonus:chat:${ip}`;
+  const [count, bonus] = await Promise.all([
+    redisGet(key).catch(() => 0),
+    redisGet(bonusKey).catch(() => 0),
+  ]);
+  const limit = 10 + (bonus || 0);
+  if ((count || 0) >= limit) return { ok: false };
+  await redisSet(key, (count || 0) + 1, 90000);
   return { ok: true };
 }
 
@@ -111,7 +115,11 @@ module.exports = async function handler(req, res) {
     imageBase64 = null, imageMimeType = 'image/jpeg',
     subjectAge = null,   // 被测者年龄（数字），用于年龄分层解读
     reportSummary = null, // 第一次vision解读后缓存的报告数据摘要，追问时传入
+    refToken = null,     // 邀请裂变 token（被邀请人首次使用时传入，给邀请人积分）
   } = payload;
+
+  // 邀请积分（异步，不阻塞主流程；服务端去重，多次调用安全）
+  if (refToken) creditReferral(ip, refToken, 'chat').catch(() => {});
 
   // 图片上传模式：content 可以为空（纯看图）或追加问题
   const isVisionMode = !!imageBase64;

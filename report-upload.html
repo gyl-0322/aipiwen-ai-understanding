@@ -457,6 +457,31 @@ let ST = {
   requiredMods: [],
 };
 
+// ── 邀请来源捕获 ──────────────────────────────────────────────
+(function() {
+  try {
+    const ref = new URLSearchParams(location.search).get('ref');
+    if (ref && /^[0-9a-f]{10}$/.test(ref)) localStorage.setItem('aipiwen_ref', ref);
+  } catch(e) {}
+})();
+let _refToken = null;
+try { _refToken = localStorage.getItem('aipiwen_ref') || null; } catch(e) {}
+// 本机邀请 token（分享时用）
+let _myInviteToken = null;
+try { _myInviteToken = localStorage.getItem('aipiwen_invite_token') || null; } catch(e) {}
+async function getMyInviteToken() {
+  if (_myInviteToken) return _myInviteToken;
+  try {
+    const r = await fetch('/api/invite?action=create');
+    const d = await r.json();
+    if (d.ok && d.token) {
+      _myInviteToken = d.token;
+      localStorage.setItem('aipiwen_invite_token', d.token);
+    }
+  } catch(e) {}
+  return _myInviteToken;
+}
+
 // ─── UTILITIES ────────────────────────────────────────────────────────────
 function qs(sel) { return document.querySelector(sel); }
 function el(tag, cls, text) {
@@ -708,13 +733,19 @@ qs('#gen-btn').addEventListener('click', async () => {
         age: ST.age,
         name: ST.name,
         selectedIssues: ST.selectedIssues,
+        refToken: _refToken,   // 邀请来源 token（服务端积分，去重安全）
       }),
     });
     const data = await res.json();
 
     if (!data.ok) {
       if (data.soft) {
-        qs('#gen-status').innerHTML = '今天的报告生成次数已用完。<br>明天继续使用，或 <a href="https://aipiwen.cn" style="color:#C2692A">邀请朋友体验</a> 获得更多次数。';
+        getMyInviteToken().then(tok => {
+          const inviteUrl = tok ? `https://aipiwen.cn?ref=${tok}` : 'https://aipiwen.cn';
+          qs('#gen-status').innerHTML = `今天的报告生成次数已用完。<br>明天继续使用，或 <a href="${inviteUrl}" style="color:#C2692A">邀请朋友体验</a>（每邀请1人+1次）。`;
+        }).catch(() => {
+          qs('#gen-status').innerHTML = '今天的报告生成次数已用完。<br>明天继续使用，或邀请朋友体验获得更多次数。';
+        });
       } else {
         qs('#gen-status').textContent = '❌ ' + (data.error || '生成失败，请重试');
       }

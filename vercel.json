@@ -105,6 +105,10 @@
       "dest": "/practitioner.html"
     },
     {
+      "src": "/api/invite",
+      "dest": "/api/invite.js"
+    },
+    {
       "src": "/practitioner",
       "dest": "/practitioner.html"
     },

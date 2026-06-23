@@ -625,6 +625,16 @@ body {
 <script>
 if (window.GT) GT.captureInboundUTM();
 
+// ── 邀请来源捕获：?ref=TOKEN → localStorage（供后续页面传给 API 积分） ──
+(function() {
+  try {
+    const ref = new URLSearchParams(location.search).get('ref');
+    if (ref && /^[0-9a-f]{10}$/.test(ref)) {
+      localStorage.setItem('aipiwen_ref', ref);
+    }
+  } catch(e) {}
+})();
+
 // ── 评价轮播 ──────────────────────────────────────────────────
 let _reviewIdx = 0;
 function switchReview(idx) {

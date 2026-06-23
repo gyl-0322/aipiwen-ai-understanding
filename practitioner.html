@@ -124,7 +124,7 @@ body { background:var(--cream); color:var(--ink); font-family:var(--font-sans); 
 
   <div class="faq-item">
     <div class="faq-q">邀请了新从业者有什么？</div>
-    <div class="faq-a">每成功邀请一位从业者加入体验，你的客户档案位增加2个。邀请5位以上，进入内测候选名单，可优先参与功能共创。</div>
+    <div class="faq-a">邀请新从业者加入体验后，把你们的微信告诉我，人工确认后为你增加2个档案位。邀请5位以上，进入内测候选名单，可优先参与功能共创。</div>
   </div>
 
   <div class="faq-item">
@@ -138,9 +138,9 @@ body { background:var(--cream); color:var(--ink); font-family:var(--font-sans); 
     <div class="share-icon">🎁</div>
     <div class="share-text">
       <strong>邀请同行一起试</strong>
-      <span>每邀请1位从业者，你的档案位+2</span>
+      <span>朋友加入后告知我们，手动确认+2档案位</span>
     </div>
-    <button class="share-btn" onclick="copyInvite()">复制邀请链接</button>
+    <button class="share-btn" id="invite-btn" onclick="copyInvite()">复制邀请链接</button>
   </div>
 </div>
 
@@ -151,18 +151,45 @@ body { background:var(--cream); color:var(--ink); font-family:var(--font-sans); 
 </div>
 
 <script>
-function copyInvite() {
-  const url = 'https://aipiwen.cn/practitioner.html?ref=' + encodeURIComponent(location.search.match(/ref=([^&]*)/)?.[1] || 'direct');
-  navigator.clipboard.writeText('推荐你试试这个工具，帮从业者用AI读懂客户的行为和天赋。30天免费体验：' + url).then(() => {
-    alert('邀请链接已复制！');
-  }).catch(() => {
-    prompt('复制这段文字分享：', '推荐你试试这个工具，帮从业者用AI读懂客户的行为和天赋。30天免费体验：https://aipiwen.cn/practitioner.html');
-  });
+// 邀请 token（懒加载：第一次点分享时生成并缓存到 localStorage）
+let _myInviteToken = null;
+try { _myInviteToken = localStorage.getItem('aipiwen_invite_token') || null; } catch(e) {}
+
+async function getMyInviteToken() {
+  if (_myInviteToken) return _myInviteToken;
+  try {
+    const r = await fetch('/api/invite?action=create');
+    const d = await r.json();
+    if (d.ok && d.token) {
+      _myInviteToken = d.token;
+      localStorage.setItem('aipiwen_invite_token', d.token);
+    }
+  } catch(e) {}
+  return _myInviteToken;
+}
+
+async function copyInvite() {
+  const btn = document.getElementById('invite-btn');
+  if (btn) { btn.textContent = '生成中…'; btn.disabled = true; }
+
+  const tok = await getMyInviteToken();
+  const url = tok
+    ? `https://aipiwen.cn/practitioner.html?ref=${tok}`
+    : 'https://aipiwen.cn/practitioner.html';
+  const text = `推荐你试试这个工具，帮从业者用AI读懂客户的行为和天赋。30天免费体验：${url}`;
+
+  try {
+    await navigator.clipboard.writeText(text);
+    if (btn) { btn.textContent = '已复制！'; setTimeout(() => { btn.textContent='复制邀请链接'; btn.disabled=false; }, 2000); }
+    else alert('邀请链接已复制！');
+  } catch(e) {
+    prompt('复制这段文字分享给同行：', text);
+    if (btn) { btn.textContent = '复制邀请链接'; btn.disabled = false; }
+  }
 }
 
 function copyWechat(e) {
   navigator.clipboard.writeText('aipiwen2026').catch(() => {});
-  // 仍然尝试跳转
 }
 </script>
 </body>
