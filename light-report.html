@@ -149,7 +149,7 @@ html,body { font-family: var(--font-sans); background: var(--cream); color: var(
 <body>
 
 <nav class="top-nav">
-  <a class="nav-back" href="behavior-input.html">
+  <a class="nav-back" href="child-chat.html">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
       <path d="M19 12H5M12 5l-7 7 7 7"/>
     </svg>
@@ -283,7 +283,7 @@ function showReport(behavior, reportId, userId) {
     document.getElementById('insight-heading-1').textContent = '孩子的行为背后有他自己的逻辑';
     document.getElementById('insight-body-1').textContent = '每个行为都是孩子在表达某种需求——AI 分析需要稍后再试。';
     document.getElementById('summary-text').textContent = '请稍后刷新重试，或从首页重新描述行为。';
-    document.getElementById('cta-link').href = 'behavior-input.html';
+    document.getElementById('cta-link').href = 'child-chat.html';
     return;
   }
 
@@ -391,19 +391,19 @@ window.addEventListener('DOMContentLoaded', function() {
   } catch(e) {}
 
   if (!behavior) {
-    window.location.href = 'behavior-input.html';
+    window.location.href = 'child-chat.html';
     return;
   }
 
   // 防御：AIPIWEN 加载失败时回退到输入页
   if (typeof AIPIWEN === 'undefined' || typeof AIPIWEN.generateReportId !== 'function') {
-    window.location.href = 'behavior-input.html';
+    window.location.href = 'child-chat.html';
     return;
   }
 
   let reportId;
   try { reportId = AIPIWEN.generateReportId(); }
-  catch(e) { window.location.href = 'behavior-input.html'; return; }
+  catch(e) { window.location.href = 'child-chat.html'; return; }
 
   runLoading(function() {
     try {
