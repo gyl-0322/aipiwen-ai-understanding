@@ -195,8 +195,9 @@ async function registerUser(openid) {
 // ─── 邀请裂变 ─────────────────────────────────────────────────────────────────
 // event → { bonusKey(ip), amount }
 const REFERRAL_REWARDS = {
-  chat:   { bonusKey: (ip) => `quota:bonus:chat:${ip}`,   amount: 3 },
-  report: { bonusKey: (ip) => `quota:bonus:report:${ip}`, amount: 1 },
+  chat:         { bonusKey: (ip) => `quota:bonus:chat:${ip}`,         amount: 3 },
+  report:       { bonusKey: (ip) => `quota:bonus:report:${ip}`,       amount: 1 },
+  practitioner: { bonusKey: (ip) => `quota:bonus:practitioner:${ip}`, amount: 2 },
 };
 
 // 创建邀请 token（10位hex，TTL 30天）

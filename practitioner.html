@@ -124,7 +124,7 @@ body { background:var(--cream); color:var(--ink); font-family:var(--font-sans); 
 
   <div class="faq-item">
     <div class="faq-q">邀请了新从业者有什么？</div>
-    <div class="faq-a">邀请新从业者加入体验后，把你们的微信告诉我，人工确认后为你增加2个档案位。邀请5位以上，进入内测候选名单，可优先参与功能共创。</div>
+    <div class="faq-a">朋友点开你的邀请链接后，系统自动为你增加2个档案位。邀请5位以上，进入内测候选名单，可优先参与功能共创。</div>
   </div>
 
   <div class="faq-item">
@@ -138,7 +138,7 @@ body { background:var(--cream); color:var(--ink); font-family:var(--font-sans); 
     <div class="share-icon">🎁</div>
     <div class="share-text">
       <strong>邀请同行一起试</strong>
-      <span>朋友加入后告知我们，手动确认+2档案位</span>
+      <span>每邀请1位从业者打开体验页，自动+2档案位</span>
     </div>
     <button class="share-btn" id="invite-btn" onclick="copyInvite()">复制邀请链接</button>
   </div>
@@ -151,6 +151,19 @@ body { background:var(--cream); color:var(--ink); font-family:var(--font-sans); 
 </div>
 
 <script>
+// ── 从业者邀请落地追踪：有 ?ref=TOKEN 时静默通知服务端积分给邀请人 ──────
+(function() {
+  try {
+    const ref = new URLSearchParams(location.search).get('ref');
+    if (ref && /^[0-9a-f]{10}$/.test(ref)) {
+      // 保存到 localStorage（后续使用 APP 时也能积分）
+      localStorage.setItem('aipiwen_ref', ref);
+      // 通知服务端：practitioner 事件积分（+2档案位给邀请人）
+      fetch(`/api/invite?action=track&ref=${encodeURIComponent(ref)}`).catch(() => {});
+    }
+  } catch(e) {}
+})();
+
 // 邀请 token（懒加载：第一次点分享时生成并缓存到 localStorage）
 let _myInviteToken = null;
 try { _myInviteToken = localStorage.getItem('aipiwen_invite_token') || null; } catch(e) {}
