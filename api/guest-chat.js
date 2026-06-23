@@ -661,7 +661,32 @@ X值：是"还没被点燃的潜力"，不是缺陷，要让你感到是机会�
 如果用户请求其他方向（如职业/高考/学习方法等），结合读取到的数据针对性输出，语气规范同上。
 ${NO_FILLER}`;
 
-  const systemPrompt = isVisionMode ? VISION_SYSTEM : (SYSTEM[context] || SYSTEM.child);
+  // ── 知识库检索注入（grounding）：拿用户输入去 knowledge 检索，取前3条作为底座 ──
+  // 失败/超时一律静默跳过，绝不影响对话主流程。仅普通对话注入（vision 模式不注入）。
+  let kbInjection = '';
+  if (!isVisionMode && content && content.trim()) {
+    try {
+      const host  = req.headers['x-forwarded-host'] || req.headers.host;
+      const proto = req.headers['x-forwarded-proto'] || 'https';
+      const q     = encodeURIComponent(content.trim().slice(0, 80));
+      const kbRes = await fetch(`${proto}://${host}/api/knowledge?action=search&q=${q}`, {
+        signal: AbortSignal.timeout(4000),
+      });
+      if (kbRes.ok) {
+        const kbData = await kbRes.json();
+        const top = (kbData.chunks || []).slice(0, 3).filter(c => c && c.text);
+        if (top.length) {
+          kbInjection =
+            '\n\n【检索到的专业知识·仅作你的事实底座】\n' +
+            top.map(c => '· ' + c.text).join('\n') +
+            '\n（用法：把上面的事实用 AIPIWEN 的语气自然融进你的回答，落到用户的具体场景；' +
+            '不要照搬原文、不要罗列、不要报来源、不要堆术语。与你已有的知识冲突时以上面为准。）';
+        }
+      }
+    } catch (e) { /* 检索失败不影响主流程 */ }
+  }
+
+  const systemPrompt = (isVisionMode ? VISION_SYSTEM : (SYSTEM[context] || SYSTEM.child)) + kbInjection;
 
   // ── 构建消息结构 ──────────────────────────────────────────────────────────────
   const messages = [{ role: 'system', content: systemPrompt }];
