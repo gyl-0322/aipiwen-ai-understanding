@@ -381,7 +381,7 @@ html,body { font-family: var(--font-sans); background: var(--cream); color: var(
 ═══════════════════════════════════════ -->
 <div id="screen-report" class="screen active">
   <nav class="top-nav">
-    <a class="nav-back" href="child-chat.html">
+    <a class="nav-back" id="nav-back-report" href="homepage.html">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <path d="M19 12H5M12 5l-7 7 7 7"/>
       </svg>
@@ -549,7 +549,7 @@ html,body { font-family: var(--font-sans); background: var(--cream); color: var(
 
   <div class="wechat-wrap">
     <h2 class="wechat-title" style="text-align:center;margin-bottom:6px">联系顾问，获取深度解读</h2>
-    <p class="wechat-body" style="text-align:center;margin-bottom:24px">免费咨询 · 机器人客服即时响应</p>
+    <p class="wechat-body" style="text-align:center;margin-bottom:24px">免费咨询 · 客服即时响应</p>
 
     <!-- 直达企业微信客服 -->
     <a id="kf-link" href="https://work.weixin.qq.com/kfid/kfc6ce446e6e057c683"
@@ -1091,6 +1091,11 @@ window.addEventListener('DOMContentLoaded', function() {
   // Get reportId from URL
   const params = new URLSearchParams(window.location.search);
   gReportId = params.get('id') || '';
+
+  // 返回按钮指向来源对话页
+  const forParam = params.get('for') || 'child';
+  const backEl = document.getElementById('nav-back-report');
+  if (backEl) backEl.href = 'child-chat.html?for=' + encodeURIComponent(forParam);
 
   // Get behavior + type from localStorage
   try {

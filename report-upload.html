@@ -56,6 +56,35 @@ html,body {
 }
 .pre-upload.hidden { display:none; }
 
+/* ── REPORT LOADING OVERLAY ── */
+.report-loading {
+  position:fixed; inset:0; z-index:20;
+  display:none; flex-direction:column; align-items:center; justify-content:center;
+  background:var(--cream); padding:40px 24px; text-align:center;
+}
+.report-loading.active { display:flex; }
+.report-loading-orb {
+  width:64px; height:64px; border-radius:50%;
+  background:conic-gradient(var(--amber) 0deg, rgba(194,105,42,.15) 360deg);
+  animation:rorbSpin 1.1s linear infinite; margin-bottom:24px;
+}
+@keyframes rorbSpin { to { transform:rotate(360deg); } }
+.report-loading-title {
+  font-family:var(--font-serif); font-size:22px;
+  color:var(--ink); font-weight:normal; margin-bottom:10px;
+}
+.report-loading-sub { font-size:14px; color:var(--ink-40); line-height:1.7; }
+.report-loading-steps { margin-top:24px; text-align:left; }
+.report-loading-step {
+  display:flex; align-items:center; gap:10px;
+  font-size:13px; color:var(--ink-40); padding:6px 0;
+  opacity:0; animation:rFadeStep .5s ease forwards;
+}
+.report-loading-step.done { color:var(--ok); }
+.report-loading-step .step-dot { width:8px; height:8px; border-radius:50%; background:var(--ink-10); flex-shrink:0; }
+.report-loading-step.done .step-dot { background:var(--ok); }
+@keyframes rFadeStep { from{opacity:0;transform:translateX(-8px);} to{opacity:1;transform:none;} }
+
 .page-wrap {
   max-width:520px; margin:0 auto;
   padding:80px 24px 60px;
@@ -304,6 +333,14 @@ html,body {
   </div>
 </div>
 
+<!-- ── REPORT LOADING ── -->
+<div class="report-loading" id="reportLoading">
+  <div class="report-loading-orb"></div>
+  <div class="report-loading-title">AI 正在读取报告…</div>
+  <div class="report-loading-sub">识别数据指标，对照知识库</div>
+  <div class="report-loading-steps" id="reportLoadingSteps"></div>
+</div>
+
 <!-- ── CHAT PAGE ── -->
 <div class="chat-page" id="chatPage">
 
@@ -460,12 +497,34 @@ function handleFile(file) {
       const n = file.name;
       reportName.textContent = n.length > 24 ? n.slice(0, 22) + '…' : n;
 
-      // Switch to chat
+      // Switch to loading screen first
       preUpload.classList.add('hidden');
-      chatPage.classList.add('active');
-
-      appendAI('你好！报告已收到 📋\n\n从下方选一个解读方向，AI 立刻为你生成专属内容。也可以直接在对话框提问。');
-      sendBtn.disabled = false;
+      const reportLoadingEl = document.getElementById('reportLoading');
+      const stepsContainer  = document.getElementById('reportLoadingSteps');
+      reportLoadingEl.classList.add('active');
+      stepsContainer.innerHTML = '';
+      const RSTEPS = ['读取报告图像…', '识别关键数据指标…', '比对知识库内容…', '生成个性化解读框架…'];
+      let ri = 0;
+      function addRStep() {
+        if (ri >= RSTEPS.length) {
+          setTimeout(() => {
+            reportLoadingEl.classList.remove('active');
+            chatPage.classList.add('active');
+            appendAI('你好！报告已收到 📋\n\n从下方选一个解读方向，AI 立刻为你生成专属内容。也可以直接在对话框提问。');
+            sendBtn.disabled = false;
+          }, 400);
+          return;
+        }
+        const el = document.createElement('div');
+        el.className = 'report-loading-step';
+        el.style.animationDelay = (ri * 0.1) + 's';
+        el.innerHTML = `<div class="step-dot"></div>${RSTEPS[ri]}`;
+        stepsContainer.appendChild(el);
+        setTimeout(() => el.classList.add('done'), 300);
+        ri++;
+        setTimeout(addRStep, 650);
+      }
+      addRStep();
     };
     img.src = originalDataUrl;
   };
@@ -484,6 +543,7 @@ function resetToUpload() {
   chatInput.style.height = 'auto';
   sendBtn.disabled = true;
   chatPage.classList.remove('active');
+  document.getElementById('reportLoading').classList.remove('active');
   preUpload.classList.remove('hidden');
 }
 

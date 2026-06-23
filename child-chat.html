@@ -143,6 +143,37 @@ body {
 /* ── 离屏渲染区（html2canvas 用，不可见） ── */
 #share-render-zone { position:fixed; left:-9999px; top:0; z-index:-999; width:360px; pointer-events:none; }
 
+/* ── PHASE 1.5: LOADING ── */
+#phase-loading {
+  display: none; flex-direction: column; align-items: center; justify-content: center;
+  flex: 1; padding: 40px 24px; text-align: center;
+}
+.loading-orb {
+  width: 64px; height: 64px; border-radius: 50%;
+  background: conic-gradient(var(--amber) 0deg, var(--amber-soft) 360deg);
+  animation: orbSpin 1.1s linear infinite;
+  margin-bottom: 24px;
+}
+@keyframes orbSpin { to { transform: rotate(360deg); } }
+.loading-title {
+  font-family: var(--font-serif); font-size: 22px;
+  color: var(--ink); font-weight: normal; margin-bottom: 10px;
+}
+.loading-sub { font-size: 14px; color: var(--ink-40); line-height: 1.7; }
+.loading-steps { margin-top: 24px; text-align: left; }
+.loading-step {
+  display: flex; align-items: center; gap: 10px;
+  font-size: 13px; color: var(--ink-40); padding: 6px 0;
+  opacity: 0; animation: fadeStep .5s ease forwards;
+}
+.loading-step.done { color: var(--ok); }
+.loading-step .step-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--ink-10); flex-shrink: 0;
+}
+.loading-step.done .step-dot { background: var(--ok); }
+@keyframes fadeStep { from { opacity:0; transform: translateX(-8px); } to { opacity:1; transform: none; } }
+
 /* ── PHASE 2: CHAT ── */
 #phase-chat { flex:1; display:none; flex-direction:column; overflow:hidden; }
 
@@ -304,6 +335,14 @@ body {
     <div class="cta-note">免费生成 · 2分钟内看到结果</div>
     <div class="privacy-bar">你的描述仅用于本次分析，不会被存储或分享给第三方</div>
   </div>
+</div>
+
+<!-- ══ PHASE 1.5: LOADING ══ -->
+<div id="phase-loading">
+  <div class="loading-orb"></div>
+  <div class="loading-title" id="loading-title">AI 正在理解行为…</div>
+  <div class="loading-sub">这不是翻译，是换一种视角看见Ta</div>
+  <div class="loading-steps" id="loading-steps"></div>
 </div>
 
 <!-- ══ PHASE 2: CHAT ══ -->
@@ -470,7 +509,42 @@ function fillExample(text, el) {
   ta.dispatchEvent(new Event('input'));
 }
 
-function handleBack() { history.back(); }
+function handleBack() { window.location.href = 'homepage.html'; }
+// ── Loading animation (shown between form submit and chat) ──────────────────
+function runLoadingAnimation() {
+  const STEPS_MAP = {
+    child:    ['读取孩子行为描述…', '识别行为背后的需求信号…', '比对心理模式数据库…', '生成个性化理解报告…'],
+    self:     ['读取你的行为描述…', '识别内在心理信号…', '比对自我认知模式…', '生成个性化自我解读…'],
+    partner:  ['读取伴侣行为描述…', '识别关系互动信号…', '比对伴侣心理模式…', '生成个性化关系解读…'],
+    business: ['读取合伙人行为描述…', '识别商业关系信号…', '比对合作心理模式…', '生成个性化合作解读…'],
+  };
+  const TITLE_MAP = {
+    child:    'AI 正在理解孩子的行为…',
+    self:     'AI 正在理解你的行为…',
+    partner:  'AI 正在理解伴侣的行为…',
+    business: 'AI 正在理解合伙人的行为…',
+  };
+  const steps = STEPS_MAP[_for] || STEPS_MAP.child;
+  document.getElementById('loading-title').textContent = TITLE_MAP[_for] || TITLE_MAP.child;
+  const container = document.getElementById('loading-steps');
+  container.innerHTML = '';
+  return new Promise(resolve => {
+    let i = 0;
+    function addStep() {
+      if (i >= steps.length) { setTimeout(resolve, 400); return; }
+      const el = document.createElement('div');
+      el.className = 'loading-step';
+      el.style.animationDelay = (i * 0.1) + 's';
+      el.innerHTML = `<div class="step-dot"></div>${steps[i]}`;
+      container.appendChild(el);
+      setTimeout(() => el.classList.add('done'), 300);
+      i++;
+      setTimeout(addStep, 650);
+    }
+    addStep();
+  });
+}
+
 function backToForm() {
   // 清空聊天状态，避免旧对话混入下一次 session
   chatHistory       = [];
@@ -481,6 +555,7 @@ function backToForm() {
   document.getElementById('chat-scroll').innerHTML = '';
 
   document.getElementById('phase-chat').style.display = 'none';
+  document.getElementById('phase-loading').style.display = 'none';
   document.getElementById('phase-form').style.display = 'block';
 }
 
@@ -551,27 +626,18 @@ async function submitBehavior() {
     }));
   } catch(e) {}
 
-  // Switch to chat phase
-  document.getElementById('phase-form').style.display = 'none';
-  const chatEl = document.getElementById('phase-chat');
-  chatEl.style.display = 'flex';
-
   // Generate report ID
   const d = new Date();
   currentReportId = `AIPIWEN-${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}-${Math.random().toString(36).slice(2,6).toUpperCase()}`;
 
   isProcessing = true;
-
-  // 读取本场景的历史记忆（非亲子），在整个 session 内复用
   sessionPrevContext = buildPreviousContext();
 
-  // Show user's behavior as a bubble
-  appendUserBubble(behavior);
+  // Switch to LOADING phase
+  document.getElementById('phase-form').style.display = 'none';
+  document.getElementById('phase-loading').style.display = 'flex';
 
-  // Show thinking
-  const thinking = appendThinking();
-
-  // Local analysis (亲子场景专用)
+  // Local analysis runs in parallel with animation (亲子场景专用)
   let cardData = null;
   if (_for === 'child') {
     try {
@@ -584,7 +650,16 @@ async function submitBehavior() {
     } catch(e) { console.warn('analysis', e); }
   }
 
-  thinking.remove();
+  // Play loading animation (~3s)
+  await runLoadingAnimation();
+
+  // Switch to chat phase
+  document.getElementById('phase-loading').style.display = 'none';
+  const chatEl = document.getElementById('phase-chat');
+  chatEl.style.display = 'flex';
+
+  // Show user bubble
+  appendUserBubble(behavior);
 
   // 亲子场景才显示分析卡片
   if (cardData?.insight) {

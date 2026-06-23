@@ -104,6 +104,34 @@ body {
 .step-screen { display: none; padding: 0 20px 28px; }
 .step-screen.active { display: block; }
 
+/* ─── ANALYSIS LOADING ─── */
+#screen-analysis-loading {
+  display: none; flex-direction: column; align-items: center;
+  justify-content: center; min-height: 60vh; padding: 40px 24px; text-align: center;
+}
+#screen-analysis-loading.active { display: flex; }
+.analysis-orb {
+  width: 64px; height: 64px; border-radius: 50%;
+  background: conic-gradient(var(--amber) 0deg, rgba(194,105,42,.15) 360deg);
+  animation: aorbSpin 1.1s linear infinite; margin-bottom: 24px;
+}
+@keyframes aorbSpin { to { transform: rotate(360deg); } }
+.analysis-loading-title {
+  font-family: var(--font-serif); font-size: 22px;
+  color: var(--ink); font-weight: normal; margin-bottom: 10px;
+}
+.analysis-loading-sub { font-size: 14px; color: var(--ink-40); line-height: 1.7; }
+.analysis-loading-steps { margin-top: 24px; text-align: left; }
+.analysis-step {
+  display: flex; align-items: center; gap: 10px;
+  font-size: 13px; color: var(--ink-40); padding: 6px 0;
+  opacity: 0; animation: aFadeStep .5s ease forwards;
+}
+.analysis-step.done { color: var(--ok); }
+.analysis-step .step-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ink-10); flex-shrink: 0; }
+.analysis-step.done .step-dot { background: var(--ok); }
+@keyframes aFadeStep { from { opacity:0; transform:translateX(-8px); } to { opacity:1; transform:none; } }
+
 .step-label {
   font-size: 10px;
   letter-spacing: .22em;
@@ -1335,6 +1363,16 @@ body {
   </div>
 
   <!-- ══════════════════════════════════════
+       ANALYSIS LOADING SCREEN
+  ══════════════════════════════════════ -->
+  <div id="screen-analysis-loading">
+    <div class="analysis-orb"></div>
+    <div class="analysis-loading-title">AI 正在分析皮纹数据…</div>
+    <div class="analysis-loading-sub">这需要几秒钟，结果因人而异</div>
+    <div class="analysis-loading-steps" id="analysis-loading-steps"></div>
+  </div>
+
+  <!-- ══════════════════════════════════════
        RESULT SCREEN
   ══════════════════════════════════════ -->
   <div class="step-screen" id="screen-result">
@@ -2078,17 +2116,42 @@ function generateReport(result) {
 ═══════════════════════════════════════════════ */
 function showResult() {
   const result = classify();
-  document.getElementById('resultType').textContent = result.mainType;
-  document.getElementById('resultTagline').textContent = result.tagline;
-  document.getElementById('reportContent').innerHTML = generateReport(result);
-  window._currentResult = result;
-  showScreen('result');
-  for (let i = 1; i <= 7; i++) {
-    const dot = document.getElementById('pd' + i);
-    if (dot) dot.className = 'progress-dot done';
+  // 隐藏步骤屏，显示加载动画
+  document.querySelectorAll('.step-screen').forEach(el => el.classList.remove('active'));
+  const loadingEl = document.getElementById('screen-analysis-loading');
+  loadingEl.classList.add('active');
+  const container = document.getElementById('analysis-loading-steps');
+  container.innerHTML = '';
+  const STEPS = ['读取手指纹路数据…', '识别主纹类型（斗/箕/弧）…', '计算纹路特征组合…', '生成个性化天赋报告…'];
+  let i = 0;
+  function addStep() {
+    if (i >= STEPS.length) {
+      setTimeout(() => {
+        loadingEl.classList.remove('active');
+        document.getElementById('resultType').textContent = result.mainType;
+        document.getElementById('resultTagline').textContent = result.tagline;
+        document.getElementById('reportContent').innerHTML = generateReport(result);
+        window._currentResult = result;
+        showScreen('result');
+        for (let j = 1; j <= 7; j++) {
+          const dot = document.getElementById('pd' + j);
+          if (dot) dot.className = 'progress-dot done';
+        }
+        if (window.GT) GT.track('result_view', { type: result.key });
+        _logFingerprintSession(result);
+      }, 400);
+      return;
+    }
+    const el = document.createElement('div');
+    el.className = 'analysis-step';
+    el.style.animationDelay = (i * 0.1) + 's';
+    el.innerHTML = `<div class="step-dot"></div>${STEPS[i]}`;
+    container.appendChild(el);
+    setTimeout(() => el.classList.add('done'), 300);
+    i++;
+    setTimeout(addStep, 650);
   }
-  if (window.GT) GT.track('result_view', { type: result.key });
-  _logFingerprintSession(result);
+  addStep();
 }
 
 // ── 皮纹速测会话日志 ─────────────────────────────────────────────────────────
