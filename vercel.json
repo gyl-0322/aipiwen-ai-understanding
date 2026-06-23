@@ -1,48 +1,164 @@
 {
   "version": 2,
   "routes": [
-    { "src": "/api/(.*)",                    "dest": "/api/$1" },
-    { "src": "/js/(.*)",                     "dest": "/js/$1" },
-    { "src": "/patterns/(.*)",               "dest": "/patterns/$1" },
-    { "src": "/admin.html",                  "dest": "/admin.html" },
-    { "src": "/admin-convs.html",            "dest": "/admin-convs.html" },
-    { "src": "/admin-convs",                 "dest": "/admin-convs.html" },
-    { "src": "/homepage.html",               "dest": "/homepage.html" },
-    { "src": "/behavior-input.html",         "headers": {"Location": "/child-chat.html"}, "status": 301 },
-    { "src": "/light-report.html",           "dest": "/light-report.html" },
-    { "src": "/full-report.html",            "dest": "/full-report.html" },
-    { "src": "/fingerprint-v2-wizard.html",  "dest": "/fingerprint-v2-wizard.html" },
-    { "src": "/child-chat.html",             "dest": "/child-chat.html" },
-    { "src": "/chat",                        "dest": "/child-chat.html" },
-    { "src": "/privacy",                     "dest": "/privacy.html" },
-    { "src": "/privacy.html",               "dest": "/privacy.html" },
-    { "src": "/personality",                 "dest": "/personality.html" },
-    { "src": "/personality.html",            "dest": "/personality.html" },
-    { "src": "/synthesis.html",              "dest": "/synthesis.html" },
-    { "src": "/synthesis",                   "dest": "/synthesis.html" },
-    { "src": "/report-upload.html",          "dest": "/report-upload.html" },
-    { "src": "/report-upload",               "dest": "/report-upload.html" },
-    { "src": "/",                            "dest": "/homepage.html" },
-    { "src": "/(.*)",                        "dest": "/homepage.html" }
+    {
+      "src": "/api/(.*)",
+      "dest": "/api/$1"
+    },
+    {
+      "src": "/js/(.*)",
+      "dest": "/js/$1"
+    },
+    {
+      "src": "/patterns/(.*)",
+      "dest": "/patterns/$1"
+    },
+    {
+      "src": "/admin.html",
+      "dest": "/admin.html"
+    },
+    {
+      "src": "/admin-convs.html",
+      "dest": "/admin-convs.html"
+    },
+    {
+      "src": "/admin-convs",
+      "dest": "/admin-convs.html"
+    },
+    {
+      "src": "/homepage.html",
+      "dest": "/homepage.html"
+    },
+    {
+      "src": "/behavior-input.html",
+      "headers": {
+        "Location": "/child-chat.html"
+      },
+      "status": 301
+    },
+    {
+      "src": "/light-report.html",
+      "dest": "/light-report.html"
+    },
+    {
+      "src": "/full-report.html",
+      "dest": "/full-report.html"
+    },
+    {
+      "src": "/fingerprint-v2-wizard.html",
+      "dest": "/fingerprint-v2-wizard.html"
+    },
+    {
+      "src": "/child-chat.html",
+      "dest": "/child-chat.html"
+    },
+    {
+      "src": "/chat",
+      "dest": "/child-chat.html"
+    },
+    {
+      "src": "/privacy",
+      "dest": "/privacy.html"
+    },
+    {
+      "src": "/privacy.html",
+      "dest": "/privacy.html"
+    },
+    {
+      "src": "/personality",
+      "dest": "/personality.html"
+    },
+    {
+      "src": "/personality.html",
+      "dest": "/personality.html"
+    },
+    {
+      "src": "/synthesis.html",
+      "dest": "/synthesis.html"
+    },
+    {
+      "src": "/synthesis",
+      "dest": "/synthesis.html"
+    },
+    {
+      "src": "/report-upload.html",
+      "dest": "/report-upload.html"
+    },
+    {
+      "src": "/report-upload",
+      "dest": "/report-upload.html"
+    },
+    {
+      "src": "/report-viewer.html",
+      "dest": "/report-viewer.html"
+    },
+    {
+      "src": "/report-viewer",
+      "dest": "/report-viewer.html"
+    },
+    {
+      "src": "/",
+      "dest": "/homepage.html"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/homepage.html"
+    }
   ],
   "functions": {
-    "api/wechat.js":      { "maxDuration": 10 },
-    "api/auth.js":        { "maxDuration": 10 },
-    "api/children.js":    { "maxDuration": 15 },
-    "api/guest-chat.js":  { "maxDuration": 30 },
-    "api/synthesize.js":  { "maxDuration": 30 },
-    "api/digest.js":      { "maxDuration": 60 },
-    "api/stats.js":       { "maxDuration": 10 },
-    "api/knowledge.js":   { "maxDuration": 15 },
-    "api/admin-convs.js": { "maxDuration": 30 },
-    "api/log-session.js": { "maxDuration": 10 },
-    "api/growth.js":      { "maxDuration": 15 },
-    "api/track.js":       { "maxDuration": 10 }
+    "api/wechat.js": {
+      "maxDuration": 10
+    },
+    "api/auth.js": {
+      "maxDuration": 10
+    },
+    "api/children.js": {
+      "maxDuration": 15
+    },
+    "api/guest-chat.js": {
+      "maxDuration": 30
+    },
+    "api/synthesize.js": {
+      "maxDuration": 30
+    },
+    "api/digest.js": {
+      "maxDuration": 60
+    },
+    "api/stats.js": {
+      "maxDuration": 10
+    },
+    "api/knowledge.js": {
+      "maxDuration": 15
+    },
+    "api/admin-convs.js": {
+      "maxDuration": 30
+    },
+    "api/log-session.js": {
+      "maxDuration": 10
+    },
+    "api/growth.js": {
+      "maxDuration": 15
+    },
+    "api/track.js": {
+      "maxDuration": 10
+    }
   },
   "crons": [
-    { "path": "/api/digest?action=portrait_all",   "schedule": "0 2 * * *" },
-    { "path": "/api/digest?action=patterns",       "schedule": "0 3 * * 0" },
-    { "path": "/api/digest?action=weekly",         "schedule": "0 4 * * 0" },
-    { "path": "/api/digest?action=analyze_convs",  "schedule": "0 3 * * 1" }
+    {
+      "path": "/api/digest?action=portrait_all",
+      "schedule": "0 2 * * *"
+    },
+    {
+      "path": "/api/digest?action=patterns",
+      "schedule": "0 3 * * 0"
+    },
+    {
+      "path": "/api/digest?action=weekly",
+      "schedule": "0 4 * * 0"
+    },
+    {
+      "path": "/api/digest?action=analyze_convs",
+      "schedule": "0 3 * * 1"
+    }
   ]
 }
