@@ -1,61 +1,24 @@
 #!/bin/bash
-# deploy.sh — 一键部署 AIPIWEN 到阿里云 OSS
-# 运行方式：bash ~/AI-CEO-System/aipiwen-ai-understanding/deploy.sh
+# AIPIWEN 一键部署脚本
+# 用法：bash deploy.sh
 
-PROJECT_DIR="$HOME/AI-CEO-System/aipiwen-ai-understanding"
-BUCKET="oss://aipewen-ai-understanding"
-CONFIG="$HOME/.ossutilconfig"
+set -e
+cd "$(dirname "$0")"
 
-echo ""
-echo "=== AIPIWEN 一键部署 ==="
-echo "目标：$BUCKET"
-echo ""
+echo "🚀 开始部署 AIPIWEN..."
 
-# 检查 ossutil
-if ! command -v ossutil &> /dev/null; then
-  echo "❌ ossutil 未安装，请先运行："
-  echo "   bash $PROJECT_DIR/setup_ossutil.sh"
-  exit 1
+if [[ -n $(git status --porcelain) ]]; then
+  echo "📝 发现未提交改动，正在提交..."
+  git add -A
+  git commit -m "deploy: $(date '+%Y-%m-%d %H:%M')"
+else
+  echo "✅ 没有新改动"
 fi
 
-# 检查配置
-if [ ! -f "$CONFIG" ]; then
-  echo "❌ 未找到配置文件，请先运行："
-  echo "   bash $PROJECT_DIR/setup_ossutil.sh"
-  exit 1
-fi
+echo "⬆️  推送到 GitHub..."
+git push origin main
 
-cd "$PROJECT_DIR"
-
-# ─── 上传核心文件 ─────────────────────────────────────
-echo "上传 index.html ..."
-ossutil cp index.html "$BUCKET/index.html" \
-  --config-file "$CONFIG" \
-  --meta "Cache-Control:no-cache" \
-  -f && echo "  ✅ index.html"
-
-echo "上传 admin.html ..."
-ossutil cp admin.html "$BUCKET/admin.html" \
-  --config-file "$CONFIG" \
-  --meta "Cache-Control:no-cache" \
-  -f && echo "  ✅ admin.html"
-
-# ─── 上传 images 目录 ─────────────────────────────────
-if [ -d "images" ]; then
-  echo "上传 images/ ..."
-  ossutil cp images/ "$BUCKET/images/" \
-    --config-file "$CONFIG" \
-    -r -f && echo "  ✅ images/"
-fi
-
-# ─── CDN 刷新提示 ─────────────────────────────────────
 echo ""
-echo "=== 部署完成 ✅ ==="
-echo ""
-echo "⚠️  CDN 缓存刷新（手动操作，否则可能要等5-30分钟）："
-echo "   阿里云控制台 → CDN → 刷新预热 → URL刷新"
-echo "   输入：https://www.aipiwen.cn/"
-echo "         https://www.aipiwen.cn/admin.html"
-echo ""
-echo "部署时间：$(date '+%Y-%m-%d %H:%M:%S')"
-echo ""
+echo "✅ 推送完成！Vercel 1-2 分钟内自动部署。"
+echo "   部署状态：https://vercel.com/dashboard"
+echo "   线上网站：https://www.aipiwen.cn"
