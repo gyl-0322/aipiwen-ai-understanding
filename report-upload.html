@@ -527,7 +527,7 @@ async function _saveReportForClient(sections) {
     const r = await fetch('/api/report-store', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ sections, engineResult: ST.engineResult, fingers: ST.fingers }),
+      body: JSON.stringify({ sections, engineResult: ST.engineResult, fingers: ST.fingers, name: ST.name || null, age: ST.age || null }),
     });
     const d = await r.json();
     if (!d.ok || !d.id) return;
@@ -1108,7 +1108,8 @@ qs('#cmodal-copy').addEventListener('click', () => {
       const rep = d.report;
       ST.engineResult = rep.engineResult;
       ST.fingers      = rep.fingers || [];
-      ST.age          = rep.engineResult?.age || 6;
+      ST.name         = rep.name   || null;
+      ST.age          = rep.age    || rep.engineResult?.age || 6;
       buildReportFlipBook(rep.sections);
       goScreen('s4');
       qs('#rv-client-btn').style.display = 'none'; // 客户不看"发客户"按钮

@@ -18,10 +18,29 @@
 
 const { redisSet, redisGet } = require('./_lib');
 
+// ── IP 限流：每 IP 每分钟最多 20 次（防垃圾注入 convlog:index）─────────────
+async function checkRate(ip) {
+  const minute = Math.floor(Date.now() / 60000);
+  const key    = `ratelimit:logsess:${ip}:${minute}`;
+  const count  = (await redisGet(key).catch(() => 0)) || 0;
+  if (count >= 20) return false;
+  await redisSet(key, count + 1, 120);
+  return true;
+}
+
 module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   if (req.method === 'OPTIONS') return res.status(204).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+
+  const ip = (
+    req.headers['x-forwarded-for']?.split(',')[0]?.trim() ||
+    req.socket?.remoteAddress ||
+    'unknown'
+  ).slice(0, 20);
+
+  const allowed = await checkRate(ip).catch(() => true);
+  if (!allowed) return res.status(429).json({ error: '请求过于频繁' });
 
   let payload;
   try {
@@ -37,12 +56,6 @@ module.exports = async function handler(req, res) {
   if (!context || typeof context !== 'string') {
     return res.status(400).json({ error: 'context 必填' });
   }
-
-  const ip = (
-    req.headers['x-forwarded-for']?.split(',')[0]?.trim() ||
-    req.socket?.remoteAddress ||
-    'unknown'
-  ).slice(0, 20);
 
   const ts = Date.now();
 

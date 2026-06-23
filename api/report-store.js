@@ -2,17 +2,27 @@
  * api/report-store.js — 专属报告存储与读取
  *
  * POST /api/report-store
- *   body: { sections, engineResult, fingers? }
+ *   body: { sections, engineResult, fingers?, name?, age? }
  *   → { ok: true, id }      (8位hex，唯一报告ID)
  *   存入 Redis key report:{id}，TTL 30天
  *
  * GET  /api/report-store?id=xxx
- *   → { ok: true, report: { sections, engineResult, createdAt } }
+ *   → { ok: true, report: { sections, engineResult, fingers, name, age, createdAt } }
  *   → { ok: false, error } (不存在/已过期)
  */
 
 const { redisGet, redisSet } = require('./_lib');
 const crypto = require('crypto');
+
+// ── IP 限流：每 IP 每分钟最多 10 次 POST ─────────────────────────────────
+async function checkRate(ip) {
+  const minute = Math.floor(Date.now() / 60000);
+  const key    = `ratelimit:rptstore:${ip}:${minute}`;
+  const count  = (await redisGet(key).catch(() => 0)) || 0;
+  if (count >= 10) return false;
+  await redisSet(key, count + 1, 120);
+  return true;
+}
 
 module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -24,20 +34,38 @@ module.exports = async function handler(req, res) {
 
   // ─── POST: 保存报告 ─────────────────────────────────────────────────────────
   if (req.method === 'POST') {
+    // 限流
+    const allowed = await checkRate(ip).catch(() => true);
+    if (!allowed) {
+      return res.status(429).json({ ok: false, error: '请求过于频繁，请稍后再试' });
+    }
+
+    // body 大小限制：500KB（sections 文本内容，不含图片）
+    const MAX_BODY = 500 * 1024;
     let body;
     try {
       const raw = await new Promise((resolve, reject) => {
         let data = '';
-        req.on('data', chunk => data += chunk);
+        let bytes = 0;
+        req.on('data', chunk => {
+          bytes += chunk.length;
+          if (bytes > MAX_BODY) {
+            reject(Object.assign(new Error('BODY_TOO_LARGE'), { code: 413 }));
+            req.destroy();
+          } else {
+            data += chunk;
+          }
+        });
         req.on('end', () => resolve(data));
         req.on('error', reject);
       });
       body = JSON.parse(raw);
-    } catch {
-      return res.status(400).json({ ok: false, error: '请求体格式错误' });
+    } catch(e) {
+      const code = e.code === 413 ? 413 : 400;
+      return res.status(code).json({ ok: false, error: code === 413 ? '报告数据过大' : '请求体格式错误' });
     }
 
-    const { sections, engineResult, fingers } = body;
+    const { sections, engineResult, fingers, name, age } = body;
     if (!sections?.length || !engineResult) {
       return res.status(400).json({ ok: false, error: '缺少 sections 或 engineResult' });
     }
@@ -46,7 +74,9 @@ module.exports = async function handler(req, res) {
     const payload = {
       sections,
       engineResult,
-      fingers: fingers || [],
+      fingers:   fingers   || [],
+      name:      name      ? String(name).slice(0, 40)  : null,
+      age:       age       ? Number(age) || null        : null,
       createdAt: Date.now(),
       ip,
     };
