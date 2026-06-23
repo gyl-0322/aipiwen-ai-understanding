@@ -8,7 +8,7 @@
     { "src": "/admin-convs.html",            "dest": "/admin-convs.html" },
     { "src": "/admin-convs",                 "dest": "/admin-convs.html" },
     { "src": "/homepage.html",               "dest": "/homepage.html" },
-    { "src": "/behavior-input.html",         "dest": "/behavior-input.html" },
+    { "src": "/behavior-input.html",         "headers": {"Location": "/child-chat.html"}, "status": 301 },
     { "src": "/light-report.html",           "dest": "/light-report.html" },
     { "src": "/full-report.html",            "dest": "/full-report.html" },
     { "src": "/fingerprint-v2-wizard.html",  "dest": "/fingerprint-v2-wizard.html" },

@@ -4,8 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>读懂孩子 · AIPIWEN</title>
-<!-- 此页已合并至 child-chat.html，自动跳转 -->
-<script>window.location.replace('/child-chat.html');</script>
+<!-- 此页已合并至 child-chat.html，自动跳转（含 bfcache 处理） -->
+<script>
+window.location.replace('/child-chat.html');
+window.addEventListener('pageshow', function(e) { window.location.replace('/child-chat.html'); });
+</script>
 <style>
 :root {
   --cream:      #FDFCF8;
