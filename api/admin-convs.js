@@ -1,13 +1,69 @@
 /**
- * AIPIWEN 对话日志管理接口
+ * AIPIWEN 对话日志管理接口 + 事件统计埋点（merged stats.js）
  * GET /api/admin-convs?secret=xxx                → 会话列表（最新500条）
  * GET /api/admin-convs?secret=xxx&sid=xxx        → 某次会话的完整对话
  * GET /api/admin-convs?secret=xxx&action=export  → 导出全部会话 JSON（最新300条含消息）
+ * POST /api/stats  { event, meta? }              → 埋点（公开）
+ * GET  /api/stats?admin=1&secret=xxx             → 查看统计数据（管理端）
  *
  * 需要在 Vercel 环境变量中设置 ADMIN_SECRET
  */
 
 const { redisGet, redisSet } = require('./_lib');
+
+// ── stats 处理器（merged from stats.js）──────────────────────────────────────
+function statsToday() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+async function handleStats(req, res) {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  if (req.method === 'OPTIONS') return res.status(204).end();
+
+  if (req.method === 'POST') {
+    let body = '';
+    await new Promise(resolve => { req.on('data', c => (body += c)); req.on('end', resolve); });
+    let payload = {};
+    try { payload = JSON.parse(body); } catch {}
+    const { event } = payload;
+    if (!event?.trim()) return res.status(400).json({ error: 'event 必填' });
+    const date     = statsToday();
+    const dailyKey = `stats:daily:${event}:${date}`;
+    const totalKey = `stats:total:${event}`;
+    const [daily, total, events] = await Promise.all([
+      redisGet(dailyKey).then(v => (v || 0) + 1),
+      redisGet(totalKey).then(v => (v || 0) + 1),
+      redisGet('stats:events').then(v => v || []),
+    ]);
+    const updatedEvents = events.includes(event) ? events : [...events, event];
+    await Promise.all([
+      redisSet(dailyKey, daily, 90 * 86400),
+      redisSet(totalKey, total),
+      redisSet('stats:events', updatedEvents),
+    ]);
+    return res.status(200).json({ ok: true });
+  }
+
+  if (req.method === 'GET') {
+    const adminSecret = process.env.ADMIN_SECRET;
+    const provided    = req.query?.secret || req.headers['x-admin-secret'] || '';
+    if (adminSecret && provided !== adminSecret) return res.status(401).json({ error: '未授权' });
+    const events = await redisGet('stats:events') || [];
+    const dates  = Array.from({ length: 14 }, (_, i) => {
+      const d = new Date(Date.now() - i * 86400000);
+      return d.toISOString().slice(0, 10);
+    }).reverse();
+    const result = {};
+    for (const event of events) {
+      const total = await redisGet(`stats:total:${event}`) || 0;
+      const daily = {};
+      for (const date of dates) { daily[date] = (await redisGet(`stats:daily:${event}:${date}`)) || 0; }
+      result[event] = { total, daily };
+    }
+    return res.status(200).json({ generatedAt: new Date().toISOString(), dates, events: result });
+  }
+  return res.status(405).json({ error: 'Method not allowed' });
+}
 
 const CONTEXT_LABELS = {
   child:       '亲子行为',
@@ -19,6 +75,10 @@ const CONTEXT_LABELS = {
 };
 
 module.exports = async function handler(req, res) {
+  // 路由分发：/api/stats → handleStats
+  const urlPath = req.url ? req.url.split('?')[0] : '';
+  if (urlPath === '/api/stats') return handleStats(req, res);
+
   res.setHeader('Access-Control-Allow-Origin', '*');
   if (req.method === 'OPTIONS') return res.status(204).end();
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });

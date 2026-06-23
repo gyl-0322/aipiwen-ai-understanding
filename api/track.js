@@ -23,6 +23,30 @@ const MAX_EVENTS = 2000;
 function kvBase()  { return process.env.UPSTASH_REDIS_REST_URL   || process.env.KV_REST_API_URL   || null; }
 function kvToken() { return process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_REST_API_TOKEN || null; }
 
+/** Single Redis command (used by growth handler) */
+async function kvCmd(cmd, ...args) {
+  const base = kvBase();
+  if (!base) return null;
+  try {
+    const res = await fetch(`${base}`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${kvToken()}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify([cmd, ...args]),
+    });
+    if (!res.ok) return null;
+    const j = await res.json();
+    return j.result ?? null;
+  } catch (e) { console.error('[KV]', cmd, e.message); return null; }
+}
+
+/** Convert HGETALL flat array ['k','v','k2','v2'] → {k:v, k2:v2} */
+function flatToObj(arr) {
+  if (!Array.isArray(arr)) return {};
+  const obj = {};
+  for (let i = 0; i < arr.length; i += 2) obj[arr[i]] = Number(arr[i + 1]) || 0;
+  return obj;
+}
+
 /** Run multiple Redis commands in a single HTTP round-trip */
 async function kvPipeline(commands) {
   const base = kvBase();
@@ -53,8 +77,37 @@ export default async function handler(req, res) {
 
   if (req.method === 'OPTIONS') return res.status(204).end();
 
-  // ── GET: 返回 homepage_visit 累计计数（首页社会证明用）────────────────────
+  // ── GET ──────────────────────────────────────────────────────────────────────
   if (req.method === 'GET') {
+    const urlPath = req.url ? req.url.split('?')[0] : '';
+
+    // /api/growth — 完整增长数据（管理后台用，merged from growth.js）
+    if (urlPath === '/api/growth') {
+      const kvConnected = !!kvBase();
+      if (!kvConnected) {
+        return res.status(200).json({ kvConnected: false, funnel: {}, typePerf: {}, attribution: {}, eventCount: 0 });
+      }
+      const [funnelRaw, attrRaw, typesRaw, eventCount] = await Promise.all([
+        kvCmd('HGETALL', 'gt:funnel'),
+        kvCmd('HGETALL', 'gt:attr'),
+        kvCmd('SMEMBERS', 'gt:types'),
+        kvCmd('LLEN', 'gt:events'),
+      ]);
+      const funnel      = flatToObj(funnelRaw);
+      const attribution = flatToObj(attrRaw);
+      const typeKeys    = Array.isArray(typesRaw) ? typesRaw : [];
+      let typePerf = {};
+      if (typeKeys.length > 0) {
+        const cmds    = typeKeys.map(k => ['HGETALL', `gt:type:${k}`]);
+        const results = await kvPipeline(cmds);
+        if (Array.isArray(results)) {
+          results.forEach((item, i) => { typePerf[typeKeys[i]] = flatToObj(item.result); });
+        }
+      }
+      return res.status(200).json({ kvConnected: true, funnel, typePerf, attribution, eventCount: Number(eventCount) || 0 });
+    }
+
+    // /api/track — 返回 homepage_visit 累计计数（首页社会证明用）
     const data = await kvPipeline([['HGET', 'gt:funnel', 'homepage_visit']]);
     const count = parseInt((data && data[0] && data[0].result) || 0, 10) || 0;
     return res.status(200).json({ ok: true, count });

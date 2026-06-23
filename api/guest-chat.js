@@ -1,12 +1,64 @@
 /**
- * AIPIWEN 访客对话接口
+ * AIPIWEN 访客对话接口 + 通用会话日志（merged log-session.js）
  * 无需登录，仅返回 AI 回复，同时将对话日志写入 Redis
- * POST /api/guest-chat
- * body: { content, history: [{role, content}], context, previousContext, sessionId }
+ * POST /api/guest-chat   { content, history, context, sessionId }
+ * POST /api/log-session  { sessionId, context, summary, detail }
  */
 
 const { getGlobalPatterns, redisSet, redisGet, creditReferral } = require('./_lib');
 const { buildTypeReferenceForPrompt } = require('../lib/trc-knowledge-adapter');
+
+// ── log-session 处理器（merged from log-session.js）────────────────────────
+async function handleLogSession(req, res) {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  if (req.method === 'OPTIONS') return res.status(204).end();
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+
+  const ip = (req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket?.remoteAddress || 'unknown').slice(0, 20);
+
+  // rate limit: 20/IP/min
+  const minute = Math.floor(Date.now() / 60000);
+  const rlKey  = `ratelimit:logsess:${ip}:${minute}`;
+  const rlCount = (await redisGet(rlKey).catch(() => 0)) || 0;
+  if (rlCount >= 20) return res.status(429).json({ error: '请求过于频繁' });
+  await redisSet(rlKey, rlCount + 1, 120).catch(() => {});
+
+  let payload;
+  try {
+    payload = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
+    if (!payload || typeof payload !== 'object') throw new Error('no payload');
+  } catch {
+    let raw = '';
+    await new Promise(r => { req.on('data', c => (raw += c)); req.on('end', r); });
+    try { payload = JSON.parse(raw); } catch { return res.status(400).json({ error: 'Invalid JSON' }); }
+  }
+
+  const { sessionId, context, summary, detail } = payload || {};
+  if (!sessionId || typeof sessionId !== 'string' || sessionId.length > 80)
+    return res.status(400).json({ error: 'sessionId 必填且不超过80字符' });
+  if (!context || typeof context !== 'string')
+    return res.status(400).json({ error: 'context 必填' });
+
+  const ts = Date.now();
+  try {
+    const msgsKey = `convlog:msgs:${sessionId}`;
+    const existing = await redisGet(msgsKey);
+    if (existing && existing.length > 0) return res.status(200).json({ ok: true, skipped: true });
+    const msgs = [
+      { role: 'user', content: String(summary || '').slice(0, 1000), ts },
+      { role: 'ai',   content: String(detail  || '').slice(0, 1000), ts: ts + 1 },
+    ];
+    await redisSet(msgsKey, msgs, 90 * 86400);
+    const index = await redisGet('convlog:index') || [];
+    index.unshift({ sessionId, context, ts, firstMsg: String(summary || '').slice(0, 120), ip });
+    if (index.length > 500) index.splice(500);
+    await redisSet('convlog:index', index);
+    return res.status(200).json({ ok: true });
+  } catch (e) {
+    console.error('[log-session] error:', e.message);
+    return res.status(500).json({ error: 'Internal error' });
+  }
+}
 
 // TRC类型参考框架（仅生成一次，复用）
 const TRC_REFERENCE = buildTypeReferenceForPrompt();
@@ -65,6 +117,10 @@ async function checkDailyQuota(ip) {
 }
 
 module.exports = async function handler(req, res) {
+  // 路由分发：/api/log-session → handleLogSession
+  const urlPath = req.url ? req.url.split('?')[0] : '';
+  if (urlPath === '/api/log-session') return handleLogSession(req, res);
+
   res.setHeader('Access-Control-Allow-Origin', '*');
   if (req.method === 'OPTIONS') return res.status(204).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
