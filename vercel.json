@@ -2,6 +2,22 @@
   "version": 2,
   "routes": [
     {
+      "src": "/api/growth",
+      "dest": "/api/track"
+    },
+    {
+      "src": "/api/stats",
+      "dest": "/api/admin-convs"
+    },
+    {
+      "src": "/api/log-session",
+      "dest": "/api/guest-chat"
+    },
+    {
+      "src": "/api/wechat",
+      "dest": "/api/auth"
+    },
+    {
       "src": "/api/(.*)",
       "dest": "/api/$1"
     },
@@ -115,22 +131,6 @@
     {
       "src": "/api/report-store",
       "dest": "/api/report-store.js"
-    },
-    {
-      "src": "/api/growth",
-      "dest": "/api/track.js"
-    },
-    {
-      "src": "/api/stats",
-      "dest": "/api/admin-convs.js"
-    },
-    {
-      "src": "/api/log-session",
-      "dest": "/api/guest-chat.js"
-    },
-    {
-      "src": "/api/wechat",
-      "dest": "/api/auth.js"
     },
     {
       "src": "/practitioner",
