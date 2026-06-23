@@ -741,6 +741,10 @@ async function callAPI(content) {
   });
   if (!res.ok) throw new Error('HTTP ' + res.status);
   const data = await res.json();
+  // 软限额提醒：拼接邀请链接引导
+  if (data.soft) {
+    return (data.reply || '') + '\n\n👉 分享给朋友：https://aipiwen.cn';
+  }
   return data.reply || '…';
 }
 

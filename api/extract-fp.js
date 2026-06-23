@@ -67,13 +67,25 @@ const EXTRACT_PROMPT = `你是皮纹科学数据提取专家。图片是一份 T
 - name/age 如图中有则提取，无则填 null。
 - 只输出 JSON，首字符必须是 {，末字符必须是 }。`;
 
-// ── IP 限流 ─────────────────────────────────────────────────────────────
+// ── IP 限流（防滥用） ────────────────────────────────────────────────────
 async function checkRate(ip) {
   const minute = Math.floor(Date.now() / 60000);
   const key    = `ratelimit:extract:${ip}:${minute}`;
   const count  = (await redisGet(key).catch(() => 0)) || 0;
   if (count >= 5) return false;         // 每 IP 每分钟最多 5 次
   await redisSet(key, count + 1, 120);
+  return true;
+}
+
+// ── 每日软限额：皮纹识别 3次/天（UTC+8日期） ────────────────────────────
+const SOFT_LIMIT_MSG = `你今天已经深度使用很多次了。\n为了保证每位用户的体验质量，建议明天继续使用。\n如果你愿意邀请朋友一起体验，也可以获得更多免费次数。`;
+
+async function checkDailyQuota(ip) {
+  const yyyymmdd = new Date(Date.now() + 8 * 3600 * 1000).toISOString().slice(0, 10).replace(/-/g, '');
+  const key   = `quota:extract:${ip}:${yyyymmdd}`;
+  const count = (await redisGet(key).catch(() => 0)) || 0;
+  if (count >= 3) return false;
+  await redisSet(key, count + 1, 90000); // TTL 25小时
   return true;
 }
 
@@ -126,6 +138,11 @@ module.exports = async function handler(req, res) {
   const allowed = await checkRate(ip).catch(() => true);
   if (!allowed) {
     return res.status(429).json({ ok: false, error: '请求过于频繁，请稍后再试' });
+  }
+  // 每日软限额（3次/天）
+  const quotaOk = await checkDailyQuota(ip).catch(() => true);
+  if (!quotaOk) {
+    return res.status(200).json({ ok: false, soft: true, error: SOFT_LIMIT_MSG });
   }
 
   // 读取 body（最大 4MB，图片可能较大）

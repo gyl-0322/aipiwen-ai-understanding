@@ -35,7 +35,7 @@ async function logConversation(sessionId, context, userMsg, aiReply, ip) {
   }
 }
 
-// ── IP 限流：每个 IP 每分钟最多10次 ─────────────────────────────────────────
+// ── IP 限流：每个 IP 每分钟最多10次（防滥用） ────────────────────────────────
 async function checkRateLimit(ip) {
   const minute = Math.floor(Date.now() / 60000);
   const key    = `ratelimit:${ip}:${minute}`;
@@ -43,6 +43,21 @@ async function checkRateLimit(ip) {
   if (count >= 10) return false;
   await redisSet(key, count + 1, 120); // TTL 2分钟
   return true;
+}
+
+// ── 每日软限额：每 IP 每天最多 10 次 AI 对话（UTC+8日期） ──────────────────
+const SOFT_LIMIT_MSG = `你今天已经深度使用很多次了。
+为了保证每位用户的体验质量，建议明天继续使用。
+如果你愿意邀请朋友一起体验，也可以获得更多免费次数。`;
+
+async function checkDailyQuota(ip) {
+  // 使用北京时间日期作为 key 后缀
+  const yyyymmdd = new Date(Date.now() + 8 * 3600 * 1000).toISOString().slice(0, 10).replace(/-/g, '');
+  const key   = `quota:chat:${ip}:${yyyymmdd}`;
+  const count = (await redisGet(key).catch(() => 0)) || 0;
+  if (count >= 10) return { ok: false };
+  await redisSet(key, count + 1, 90000); // TTL 25小时
+  return { ok: true };
 }
 
 module.exports = async function handler(req, res) {
@@ -55,6 +70,11 @@ module.exports = async function handler(req, res) {
   const allowed = await checkRateLimit(ip).catch(() => true); // 限流本身失败时放行
   if (!allowed) {
     return res.status(429).json({ error: '请求过于频繁，请稍后再试' });
+  }
+  // 每日软限额检查（10次/天）
+  const quota = await checkDailyQuota(ip).catch(() => ({ ok: true }));
+  if (!quota.ok) {
+    return res.status(200).json({ ok: false, soft: true, reply: SOFT_LIMIT_MSG });
   }
 
   // P0: 请求体大小限制（Vision 请求含图片，2MB；普通请求 50KB）

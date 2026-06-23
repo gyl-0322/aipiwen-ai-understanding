@@ -101,6 +101,14 @@
       "dest": "/api/generate-report.js"
     },
     {
+      "src": "/practitioner.html",
+      "dest": "/practitioner.html"
+    },
+    {
+      "src": "/practitioner",
+      "dest": "/practitioner.html"
+    },
+    {
       "src": "/",
       "dest": "/homepage.html"
     },

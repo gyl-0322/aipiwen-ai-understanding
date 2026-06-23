@@ -550,7 +550,11 @@ qs('#s1-extract-btn').addEventListener('click', async () => {
     const data = await res.json();
 
     if (!data.ok) {
-      qs('#s1-status').textContent = '❌ ' + (data.error || '识别失败，请重试');
+      if (data.soft) {
+        qs('#s1-status').innerHTML = '今天的皮纹识别次数已用完。<br>明天继续使用，或 <a href="https://aipiwen.cn" style="color:#C2692A">邀请朋友体验</a> 获得更多次数。';
+      } else {
+        qs('#s1-status').textContent = '❌ ' + (data.error || '识别失败，请重试');
+      }
       btn.disabled = false;
       btn.textContent = '重新识别';
       return;
@@ -709,7 +713,11 @@ qs('#gen-btn').addEventListener('click', async () => {
     const data = await res.json();
 
     if (!data.ok) {
-      qs('#gen-status').textContent = '❌ ' + (data.error || '生成失败，请重试');
+      if (data.soft) {
+        qs('#gen-status').innerHTML = '今天的报告生成次数已用完。<br>明天继续使用，或 <a href="https://aipiwen.cn" style="color:#C2692A">邀请朋友体验</a> 获得更多次数。';
+      } else {
+        qs('#gen-status').textContent = '❌ ' + (data.error || '生成失败，请重试');
+      }
       btn.disabled = false;
       btn.textContent = '重新生成';
       return;
