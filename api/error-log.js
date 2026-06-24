@@ -121,7 +121,14 @@ module.exports = async function handler(req, res) {
   // ── POST：前端上报错误 ──────────────────────────────────────────────────────
   if (req.method === 'POST') {
     try {
-      const { msg, stack, page, context, ua } = req.body || {};
+      // 兼容 Vercel 自动解析 和 raw stream 两种情况（sendBeacon 走 stream）
+      let parsed = req.body;
+      if (!parsed || typeof parsed === 'string') {
+        let raw = '';
+        await new Promise(r => { req.on('data', c => (raw += c)); req.on('end', r); });
+        try { parsed = JSON.parse(raw); } catch { parsed = {}; }
+      }
+      const { msg, stack, page, context, ua } = parsed || {};
       if (!msg) return res.status(400).json({ ok: false, error: 'msg required' });
 
       const entry = {
