@@ -20,7 +20,7 @@ const { redisSet, redisGet, generatePortrait } = require('./_lib');
 // ─── 身份验证 ──────────────────────────────────────────────────────────────────
 function isAuthorized(req) {
   const secret = process.env.CRON_SECRET;
-  if (!secret) return true; // 未设置时本地开发允许通过
+  if (!secret) return false; // 未配置时一律拒绝（需在 Vercel 设置 CRON_SECRET）
   const authHeader = req.headers['authorization'] || '';
   const qParam     = req.query.secret || '';
   return authHeader === `Bearer ${secret}` || qParam === secret;
