@@ -59,6 +59,7 @@ function getAgeTier(age) {
   if (n <= 12) return 'school';
   if (n <= 15) return 'junior_teen';
   if (n <= 18) return 'senior_teen';
+  if (n <= 25) return 'young_adult';  // 知识库：18-25青年，独立层级
   return 'adult';
 }
 
@@ -68,6 +69,7 @@ const REQUIRED_BY_TIER = {
   school:       ['天赋底色', '怎么学最省力', '行为解读'],
   junior_teen:  ['天赋底色', '学习方法', '自我认知', '情绪压力'],
   senior_teen:  ['天赋底色', '学习方法', '自我认知', '情绪压力'],
+  young_adult:  ['天赋底色', '方向感(专业/职业)', '自我认知'],  // 知识库：18-25青年
   adult:        ['天赋底色', '职业优势', '自我成长'],
 };
 
@@ -121,7 +123,7 @@ function buildUserMessage(engineResult, age, name, requiredModules, selectedIssu
     return `${z}(${v}) ${tag}`;
   }).join('  ');
 
-  const ageTierDesc = { preschool:'幼儿期(0-6岁)', school:'学龄期(7-12岁)', junior_teen:'初中阶段(13-15岁)', senior_teen:'高中阶段(16-18岁)', adult:'成人(19岁+)' }[tier];
+  const ageTierDesc = { preschool:'幼儿期(0-6岁)', school:'学龄期(7-12岁)', junior_teen:'初中阶段(13-15岁)', senior_teen:'高中阶段(16-18岁)', young_adult:'青年(19-25岁)', adult:'成人(26岁+)' }[tier];
   const nameLabel = name ? `【被测者】${name}，${age}岁（${ageTierDesc}）` : `【被测者】${age}岁（${ageTierDesc}）`;
 
   const allModules = [...requiredModules, ...selectedIssues];

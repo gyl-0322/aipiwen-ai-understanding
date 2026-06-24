@@ -573,6 +573,7 @@ const ISSUES_BY_TIER = {
   school:      ['写作业拖拉','上课走神','偏科/成绩','一说就顶嘴','沉迷手机游戏','不爱表达/交友难','报什么兴趣班'],
   junior_teen: ['学习效率低','选科文理','情绪/焦虑','叛逆不沟通','我到底擅长啥','早恋人际','报什么专业'],
   senior_teen: ['学习效率低','选科/志愿','情绪/焦虑','叛逆不沟通','我到底擅长啥','早恋人际','报什么专业'],
+  young_adult: ['选/转专业','工作方向迷茫','我的优势是什么','亲密关系','拖延内耗','职场适应'],  // 知识库：18-25青年
   adult:       ['职业瓶颈/转型','发挥优势','婚姻沟通','怎么懂自己的孩子','内耗情绪','团队角色'],
 };
 
@@ -643,10 +644,11 @@ function el(tag, cls, text) {
 }
 function getAgeTier(age) {
   const n = Number(age);
-  if (n <= 6) return 'preschool';
+  if (n <= 6)  return 'preschool';
   if (n <= 12) return 'school';
   if (n <= 15) return 'junior_teen';
   if (n <= 18) return 'senior_teen';
+  if (n <= 25) return 'young_adult';  // 知识库：18-25 青年，独立层级
   return 'adult';
 }
 
@@ -835,6 +837,7 @@ const REQUIRED_BY_TIER = {
   school:      ['天赋底色','怎么学最省力','行为解读'],
   junior_teen: ['天赋底色','学习方法','自我认知','情绪压力'],
   senior_teen: ['天赋底色','学习方法','自我认知','情绪压力'],
+  young_adult: ['天赋底色','方向感(专业/职业)','自我认知'],  // 知识库：18-25青年
   adult:       ['天赋底色','职业优势','自我成长'],
 };
 
