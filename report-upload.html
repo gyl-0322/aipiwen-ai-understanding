@@ -758,7 +758,9 @@ function buildConfirmScreen() {
 
   const grid = qs('#finger-grid');
   grid.innerHTML = '';
-  FINGER_KEYS.forEach(key => {
+  // 按指分组排列：拇指一行、食指一行… (R1,L1, R2,L2, …)
+  const PAIRED_KEYS = ['R1','L1','R2','L2','R3','L3','R4','L4','R5','L5'];
+  PAIRED_KEYS.forEach(key => {
     const f = (ST.fingers || {})[key] || { sym:'Lu', trc:0 };
     const card = el('div', 'finger-card');
     const label = el('div', 'fc-label', FINGER_LABELS[key]);
