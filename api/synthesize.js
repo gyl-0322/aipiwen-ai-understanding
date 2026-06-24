@@ -106,6 +106,8 @@ ${contextSections}
 
   let reply = null;
   try {
+    const ctrl  = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 25000); // 25s（vercel maxDuration 30s）
     const aiRes = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
       method:  'POST',
       headers: {
@@ -113,7 +115,9 @@ ${contextSections}
         'Content-Type':  'application/json',
       },
       body: JSON.stringify({ model:'qwen-turbo', max_tokens:600, messages }),
+      signal: ctrl.signal,
     });
+    clearTimeout(timer);
 
     const rawText = await aiRes.text();
 

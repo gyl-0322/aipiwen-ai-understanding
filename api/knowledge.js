@@ -26,7 +26,7 @@ const { redisSet, redisGet } = require('./_lib');
 
 function isAdmin(req) {
   const s = process.env.ADMIN_SECRET;
-  if (!s) return true;
+  if (!s) return false; // 未配置视为拒绝，防止意外公开
   return req.query.secret === s || req.headers['x-admin-secret'] === s;
 }
 
