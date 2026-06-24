@@ -5,8 +5,11 @@
  * GET  /api/error-log        — 管理员查看最近错误（需 x-admin-secret 或 ?secret=）
  *
  * 环境变量：
- *   ALERT_WEBHOOK   企业微信群机器人 Webhook URL（可选；不配置则只存 Redis，不推送）
- *   ADMIN_SECRET    管理员密码（查看错误列表时需要）
+ *   ALERT_OPENID         你自己的企业微信 openid（客服机器人给你发消息用）
+ *   WECHAT_CORP_ID       企业微信 CorpID（已有）
+ *   WECHAT_AGENT_SECRET  企业微信客服 Secret（已有）
+ *   WECHAT_OPEN_KFID     企业微信客服 ID（已有）
+ *   ADMIN_SECRET         管理员密码（查看错误列表时需要）
  *   KV_REST_API_URL / KV_REST_API_TOKEN  — Vercel KV / Upstash Redis（与其他 API 共用）
  */
 
@@ -57,36 +60,54 @@ async function checkAndMarkDup(hash) {
   return !!(data.result?.[0]?.result);
 }
 
-// ── 企业微信群机器人推送 ──────────────────────────────────────────────────────
+// ── 企业微信客服消息推送（复用现有 WECHAT_* 环境变量） ───────────────────────
+
+async function getWxToken() {
+  const corpId = process.env.WECHAT_CORP_ID     || '';
+  const secret = process.env.WECHAT_AGENT_SECRET || '';
+  if (!corpId || !secret) return null;
+  const res  = await fetch(`https://qyapi.weixin.qq.com/cgi-bin/gettoken?corpid=${corpId}&corpsecret=${secret}`);
+  const data = await res.json();
+  return data.access_token || null;
+}
 
 async function sendAlert(entry) {
-  const webhook = process.env.ALERT_WEBHOOK;
-  if (!webhook) return;                        // 未配置就跳过，不报错
+  // 需要在 Vercel 环境变量里额外加一条：ALERT_OPENID = 你自己的微信 openid
+  const adminOpenid = process.env.ALERT_OPENID || '';
+  const kfid        = process.env.WECHAT_OPEN_KFID || '';
+  if (!adminOpenid || !kfid) return;           // 未配置就跳过，不报错
+
+  const token = await getWxToken().catch(() => null);
+  if (!token) return;
 
   const timeStr = new Date(entry.ts).toLocaleString('zh-CN', {
     timeZone: 'Asia/Shanghai',
     hour12:   false,
   });
 
-  // 企业微信 markdown 格式
   const lines = [
-    `## 🔴 用户出错了`,
-    `**时间：**${timeStr}`,
-    `**页面：**\`${entry.page || '-'}\``,
-    `**错误：**${entry.msg}`,
+    `🔴 用户出错了`,
+    `时间：${timeStr}`,
+    `页面：${entry.page || '-'}`,
+    `错误：${entry.msg}`,
   ];
-  if (entry.context) lines.push(`**场景：**${entry.context}`);
-  if (entry.stack)   lines.push(`**堆栈：**\n\`\`\`\n${entry.stack.slice(0, 300)}\n\`\`\``);
-  if (entry.ua)      lines.push(`**设备：**${entry.ua.slice(0, 100)}`);
+  if (entry.context) lines.push(`场景：${entry.context.slice(0, 200)}`);
+  if (entry.stack)   lines.push(`堆栈：${entry.stack.slice(0, 300)}`);
+  if (entry.ua)      lines.push(`设备：${entry.ua.slice(0, 100)}`);
 
-  await fetch(webhook, {
-    method:  'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      msgtype:  'markdown',
-      markdown: { content: lines.join('\n') },
-    }),
-  }).catch(() => {});   // 推送失败不影响主流程
+  await fetch(
+    `https://qyapi.weixin.qq.com/cgi-bin/kf/send_msg?access_token=${token}`,
+    {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        touser:    adminOpenid,
+        open_kfid: kfid,
+        msgtype:   'text',
+        text:      { content: lines.join('\n') },
+      }),
+    }
+  ).catch(() => {});   // 推送失败不影响主流程
 }
 
 // ── 主处理函数 ────────────────────────────────────────────────────────────────
