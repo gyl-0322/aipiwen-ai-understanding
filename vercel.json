@@ -1,5 +1,6 @@
 {
   "version": 2,
+  "_comment": "updated 2026-06-24",
   "routes": [
     {
       "src": "/api/growth",
