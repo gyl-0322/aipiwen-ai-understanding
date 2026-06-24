@@ -26,6 +26,10 @@
       "dest": "/js/$1"
     },
     {
+      "src": "/lib/(.*)",
+      "dest": "/lib/$1"
+    },
+    {
       "src": "/assets/(.*)",
       "dest": "/assets/$1"
     },
