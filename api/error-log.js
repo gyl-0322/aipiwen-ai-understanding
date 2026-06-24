@@ -1,0 +1,157 @@
+/**
+ * AIPIWEN 前端错误收集接口
+ *
+ * POST /api/error-log        — 前端上报错误（无需登录，静默调用）
+ * GET  /api/error-log        — 管理员查看最近错误（需 x-admin-secret 或 ?secret=）
+ *
+ * 环境变量：
+ *   ALERT_WEBHOOK   企业微信群机器人 Webhook URL（可选；不配置则只存 Redis，不推送）
+ *   ADMIN_SECRET    管理员密码（查看错误列表时需要）
+ *   KV_REST_API_URL / KV_REST_API_TOKEN  — Vercel KV / Upstash Redis（与其他 API 共用）
+ */
+
+const crypto = require('crypto');
+
+const kvUrl   = () => process.env.KV_REST_API_URL   || process.env.REDIS_URL  || '';
+const kvToken = () => process.env.KV_REST_API_TOKEN || '';
+
+// ── Redis 工具 ──────────────────────────────────────────────────────────────
+
+/** LPUSH + LTRIM：把新错误插到列表头，只保留最近 200 条 */
+async function pushError(entry) {
+  await fetch(`${kvUrl()}/pipeline`, {
+    method:  'POST',
+    headers: { Authorization: `Bearer ${kvToken()}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify([
+      ['LPUSH', 'errors:log', JSON.stringify(entry)],
+      ['LTRIM', 'errors:log', 0, 199],
+    ]),
+  });
+}
+
+/** LRANGE：取最近 n 条 */
+async function getErrors(n = 50) {
+  const res  = await fetch(`${kvUrl()}/lrange/errors:log/0/${n - 1}`, {
+    headers: { Authorization: `Bearer ${kvToken()}` },
+  });
+  const data = await res.json();
+  return (data.result || []).map(s => { try { return JSON.parse(s); } catch { return s; } });
+}
+
+/**
+ * 防重：同一错误（msg + page 的 MD5）5 分钟内只推一次微信
+ * 返回 true 表示"已推过，跳过本次推送"
+ */
+async function checkAndMarkDup(hash) {
+  const key = `errors:dedup:${hash}`;
+  const res = await fetch(`${kvUrl()}/pipeline`, {
+    method:  'POST',
+    headers: { Authorization: `Bearer ${kvToken()}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify([
+      ['GET', key],
+      ['SET', key, '1', 'EX', 300],   // 300 秒 = 5 分钟
+    ]),
+  });
+  const data = await res.json();
+  // data.result[0].result 非 null 表示之前已经设置过
+  return !!(data.result?.[0]?.result);
+}
+
+// ── 企业微信群机器人推送 ──────────────────────────────────────────────────────
+
+async function sendAlert(entry) {
+  const webhook = process.env.ALERT_WEBHOOK;
+  if (!webhook) return;                        // 未配置就跳过，不报错
+
+  const timeStr = new Date(entry.ts).toLocaleString('zh-CN', {
+    timeZone: 'Asia/Shanghai',
+    hour12:   false,
+  });
+
+  // 企业微信 markdown 格式
+  const lines = [
+    `## 🔴 用户出错了`,
+    `**时间：**${timeStr}`,
+    `**页面：**\`${entry.page || '-'}\``,
+    `**错误：**${entry.msg}`,
+  ];
+  if (entry.context) lines.push(`**场景：**${entry.context}`);
+  if (entry.stack)   lines.push(`**堆栈：**\n\`\`\`\n${entry.stack.slice(0, 300)}\n\`\`\``);
+  if (entry.ua)      lines.push(`**设备：**${entry.ua.slice(0, 100)}`);
+
+  await fetch(webhook, {
+    method:  'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      msgtype:  'markdown',
+      markdown: { content: lines.join('\n') },
+    }),
+  }).catch(() => {});   // 推送失败不影响主流程
+}
+
+// ── 主处理函数 ────────────────────────────────────────────────────────────────
+
+module.exports = async function handler(req, res) {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type,x-admin-secret');
+  if (req.method === 'OPTIONS') return res.status(200).end();
+
+  // ── POST：前端上报错误 ──────────────────────────────────────────────────────
+  if (req.method === 'POST') {
+    try {
+      const { msg, stack, page, context, ua } = req.body || {};
+      if (!msg) return res.status(400).json({ ok: false, error: 'msg required' });
+
+      const entry = {
+        ts:      Date.now(),
+        msg:     String(msg).slice(0, 500),
+        stack:   stack   ? String(stack).slice(0, 800)   : undefined,
+        page:    page    ? String(page).slice(0, 200)    : undefined,
+        context: context ? String(context).slice(0, 300) : undefined,
+        ua:      ua      ? String(ua).slice(0, 200)      : undefined,
+      };
+
+      // 错误指纹（msg + page 的 MD5 前8位）
+      const hash = crypto
+        .createHash('md5')
+        .update((entry.msg || '') + (entry.page || ''))
+        .digest('hex')
+        .slice(0, 8);
+
+      // 存档 & 防重检查并行执行，加快响应
+      const [, isDup] = await Promise.all([
+        pushError({ ...entry, hash }),
+        checkAndMarkDup(hash),
+      ]);
+
+      // 不重复才推微信，避免刷屏
+      if (!isDup) await sendAlert(entry);
+
+      return res.status(200).json({ ok: true });
+    } catch (e) {
+      console.error('[error-log POST]', e);
+      return res.status(500).json({ ok: false });
+    }
+  }
+
+  // ── GET：管理员查看错误列表 ─────────────────────────────────────────────────
+  if (req.method === 'GET') {
+    const adminSecret = process.env.ADMIN_SECRET || 'coco1013';
+    const token = req.headers['x-admin-secret'] || req.query.secret;
+    if (token !== adminSecret) {
+      return res.status(401).json({ error: '未授权，请携带 secret 参数' });
+    }
+
+    try {
+      const n      = Math.min(parseInt(req.query.n || '50', 10), 200);
+      const errors = await getErrors(n);
+      return res.status(200).json({ ok: true, count: errors.length, errors });
+    } catch (e) {
+      console.error('[error-log GET]', e);
+      return res.status(500).json({ ok: false, error: e.message });
+    }
+  }
+
+  return res.status(405).end();
+};
