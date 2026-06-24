@@ -197,6 +197,9 @@
     },
     "api/report-store.js": {
       "maxDuration": 10
+    },
+    "api/error-log.js": {
+      "maxDuration": 10
     }
   },
   "crons": [
