@@ -141,6 +141,18 @@
       "dest": "/practitioner.html"
     },
     {
+      "src": "/practitioner-demo",
+      "dest": "/practitioner-demo.html"
+    },
+    {
+      "src": "/practitioner-demo.html",
+      "dest": "/practitioner-demo.html"
+    },
+    {
+      "src": "/share/(.*)",
+      "dest": "/share/$1"
+    },
+    {
       "src": "/",
       "dest": "/homepage.html"
     },
