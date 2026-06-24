@@ -171,7 +171,7 @@
       "maxDuration": 15
     },
     "api/extract-fp.js": {
-      "maxDuration": 30
+      "maxDuration": 60
     },
     "api/generate-report.js": {
       "maxDuration": 60

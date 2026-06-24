@@ -579,7 +579,7 @@ function compressImage(file, maxW, quality) {
         canvas.width = Math.round(img.width * scale);
         canvas.height = Math.round(img.height * scale);
         canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
-        const mime = file.type === 'image/png' ? 'image/png' : 'image/jpeg';
+        const mime = 'image/jpeg'; // 统一输出 JPEG，PNG 压缩无效
         const dataUrl = canvas.toDataURL(mime, quality);
         const b64 = dataUrl.split(',')[1];
         resolve({ b64, mime });
@@ -601,7 +601,7 @@ function handleFile(file) {
   };
   reader.readAsDataURL(file);
 
-  compressImage(file, 1600, 0.85).then(({ b64, mime }) => {
+  compressImage(file, 1200, 0.75).then(({ b64, mime }) => {
     ST.imageBase64 = b64;
     ST.imageMimeType = mime;
     qs('#s1-status').textContent = '图片准备好了，点击"识别数据"';
