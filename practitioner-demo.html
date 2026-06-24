@@ -493,6 +493,26 @@
       pointer-events: none;
     }
 
+    .back-btn {
+      position: fixed;
+      left: 14px;
+      top: 14px;
+      z-index: 30;
+      background: rgba(248,243,236,.08);
+      border: 1px solid rgba(194,105,42,.36);
+      color: var(--amber-2);
+      font-size: 13px;
+      font-weight: 500;
+      border-radius: 20px;
+      padding: 6px 14px;
+      cursor: pointer;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      -webkit-tap-highlight-color: transparent;
+    }
+
     .tiny-share {
       position: fixed;
       right: 16px;
@@ -737,6 +757,7 @@
       </div>
     </section>
   </main>
+  <a class="back-btn" href="https://www.aipiwen.cn" aria-label="返回首页">← 首页</a>
   <button class="tiny-share" type="button" aria-label="分享">↗</button>
   <div class="hint">向上滑动翻页</div>
   <script>
