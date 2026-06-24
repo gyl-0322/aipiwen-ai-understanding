@@ -34,36 +34,57 @@ const VALID_SYMS = new Set([
 
 const FINGERS = ['R1','R2','R3','R4','R5','L1','L2','L3','L4','L5'];
 
+// ── 脑区 → 手指键 固定映射（跨机构通用）──────────────────────────────────
+// 不论报告版本，按脑区标签名提取，再用此表转为 R1-L5
+const ZONE_TO_FINGER = {
+  // 思维功能
+  logic_verbal:    'R1',  // 逻辑推理/语言功能
+  spatial_imagine: 'L1',  // 空间心像/构思拟想
+  // 听觉功能
+  audio_lang:      'R2',  // 听觉辨识/语言理解
+  audio_music:     'L2',  // 听觉感受/音乐欣赏
+  // 视觉功能
+  visual_obs:      'R3',  // 视觉辨识/观察理解
+  visual_image:    'L3',  // 视觉感受/图像欣赏
+  // 体觉功能
+  kinetic_ops:     'R4',  // 体觉辨识/操作理解
+  kinetic_art:     'L4',  // 体觉感受/艺术欣赏
+  // 精神功能
+  comm_plan:       'R5',  // 沟通管理/计划判断
+  create_lead:     'L5',  // 创造领导/目标憧憬
+};
+
 // ── Vision 提取 Prompt ──────────────────────────────────────────────────
-const EXTRACT_PROMPT = `你是皮纹科学数据提取专家。图片是一份 TRC 皮纹测评报告的【总表页】，包含十指纹型符号、TRC 数值、ATD 角度、被测者姓名/年龄。
+// 策略：按脑区【标签名称】提取，而非按手指位置 —— 跨机构版本通用
+const EXTRACT_PROMPT = `你是皮纹科学数据提取专家。图片是一份 TRC 皮纹测评报告总表页，可能来自不同机构，排版各异。
 
-你的任务是【从图片中逐字读取真实数据】，严禁猜测或使用任何默认值。每根手指的 sym 和 trc 必须独立从图片中找到并读出，不可复用同一数值。
+报告中包含【五大功能区 × 10 个脑区】，每个脑区有一个纹型符号和 TRC 数值。你的任务是按脑区名称找到对应数值，严格从图中读取，不可猜测。
 
-**只输出 JSON，不输出解释文字。** 输出格式：
+**只输出 JSON，不输出解释文字。** 格式：
 
 {
-  "fingers": {
-    "R1": {"sym": "（右拇指纹型，从图中读）", "trc": （右拇指TRC，从图中读整数）},
-    "R2": {"sym": "（右食指纹型，从图中读）", "trc": （右食指TRC，从图中读整数）},
-    "R3": {"sym": "（右中指纹型，从图中读）", "trc": （右中指TRC，从图中读整数）},
-    "R4": {"sym": "（右无名指纹型，从图中读）", "trc": （右无名指TRC，从图中读整数）},
-    "R5": {"sym": "（右小指纹型，从图中读）", "trc": （右小指TRC，从图中读整数）},
-    "L1": {"sym": "（左拇指纹型，从图中读）", "trc": （左拇指TRC，从图中读整数）},
-    "L2": {"sym": "（左食指纹型，从图中读）", "trc": （左食指TRC，从图中读整数）},
-    "L3": {"sym": "（左中指纹型，从图中读）", "trc": （左中指TRC，从图中读整数）},
-    "L4": {"sym": "（左无名指纹型，从图中读）", "trc": （左无名指TRC，从图中读整数）},
-    "L5": {"sym": "（左小指纹型，从图中读）", "trc": （左小指TRC，从图中读整数）}
+  "zones": {
+    "logic_verbal":    {"sym": "（逻辑推理/语言功能 的纹型）", "trc": （整数）},
+    "spatial_imagine": {"sym": "（空间心像/构思拟想 的纹型）", "trc": （整数）},
+    "audio_lang":      {"sym": "（听觉辨识/语言理解 的纹型）", "trc": （整数）},
+    "audio_music":     {"sym": "（听觉感受/音乐欣赏 的纹型）", "trc": （整数）},
+    "visual_obs":      {"sym": "（视觉辨识/观察理解 的纹型）", "trc": （整数）},
+    "visual_image":    {"sym": "（视觉感受/图像欣赏 的纹型）", "trc": （整数）},
+    "kinetic_ops":     {"sym": "（体觉辨识/操作理解 的纹型）", "trc": （整数）},
+    "kinetic_art":     {"sym": "（体觉感受/艺术欣赏 的纹型）", "trc": （整数）},
+    "comm_plan":       {"sym": "（沟通管理/计划判断 的纹型）", "trc": （整数）},
+    "create_lead":     {"sym": "（创造领导/目标憧憬 的纹型）", "trc": （整数）}
   },
-  "atd": （ATD值小数，图中无则null）,
+  "atd": （ATD或反应速度数值，小数，图中无则null）,
   "name": "（姓名，图中无则null）",
   "age": （年龄整数，图中无则null）
 }
 
 提取规则：
-- 手指对应：R1=右拇指、R2=右食指、R3=右中指、R4=右无名指、R5=右小指；L1=左拇、L2=左食、L3=左中、L4=左无名、L5=左小。
-- 纹型符号（sym）合法值：Ws/Wt/We/Wsp/Wl/Wc/Wd/Wsc/Wpe/Rpe/Rwl/Wi/Lu/Ls/Lf/Rl/X/Xn。严格照搬图片原文。
-- 如某指纹型确实看不清，sym 填 "Lu"，但 trc 仍需从图中独立读取。
-- TRC 为整数；ATD 可为小数。
+- 按脑区中文标签名在图中定位，再读取该标签旁边的纹型符号和 TRC 数字。
+- 各报告版本标签用词可能略有差异，识别关键词：逻辑/语言→logic_verbal；空间/心像→spatial_imagine；听觉辨识→audio_lang；听觉感受/音乐→audio_music；视觉辨识/观察→visual_obs；视觉感受/图像→visual_image；体觉辨识/操作→kinetic_ops；体觉感受/艺术→kinetic_art；沟通/计划→comm_plan；创造/领导→create_lead。
+- 纹型符号合法值：Ws/Wt/We/Wsp/Wl/Wc/Wd/Wsc/Wpe/Rpe/Rwl/Wi/Lu/Ls/Lf/Rl/X/Xn。严格照搬图中文字，X型和Xn均有0 TRC。
+- 每个脑区 trc 必须独立读取，不可复用相同数值。
 - 只输出 JSON，首字符必须是 {，末字符必须是 }。`;
 
 // ── IP 限流（防滥用） ────────────────────────────────────────────────────
@@ -243,7 +264,7 @@ module.exports = async function handler(req, res) {
 
   // ── 解析 JSON ─────────────────────────────────────────────────────────
   const parsed = extractJSON(visionRaw);
-  if (!parsed || !parsed.fingers) {
+  if (!parsed || (!parsed.zones && !parsed.fingers)) {
     console.warn('[extract-fp] parse fail, raw:', visionRaw.slice(0, 600));
     return res.status(200).json({
       ok:    false,
@@ -252,13 +273,27 @@ module.exports = async function handler(req, res) {
     });
   }
 
-  const fingers = normalizeFingers(parsed.fingers);
+  // ── 脑区 → 手指键转换（新格式）或直接用 fingers（旧格式兼容）────────────
+  let rawFingers;
+  if (parsed.zones) {
+    rawFingers = {};
+    for (const [zoneKey, fingerKey] of Object.entries(ZONE_TO_FINGER)) {
+      const z = parsed.zones[zoneKey];
+      rawFingers[fingerKey] = z
+        ? { sym: z.sym, trc: z.trc }
+        : { sym: 'Lu', trc: 0 };
+    }
+  } else {
+    rawFingers = parsed.fingers;
+  }
+
+  const fingers = normalizeFingers(rawFingers);
   const atd     = (parsed.atd !== null && parsed.atd !== undefined)
                   ? parseFloat(String(parsed.atd)) : null;
   const name    = parsed.name  ? String(parsed.name).trim()  : null;
   const age     = parsed.age   ? parseInt(String(parsed.age)) : null;
 
-  // 简单合理性检查：TRC 总和不应为 0（说明提取全部失败）
+  // 合理性检查：TRC 总和不应为 0
   const totalTRC = Object.values(fingers).reduce((s, f) => s + f.trc, 0);
   if (totalTRC === 0) {
     return res.status(200).json({
