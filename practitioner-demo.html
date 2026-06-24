@@ -5,10 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
   <title>AIPIWEN 客户体验手册</title>
   <meta name="description" content="先从一个真实行为开始，看懂孩子、自己和关系里的困惑。">
-
-  <!-- Open Graph / WeChat -->
   <meta property="og:type" content="website">
-  <meta property="og:site_name" content="AIPIWEN">
   <meta property="og:title" content="AIPIWEN 客户体验手册">
   <meta property="og:description" content="先从一个真实行为开始，看懂孩子、自己和关系里的困惑。">
   <meta property="og:image" content="https://www.aipiwen.cn/share/aipiwen-practitioner-card.jpg">
@@ -17,9 +14,6 @@
   <meta name="twitter:title" content="AIPIWEN 客户体验手册">
   <meta name="twitter:description" content="先从一个真实行为开始，看懂孩子、自己和关系里的困惑。">
   <meta name="twitter:image" content="https://www.aipiwen.cn/share/aipiwen-practitioner-card.jpg">
-
-  <!-- WeChat JS-SDK: skip — no appId available -->
-
   <style>
     :root {
       --dark: #17130f;
@@ -60,7 +54,7 @@
       position: relative;
       display: flex;
       align-items: center;
-      padding: 42px 24px 76px;
+      padding: 42px 24px 58px;
       overflow: hidden;
       isolation: isolate;
     }
@@ -84,6 +78,7 @@
         linear-gradient(90deg, rgba(255,255,255,.032) 1px, transparent 1px),
         linear-gradient(180deg, rgba(255,255,255,.026) 1px, transparent 1px);
       background-size: 36px 36px;
+      -webkit-mask-image: linear-gradient(180deg, transparent, #000 18%, #000 84%, transparent);
       mask-image: linear-gradient(180deg, transparent, #000 18%, #000 84%, transparent);
       opacity: .72;
     }
@@ -92,7 +87,18 @@
       width: 100%;
       max-width: 520px;
       margin: 0 auto;
+      transform: translateY(var(--shift, 0));
     }
+
+    .hero-slide { --shift: 8px; }
+    .problem-slide { --shift: 0; }
+    .path-slide { --shift: 10px; }
+    .behavior-slide { --shift: 22px; }
+    .finger-slide { --shift: 14px; }
+    .report-slide { --shift: 18px; }
+    .age-slide { --shift: 0; }
+    .value-slide { --shift: 4px; }
+    .cta-slide { --shift: 14px; }
 
     .logo {
       display: flex;
@@ -101,28 +107,45 @@
       margin-bottom: 34px;
     }
 
-    .mark {
+    .logo-flower {
       width: 38px;
       height: 38px;
-      border-radius: 50%;
-      border: 1px dashed rgba(194,105,42,.42);
-      position: relative;
+      flex: 0 0 auto;
+      overflow: visible;
     }
 
-    .mark::before,
-    .mark::after {
-      content: "";
-      position: absolute;
-      left: 16px;
-      top: 7px;
-      width: 6px;
-      height: 24px;
-      border-radius: 999px;
-      background: var(--amber);
-      transform-origin: 50% 12px;
+    @keyframes logo-spin {
+      from { transform: rotate(0); }
+      to { transform: rotate(360deg); }
     }
 
-    .mark::after { transform: rotate(70deg); opacity: .62; }
+    @keyframes logo-spin-rev {
+      from { transform: rotate(0); }
+      to { transform: rotate(-360deg); }
+    }
+
+    @keyframes logo-breathe {
+      0%, 100% { opacity: .82; transform: scale(1); }
+      50% { opacity: 1; transform: scale(1.04); }
+    }
+
+    .logo-ring-outer,
+    .logo-petals,
+    .logo-center {
+      transform-origin: 18px 18px;
+    }
+
+    .logo-ring-outer { animation: logo-spin 22s linear infinite; }
+    .logo-petals { animation: logo-spin-rev 14s linear infinite; }
+    .logo-center { animation: logo-breathe 3.5s ease-in-out infinite; }
+
+    @media (prefers-reduced-motion: reduce) {
+      .logo-ring-outer,
+      .logo-petals,
+      .logo-center {
+        animation: none;
+      }
+    }
 
     .wordmark {
       letter-spacing: .18em;
@@ -449,8 +472,6 @@
       line-height: 1.4;
       font-weight: 900;
       box-shadow: 0 18px 42px rgba(194,105,42,.28);
-      border: none;
-      cursor: pointer;
     }
 
     .button.secondary {
@@ -460,7 +481,6 @@
       box-shadow: none;
     }
 
-    /* scroll hint */
     .hint {
       position: fixed;
       left: 0;
@@ -471,165 +491,138 @@
       text-align: center;
       font-size: 12px;
       pointer-events: none;
-      transition: opacity .4s;
     }
 
-    /* progress dots */
-    .dots {
-      position: fixed;
-      right: 14px;
-      top: 50%;
-      transform: translateY(-50%);
-      z-index: 25;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      pointer-events: none;
-    }
-
-    .dot {
-      width: 5px;
-      height: 5px;
-      border-radius: 50%;
-      background: rgba(194,105,42,.32);
-      transition: background .3s, transform .3s;
-    }
-
-    .dot.active {
-      background: var(--amber);
-      transform: scale(1.5);
-    }
-
-    /* floating buttons */
-    .fab-row {
+    .tiny-share {
       position: fixed;
       right: 16px;
       top: 16px;
       z-index: 30;
-      display: flex;
-      gap: 8px;
-    }
-
-    .fab {
-      width: 36px;
-      height: 36px;
+      width: 30px;
+      height: 30px;
       border-radius: 50%;
       border: 1px solid rgba(194,105,42,.36);
-      background: rgba(23,19,15,.72);
+      background: rgba(248,243,236,.08);
       color: var(--amber-2);
       font-size: 16px;
-      line-height: 34px;
-      text-align: center;
+      line-height: 28px;
       backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);
-      cursor: pointer;
-      transition: background .2s, transform .15s;
-      display: grid;
-      place-items: center;
-      padding: 0;
     }
 
-    .fab:active { transform: scale(.9); }
+    @media (max-height: 760px) and (max-width: 699px) {
+      .slide {
+        padding: 34px 22px 50px;
+      }
 
-    .fab-music svg, .fab-share svg {
-      display: block;
-      width: 18px;
-      height: 18px;
+      .panel {
+        max-width: 500px;
+      }
+
+      h1 {
+        font-size: clamp(40px, 11vw, 58px);
+      }
+
+      h2 {
+        font-size: clamp(31px, 8.6vw, 42px);
+        line-height: 1.12;
+      }
+
+      .lead {
+        margin-top: 22px;
+        padding-top: 20px;
+        font-size: 16px;
+      }
+
+      .problem-list,
+      .steps,
+      .value-list,
+      .age-list {
+        margin-top: 24px;
+        gap: 12px;
+      }
+
+      .hero-slide { --shift: 0; }
+      .path-slide { --shift: 4px; }
+      .behavior-slide { --shift: 8px; }
+      .finger-slide { --shift: 6px; }
+      .report-slide { --shift: 8px; }
+      .cta-slide { --shift: 6px; }
     }
 
-    .fab-music.muted { opacity: .42; }
+    @media (min-width: 700px) {
+      :root {
+        --reader-h: min(calc(100svh - 36px), 920px);
+        --reader-w: min(430px, 52svh, 100vw);
+      }
 
-    /* share modal */
-    .modal-overlay {
-      position: fixed;
-      inset: 0;
-      z-index: 100;
-      background: rgba(23,19,15,.82);
-      display: none;
-      place-items: center;
-      padding: 24px;
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-    }
+      body {
+        min-height: 100vh;
+        min-height: 100svh;
+        display: grid;
+        place-items: center;
+        overflow: hidden;
+        background:
+          radial-gradient(circle at 50% 0%, rgba(194,105,42,.18), transparent 34%),
+          #0f0c09;
+      }
 
-    .modal-overlay.open { display: grid; }
+      .deck {
+        width: var(--reader-w);
+        height: var(--reader-h);
+        margin: 0;
+        box-shadow:
+          0 0 0 1px rgba(255,255,255,.08),
+          0 28px 90px rgba(0,0,0,.42);
+      }
 
-    .modal {
-      width: 100%;
-      max-width: 360px;
-      border-radius: 28px;
-      border: 1px solid rgba(255,255,255,.12);
-      background: rgba(33,27,22,.95);
-      padding: 28px 24px;
-      box-shadow: 0 40px 80px rgba(0,0,0,.4);
-    }
+      .slide {
+        min-height: var(--reader-h);
+        padding: 42px 26px 58px;
+      }
 
-    .modal-title {
-      font-family: var(--font-serif);
-      font-size: 22px;
-      color: var(--paper);
-      margin-bottom: 8px;
-    }
+      .panel {
+        max-width: calc(var(--reader-w) - 48px);
+      }
 
-    .modal-sub {
-      font-size: 14px;
-      color: var(--muted);
-      line-height: 1.6;
-      margin-bottom: 24px;
-    }
+      h1 {
+        font-size: 54px;
+      }
 
-    .modal-url {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 12px 14px;
-      border-radius: 14px;
-      background: rgba(255,255,255,.06);
-      border: 1px solid rgba(255,255,255,.1);
-      margin-bottom: 20px;
-    }
+      h2 {
+        font-size: 42px;
+      }
 
-    .modal-url span {
-      flex: 1;
-      font-size: 13px;
-      color: var(--amber-2);
-      word-break: break-all;
-    }
+      .tiny-share {
+        top: calc((100svh - var(--reader-h)) / 2 + 16px);
+        right: calc((100vw - var(--reader-w)) / 2 + 16px);
+      }
 
-    .modal-copy {
-      flex-shrink: 0;
-      padding: 6px 12px;
-      border-radius: 8px;
-      background: rgba(194,105,42,.2);
-      border: 1px solid rgba(194,105,42,.4);
-      color: var(--amber-2);
-      font-size: 12px;
-      font-weight: 900;
-      cursor: pointer;
-      transition: background .2s;
-    }
-
-    .modal-copy:active { background: rgba(194,105,42,.4); }
-
-    .modal-close {
-      width: 100%;
-      padding: 12px;
-      border-radius: 14px;
-      background: transparent;
-      border: 1px solid rgba(255,255,255,.14);
-      color: var(--muted);
-      font-size: 14px;
-      cursor: pointer;
+      .hint {
+        left: 50%;
+        right: auto;
+        bottom: calc((100svh - var(--reader-h)) / 2 + 20px);
+        width: var(--reader-w);
+        transform: translateX(-50%);
+      }
     }
   </style>
 </head>
 <body>
-  <main class="deck" id="deck">
-    <!-- 01 Cover -->
-    <section class="slide">
+  <main class="deck">
+    <section class="slide hero-slide">
       <div class="panel">
         <div class="logo">
-          <div class="mark"></div>
+          <svg class="logo-flower" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <circle class="logo-ring-outer" cx="18" cy="18" r="15.5" stroke="#C2692A" stroke-width=".9" stroke-dasharray="2.5 6" opacity=".30"/>
+            <g class="logo-petals">
+              <ellipse cx="18" cy="12" rx="2.2" ry="6.5" fill="#C2692A" opacity=".75" transform="rotate(0 18 18)"/>
+              <ellipse cx="18" cy="12" rx="2.2" ry="6.5" fill="#C2692A" opacity=".50" transform="rotate(90 18 18)"/>
+              <ellipse cx="18" cy="12" rx="1.4" ry="5.5" fill="#C2692A" opacity=".35" transform="rotate(45 18 18)"/>
+              <ellipse cx="18" cy="12" rx="1.4" ry="5.5" fill="#C2692A" opacity=".35" transform="rotate(135 18 18)"/>
+            </g>
+            <circle class="logo-center" cx="18" cy="18" r="3" fill="#C2692A"/>
+          </svg>
           <div class="wordmark">AIPIW<span>E</span>N</div>
         </div>
         <div class="eyebrow">给从业人员的客户体验手册</div>
@@ -639,8 +632,7 @@
       </div>
     </section>
 
-    <!-- 02 Problems -->
-    <section class="slide">
+    <section class="slide problem-slide">
       <div class="panel">
         <div class="eyebrow">客户真正卡住的地方</div>
         <h2>他看到的是行为，<br>但不知道<em>背后是什么</em>。</h2>
@@ -652,8 +644,7 @@
       </div>
     </section>
 
-    <!-- 03 How -->
-    <section class="slide">
+    <section class="slide path-slide">
       <div class="panel">
         <div class="eyebrow">推荐客户走这条路</div>
         <h2>不要先说服，<br>先让他<em>有感觉</em>。</h2>
@@ -665,37 +656,34 @@
       </div>
     </section>
 
-    <!-- 04 Step 1 Behavior -->
-    <section class="slide">
+    <section class="slide behavior-slide">
       <div class="panel">
         <div class="eyebrow">第一步 · AI 行为理解</div>
         <h2>先把行为，<br>翻译成<em>需求</em>。</h2>
         <div class="behavior-card glass">
-          <div class="quote">"他一写作业就崩溃。"</div>
+          <div class="quote">“他一写作业就崩溃。”</div>
           <div class="answer">可能不是懒，是压力、节奏和控制感失衡。家长先换说法，关系才有空间。</div>
         </div>
       </div>
     </section>
 
-    <!-- 05 Step 2 Fingerprint -->
-    <section class="slide">
+    <section class="slide finger-slide">
       <div class="panel">
         <div class="eyebrow">第二步 · 皮纹速测</div>
         <h2>先被读懂，<br>才愿意靠近<em>皮纹</em>。</h2>
         <div class="finger-row glass">
-          <div class="finger"><img src="assets/fp-icons/double-whorl.webp" alt="双斗皮纹示意"></div>
+          <div class="finger"><img src="data:image/webp;base64,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" alt="双斗皮纹示意"></div>
           <div class="tags">
             <div class="tag">反应习惯</div>
             <div class="tag">性格倾向</div>
             <div class="tag">大脑偏好</div>
           </div>
         </div>
-        <p>速测不是诊断，也不是命运判断。它是让客户先看到"行为和我有关"。</p>
+        <p>速测不是诊断，也不是命运判断。它是让客户先看到“行为和我有关”。</p>
       </div>
     </section>
 
-    <!-- 06 Step 3 Report -->
-    <section class="slide">
+    <section class="slide report-slide">
       <div class="panel">
         <div class="eyebrow">第三步 · 专属报告解读</div>
         <h2>报告不够，<br>要讲到<em>他自己</em>身上。</h2>
@@ -712,8 +700,7 @@
       </div>
     </section>
 
-    <!-- 07 Age themes -->
-    <section class="slide">
+    <section class="slide age-slide">
       <div class="panel">
         <div class="eyebrow">报告风格也要因人而变</div>
         <h2>先识别年龄，<br>再匹配<em>阅读风格</em>。</h2>
@@ -726,8 +713,7 @@
       </div>
     </section>
 
-    <!-- 08 Value -->
-    <section class="slide">
+    <section class="slide value-slide">
       <div class="panel">
         <div class="eyebrow">对从业人员的价值</div>
         <h2>它不替代你，<br>先替你完成<em>信任破冰</em>。</h2>
@@ -739,114 +725,40 @@
       </div>
     </section>
 
-    <!-- 09 CTA -->
-    <section class="slide">
+    <section class="slide cta-slide">
       <div class="panel">
         <div class="eyebrow">一句话推介</div>
-        <h2>把 AIPIWEN 发给客户，<br>让他先从一个行为里<em>被读懂</em>。</h2>
+        <h2>把 AIPIWEN<br>发给客户，<br>先从一个行为里<em>被读懂</em>。</h2>
         <p class="lead">客户先理解行为，才愿意靠近皮纹；先认可关联，才愿意进入报告；先感到被懂，才愿意继续接受你的专业服务。</p>
         <div class="cta">
           <a class="button" href="https://www.aipiwen.cn" target="_blank" rel="noopener">打开 www.aipiwen.cn</a>
-          <a class="button secondary" href="https://www.aipiwen.cn/report-upload" target="_blank" rel="noopener">演示上传报告解读</a>
+          <a class="button secondary" href="https://www.aipiwen.cn/report-upload.html" target="_blank" rel="noopener">演示上传报告解读</a>
         </div>
       </div>
     </section>
   </main>
-
-  <!-- Floating buttons -->
-  <div class="fab-row">
-    <button class="fab fab-music muted" id="musicBtn" type="button" aria-label="背景音乐（暂不可用）" disabled>
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>
-      </svg>
-    </button>
-    <button class="fab fab-share" id="shareBtn" type="button" aria-label="分享">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/>
-      </svg>
-    </button>
-  </div>
-
-  <!-- Progress dots -->
-  <div class="dots" id="dots"></div>
-
-  <!-- Scroll hint -->
-  <div class="hint" id="hint">向上滑动翻页</div>
-
-  <!-- Share modal -->
-  <div class="modal-overlay" id="modalOverlay">
-    <div class="modal">
-      <div class="modal-title">分享手册</div>
-      <div class="modal-sub">复制链接发给从业人员，让他先给客户试用</div>
-      <div class="modal-url">
-        <span>www.aipiwen.cn/practitioner-demo</span>
-        <button class="modal-copy" id="copyBtn">复制</button>
-      </div>
-      <button class="modal-close" id="modalClose">关闭</button>
-    </div>
-  </div>
-
+  <button class="tiny-share" type="button" aria-label="分享">↗</button>
+  <div class="hint">向上滑动翻页</div>
   <script>
     (() => {
-      const SHARE_URL = 'https://www.aipiwen.cn/practitioner-demo';
-      const SHARE_TITLE = 'AIPIWEN 客户体验手册';
-      const SHARE_TEXT = '先从一个真实行为开始，看懂孩子、自己和关系里的困惑。';
-
-      // --- progress dots ---
-      const deck = document.getElementById('deck');
-      const slides = [...deck.querySelectorAll('.slide')];
-      const dotsEl = document.getElementById('dots');
-      const hint = document.getElementById('hint');
-
-      slides.forEach((_, i) => {
-        const d = document.createElement('div');
-        d.className = 'dot' + (i === 0 ? ' active' : '');
-        dotsEl.appendChild(d);
-      });
-
-      const dotEls = [...dotsEl.querySelectorAll('.dot')];
-      let hintHidden = false;
-
-      deck.addEventListener('scroll', () => {
-        const h = deck.clientHeight;
-        const idx = Math.round(deck.scrollTop / h);
-        dotEls.forEach((d, i) => d.classList.toggle('active', i === idx));
-        if (!hintHidden && deck.scrollTop > 40) {
-          hintHidden = true;
-          hint.style.opacity = '0';
-        }
-      }, { passive: true });
-
-      // --- share button ---
-      const shareBtn = document.getElementById('shareBtn');
-      const overlay = document.getElementById('modalOverlay');
-      const copyBtn = document.getElementById('copyBtn');
-      const modalClose = document.getElementById('modalClose');
-
-      shareBtn.addEventListener('click', async () => {
+      const share = document.querySelector('.tiny-share');
+      share.addEventListener('click', async () => {
+        const payload = {
+          title: 'AIPIWEN 客户体验手册',
+          text: '先从一个真实行为开始，看懂孩子、自己和关系里的困惑。',
+          url: 'https://www.aipiwen.cn/practitioner-demo'
+        };
         if (navigator.share) {
-          try {
-            await navigator.share({ title: SHARE_TITLE, text: SHARE_TEXT, url: SHARE_URL });
-            return;
-          } catch (_) {
-            // user cancelled or unsupported — fall through to modal
-          }
+          try { await navigator.share(payload); return; } catch (error) {}
         }
-        overlay.classList.add('open');
-      });
-
-      copyBtn.addEventListener('click', async () => {
         try {
-          await navigator.clipboard.writeText(SHARE_URL);
-          copyBtn.textContent = '已复制 ✓';
-          setTimeout(() => { copyBtn.textContent = '复制'; }, 1800);
-        } catch (_) {
-          copyBtn.textContent = '复制失败';
+          await navigator.clipboard.writeText(`${payload.text}\n${payload.url}`);
+          share.textContent = '✓';
+          setTimeout(() => share.textContent = '↗', 1200);
+        } catch (error) {
+          window.open(payload.url, '_blank');
         }
       });
-
-      modalClose.addEventListener('click', () => overlay.classList.remove('open'));
-      overlay.addEventListener('click', e => { if (e.target === overlay) overlay.classList.remove('open'); });
     })();
   </script>
 </body>
