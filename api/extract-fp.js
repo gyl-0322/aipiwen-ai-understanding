@@ -77,7 +77,7 @@ async function checkRate(ip) {
   return true;
 }
 
-// ── 每日软限额：皮纹识别 3次/天（UTC+8日期） ────────────────────────────
+// ── 每日软限额：皮纹识别 10次/天（UTC+8日期） ───────────────────────────
 const SOFT_LIMIT_MSG = `你今天已经深度使用很多次了。\n为了保证每位用户的体验质量，建议明天继续使用。\n如果你愿意邀请朋友一起体验，也可以获得更多免费次数。`;
 
 async function checkDailyQuota(ip) {
@@ -88,7 +88,7 @@ async function checkDailyQuota(ip) {
     redisGet(key).catch(() => 0),
     redisGet(bonusKey).catch(() => 0),
   ]);
-  const limit = 3 + (bonus || 0);
+  const limit = 10 + (bonus || 0);
   if ((count || 0) >= limit) return false;
   await redisSet(key, (count || 0) + 1, 90000);
   return true;
