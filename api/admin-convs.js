@@ -139,6 +139,22 @@ module.exports = async function handler(req, res) {
     return res.status(200).json({ sid, msgs });
   }
 
+  // ── 用户列表（含 openid，管理员用来查自己的 openid）────────────────────────
+  if (action === 'users') {
+    const allOpenids = await redisGet('users:all') || [];
+    const users = [];
+    for (const openid of allOpenids.slice(0, 200)) {
+      const u = await redisGet(`user:${openid}`) || {};
+      users.push({
+        openid,
+        name:      u.name     || u.nickname || '',
+        createdAt: u.createdAt ? new Date(u.createdAt).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' }) : '',
+        children:  (u.children || []).map(c => c.name),
+      });
+    }
+    return res.status(200).json({ total: users.length, users });
+  }
+
   // ── 全量导出（最新300条，含消息内容）───────────────────────────────────────
   if (action === 'export') {
     const index = await redisGet('convlog:index') || [];
