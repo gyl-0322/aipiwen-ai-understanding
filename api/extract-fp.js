@@ -35,23 +35,18 @@ const VALID_SYMS = new Set([
 const FINGERS = ['R1','R2','R3','R4','R5','L1','L2','L3','L4','L5'];
 
 // ── 脑区 → 手指键 固定映射（跨机构通用）──────────────────────────────────
-// 不论报告版本，按脑区标签名提取，再用此表转为 R1-L5
+// 正确对应关系（经 Emma 确认）：
 const ZONE_TO_FINGER = {
-  // 思维功能
-  logic_verbal:    'R1',  // 逻辑推理/语言功能
-  spatial_imagine: 'L1',  // 空间心像/构思拟想
-  // 听觉功能
-  audio_lang:      'R2',  // 听觉辨识/语言理解
-  audio_music:     'L2',  // 听觉感受/音乐欣赏
-  // 视觉功能
-  visual_obs:      'R3',  // 视觉辨识/观察理解
-  visual_image:    'L3',  // 视觉感受/图像欣赏
-  // 体觉功能
-  kinetic_ops:     'R4',  // 体觉辨识/操作理解
-  kinetic_art:     'L4',  // 体觉感受/艺术欣赏
-  // 精神功能
-  comm_plan:       'R5',  // 沟通管理/计划判断
-  create_lead:     'L5',  // 创造领导/目标憧憬
+  comm_plan:       'R1',  // 沟通管理/计划判断   → 右拇指
+  logic_verbal:    'R2',  // 逻辑推理/语言功能   → 右食指
+  kinetic_ops:     'R3',  // 体觉辨识/操作理解   → 右中指
+  audio_lang:      'R4',  // 听觉辨识/语言理解   → 右无名指
+  visual_obs:      'R5',  // 视觉辨识/观察理解   → 右小指
+  create_lead:     'L1',  // 创造领导/目标憧憬   → 左拇指
+  spatial_imagine: 'L2',  // 空间心像/构思拟想   → 左食指
+  kinetic_art:     'L3',  // 体觉感受/艺术欣赏   → 左中指
+  audio_music:     'L4',  // 听觉感受/音乐欣赏   → 左无名指
+  visual_image:    'L5',  // 视觉感受/图像欣赏   → 左小指
 };
 
 // ── Vision 提取 Prompt ──────────────────────────────────────────────────
