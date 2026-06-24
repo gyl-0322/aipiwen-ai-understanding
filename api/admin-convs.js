@@ -140,6 +140,45 @@ module.exports = async function handler(req, res) {
     return res.status(200).json({ sid, msgs });
   }
 
+  // ── 查询企业微信客服最近消息的 external_userid（用于找 ALERT_OPENID）──────────
+  if (action === 'kf_who') {
+    const corpId = process.env.WECHAT_CORP_ID     || '';
+    const secret = process.env.WECHAT_AGENT_SECRET || '';
+    const kfid   = process.env.WECHAT_OPEN_KFID   || '';
+    if (!corpId || !secret || !kfid) {
+      return res.status(200).json({ ok: false, error: '企业微信环境变量未配置' });
+    }
+    try {
+      // 获取 access_token
+      const tkRes  = await fetch(`https://qyapi.weixin.qq.com/cgi-bin/gettoken?corpid=${corpId}&corpsecret=${secret}`);
+      const tkData = await tkRes.json();
+      const token  = tkData.access_token;
+      if (!token) return res.status(200).json({ ok: false, error: '获取微信token失败', detail: tkData });
+
+      // 拉取最新客服消息（不带cursor，从头拉）
+      const msgRes  = await fetch(`https://qyapi.weixin.qq.com/cgi-bin/kf/sync_msg?access_token=${token}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ open_kfid: kfid, limit: 50 }),
+      });
+      const msgData = await msgRes.json();
+      const msgs    = msgData.msg_list || [];
+
+      // 提取最近发过消息的 external_userid 和时间
+      const seen = {};
+      for (const m of msgs) {
+        if (m.origin === 3 && m.external_userid && !seen[m.external_userid]) {
+          seen[m.external_userid] = new Date(m.send_time * 1000)
+            .toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' });
+        }
+      }
+      const senders = Object.entries(seen).map(([uid, time]) => ({ external_userid: uid, last_msg_time: time }));
+      return res.status(200).json({ ok: true, tip: '把你刚发的那条消息对应的 external_userid 填到 ALERT_OPENID', senders, raw_count: msgs.length });
+    } catch(e) {
+      return res.status(200).json({ ok: false, error: e.message });
+    }
+  }
+
   // ── 用户列表（含 openid，管理员用来查自己的 openid）────────────────────────
   if (action === 'users') {
     const allOpenids = await redisGet('users:all') || [];
