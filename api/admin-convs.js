@@ -47,7 +47,8 @@ async function handleStats(req, res) {
   if (req.method === 'GET') {
     const adminSecret = process.env.ADMIN_SECRET;
     const provided    = req.query?.secret || req.headers['x-admin-secret'] || '';
-    if (adminSecret && provided !== adminSecret) return res.status(401).json({ error: '未授权' });
+    if (!adminSecret) return res.status(500).json({ error: '管理密钥未配置' });
+    if (provided !== adminSecret) return res.status(401).json({ error: '未授权' });
     const events = await redisGet('stats:events') || [];
     const dates  = Array.from({ length: 14 }, (_, i) => {
       const d = new Date(Date.now() - i * 86400000);
