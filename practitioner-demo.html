@@ -760,26 +760,72 @@
   <a class="back-btn" href="https://www.aipiwen.cn" aria-label="返回首页">← 首页</a>
   <button class="tiny-share" type="button" aria-label="分享">↗</button>
   <div class="hint">向上滑动翻页</div>
+
+  <!-- 分享弹窗 -->
+  <div id="share-modal" style="display:none; position:fixed; inset:0; z-index:100; background:rgba(0,0,0,.6); align-items:flex-end; justify-content:center;">
+    <div style="background:#211b16; border-radius:20px 20px 0 0; padding:28px 24px 40px; width:100%; max-width:520px; text-align:center;">
+      <div style="font-size:15px; font-weight:600; color:#F8F3EC; margin-bottom:6px;">分享体验手册</div>
+      <div style="font-size:13px; color:rgba(248,243,236,.55); margin-bottom:20px;">长按复制链接，发给客户或朋友</div>
+      <div id="share-link-box" style="background:#17130f; border:1px solid rgba(194,105,42,.35); border-radius:12px; padding:14px 16px; font-size:14px; color:#C2692A; word-break:break-all; margin-bottom:18px; cursor:pointer; user-select:all;">
+        https://www.aipiwen.cn/practitioner-demo
+      </div>
+      <button id="share-copy-btn" style="width:100%; background:#C2692A; color:#fff; border:none; border-radius:24px; padding:14px; font-size:15px; font-weight:600; cursor:pointer; margin-bottom:12px;">复制链接</button>
+      <button id="share-close-btn" style="width:100%; background:transparent; color:rgba(248,243,236,.5); border:none; font-size:14px; cursor:pointer; padding:8px;">关闭</button>
+    </div>
+  </div>
+
   <script>
     (() => {
-      const share = document.querySelector('.tiny-share');
-      share.addEventListener('click', async () => {
-        const payload = {
-          title: 'AIPIWEN 客户体验手册',
-          text: '先从一个真实行为开始，看懂孩子、自己和关系里的困惑。',
-          url: 'https://www.aipiwen.cn/practitioner-demo'
-        };
+      const SHARE_URL  = 'https://www.aipiwen.cn/practitioner-demo';
+      const SHARE_TEXT = '先从一个真实行为开始，看懂孩子、自己和关系里的困惑。';
+      const shareBtn   = document.querySelector('.tiny-share');
+      const modal      = document.getElementById('share-modal');
+      const copyBtn    = document.getElementById('share-copy-btn');
+      const closeBtn   = document.getElementById('share-close-btn');
+
+      function showModal() {
+        modal.style.display = 'flex';
+      }
+      function hideModal() {
+        modal.style.display = 'none';
+      }
+
+      shareBtn.addEventListener('click', async () => {
+        // 先尝试系统原生分享（iOS/安卓 Safari/Chrome）
         if (navigator.share) {
-          try { await navigator.share(payload); return; } catch (error) {}
+          try {
+            await navigator.share({ title: 'AIPIWEN 客户体验手册', text: SHARE_TEXT, url: SHARE_URL });
+            return;
+          } catch(e) {
+            // 用户取消或不支持，降级到弹窗
+          }
         }
-        try {
-          await navigator.clipboard.writeText(`${payload.text}\n${payload.url}`);
-          share.textContent = '✓';
-          setTimeout(() => share.textContent = '↗', 1200);
-        } catch (error) {
-          window.open(payload.url, '_blank');
-        }
+        showModal();
       });
+
+      copyBtn.addEventListener('click', async () => {
+        try {
+          await navigator.clipboard.writeText(SHARE_URL);
+        } catch(e) {
+          // clipboard 不可用时，选中文本框让用户手动复制
+          const box = document.getElementById('share-link-box');
+          const sel = window.getSelection();
+          const range = document.createRange();
+          range.selectNodeContents(box);
+          sel.removeAllRanges();
+          sel.addRange(range);
+        }
+        copyBtn.textContent = '✓ 已复制';
+        copyBtn.style.background = '#2d7a45';
+        setTimeout(() => {
+          copyBtn.textContent = '复制链接';
+          copyBtn.style.background = '#C2692A';
+          hideModal();
+        }, 1500);
+      });
+
+      closeBtn.addEventListener('click', hideModal);
+      modal.addEventListener('click', e => { if (e.target === modal) hideModal(); });
     })();
   </script>
 </body>
