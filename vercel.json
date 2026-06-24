@@ -137,6 +137,10 @@
       "dest": "/api/report-store.js"
     },
     {
+      "src": "/api/error-log",
+      "dest": "/api/error-log.js"
+    },
+    {
       "src": "/practitioner",
       "dest": "/practitioner.html"
     },
