@@ -29,9 +29,11 @@ html,body{height:100%;overflow:hidden;background:#060810;
 }
 /* ── SCREENS ── */
 .screen{position:absolute;inset:0;display:none;flex-direction:column;
-  overflow-y:auto;scrollbar-width:none;}
-.screen::-webkit-scrollbar{display:none;}
+  overflow:hidden;}
 .screen.active{display:flex;}
+/* s1 整屏滚动（内容少，直接屏滚） */
+#s1{overflow-y:auto;}
+#s1::-webkit-scrollbar{display:none;}
 
 /* ── SHARED TOP BAR ── */
 .topbar{flex-shrink:0;height:52px;display:flex;align-items:center;
@@ -79,7 +81,7 @@ html,body{height:100%;overflow:hidden;background:#060810;
 
 /* ─── SCREEN 2: CONFIRM ─── */
 #s2{padding:0;}
-.s2-body{flex:1;padding:12px 20px 80px;}
+.s2-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:12px 20px 20px;}
 .s2-section-label{font-size:10.5px;letter-spacing:.14em;color:var(--amber);
   text-transform:uppercase;font-weight:700;margin:16px 0 10px;}
 /* finger grid */
@@ -101,16 +103,14 @@ html,body{height:100%;overflow:hidden;background:#060810;
 .if-label{font-size:10px;color:var(--faint);margin-bottom:4px;}
 .if-input{width:100%;background:transparent;border:none;color:var(--text);font-size:14px;
   font-family:inherit;outline:none;}
-.s2-confirm-btn{position:fixed;bottom:0;left:50%;transform:translateX(-50%);
-  width:var(--w);max-width:100%;padding:12px 20px 24px;
-  background:linear-gradient(transparent,rgba(14,17,24,.98) 28%);z-index:20;}
-@media(max-width:430px){.s2-confirm-btn{width:100%;}}
+.s2-confirm-btn{flex-shrink:0;width:100%;padding:12px 20px 24px;
+  background:linear-gradient(transparent,rgba(14,17,24,.98) 28%);}
 .confirm-btn-inner{width:100%;height:52px;background:var(--amber);color:var(--bg);
   border:none;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;}
 
 /* ─── SCREEN 3: ISSUES ─── */
 #s3{padding:0;}
-.s3-body{flex:1;padding:12px 20px 80px;}
+.s3-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:12px 20px 20px;}
 .must-list{display:flex;flex-direction:column;gap:6px;margin-bottom:4px;}
 .must-item{display:flex;align-items:center;gap:10px;padding:11px 14px;
   background:rgba(194,105,42,.06);border:1px solid rgba(194,105,42,.18);
@@ -121,10 +121,8 @@ html,body{height:100%;overflow:hidden;background:#060810;
   font-size:13px;color:var(--dim);cursor:pointer;transition:all .2s;user-select:none;}
 .issue-chip.selected{border-color:var(--amber);color:var(--amber);
   background:rgba(194,105,42,.1);}
-.s3-btn-wrap{position:fixed;bottom:0;left:50%;transform:translateX(-50%);
-  width:var(--w);max-width:100%;padding:12px 20px 24px;
-  background:linear-gradient(transparent,rgba(14,17,24,.98) 28%);z-index:20;}
-@media(max-width:430px){.s3-btn-wrap{width:100%;}}
+.s3-btn-wrap{flex-shrink:0;width:100%;padding:12px 20px 24px;
+  background:linear-gradient(transparent,rgba(14,17,24,.98) 28%);}
 .gen-btn{width:100%;height:52px;background:var(--amber);color:var(--bg);
   border:none;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;
   font-family:inherit;}
