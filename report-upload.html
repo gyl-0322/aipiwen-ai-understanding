@@ -276,6 +276,11 @@ html,body{height:100%;overflow:hidden;background:#060810;
   font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;}
 #cmodal-copy{background:var(--amber);color:var(--bg);}
 #cmodal-close-btn{background:rgba(255,255,255,.08);color:var(--dim);}
+/* iOS 点击两次问题：全局修复 */
+button, a, .must-item, .fp-option-card, .back-btn, .issue-chip {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
 </style>
 </head>
 <body>
