@@ -130,55 +130,135 @@ html,body{height:100%;overflow:hidden;background:#060810;
 #gen-status{font-size:12.5px;color:var(--dim);text-align:center;margin-top:10px;}
 
 /* ─── SCREEN 4: REPORT (flip-book) ─── */
-#s4{padding:0;background:var(--bg);}
-/* reuse from report-viewer */
-#rv-viewer{position:relative;width:100%;height:100%;overflow:hidden;}
+#s4{padding:0;background:var(--th-bg,var(--bg));}
+/* ── 主题变量（data-theme on #s4） ─────────────────────── */
+#s4{--th-bg:#0E1118;--th-p:#C2692A;--th-p2:#E8854A;--th-card:rgba(255,255,255,.04);
+  --th-border:rgba(255,255,255,.09);--th-text:#FDFCF8;--th-dim:rgba(253,252,248,.6);
+  --th-faint:rgba(253,252,248,.28);--th-radius:14px;--th-font-h:Georgia,'Noto Serif SC',serif;
+  --th-fs-h:26px;--th-glow:rgba(194,105,42,.4);}
+/* 学龄前 ≤6：暖橙 + 大圆角 + 活泼 */
+#s4[data-theme="preschool"]{
+  --th-bg:#1A0F06;--th-p:#FF8C42;--th-p2:#FFB347;--th-card:rgba(255,140,66,.07);
+  --th-border:rgba(255,140,66,.18);--th-glow:rgba(255,140,66,.5);
+  --th-radius:20px;--th-fs-h:28px;}
+/* 小学 7-12：清新蓝绿 */
+#s4[data-theme="school"]{
+  --th-bg:#081420;--th-p:#3E9BDB;--th-p2:#5AB8E8;--th-card:rgba(62,155,219,.07);
+  --th-border:rgba(62,155,219,.18);--th-glow:rgba(62,155,219,.45);
+  --th-radius:16px;}
+/* 初中 13-15：紫蓝电光 */
+#s4[data-theme="junior_teen"]{
+  --th-bg:#0D0A1E;--th-p:#8B5CF6;--th-p2:#00D4FF;--th-card:rgba(139,92,246,.08);
+  --th-border:rgba(139,92,246,.22);--th-glow:rgba(139,92,246,.5);
+  --th-radius:12px;--th-font-h:'PingFang SC',sans-serif;--th-fs-h:24px;}
+/* 高中 16-18：深海金 */
+#s4[data-theme="senior_teen"]{
+  --th-bg:#080C14;--th-p:#C9A84C;--th-p2:#E2C97E;--th-card:rgba(201,168,76,.07);
+  --th-border:rgba(201,168,76,.2);--th-glow:rgba(201,168,76,.45);
+  --th-radius:10px;--th-font-h:Georgia,'Noto Serif SC',serif;}
+/* 成人 19+：极简深色 */
+#s4[data-theme="adult"]{
+  --th-bg:#111827;--th-p:#C2692A;--th-p2:#D97F3A;--th-card:rgba(255,255,255,.03);
+  --th-border:rgba(255,255,255,.07);--th-glow:rgba(194,105,42,.4);--th-radius:12px;}
+
+#rv-viewer{position:relative;width:100%;height:100%;overflow:hidden;background:var(--th-bg);}
 #rv-track{display:flex;height:100%;transition:transform .42s cubic-bezier(.25,.46,.45,.94);will-change:transform;}
 .rv-slide{flex:0 0 100%;height:100%;overflow-y:auto;overflow-x:hidden;
-  padding:60px 26px 72px;scrollbar-width:none;}
+  padding:60px 22px 76px;scrollbar-width:none;background:var(--th-bg);color:var(--th-text);}
 .rv-slide::-webkit-scrollbar{display:none;}
-/* slide content styles (same as report-viewer) */
+
+/* ── 通用 section 样式（用主题变量） ─────────────────────── */
 .sec-eyebrow{display:flex;align-items:center;gap:8px;font-size:10.5px;letter-spacing:.15em;
-  color:var(--amber);text-transform:uppercase;font-weight:700;margin-bottom:14px;}
-.sec-eyebrow::before{content:'';width:18px;height:1px;background:var(--amber);}
-.sec-h{font-family:Georgia,'Noto Serif SC',serif;font-size:26px;font-weight:700;
-  color:var(--text);margin-bottom:16px;line-height:1.3;}
-.sec-body{font-size:14.5px;color:var(--dim);line-height:1.9;}
-.sec-body strong{color:var(--text);font-weight:600;}
-.sec-body em{color:var(--amber);font-style:normal;}
-/* four-part */
-.fp-parts{display:flex;flex-direction:column;gap:12px;margin-top:20px;}
-.fp-part{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px 15px;}
-.fp-badge{display:inline-flex;align-items:center;gap:7px;margin-bottom:9px;}
-.fp-badge-n{width:18px;height:18px;background:var(--amber);color:var(--bg);
+  color:var(--th-p);text-transform:uppercase;font-weight:700;margin-bottom:12px;}
+.sec-eyebrow::before{content:'';width:16px;height:1.5px;background:var(--th-p);border-radius:1px;}
+.sec-h{font-family:var(--th-font-h);font-size:var(--th-fs-h);font-weight:700;
+  color:var(--th-text);margin-bottom:14px;line-height:1.3;}
+.sec-body{font-size:14.5px;color:var(--th-dim);line-height:1.9;}
+.sec-body strong{color:var(--th-text);font-weight:600;}
+.sec-body em{color:var(--th-p);font-style:normal;}
+
+/* ── 高亮引用块 ──────────────────────────────────────────── */
+.hl-block{border-left:3px solid var(--th-p);background:var(--th-card);
+  border-radius:0 var(--th-radius) var(--th-radius) 0;padding:13px 15px;
+  margin:14px 0;font-size:14px;color:var(--th-text);line-height:1.75;font-style:italic;}
+/* ── 关键词标签 ────────────────────────────────────────────── */
+.kw-row{display:flex;flex-wrap:wrap;gap:7px;margin:14px 0;}
+.kw{padding:5px 12px;border:1px solid var(--th-border);border-radius:20px;
+  font-size:12px;color:var(--th-p);background:var(--th-card);}
+/* ── 图文卡片（issue 三段） ─────────────────────────────────── */
+.fp-parts{display:flex;flex-direction:column;gap:10px;margin-top:16px;}
+.fp-part{background:var(--th-card);border:1px solid var(--th-border);
+  border-radius:var(--th-radius);padding:13px 15px;}
+.fp-badge{display:inline-flex;align-items:center;gap:7px;margin-bottom:8px;}
+.fp-badge-n{width:20px;height:20px;background:var(--th-p);color:var(--th-bg);
   border-radius:50%;display:flex;align-items:center;justify-content:center;
   font-size:10px;font-weight:700;flex-shrink:0;}
-.fp-badge-t{font-size:11px;font-weight:700;color:var(--amber);letter-spacing:.08em;text-transform:uppercase;}
-.fp-text{font-size:13.5px;color:var(--dim);line-height:1.8;}
-.fp-text strong{color:var(--text);}
-.fp-text em{color:var(--amber);font-style:normal;}
+.fp-badge-t{font-size:11px;font-weight:700;color:var(--th-p);letter-spacing:.08em;text-transform:uppercase;}
+.fp-text{font-size:13.5px;color:var(--th-dim);line-height:1.8;}
+.fp-text strong{color:var(--th-text);}
+.fp-text em{color:var(--th-p);font-style:normal;}
 .fp-cta-btn{display:flex;align-items:center;gap:9px;
-  background:rgba(194,105,42,.1);border:1px solid var(--amber-dim);
-  border-radius:12px;padding:12px 14px;margin-top:4px;
-  font-size:13px;color:var(--amber);cursor:pointer;transition:background .2s;
-  font-family:inherit;width:100%;text-align:left;}
-/* cover slide */
-.cv-fp{text-align:center;margin:16px 0 20px;}
-.cv-fp img{width:196px;height:196px;object-fit:contain;filter:drop-shadow(0 0 36px var(--amber-glow));}
-.cv-type{font-family:Georgia,'Noto Serif SC',serif;font-size:38px;font-weight:700;
-  text-align:center;color:var(--text);margin-bottom:8px;}
-.cv-line{width:40px;height:2px;background:var(--amber);margin:0 auto 18px;border-radius:1px;}
-.cv-tagline{font-size:13.5px;color:var(--dim);text-align:center;line-height:1.75;margin-bottom:22px;}
-.cv-tags{display:flex;flex-wrap:wrap;gap:7px;justify-content:center;margin-bottom:22px;}
-.tag{border:1px solid var(--amber-dim);border-radius:20px;padding:5px 13px;font-size:11.5px;color:var(--dim);}
-.cv-hr{border:none;border-top:1px solid rgba(255,255,255,.06);margin:0 0 14px;}
-.cv-meta{font-size:11px;color:var(--faint);text-align:center;line-height:2.2;}
-.cv-meta b{color:var(--amber);}
-/* final slide */
-.fin-fp{text-align:center;margin:8px 0 18px;}
-.fin-fp img{width:110px;height:110px;object-fit:contain;filter:drop-shadow(0 0 20px var(--amber-glow));}
-.fin-h{font-family:Georgia,'Noto Serif SC',serif;font-size:22px;font-weight:700;text-align:center;margin-bottom:10px;}
-.fin-sub{font-size:13px;color:var(--dim);text-align:center;line-height:1.75;margin-bottom:28px;}
+  background:var(--th-card);border:1px solid var(--th-border);
+  border-radius:var(--th-radius);padding:12px 14px;margin-top:6px;
+  font-size:13px;color:var(--th-p);cursor:pointer;
+  font-family:inherit;width:100%;text-align:left;touch-action:manipulation;}
+
+/* ── 数据可视化 slide ────────────────────────────────────────── */
+.dv-title{font-size:11px;letter-spacing:.18em;color:var(--th-p);text-transform:uppercase;
+  font-weight:700;margin-bottom:18px;}
+.dv-brain{display:flex;align-items:center;gap:10px;margin-bottom:20px;
+  background:var(--th-card);border:1px solid var(--th-border);
+  border-radius:var(--th-radius);padding:14px 16px;}
+.dv-brain-label{font-size:11px;color:var(--th-dim);flex-shrink:0;width:40px;}
+.dv-brain-bar{flex:1;height:10px;background:rgba(255,255,255,.08);border-radius:5px;overflow:hidden;}
+.dv-brain-fill-l{height:100%;border-radius:5px 0 0 5px;background:var(--th-p);transition:width .8s ease;}
+.dv-brain-fill-r{height:100%;border-radius:0 5px 5px 0;float:right;background:var(--th-p2);transition:width .8s ease;}
+.dv-func-list{display:flex;flex-direction:column;gap:9px;}
+.dv-func-row{display:grid;grid-template-columns:52px 1fr 36px;align-items:center;gap:10px;}
+.dv-func-name{font-size:12px;color:var(--th-dim);}
+.dv-func-bar-wrap{height:8px;background:rgba(255,255,255,.07);border-radius:4px;overflow:hidden;}
+.dv-func-bar{height:100%;border-radius:4px;background:var(--th-p);transition:width .9s ease;}
+.dv-func-val{font-size:12px;color:var(--th-p);font-weight:600;text-align:right;}
+.dv-badges{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0;}
+.dv-badge{display:flex;flex-direction:column;gap:3px;background:var(--th-card);
+  border:1px solid var(--th-border);border-radius:var(--th-radius);
+  padding:10px 14px;flex:1;min-width:calc(50% - 4px);}
+.dv-badge-label{font-size:10px;color:var(--th-faint);letter-spacing:.1em;}
+.dv-badge-val{font-size:13px;color:var(--th-p);font-weight:600;}
+/* ── Cover slide ─────────────────────────────────────────── */
+.cv-wrap{display:flex;flex-direction:column;align-items:center;padding-top:8px;}
+.cv-theme-badge{font-size:10px;letter-spacing:.2em;color:var(--th-p);text-transform:uppercase;
+  font-weight:700;margin-bottom:16px;border:1px solid var(--th-border);
+  border-radius:20px;padding:4px 14px;}
+.cv-fp{text-align:center;margin:0 0 18px;width:100%;}
+.cv-fp img{width:180px;height:180px;object-fit:contain;
+  filter:drop-shadow(0 0 40px var(--th-glow));}
+.cv-type{font-family:var(--th-font-h);font-size:36px;font-weight:700;
+  text-align:center;color:var(--th-text);margin-bottom:6px;line-height:1.2;}
+.cv-line{width:36px;height:2px;background:var(--th-p);margin:0 auto 14px;border-radius:1px;}
+.cv-tagline{font-size:13px;color:var(--th-dim);text-align:center;line-height:1.75;margin-bottom:16px;}
+.cv-tags{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-bottom:18px;}
+.cv-tag{border:1px solid var(--th-border);border-radius:20px;padding:5px 12px;
+  font-size:11.5px;color:var(--th-p);background:var(--th-card);}
+.cv-stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%;margin-bottom:14px;}
+.cv-stat{background:var(--th-card);border:1px solid var(--th-border);
+  border-radius:var(--th-radius);padding:10px 13px;}
+.cv-stat-label{font-size:10px;color:var(--th-faint);letter-spacing:.1em;margin-bottom:3px;}
+.cv-stat-val{font-size:13.5px;color:var(--th-p);font-weight:600;}
+.cv-hr{width:100%;border:none;border-top:1px solid var(--th-border);margin:4px 0 10px;}
+.cv-meta{font-size:10.5px;color:var(--th-faint);text-align:center;line-height:2.2;}
+.cv-meta b{color:var(--th-p);}
+/* ── 主题装饰（preschool/junior_teen等） ──────────────────── */
+#s4[data-theme="preschool"] .cv-deco{font-size:28px;text-align:center;margin-bottom:10px;letter-spacing:8px;}
+#s4[data-theme="school"] .cv-deco{font-size:22px;text-align:center;margin-bottom:10px;letter-spacing:6px;}
+#s4[data-theme="junior_teen"] .cv-deco{font-size:20px;text-align:center;margin-bottom:10px;letter-spacing:4px;}
+#s4[data-theme="senior_teen"] .cv-deco,#s4[data-theme="adult"] .cv-deco{display:none;}
+/* ── Final slide ─────────────────────────────────────────── */
+.fin-fp{text-align:center;margin:8px 0 16px;}
+.fin-fp img{width:100px;height:100px;object-fit:contain;filter:drop-shadow(0 0 22px var(--th-glow));}
+.fin-h{font-family:var(--th-font-h);font-size:22px;font-weight:700;text-align:center;
+  color:var(--th-text);margin-bottom:10px;}
+.fin-sub{font-size:13px;color:var(--th-dim);text-align:center;line-height:1.75;margin-bottom:24px;}
 .btn-row{display:flex;flex-direction:column;gap:10px;}
 .btn-primary{width:100%;padding:15px;background:var(--amber);color:var(--bg);
   border:none;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;}
@@ -841,83 +921,197 @@ qs('#gen-btn').addEventListener('click', async () => {
 // ─── SCREEN 4: FLIP-BOOK ─────────────────────────────────────────────────
 let RV = { cur: 0, total: 0, slides: [] };
 
+// ── 年龄段→主题配置 ────────────────────────────────────────────────────
+function getThemeConfig(ageTier) {
+  return {
+    preschool:   { theme:'preschool',   badge:'学龄前',   deco:'🌟 ✨ 🌈', finMsg:'每一根手指，都是宇宙给你的礼物。',   icon:{ foundation:'🌱', required:'💡', issue:'🤔' } },
+    school:      { theme:'school',      badge:'小学阶段', deco:'📚 🔭 🎯', finMsg:'你的天赋，是最好的学习地图。',       icon:{ foundation:'🧩', required:'📖', issue:'🙋' } },
+    junior_teen: { theme:'junior_teen', badge:'初中阶段', deco:'⚡ 🔮 🎮', finMsg:'你的大脑，天生为突破而来。',         icon:{ foundation:'🧠', required:'🔑', issue:'💬' } },
+    senior_teen: { theme:'senior_teen', badge:'高中阶段', deco:'',         finMsg:'洞见自我，是所有成就的起点。',       icon:{ foundation:'◈',  required:'▸',  issue:'◉' } },
+    adult:       { theme:'adult',       badge:'成人报告', deco:'',         finMsg:'了解自己，是最有价值的投资。',       icon:{ foundation:'◈',  required:'▸',  issue:'◉' } },
+  }[ageTier] || { theme:'adult', badge:'专属报告', deco:'', finMsg:'了解自己，是最有价值的投资。', icon:{ foundation:'◈', required:'▸', issue:'◉' } };
+}
+
+// ── 五功能区 → SVG 条形图 HTML ─────────────────────────────────────────
+function buildDataVizSlide(E) {
+  if (!E) return null;
+  const func5 = E.五功能区 || {};
+  const maxTRC = Math.max(func5.精神||0, func5.思维||0, func5.体觉||0, func5.听觉||0, func5.视觉||0, 1);
+  const avgTRC = func5.个人均值 || 0;
+  const funcRows = [
+    { name:'精神功能', key:'精神', color:'var(--th-p)' },
+    { name:'思维功能', key:'思维', color:'var(--th-p2)' },
+    { name:'体觉功能', key:'体觉', color:'var(--th-p)' },
+    { name:'听觉功能', key:'听觉', color:'var(--th-p2)' },
+    { name:'视觉功能', key:'视觉', color:'var(--th-p)' },
+  ];
+  const brainL = E.左右脑?.左脑占比 || 50;
+  const brainR = (100 - brainL).toFixed(1);
+  const brainConclusion = E.左右脑?.结论 || '';
+  const chanPct = E.学习通道?.占比 || {};
+
+  return `
+    <div class="dv-title">数据总览 · DATA OVERVIEW</div>
+    <div class="dv-brain">
+      <div class="dv-brain-label" style="text-align:right;font-size:10px">左脑<br>${brainL}%</div>
+      <div style="flex:1">
+        <div class="dv-brain-bar" style="position:relative;height:12px;background:rgba(255,255,255,.08);border-radius:6px;overflow:hidden;">
+          <div style="position:absolute;left:0;top:0;height:100%;width:${brainL}%;background:var(--th-p);border-radius:6px 0 0 6px;"></div>
+          <div style="position:absolute;right:0;top:0;height:100%;width:${brainR}%;background:var(--th-p2);border-radius:0 6px 6px 0;opacity:.7;"></div>
+        </div>
+        <div style="text-align:center;font-size:11px;color:var(--th-faint);margin-top:5px;">${brainConclusion}</div>
+      </div>
+      <div class="dv-brain-label" style="font-size:10px">右脑<br>${brainR}%</div>
+    </div>
+    <div class="dv-func-list">
+      ${funcRows.map(f => {
+        const val = func5[f.key] || 0;
+        const pct = Math.round(val / maxTRC * 100);
+        const isAbove = val >= avgTRC;
+        return `<div class="dv-func-row">
+          <div class="dv-func-name">${f.name}</div>
+          <div class="dv-func-bar-wrap">
+            <div class="dv-func-bar" style="width:${pct}%;background:${isAbove ? 'var(--th-p)' : 'var(--th-p2)'};opacity:${isAbove ? 1 : 0.6};"></div>
+          </div>
+          <div class="dv-func-val">${val}</div>
+        </div>`;
+      }).join('')}
+    </div>
+    <div class="dv-badges">
+      <div class="dv-badge"><div class="dv-badge-label">学习通道</div><div class="dv-badge-val">${E.学习通道?.主通道 || '—'}</div></div>
+      <div class="dv-badge"><div class="dv-badge-label">行为模式</div><div class="dv-badge-val">${E.行为模式?.结论 || '—'}</div></div>
+      <div class="dv-badge"><div class="dv-badge-label">ATD 角度</div><div class="dv-badge-val">${E.ATD?.分区 || '—'}${ST.atd ? ' · ' + ST.atd + '°' : ''}</div></div>
+      <div class="dv-badge"><div class="dv-badge-label">个人均值</div><div class="dv-badge-val">${avgTRC} TRC</div></div>
+    </div>`;
+}
+
+// ── 正文内容格式化（加高亮块） ─────────────────────────────────────────
+function formatContent(text) {
+  if (!text) return '';
+  // 处理 **粗体** 和 *斜体*
+  let html = text
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g, '<em>$1</em>');
+  // 把段落拆分，超过2行的独立段落包成引用块
+  const paras = html.split(/\n\n+/);
+  return paras.map((p, i) => {
+    const lines = p.replace(/\n/g, '<br>');
+    // 第一段或含"**"的段落用高亮块
+    if (i === 0 && paras.length > 1) {
+      return `<div class="hl-block">${lines}</div>`;
+    }
+    return `<p style="margin-bottom:12px;">${lines}</p>`;
+  }).join('');
+}
+
 function buildReportFlipBook(sections) {
   const track = qs('#rv-track');
   track.innerHTML = '';
   RV.slides = [];
 
-  const E  = ST.engineResult;
+  const E   = ST.engineResult;
+  const tier = ST.ageTier || 'school';
+  const cfg  = getThemeConfig(tier);
   const imgKey = KEY2IMG[E?.key || 'w'] || 'whorl';
   const fpSrc  = FP_IMGS[imgKey];
   const type   = E?.主性格类型 || '天赋型';
   const reportId = `FP-${new Date().getFullYear()}-${(E?.key||'w').toUpperCase().slice(0,2)}${Math.floor(Math.random()*900+100)}`;
 
-  // Slide 0: Cover
+  // 把主题应用到 #s4
+  qs('#s4').dataset.theme = cfg.theme;
+
+  // ── Slide 0: Cover ──────────────────────────────────────────────────
   const coverSlide = el('div', 'rv-slide');
   coverSlide.dataset.title = '封面';
-  coverSlide.innerHTML = `
+  const overlayTraits = (E?.叠加特质 || []).slice(0, 2).join(' · ');
+  coverSlide.innerHTML = `<div class="cv-wrap">
+    ${cfg.deco ? `<div class="cv-deco">${cfg.deco}</div>` : ''}
+    <div class="cv-theme-badge">${cfg.badge}</div>
     <div class="cv-fp"><img src="${fpSrc}" alt="指纹图"></div>
     <div class="cv-type">${type}</div>
     <div class="cv-line"></div>
-    <div class="cv-tagline">${ST.name ? ST.name + ' · ' : ''}${ST.age}岁 · 专属皮纹报告</div>
+    <div class="cv-tagline">${ST.name ? '<strong>' + ST.name + '</strong> · ' : ''}${ST.age}岁 · 专属皮纹报告</div>
     <div class="cv-tags">
-      ${[type, E?.学习通道?.主通道||'', E?.行为模式?.结论||'', E?.ATD?.分区||''].filter(Boolean).slice(0,4).map(t=>`<div class="tag">${t}</div>`).join('')}
+      ${[E?.学习通道?.主通道, E?.行为模式?.结论, E?.ATD?.分区].filter(Boolean).map(t=>`<div class="cv-tag">${t}</div>`).join('')}
+    </div>
+    <div class="cv-stats">
+      <div class="cv-stat"><div class="cv-stat-label">左脑占比</div><div class="cv-stat-val">${E?.左右脑?.左脑占比||'—'}%</div></div>
+      <div class="cv-stat"><div class="cv-stat-label">个人均值</div><div class="cv-stat-val">${E?.五功能区?.个人均值||'—'} TRC</div></div>
+      ${overlayTraits ? `<div class="cv-stat" style="grid-column:1/-1"><div class="cv-stat-label">叠加特质</div><div class="cv-stat-val" style="font-size:12px">${overlayTraits}</div></div>` : ''}
     </div>
     <hr class="cv-hr">
-    <div class="cv-meta">报告编号 <b>${reportId}</b><br>生成日期 <b>${new Date().toLocaleDateString('zh-CN')}</b></div>`;
+    <div class="cv-meta">报告编号 <b>${reportId}</b>&nbsp;&nbsp;生成日期 <b>${new Date().toLocaleDateString('zh-CN')}</b></div>
+  </div>`;
   track.appendChild(coverSlide);
-  RV.slides.push({ title:'封面', sub:'' });
+  RV.slides.push({ title:'封面', sub:cfg.badge });
 
-  // Content slides from sections
+  // ── Slide 1: 数据总览 ───────────────────────────────────────────────
+  const dvHTML = buildDataVizSlide(E);
+  if (dvHTML) {
+    const dvSlide = el('div', 'rv-slide');
+    dvSlide.dataset.title = '数据总览';
+    dvSlide.innerHTML = dvHTML;
+    track.appendChild(dvSlide);
+    RV.slides.push({ title:'数据总览', sub:'五功能区 · 左右脑' });
+  }
+
+  // ── Content slides ──────────────────────────────────────────────────
   sections.forEach((sec, i) => {
     const slide = el('div', 'rv-slide');
     slide.dataset.title = sec.title;
+    const secNum = String(i + 1).padStart(2, '0');
 
     if (sec.type === 'issue') {
-      const eyebrow = `Issue ${String(i).padStart(2,'0')} · 家长勾选`;
-      slide.dataset.sub = eyebrow;
+      const icon = cfg.icon.issue;
+      const eyebrow = `${icon} 专项解读 · ${secNum}`;
+      slide.dataset.sub = '家长关注';
       slide.innerHTML = `
         <div class="sec-eyebrow">${eyebrow}</div>
         <div class="sec-h">${sec.title}</div>
         <div class="fp-parts">
           <div class="fp-part">
-            <div class="fp-badge"><div class="fp-badge-n">1</div><div class="fp-badge-t">为什么</div></div>
-            <div class="fp-text">${(sec.why||'').replace(/\n/g,'<br>')}</div>
+            <div class="fp-badge"><div class="fp-badge-n">1</div><div class="fp-badge-t">为什么会这样</div></div>
+            <div class="fp-text">${(sec.why||'').replace(/\n/g,'<br>').replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\*(.+?)\*/g,'<em>$1</em>')}</div>
           </div>
           <div class="fp-part">
-            <div class="fp-badge"><div class="fp-badge-n">2</div><div class="fp-badge-t">怎么办</div></div>
-            <div class="fp-text">${(sec.how||'').replace(/\n/g,'<br>')}</div>
+            <div class="fp-badge"><div class="fp-badge-n">2</div><div class="fp-badge-t">怎么应对</div></div>
+            <div class="fp-text">${(sec.how||'').replace(/\n/g,'<br>').replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\*(.+?)\*/g,'<em>$1</em>')}</div>
           </div>
           <div class="fp-part">
-            <div class="fp-badge"><div class="fp-badge-n">3</div><div class="fp-badge-t">未来趋势</div></div>
-            <div class="fp-text">${(sec.future||'').replace(/\n/g,'<br>')}</div>
+            <div class="fp-badge"><div class="fp-badge-n">3</div><div class="fp-badge-t">未来可期</div></div>
+            <div class="fp-text">${(sec.future||'').replace(/\n/g,'<br>').replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\*(.+?)\*/g,'<em>$1</em>')}</div>
           </div>
           <button class="fp-cta-btn" onclick="window.location='/child-chat.html'">
-            <span style="font-size:14px">④</span>
-            <span>${sec.cta || '还想深聊？继续问我'}</span>
+            <span>💬 ${sec.cta || '还想深聊？继续问我'}</span>
           </button>
         </div>`;
     } else {
-      const label = sec.type === 'foundation' ? '必读 · 地基段' : `第${i+1}段 · 必给`;
-      slide.dataset.sub = label;
+      const isFoundation = sec.type === 'foundation';
+      const icon = isFoundation ? cfg.icon.foundation : cfg.icon.required;
+      const label = isFoundation ? `${icon} 必读 · 天赋地基` : `${icon} 专项 · ${secNum}`;
+      slide.dataset.sub = isFoundation ? '天赋地基' : '必给模块';
+      // 提取关键词（从内容中找 **加粗** 词）
+      const kwMatches = (sec.content||'').match(/\*\*(.+?)\*\*/g) || [];
+      const kws = kwMatches.slice(0,4).map(k => k.replace(/\*\*/g,''));
       slide.innerHTML = `
         <div class="sec-eyebrow">${label}</div>
         <div class="sec-h">${sec.title}</div>
-        <div class="sec-body">${(sec.content||'').replace(/\n/g,'<br>').replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\*(.+?)\*/g,'<em>$1</em>')}</div>`;
+        ${kws.length ? `<div class="kw-row">${kws.map(k=>`<span class="kw">${k}</span>`).join('')}</div>` : ''}
+        <div class="sec-body">${formatContent(sec.content)}</div>`;
     }
     track.appendChild(slide);
     RV.slides.push({ title: sec.title, sub: slide.dataset.sub || '' });
   });
 
-  // Final slide
+  // ── Final slide ─────────────────────────────────────────────────────
   const finSlide = el('div', 'rv-slide');
   finSlide.dataset.title = '继续探索';
   finSlide.innerHTML = `
     <div class="fin-fp"><img src="${fpSrc}" alt=""></div>
     <div class="fin-h">${type}，就是你。</div>
-    <div class="fin-sub">这份报告拴着你指尖上的数据。<br>想聊更多，我在这里陪你。</div>
+    <div class="fin-sub">${cfg.finMsg}<br><br>想聊更多，我在这里。</div>
     <div class="btn-row">
-      <button class="btn-primary" onclick="window.location='/child-chat.html'">继续深聊 →</button>
+      <button class="btn-primary" onclick="window.location='/child-chat.html'" style="background:var(--th-p);border-color:var(--th-p)">继续深聊 →</button>
       <button class="btn-sec" id="rv-share-open">分享这份报告</button>
       <button class="btn-sec" id="rv-dl-fin">下载报告 PDF</button>
     </div>`;
@@ -927,7 +1121,6 @@ function buildReportFlipBook(sections) {
   RV.total = track.children.length;
   RV.cur = 0;
 
-  // Build dots + drawer
   buildRVDots();
   buildRVDrawer();
   rvGoTo(0);
@@ -942,7 +1135,6 @@ function buildReportFlipBook(sections) {
     const d = el('div', 'fpc-tag', t); ptags.appendChild(d);
   });
 
-  // Share buttons (added dynamically)
   setTimeout(() => {
     document.querySelectorAll('#rv-share-open,#rv-share-btn').forEach(b => {
       b.addEventListener('click', () => qs('#smodal').classList.add('open'));
