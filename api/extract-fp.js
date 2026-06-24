@@ -23,7 +23,7 @@ const { redisGet, redisSet } = require('./_lib');
 
 // ── 合法纹型符号白名单 ──────────────────────────────────────────────────
 const VALID_SYMS = new Set([
-  'Ws','Wt','We','Wsp','Wl',           // 螺旋/靶心/伸长/侧袋/侧向斗
+  'Ws','Wt','We','Wsp','Wsr','Wl',     // 螺旋/靶心/伸长/侧向螺旋/反侧向螺旋/侧向斗
   'Wc','Wd','Wsc',                      // 双斗类
   'Wpe','Rpe','Rwl',                    // 孔雀眼/反孔雀眼/反侧向
   'Wi',                                 // 内破斗
@@ -72,7 +72,7 @@ const EXTRACT_PROMPT = `你是皮纹科学数据提取专家。图片是一份 T
   },
   "atd": （ATD或反应速度数值，小数，图中无则null）,
   "name": "（姓名，图中无则null）",
-  "age": （年龄整数，图中无则null）
+  "birthday": "（被测者生日，格式 YYYY-MM-DD，图中无则null；若只有年份则填 YYYY-01-01）"
 }
 
 提取规则：
@@ -286,7 +286,21 @@ module.exports = async function handler(req, res) {
   const atd     = (parsed.atd !== null && parsed.atd !== undefined)
                   ? parseFloat(String(parsed.atd)) : null;
   const name    = parsed.name  ? String(parsed.name).trim()  : null;
-  const age     = parsed.age   ? parseInt(String(parsed.age)) : null;
+
+  // 年龄：从生日算（当前时间 - 报告生日），而不是读报告上写的年龄字段
+  let age = null;
+  if (parsed.birthday) {
+    const bd = new Date(String(parsed.birthday));
+    if (!isNaN(bd.getTime())) {
+      const now = new Date();
+      age = now.getFullYear() - bd.getFullYear();
+      const monthDiff = now.getMonth() - bd.getMonth();
+      if (monthDiff < 0 || (monthDiff === 0 && now.getDate() < bd.getDate())) age--;
+    }
+  } else if (parsed.age) {
+    // 兼容旧格式：报告只有年龄字段无生日
+    age = parseInt(String(parsed.age)) || null;
+  }
 
   // 合理性检查：TRC 总和不应为 0
   const totalTRC = Object.values(fingers).reduce((s, f) => s + f.trc, 0);
