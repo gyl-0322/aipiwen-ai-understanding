@@ -2332,7 +2332,7 @@ async function generatePoster() {
       tmp.style.cssText = 'position:fixed;left:-9999px;top:-9999px;width:80px;height:80px';
       document.body.appendChild(tmp);
       const uid = _getOrCreateFpUid();
-      const qrUrl = `https://aipiwen.cn/fingerprint-v2-wizard.html?from=poster&ref=${result.key}`;
+      const qrUrl = `https://aipiwen.cn/#fingerprint`;
       try {
         new QRCode(tmp, { text:qrUrl, width:80, height:80, colorDark:'#1A1714', colorLight:'#FFFFFF', correctLevel: QRCode.CorrectLevel.L });
       } catch(e) { document.body.removeChild(tmp); resolve(); return; }
