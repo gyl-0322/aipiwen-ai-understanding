@@ -27,8 +27,15 @@ async function checkRate(ip) {
   return true;
 }
 
-// ── 每日软限额：报告生成 3次/天（UTC+8日期） ────────────────────────────
-const SOFT_LIMIT_MSG = `你今天已经深度使用很多次了。\n为了保证每位用户的体验质量，建议明天继续使用。\n如果你愿意邀请朋友一起体验，也可以获得更多免费次数。`;
+// ── VIP bypass ───────────────────────────────────────────────────────────
+async function isVipToken(token) {
+  if (!token || typeof token !== 'string' || token.length < 6) return false;
+  const val = await redisGet(`vip:token:${token.trim()}`).catch(() => null);
+  return !!val;
+}
+
+// ── 每日软限额：报告生成 10次/天（UTC+8日期） ───────────────────────────
+const SOFT_LIMIT_MSG = `今天的报告生成次数已用完。\n明天继续使用，或邀请朋友体验（每邀请1人+1次）。`;
 
 async function checkDailyQuota(ip) {
   const yyyymmdd = new Date(Date.now() + 8 * 3600 * 1000).toISOString().slice(0, 10).replace(/-/g, '');
@@ -38,7 +45,7 @@ async function checkDailyQuota(ip) {
     redisGet(key).catch(() => 0),
     redisGet(bonusKey).catch(() => 0),
   ]);
-  const limit = 3 + (bonus || 0);
+  const limit = 10 + (bonus || 0);
   if ((count || 0) >= limit) return false;
   await redisSet(key, (count || 0) + 1, 90000);
   return true;
@@ -210,11 +217,14 @@ module.exports = async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ ok:false, error:'Method not allowed' });
 
   const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket?.remoteAddress || 'unknown';
-  const allowed = await checkRate(ip).catch(() => true);
-  if (!allowed) return res.status(429).json({ ok:false, error:'请求过于频繁，请稍后再试' });
-  // 每日软限额（3次/天）
-  const quotaOk = await checkDailyQuota(ip).catch(() => true);
-  if (!quotaOk) return res.status(200).json({ ok:false, soft:true, error: SOFT_LIMIT_MSG });
+  const vipToken = req.headers['x-vip-token'] || '';
+  const vipPass = await isVipToken(vipToken).catch(() => false);
+  if (!vipPass) {
+    const allowed = await checkRate(ip).catch(() => true);
+    if (!allowed) return res.status(429).json({ ok:false, error:'请求过于频繁，请稍后再试' });
+    const quotaOk = await checkDailyQuota(ip).catch(() => true);
+    if (!quotaOk) return res.status(200).json({ ok:false, soft:true, error: SOFT_LIMIT_MSG });
+  }
 
   // 读 body
   let body = '';

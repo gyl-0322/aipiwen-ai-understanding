@@ -794,9 +794,11 @@ qs('#gen-btn').addEventListener('click', async () => {
   qs('#gen-status').textContent = 'AI 正在为你生成专属报告，约需 20-40 秒…';
 
   try {
+    const _genVip = localStorage.getItem('aipiwen_vip') || '';
+    const _genVipHdr = _genVip ? { 'x-vip-token': _genVip } : {};
     const res = await fetch('/api/generate-report', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ..._genVipHdr },
       body: JSON.stringify({
         engineResult: ST.engineResult,
         age: ST.age,
