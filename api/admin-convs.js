@@ -301,8 +301,6 @@ async function handleTrack(req, res) {
 }
 
 // ── 知识库管理处理器（merged from knowledge.js）──────────────────────────────
-const crypto = require('crypto');
-
 function knowledgeExtractWords(text) {
   const words = new Set();
   (text.match(/[一-龥]{2,4}/g) || []).forEach(w => words.add(w));
