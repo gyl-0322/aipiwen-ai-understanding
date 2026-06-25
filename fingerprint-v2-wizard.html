@@ -933,6 +933,7 @@ body {
 .age-chip-inline.selected { background: var(--amber); border-color: var(--amber); color: #fff; font-weight: 600; }
 </style>
 <script src="/js/error-tracker.js"></script>
+<script src="/lib/trc-engine.js"></script>
 </head>
 <body>
 <div class="container">
@@ -1966,95 +1967,35 @@ function s7None() {
 
 /* ═══════════════════════════════════════════════
    CLASSIFICATION
+   ── 入口分流（按"有无数值"）──────────────────────
+   速测 (本页): 无TRC数值 → classifyBySymbolsOnly()  ← 在此
+   完整版 (report-upload.html): 有TRC数值 → TRCEngine.classify()
 ═══════════════════════════════════════════════ */
+
+/** 把 state.data 的 Set 集合转为 { R1:'Ws', R2:'Lu', ... } 格式供 engine 使用 */
+function _buildSymbolMap() {
+  const d   = state.data;
+  const POS = ['R1','R2','R3','R4','R5','L1','L2','L3','L4','L5'];
+  const sym = {};
+  for (let i = 0; i < 10; i++) {
+    const p = POS[i];
+    if (d.rlFingers.has(i))     { sym[p] = 'Rl'; continue; }
+    if (i === 0 && d.rtThumb)   { sym[p] = d.rtThumb; continue; }
+    if (i === 5 && d.ltThumb)   { sym[p] = d.ltThumb; continue; }
+    if (d.xFingers.has(i))      { sym[p] = 'X';  continue; }
+    if (d.xnFingers.has(i))     { sym[p] = 'Xn'; continue; }
+    if (d.luFingers.has(i))     { sym[p] = 'Lu'; continue; }
+    if (d.wOtherFingers.has(i)) { sym[p] = 'Ws'; continue; }
+    sym[p] = 'Lu';  // 未选手指默认正箕
+  }
+  return sym;
+}
+
+/** 速测主类型判定 — 纯纹型，绝不调用差值/M型/RULE-F04等需数值的规则 */
 function classify() {
-  const d = state.data;
-
-  // ── Rule 1: Any Rl → 逆思型 ─────────────────────────────
-  if (d.rlFingers.size > 0)
-    return { mainType: '逆思型 R', tagline: '逆向思考 · 创意非凡 · 与众不同', key: 'rl' };
-
-  const rt = d.rtThumb, lt = d.ltThumb;
-  const rtIsW = IS_W(rt), ltIsW = IS_W(lt);
-  const totalW   = (rtIsW ? 1 : 0) + (ltIsW ? 1 : 0) + d.wOtherFingers.size;
-  const totalLu  = d.luFingers.size;
-  const totalArc = d.xFingers.size + d.xnFingers.size;
-
-  const isDouble  = t => t === 'Wd' || t === 'Wc';
-  const isPeacock = t => t === 'We' || t === 'Wpe';
-
-  // 拇指个性标签（用于 Rule 3 食指弧修饰 & Rule 5）
-  function thumbLabel(isRight) {
-    const t  = isRight ? rt : lt;
-    const fi = isRight ? 0  : 5;
-    if (IS_W(t)) {
-      if (isDouble(t))  return '整合';
-      if (isPeacock(t)) return '完美';
-      return '认知';
-    }
-    if (d.luFingers.has(fi)  || t === 'Lu')                          return '模仿';
-    if (d.xFingers.has(fi)   || d.xnFingers.has(fi) ||
-        t === 'X'            || t === 'Xn')                           return '开放';
-    return '认知';
-  }
-
-  // ── Rule 2: 十指全斗 → 超级认知 A / B / C ────────────────
-  if (totalW >= 10) {
-    // 双斗 + 孔雀眼 混合：左手拇指优先决定
-    if ((isDouble(rt) && isPeacock(lt)) || (isPeacock(rt) && isDouble(lt)))
-      return isDouble(lt)
-        ? { mainType: '超级认知B · 双核整合', tagline: '领袖气质 · 全局整合 · 多维并行 · 跨界高手', key: 'super_w_b' }
-        : { mainType: '超级认知C · 完美特质', tagline: '领袖气质 · 极致审美 · 完美追求 · 卓越标准', key: 'super_w_c' };
-    // 任意拇指有双斗 → B
-    if (isDouble(rt)  || isDouble(lt))
-      return { mainType: '超级认知B · 双核整合', tagline: '领袖气质 · 全局整合 · 多维并行 · 跨界高手', key: 'super_w_b' };
-    // 任意拇指有孔雀眼 → C
-    if (isPeacock(rt) || isPeacock(lt))
-      return { mainType: '超级认知C · 完美特质', tagline: '领袖气质 · 极致审美 · 完美追求 · 卓越标准', key: 'super_w_c' };
-    // 其余（螺旋斗或其他斗纹） → A
-    return { mainType: '超级认知A · 螺旋领袖', tagline: '天生领袖 · 主见极强 · 目标必达 · 王者之气', key: 'super_w_a' };
-  }
-
-  // ── Rule 3: 弧形纹检查 ───────────────────────────────────
-  // 双手弧形纹（简单弧 + 帐篷弧）合计 ≥ 6 → 开放型
-  if (totalArc >= 6)
-    return { mainType: '开放型', tagline: '海绵学习 · 踏实肯干 · 简单极致', key: 'x' };
-
-  // 食指（右食指 fi=1，左食指 fi=6）有弧形纹 → [拇指类型]兼开放型
-  const hasIndexArc = d.xFingers.has(1) || d.xnFingers.has(1) ||
-                      d.xFingers.has(6) || d.xnFingers.has(6);
-  if (hasIndexArc) {
-    const ltLbl = thumbLabel(false), rtLbl = thumbLabel(true);
-    // 左手拇指优先，若左手拇指本身是开放则用右手
-    const lbl = ltLbl !== '开放' ? ltLbl : rtLbl;
-    if (lbl !== '开放')
-      return { mainType: `${lbl}兼开放型`, tagline: `${lbl}主导 · 开放加持 · 吸收力强`, key: 'combo_open' };
-  }
-
-  // ── Rule 4: 十指全正箕纹 → 超级模仿型 ───────────────────
-  if (totalLu >= 10)
-    return { mainType: '超级模仿型', tagline: '敞开接纳 · 大公无私 · 奉献型', key: 'super_l' };
-
-  // ── Rule 5: 通用规则 — 只看大拇指 ────────────────────────
-  const rtLbl = thumbLabel(true), ltLbl = thumbLabel(false);
-
-  if (rtLbl === ltLbl) {
-    // 两拇指相同 → 直接输出该类型
-    const SINGLE = {
-      '认知': { mainType: '认知型', tagline: '独立思考 · 主见权威 · 探索求知', key: 'w'         },
-      '整合': { mainType: '整合型', tagline: '双核思维 · 多维整合 · 灵活高手', key: 'wc'        },
-      '完美': { mainType: '完美型', tagline: '极致标准 · 审美卓越 · 追求完美', key: 'perfect_w' },
-      '模仿': { mainType: '模仿型', tagline: '善于模仿 · 适应力强 · 服务型',   key: 'l'         },
-      '开放': { mainType: '开放型', tagline: '海绵学习 · 踏实肯干 · 简单极致', key: 'x'         },
-    };
-    return SINGLE[rtLbl] || { mainType: '认知型', tagline: '独立思考 · 主见权威 · 探索求知', key: 'w' };
-  }
-
-  // 两拇指不同 → 写两种都兼上（层级：认知 > 整合 > 完美 > 模仿 > 开放）
-  const ORDER = ['认知', '整合', '完美', '模仿', '开放'];
-  const [a, b] = [rtLbl, ltLbl].sort((x, y) => ORDER.indexOf(x) - ORDER.indexOf(y));
-  const comboKey = b === '开放' ? 'combo_open' : b === '模仿' ? 'combo_w_l' : 'combo_w';
-  return { mainType: `${a}兼${b}型`, tagline: `${a}主导 · ${b}加持 · 多元天赋`, key: comboKey };
+  const allSymbols = _buildSymbolMap();
+  const thumbs     = { right: allSymbols.R1, left: allSymbols.L1 };
+  return window.TRCEngine.classifyBySymbolsOnly(thumbs, allSymbols);
 }
 
 /* ═══════════════════════════════════════════════
