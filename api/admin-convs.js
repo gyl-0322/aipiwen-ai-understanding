@@ -1,5 +1,6 @@
 /**
- * AIPIWEN 对话日志管理接口 + 事件统计埋点（merged stats.js）+ 前端错误日志（merged error-log.js）
+ * AIPIWEN 对话日志管理 + 事件统计埋点（merged stats.js）+ 前端错误日志（merged error-log.js）
+ *                     + 增长追踪（merged track.js）+ 知识库管理（merged knowledge.js）
  * GET /api/admin-convs?secret=xxx                → 会话列表（最新500条）
  * GET /api/admin-convs?secret=xxx&sid=xxx        → 某次会话的完整对话
  * GET /api/admin-convs?secret=xxx&action=export  → 导出全部会话 JSON（最新300条含消息）
@@ -9,6 +10,9 @@
  * GET  /api/stats?admin=1&secret=xxx             → 查看统计数据（管理端）
  * POST /api/error-log  { msg, stack, page... }   → 前端上报错误（无需登录）
  * GET  /api/error-log?secret=xxx                 → 查看错误日志（同 action=errors）
+ * GET/POST /api/track  { event, meta, ... }      → 增长埋点（merged from track.js）
+ * GET  /api/growth                               → 增长数据汇总（merged from track.js）
+ * GET/POST /api/knowledge?action=search|load|list|delete → 知识库管理（merged from knowledge.js）
  *
  * 需要在 Vercel 环境变量中设置 ADMIN_SECRET
  */
@@ -187,11 +191,202 @@ const CONTEXT_LABELS = {
   report:      '报告解读',
 };
 
+// ── 增长追踪处理器（merged from track.js）────────────────────────────────────
+const MAX_TRACK_EVENTS = 2000;
+function trackKvBase()  { return process.env.UPSTASH_REDIS_REST_URL   || process.env.KV_REST_API_URL   || null; }
+function trackKvToken() { return process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_REST_API_TOKEN || null; }
+
+async function trackKvCmd(cmd, ...args) {
+  const base = trackKvBase();
+  if (!base) return null;
+  try {
+    const res = await fetch(`${base}`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${trackKvToken()}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify([cmd, ...args]),
+    });
+    if (!res.ok) return null;
+    const j = await res.json();
+    return j.result ?? null;
+  } catch (e) { console.error('[KV track]', cmd, e.message); return null; }
+}
+
+async function trackKvPipeline(commands) {
+  const base = trackKvBase();
+  if (!base) return null;
+  try {
+    const res = await fetch(`${base}/pipeline`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${trackKvToken()}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify(commands),
+    });
+    if (!res.ok) console.error(`[KV track] pipeline HTTP ${res.status}`);
+    return res.ok ? res.json() : null;
+  } catch (e) { console.error('[KV track] pipeline error:', e.message); return null; }
+}
+
+function trackFlatToObj(arr) {
+  if (!Array.isArray(arr)) return {};
+  const obj = {};
+  for (let i = 0; i < arr.length; i += 2) obj[arr[i]] = Number(arr[i + 1]) || 0;
+  return obj;
+}
+
+async function handleTrack(req, res) {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  if (req.method === 'OPTIONS') return res.status(204).end();
+
+  const urlPath = req.url ? req.url.split('?')[0] : '';
+
+  if (req.method === 'GET') {
+    if (urlPath === '/api/growth') {
+      const kvConnected = !!trackKvBase();
+      if (!kvConnected) return res.status(200).json({ kvConnected: false, funnel: {}, typePerf: {}, attribution: {}, eventCount: 0 });
+      const [funnelRaw, attrRaw, typesRaw, eventCount] = await Promise.all([
+        trackKvCmd('HGETALL', 'gt:funnel'),
+        trackKvCmd('HGETALL', 'gt:attr'),
+        trackKvCmd('SMEMBERS', 'gt:types'),
+        trackKvCmd('LLEN', 'gt:events'),
+      ]);
+      const funnel      = trackFlatToObj(funnelRaw);
+      const attribution = trackFlatToObj(attrRaw);
+      const typeKeys    = Array.isArray(typesRaw) ? typesRaw : [];
+      let typePerf = {};
+      if (typeKeys.length > 0) {
+        const cmds    = typeKeys.map(k => ['HGETALL', `gt:type:${k}`]);
+        const results = await trackKvPipeline(cmds);
+        if (Array.isArray(results)) {
+          results.forEach((item, i) => { typePerf[typeKeys[i]] = trackFlatToObj(item.result); });
+        }
+      }
+      return res.status(200).json({ kvConnected: true, funnel, typePerf, attribution, eventCount: Number(eventCount) || 0 });
+    }
+    // /api/track GET — 首页访问计数
+    const data  = await trackKvPipeline([['HGET', 'gt:funnel', 'homepage_visit']]);
+    const count = parseInt((data && data[0] && data[0].result) || 0, 10) || 0;
+    return res.status(200).json({ ok: true, count });
+  }
+
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+
+  let payload;
+  try { payload = typeof req.body === 'string' ? JSON.parse(req.body) : req.body; } catch (e) {
+    return res.status(400).json({ error: 'Invalid JSON' });
+  }
+
+  const { event, meta = {}, session, type, ts, utm = {} } = payload || {};
+  if (!event || typeof event !== 'string') return res.status(400).json({ error: 'Missing event' });
+
+  const src   = (utm && utm.source) || 'direct';
+  const entry = JSON.stringify({ event, meta, session, type, ts: ts || Date.now(), utm, received: Date.now() });
+
+  const pipeline = [
+    ['HINCRBY', 'gt:funnel', event, 1],
+    ['HINCRBY', 'gt:attr',   src,   1],
+    ['LPUSH',   'gt:events', entry],
+    ['LTRIM',   'gt:events', 0, MAX_TRACK_EVENTS - 1],
+  ];
+  if (type) {
+    const typeKey = `gt:type:${type}`;
+    pipeline.push(['SADD', 'gt:types', type]);
+    if (event === 'result_view')   pipeline.push(['HINCRBY', typeKey, 'views',  1]);
+    if (event === 'poster_share')  pipeline.push(['HINCRBY', typeKey, 'shares', 1]);
+    if (event === 'wecom_click')   pipeline.push(['HINCRBY', typeKey, 'wecom',  1]);
+    if (event === 'lead_captured') pipeline.push(['HINCRBY', typeKey, 'leads',  1]);
+  }
+  await trackKvPipeline(pipeline);
+  return res.status(200).json({ ok: true });
+}
+
+// ── 知识库管理处理器（merged from knowledge.js）──────────────────────────────
+const crypto = require('crypto');
+
+function knowledgeExtractWords(text) {
+  const words = new Set();
+  (text.match(/[一-龥]{2,4}/g) || []).forEach(w => words.add(w));
+  (text.toLowerCase().match(/[a-z]{3,}/g) || []).forEach(w => words.add(w));
+  return [...words];
+}
+
+function knowledgeIsAdmin(req) {
+  const s = process.env.ADMIN_SECRET;
+  if (!s) return false;
+  return req.query.secret === s || req.headers['x-admin-secret'] === s;
+}
+
+async function handleKnowledge(req, res) {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  const { action } = req.query;
+
+  if (action === 'search') {
+    const q = (req.query.q || '').trim();
+    if (!q) return res.status(400).json({ error: 'q 参数必填' });
+    const queryWords = knowledgeExtractWords(q);
+    if (queryWords.length === 0) return res.status(200).json({ chunks: [] });
+    const candidateScores = {};
+    for (const word of queryWords.slice(0, 20)) {
+      const ids = await redisGet(`knowledge:index:${word}`) || [];
+      ids.forEach(id => { candidateScores[id] = (candidateScores[id] || 0) + 1; });
+    }
+    if (Object.keys(candidateScores).length === 0) return res.status(200).json({ chunks: [] });
+    const topIds = Object.entries(candidateScores).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([id]) => id);
+    const chunks = await redisGet('knowledge:chunks') || [];
+    const results = topIds.map(id => chunks.find(c => c.id === id)).filter(Boolean);
+    return res.status(200).json({ chunks: results, query: q });
+  }
+
+  if (action === 'load' && req.method === 'POST') {
+    if (!knowledgeIsAdmin(req)) return res.status(401).json({ error: '未授权' });
+    let b = '';
+    const body = await new Promise(resolve => { req.on('data', c => (b += c)); req.on('end', () => { try { resolve(JSON.parse(b)); } catch { resolve({}); } }); });
+    const incoming = body.chunks || [];
+    if (!Array.isArray(incoming) || incoming.length === 0) return res.status(400).json({ error: 'chunks 数组不能为空' });
+    const existing = await redisGet('knowledge:chunks') || [];
+    let added = 0;
+    for (const item of incoming) {
+      if (!item.text?.trim()) continue;
+      const chunk = { id: crypto.randomBytes(6).toString('hex'), source: item.source || '未知来源', tags: Array.isArray(item.tags) ? item.tags : [], text: item.text.trim(), createdAt: new Date().toISOString() };
+      existing.push(chunk);
+      const words = knowledgeExtractWords(chunk.text + ' ' + chunk.tags.join(' '));
+      for (const word of words) {
+        const ids = await redisGet(`knowledge:index:${word}`) || [];
+        if (!ids.includes(chunk.id)) { ids.push(chunk.id); await redisSet(`knowledge:index:${word}`, ids); }
+      }
+      added++;
+    }
+    await redisSet('knowledge:chunks', existing);
+    return res.status(200).json({ ok: true, added, total: existing.length });
+  }
+
+  if (action === 'list') {
+    if (!knowledgeIsAdmin(req)) return res.status(401).json({ error: '未授权' });
+    const chunks = await redisGet('knowledge:chunks') || [];
+    const overview = chunks.map(c => ({ id: c.id, source: c.source, tags: c.tags, textLen: c.text?.length || 0, preview: c.text?.slice(0, 60) + '…', createdAt: c.createdAt }));
+    return res.status(200).json({ total: chunks.length, chunks: overview });
+  }
+
+  if (action === 'delete' && req.method === 'POST') {
+    if (!knowledgeIsAdmin(req)) return res.status(401).json({ error: '未授权' });
+    const { id } = req.query;
+    if (!id) return res.status(400).json({ error: 'id 必填' });
+    const chunks = await redisGet('knowledge:chunks') || [];
+    await redisSet('knowledge:chunks', chunks.filter(c => c.id !== id));
+    return res.status(200).json({ ok: true, remaining: chunks.length - 1 });
+  }
+
+  return res.status(400).json({ error: '无效的 action' });
+}
+
 module.exports = async function handler(req, res) {
   // 路由分发
   const urlPath = req.url ? req.url.split('?')[0] : '';
-  if (urlPath === '/api/stats')     return handleStats(req, res);
-  if (urlPath === '/api/error-log') return handleErrorLog(req, res);
+  if (urlPath === '/api/stats')      return handleStats(req, res);
+  if (urlPath === '/api/error-log')  return handleErrorLog(req, res);
+  if (urlPath === '/api/track')      return handleTrack(req, res);
+  if (urlPath === '/api/growth')     return handleTrack(req, res);
+  if (urlPath === '/api/knowledge')  return handleKnowledge(req, res);
 
   res.setHeader('Access-Control-Allow-Origin', '*');
   if (req.method === 'OPTIONS') return res.status(204).end();

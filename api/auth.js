@@ -1,11 +1,14 @@
 /**
  * AIPIWEN 微信登录 + 用户账号系统 + 企业微信客服自动回复（merged wechat.js）
+ *             + 邀请裂变（merged invite.js）
  *
  * 路由：
  *   GET  /api/auth?action=login_url          → 返回微信授权跳转链接
  *   GET  /api/auth?action=callback&code=xxx  → 微信回调，完成登录，写入session
  *   GET  /api/auth?action=me                 → 返回当前登录用户信息
  *   POST /api/auth?action=logout             → 退出登录
+ *   GET  /api/invite?action=create           → 创建邀请 token（merged）
+ *   GET  /api/invite?action=track&ref=TOKEN  → 积分给邀请人（merged）
  *
  * 环境变量：
  *   WECHAT_OPEN_APPID      微信开放平台 AppID
@@ -14,7 +17,8 @@
  */
 
 const crypto = require('crypto');
-const { redisSet, redisGet, makeSessionToken, getSessionToken, parseSessionToken, registerUser } = require('./_lib');
+const { redisSet, redisGet, makeSessionToken, getSessionToken, parseSessionToken, registerUser,
+        createInviteToken, creditReferral } = require('./_lib');
 
 const APPID        = process.env.WECHAT_OPEN_APPID || 'wxcd1f11f34b4cf731';
 const SECRET       = process.env.WECHAT_OPEN_SECRET || '';
@@ -127,10 +131,47 @@ async function handleWechat(req, res) {
   res.status(405).send('Method Not Allowed');
 }
 
+// ── 邀请裂变处理器（merged from invite.js）─────────────────────────────────
+async function handleInvite(req, res) {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  if (req.method === 'OPTIONS') return res.status(204).end();
+
+  const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim()
+           || req.socket?.remoteAddress || 'unknown';
+
+  if (req.method === 'GET') {
+    const url    = new URL(req.url, `https://${req.headers.host}`);
+    const action = url.searchParams.get('action');
+
+    if (action === 'create') {
+      // 简单防刷：每 IP 每分钟最多创建 5 个 token
+      const minute = Math.floor(Date.now() / 60000);
+      const rlKey  = `ratelimit:invite:${ip}:${minute}`;
+      const count  = (await redisGet(rlKey).catch(() => 0)) || 0;
+      if (count >= 5) return res.status(429).json({ ok: false, error: '请求过于频繁' });
+      await redisSet(rlKey, count + 1, 120);
+      const token = await createInviteToken(ip);
+      return res.status(200).json({ ok: true, token });
+    }
+
+    if (action === 'track') {
+      const ref = url.searchParams.get('ref');
+      if (!ref) return res.status(200).json({ ok: true, credited: false });
+      const credited = await creditReferral(ip, ref, 'practitioner').catch(() => false);
+      return res.status(200).json({ ok: true, credited });
+    }
+
+    return res.status(400).json({ ok: false, error: '缺少 action 参数' });
+  }
+  return res.status(405).json({ ok: false, error: 'Method not allowed' });
+}
+
 module.exports = async function handler(req, res) {
-  // 路由分发：/api/wechat → handleWechat
+  // 路由分发：/api/wechat → handleWechat，/api/invite → handleInvite
   const urlPath = req.url ? req.url.split('?')[0] : '';
   if (urlPath === '/api/wechat') return handleWechat(req, res);
+  if (urlPath === '/api/invite') return handleInvite(req, res);
 
   const { action, code } = req.query;
 

@@ -1,20 +1,14 @@
 /**
- * api/generate-report.js — 专属皮纹报告 AI 生成接口
+ * api/generate-report.js — 专属皮纹报告 AI 生成接口 + 报告存储（merged report-store.js）
  *
- * POST /api/generate-report
- * Body: {
- *   engineResult: { 主性格类型, key, 学习通道, 行为模式, 左右脑, 五功能区, ATD, 叠加特质 },
- *   age:          number | null,
- *   name:         string | null,
- *   selectedIssues: string[]   // 用户勾选的高频问题
- * }
- *
- * 返回: { ok: true, sections: Section[], raw: string }
- * Section: { title, type:'foundation'|'required'|'issue', content?, why?, how?, future?, cta? }
+ * POST /api/generate-report  { engineResult, age, name, selectedIssues }  → 生成报告
+ * POST /api/report-store     { sections, engineResult, fingers?, name?, age? } → 保存报告（merged）
+ * GET  /api/report-store?id=xxx                                           → 读取报告（merged）
  *
  * 失败: { ok: false, error: string }
  */
 
+const crypto = require('crypto');
 const { redisGet, redisSet, creditReferral } = require('./_lib');
 
 // ── 限流：每 IP 每分钟最多 3 次（防滥用） ──────────────────────────────
@@ -211,8 +205,72 @@ function parseSections(raw, requiredModules, selectedIssues) {
   return sections;
 }
 
+// ── 报告存储处理器（merged from report-store.js）─────────────────────────────
+async function checkStoreRate(ip) {
+  const minute = Math.floor(Date.now() / 60000);
+  const key    = `ratelimit:rptstore:${ip}:${minute}`;
+  const count  = (await redisGet(key).catch(() => 0)) || 0;
+  if (count >= 10) return false;
+  await redisSet(key, count + 1, 120);
+  return true;
+}
+
+async function handleReportStore(req, res) {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  if (req.method === 'OPTIONS') return res.status(204).end();
+
+  const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket?.remoteAddress || 'unknown';
+
+  if (req.method === 'POST') {
+    const allowed = await checkStoreRate(ip).catch(() => true);
+    if (!allowed) return res.status(429).json({ ok: false, error: '请求过于频繁，请稍后再试' });
+
+    const MAX_BODY = 500 * 1024;
+    let body;
+    try {
+      const raw = await new Promise((resolve, reject) => {
+        let data = ''; let bytes = 0;
+        req.on('data', chunk => {
+          bytes += chunk.length;
+          if (bytes > MAX_BODY) { reject(Object.assign(new Error('BODY_TOO_LARGE'), { code: 413 })); req.destroy(); }
+          else data += chunk;
+        });
+        req.on('end', () => resolve(data));
+        req.on('error', reject);
+      });
+      body = JSON.parse(raw);
+    } catch(e) {
+      const code = e.code === 413 ? 413 : 400;
+      return res.status(code).json({ ok: false, error: code === 413 ? '报告数据过大' : '请求体格式错误' });
+    }
+
+    const { sections, engineResult, fingers, name, age } = body;
+    if (!sections?.length || !engineResult) return res.status(400).json({ ok: false, error: '缺少 sections 或 engineResult' });
+
+    const id = crypto.randomBytes(4).toString('hex');
+    await redisSet(`report:${id}`, { sections, engineResult, fingers: fingers || [], name: name ? String(name).slice(0, 40) : null, age: age ? Number(age) || null : null, createdAt: Date.now(), ip }, 30 * 86400);
+    return res.status(200).json({ ok: true, id });
+  }
+
+  if (req.method === 'GET') {
+    const url = new URL(req.url, `https://${req.headers.host}`);
+    const id  = url.searchParams.get('id');
+    if (!id) return res.status(400).json({ ok: false, error: '缺少 id 参数' });
+    const report = await redisGet(`report:${id}`).catch(() => null);
+    if (!report) return res.status(404).json({ ok: false, error: '报告不存在或已过期（30天）' });
+    return res.status(200).json({ ok: true, report });
+  }
+
+  return res.status(405).json({ ok: false, error: 'Method not allowed' });
+}
+
 // ── 主 Handler ───────────────────────────────────────────────────────────
 module.exports = async function handler(req, res) {
+  // 路由分发：/api/report-store → handleReportStore
+  const urlPath = req.url ? req.url.split('?')[0] : '';
+  if (urlPath === '/api/report-store') return handleReportStore(req, res);
+
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   if (req.method === 'OPTIONS') return res.status(204).end();

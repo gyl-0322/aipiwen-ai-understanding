@@ -3,7 +3,7 @@
   "routes": [
     {
       "src": "/api/growth",
-      "dest": "/api/track"
+      "dest": "/api/admin-convs"
     },
     {
       "src": "/api/stats",
@@ -20,6 +20,26 @@
     {
       "src": "/api/error-log",
       "dest": "/api/admin-convs"
+    },
+    {
+      "src": "/api/invite",
+      "dest": "/api/auth"
+    },
+    {
+      "src": "/api/synthesize",
+      "dest": "/api/guest-chat"
+    },
+    {
+      "src": "/api/track",
+      "dest": "/api/admin-convs"
+    },
+    {
+      "src": "/api/knowledge",
+      "dest": "/api/admin-convs"
+    },
+    {
+      "src": "/api/report-store",
+      "dest": "/api/generate-report"
     },
     {
       "src": "/api/(.*)",
@@ -133,14 +153,6 @@
       "dest": "/practitioner.html"
     },
     {
-      "src": "/api/invite",
-      "dest": "/api/invite.js"
-    },
-    {
-      "src": "/api/report-store",
-      "dest": "/api/report-store.js"
-    },
-    {
       "src": "/practitioner",
       "dest": "/practitioner.html"
     },
@@ -175,32 +187,17 @@
     "api/guest-chat.js": {
       "maxDuration": 30
     },
-    "api/synthesize.js": {
-      "maxDuration": 30
-    },
     "api/digest.js": {
       "maxDuration": 60
     },
-    "api/knowledge.js": {
-      "maxDuration": 15
-    },
     "api/admin-convs.js": {
       "maxDuration": 30
-    },
-    "api/track.js": {
-      "maxDuration": 15
     },
     "api/extract-fp.js": {
       "maxDuration": 60
     },
     "api/generate-report.js": {
       "maxDuration": 60
-    },
-    "api/invite.js": {
-      "maxDuration": 10
-    },
-    "api/report-store.js": {
-      "maxDuration": 10
     }
   },
   "crons": [

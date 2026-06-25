@@ -1,8 +1,10 @@
 /**
  * AIPIWEN 访客对话接口 + 通用会话日志（merged log-session.js）
+ *                     + 跨场景综合分析（merged synthesize.js）
  * 无需登录，仅返回 AI 回复，同时将对话日志写入 Redis
  * POST /api/guest-chat   { content, history, context, sessionId }
  * POST /api/log-session  { sessionId, context, summary, detail }
+ * POST /api/synthesize   { contexts: { child?, self?, partner?, business? } }
  */
 
 const { getGlobalPatterns, redisSet, redisGet, creditReferral } = require('./_lib');
@@ -124,9 +126,10 @@ async function checkDailyQuota(ip) {
 }
 
 module.exports = async function handler(req, res) {
-  // 路由分发：/api/log-session → handleLogSession
+  // 路由分发：/api/log-session → handleLogSession，/api/synthesize → handleSynthesize
   const urlPath = req.url ? req.url.split('?')[0] : '';
   if (urlPath === '/api/log-session') return handleLogSession(req, res);
+  if (urlPath === '/api/synthesize')  return handleSynthesize(req, res);
 
   res.setHeader('Access-Control-Allow-Origin', '*');
   if (req.method === 'OPTIONS') return res.status(204).end();
@@ -888,3 +891,97 @@ ${NO_FILLER}`;
     ...(extractedReportSummary ? { reportSummary: extractedReportSummary } : {}),
   });
 };
+
+// ── 跨场景综合分析处理器（merged from synthesize.js）─────────────────────────
+async function handleSynthesize(req, res) {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  if (req.method === 'OPTIONS') return res.status(204).end();
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+
+  const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket?.remoteAddress || 'unknown';
+
+  // 限流：每 IP 每分钟最多 3 次
+  const minute = Math.floor(Date.now() / 60000);
+  const rlKey  = `ratelimit:synth:${ip}:${minute}`;
+  const count  = (await redisGet(rlKey).catch(() => 0)) || 0;
+  if (count >= 3) return res.status(429).json({ error: '请求过于频繁，请稍后再试' });
+  await redisSet(rlKey, count + 1, 120);
+
+  let body = '';
+  await new Promise((resolve, reject) => {
+    req.on('data', c => (body += c));
+    req.on('end', resolve);
+    req.on('error', reject);
+  });
+
+  let payload = {};
+  try { payload = JSON.parse(body); } catch {}
+
+  const { contexts = {} } = payload;
+  const availableContexts = Object.entries(contexts).filter(([, arr]) => arr && arr.length > 0);
+  if (availableContexts.length < 2) {
+    return res.status(400).json({ error: '至少需要2个场景的数据才能进行综合分析' });
+  }
+
+  const CONTEXT_LABELS = {
+    child: '亲子场景（孩子的行为）', self: '自我场景（自己的行为）',
+    partner: '亲密关系（伴侣的行为）', business: '合伙关系（合伙人的行为）',
+  };
+
+  const contextSections = availableContexts.map(([ctx, entries]) => {
+    const label = CONTEXT_LABELS[ctx] || ctx;
+    const lines = entries.slice(0, 3).map((e, i) =>
+      `  ${i + 1}. [${e.date}] 用户描述："${e.behavior}" → AI发现：${e.insight}`
+    ).join('\n');
+    return `【${label}】\n${lines}`;
+  }).join('\n\n');
+
+  const TRC_REFERENCE = buildTypeReferenceForPrompt();
+
+  const systemPrompt = `你是AIPIWEN的家庭关系系统分析顾问。你的核心信念：家庭是一个有机系统，每一个人的行为模式，都是对这个系统整体运作方式的回应——没有人是孤立的"问题"，每个人都在用自己的方式维持系统的某种平衡。\n\n分析原则：\n- 用系统视角，找到多个场景之间真正的内在联系（不是简单罗列各场景）\n- 识别这个人在所有关系中重复出现的核心模式（角色、情绪策略、未被满足的需求）\n- 找到改变的"杠杆点"：改变这一处，可以同时影响多段关系、多个问题\n- 语气温暖有力，像真正懂关系的朋友，不评判任何人，让用户感到"被看见"和"有希望"\n\n【天赋认知类型（TRC）参考框架】\n${TRC_REFERENCE}\n\n【重要格式要求】禁止用"收到""好的""当然""明白""我来帮你"等开场白。直接输出结构化分析。`;
+
+  const userPrompt = `以下是同一个用户在不同关系场景下积累的行为洞察记录：\n\n${contextSections}\n\n请从家庭系统视角进行综合分析。\n\n请按以下结构输出（语言要有洞察力和温度，合计400字以内）：\n\n**系统主题**（1-2句话，说出这个人在所有关系中最核心的那个模式）\n\n**跨场景联系**（2-3条，说明这些场景的行为如何相互影响——要有因果逻辑）\n\n**可能的天赋类型**（如果特征明显，用1-3句话点出；不明显可省略）\n\n**优先改变建议**（3条，按杠杆大小排序。每条说明 在哪里改变 + 为什么能同时让多段关系松动 + 一个明天就能做的具体动作）`;
+
+  const messages = [
+    { role: 'system', content: systemPrompt },
+    { role: 'user',   content: userPrompt },
+  ];
+
+  let reply = null;
+  try {
+    const ctrl  = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 25000);
+    const aiRes = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${process.env.DASHSCOPE_API_KEY || ''}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model: 'qwen-turbo', max_tokens: 600, messages }),
+      signal: ctrl.signal,
+    });
+    clearTimeout(timer);
+
+    const rawText = await aiRes.text();
+    if (!aiRes.ok) return res.status(500).json({ error: `AI 调用失败（${aiRes.status}）：${rawText.slice(0, 80)}` });
+
+    let aiData;
+    try { aiData = JSON.parse(rawText); } catch(e) { return res.status(500).json({ error: 'AI 返回格式错误' }); }
+
+    reply = aiData.choices?.[0]?.message?.content?.trim() || null;
+    if (!reply) return res.status(500).json({ error: 'AI 返回空内容，请检查 DASHSCOPE_API_KEY' });
+  } catch(err) {
+    return res.status(500).json({ error: 'AI 网络请求失败：' + err.message });
+  }
+
+  const themeMatch       = reply.match(/\*\*系统主题\*\*[：:]?\s*([\s\S]*?)(?=\*\*跨场景联系\*\*|$)/);
+  const connectionsMatch = reply.match(/\*\*跨场景联系\*\*[：:]?\s*([\s\S]*?)(?=\*\*可能的天赋类型\*\*|\*\*优先改变建议\*\*|$)/);
+  const trcTypeMatch     = reply.match(/\*\*可能的天赋类型\*\*[：:]?\s*([\s\S]*?)(?=\*\*优先改变建议\*\*|$)/);
+  const adviceMatch      = reply.match(/\*\*优先改变建议\*\*[：:]?\s*([\s\S]*?)$/);
+
+  return res.status(200).json({
+    theme:       themeMatch?.[1]?.trim()       || '',
+    connections: connectionsMatch?.[1]?.trim() || '',
+    trcType:     trcTypeMatch?.[1]?.trim()     || '',
+    advice:      adviceMatch?.[1]?.trim()      || '',
+    raw:         reply,
+    contextsUsed: availableContexts.map(([ctx]) => ctx),
+  });
+}
