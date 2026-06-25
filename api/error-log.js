@@ -163,12 +163,49 @@ module.exports = async function handler(req, res) {
     }
   }
 
-  // ── GET：管理员查看错误列表 ─────────────────────────────────────────────────
+  // ── GET：管理员查看错误列表 / 查询企业微信 external_userid ────────────────────
   if (req.method === 'GET') {
     const adminSecret = process.env.ADMIN_SECRET || 'coco1013';
     const token = req.headers['x-admin-secret'] || req.query.secret;
     if (token !== adminSecret) {
       return res.status(401).json({ error: '未授权，请携带 secret 参数' });
+    }
+
+    // action=kf_who：查企业微信客服最近消息，找 ALERT_OPENID
+    if (req.query.action === 'kf_who') {
+      const corpId = process.env.WECHAT_CORP_ID      || '';
+      const sec    = process.env.WECHAT_AGENT_SECRET  || '';
+      const kfid   = process.env.WECHAT_OPEN_KFID    || '';
+      if (!corpId || !sec || !kfid) {
+        return res.status(200).json({ ok: false, error: '企业微信变量未配置' });
+      }
+      try {
+        const tkRes  = await fetch(`https://qyapi.weixin.qq.com/cgi-bin/gettoken?corpid=${corpId}&corpsecret=${sec}`);
+        const tkData = await tkRes.json();
+        const wxToken = tkData.access_token;
+        if (!wxToken) return res.status(200).json({ ok: false, error: '获取微信token失败', detail: tkData });
+
+        const msgRes  = await fetch(
+          `https://qyapi.weixin.qq.com/cgi-bin/kf/sync_msg?access_token=${wxToken}`,
+          { method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ open_kfid: kfid, limit: 100 }) }
+        );
+        const msgData = await msgRes.json();
+        if (msgData.errcode && msgData.errcode !== 0) {
+          return res.status(200).json({ ok: false, error: '微信API报错', detail: msgData });
+        }
+        const seen = {};
+        for (const m of (msgData.msg_list || [])) {
+          if (m.origin === 3 && m.external_userid && !seen[m.external_userid]) {
+            seen[m.external_userid] = new Date(m.send_time * 1000)
+              .toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai', hour12: false });
+          }
+        }
+        const senders = Object.entries(seen).map(([uid, t]) => ({ external_userid: uid, time: t }));
+        return res.status(200).json({ ok: true, tip: '找最近的那条，external_userid 填入 ALERT_OPENID', senders });
+      } catch(e) {
+        return res.status(200).json({ ok: false, error: e.message });
+      }
     }
 
     try {
