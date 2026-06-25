@@ -19,6 +19,10 @@
       "dest": "/api/auth"
     },
     {
+      "src": "/api/error-log",
+      "dest": "/api/admin-convs"
+    },
+    {
       "src": "/api/(.*)",
       "dest": "/api/$1"
     },
@@ -138,14 +142,6 @@
       "dest": "/api/report-store.js"
     },
     {
-      "src": "/api/error-log",
-      "dest": "/api/error-log.js"
-    },
-    {
-      "src": "/api/kf-who",
-      "dest": "/api/kf-who.js"
-    },
-    {
       "src": "/practitioner",
       "dest": "/practitioner.html"
     },
@@ -205,9 +201,6 @@
       "maxDuration": 10
     },
     "api/report-store.js": {
-      "maxDuration": 10
-    },
-    "api/error-log.js": {
       "maxDuration": 10
     }
   },

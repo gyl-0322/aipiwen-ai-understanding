@@ -1,15 +1,130 @@
 /**
- * AIPIWEN 对话日志管理接口 + 事件统计埋点（merged stats.js）
+ * AIPIWEN 对话日志管理接口 + 事件统计埋点（merged stats.js）+ 前端错误日志（merged error-log.js）
  * GET /api/admin-convs?secret=xxx                → 会话列表（最新500条）
  * GET /api/admin-convs?secret=xxx&sid=xxx        → 某次会话的完整对话
  * GET /api/admin-convs?secret=xxx&action=export  → 导出全部会话 JSON（最新300条含消息）
+ * GET /api/admin-convs?secret=xxx&action=errors  → 查看最近错误日志
+ * GET /api/admin-convs?secret=xxx&action=kf_who  → 查企业微信客服发信人 external_userid
  * POST /api/stats  { event, meta? }              → 埋点（公开）
  * GET  /api/stats?admin=1&secret=xxx             → 查看统计数据（管理端）
+ * POST /api/error-log  { msg, stack, page... }   → 前端上报错误（无需登录）
+ * GET  /api/error-log?secret=xxx                 → 查看错误日志（同 action=errors）
  *
  * 需要在 Vercel 环境变量中设置 ADMIN_SECRET
  */
 
+const crypto = require('crypto');
 const { redisGet, redisSet } = require('./_lib');
+
+// ── 错误日志 Redis 工具（list 操作，直接调 Upstash HTTP）───────────────────────
+const kvUrl   = () => process.env.KV_REST_API_URL   || process.env.REDIS_URL  || '';
+const kvToken = () => process.env.KV_REST_API_TOKEN || '';
+
+async function pushError(entry) {
+  await fetch(`${kvUrl()}/pipeline`, {
+    method:  'POST',
+    headers: { Authorization: `Bearer ${kvToken()}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify([
+      ['LPUSH', 'errors:log', JSON.stringify(entry)],
+      ['LTRIM', 'errors:log', 0, 199],
+    ]),
+  });
+}
+
+async function getErrors(n = 50) {
+  const res  = await fetch(`${kvUrl()}/lrange/errors:log/0/${n - 1}`, {
+    headers: { Authorization: `Bearer ${kvToken()}` },
+  });
+  const data = await res.json();
+  return (data.result || []).map(s => { try { return JSON.parse(s); } catch { return s; } });
+}
+
+async function checkAndMarkDup(hash) {
+  const key = `errors:dedup:${hash}`;
+  const res = await fetch(`${kvUrl()}/pipeline`, {
+    method:  'POST',
+    headers: { Authorization: `Bearer ${kvToken()}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify([
+      ['GET', key],
+      ['SET', key, '1', 'EX', 300],
+    ]),
+  });
+  const data = await res.json();
+  return !!(data.result?.[0]?.result);
+}
+
+async function getWxToken() {
+  const corpId = process.env.WECHAT_CORP_ID     || '';
+  const secret = process.env.WECHAT_AGENT_SECRET || '';
+  if (!corpId || !secret) return null;
+  const res  = await fetch(`https://qyapi.weixin.qq.com/cgi-bin/gettoken?corpid=${corpId}&corpsecret=${secret}`);
+  const data = await res.json();
+  return data.access_token || null;
+}
+
+async function sendAlert(entry) {
+  const adminOpenid = process.env.ALERT_OPENID || '';
+  const kfid        = process.env.WECHAT_OPEN_KFID || '';
+  if (!adminOpenid || !kfid) return;
+  const token = await getWxToken().catch(() => null);
+  if (!token) return;
+  const timeStr = new Date(entry.ts).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai', hour12: false });
+  const lines = [`🔴 用户出错了`, `时间：${timeStr}`, `页面：${entry.page || '-'}`, `错误：${entry.msg}`];
+  if (entry.context) lines.push(`场景：${entry.context.slice(0, 200)}`);
+  if (entry.stack)   lines.push(`堆栈：${entry.stack.slice(0, 300)}`);
+  await fetch(`https://qyapi.weixin.qq.com/cgi-bin/kf/send_msg?access_token=${token}`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ touser: adminOpenid, open_kfid: kfid, msgtype: 'text', text: { content: lines.join('\n') } }),
+  }).catch(() => {});
+}
+
+async function handleErrorLog(req, res) {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type,x-admin-secret');
+  if (req.method === 'OPTIONS') return res.status(200).end();
+
+  if (req.method === 'POST') {
+    try {
+      let parsed = req.body;
+      if (!parsed || typeof parsed === 'string') {
+        let raw = '';
+        await new Promise(r => { req.on('data', c => (raw += c)); req.on('end', r); });
+        try { parsed = JSON.parse(raw); } catch { parsed = {}; }
+      }
+      const { msg, stack, page, context, ua } = parsed || {};
+      if (!msg) return res.status(400).json({ ok: false, error: 'msg required' });
+      const entry = {
+        ts: Date.now(), msg: String(msg).slice(0, 500),
+        stack:   stack   ? String(stack).slice(0, 800)   : undefined,
+        page:    page    ? String(page).slice(0, 200)    : undefined,
+        context: context ? String(context).slice(0, 300) : undefined,
+        ua:      ua      ? String(ua).slice(0, 200)      : undefined,
+      };
+      const hash = crypto.createHash('md5').update((entry.msg || '') + (entry.page || '')).digest('hex').slice(0, 8);
+      const [, isDup] = await Promise.all([pushError({ ...entry, hash }), checkAndMarkDup(hash)]);
+      if (!isDup) await sendAlert(entry);
+      return res.status(200).json({ ok: true });
+    } catch (e) {
+      return res.status(500).json({ ok: false });
+    }
+  }
+
+  if (req.method === 'GET') {
+    const adminSecret = process.env.ADMIN_SECRET || 'coco1013';
+    const token = req.headers['x-admin-secret'] || req.query.secret;
+    if (token !== adminSecret) return res.status(401).json({ error: '未授权，请携带 secret 参数' });
+    try {
+      const n      = Math.min(parseInt(req.query.n || '50', 10), 200);
+      const errors = await getErrors(n);
+      return res.status(200).json({ ok: true, count: errors.length, errors });
+    } catch (e) {
+      return res.status(500).json({ ok: false, error: e.message });
+    }
+  }
+
+  return res.status(405).end();
+}
 
 // ── stats 处理器（merged from stats.js）──────────────────────────────────────
 function statsToday() {
@@ -76,9 +191,10 @@ const CONTEXT_LABELS = {
 };
 
 module.exports = async function handler(req, res) {
-  // 路由分发：/api/stats → handleStats
+  // 路由分发
   const urlPath = req.url ? req.url.split('?')[0] : '';
-  if (urlPath === '/api/stats') return handleStats(req, res);
+  if (urlPath === '/api/stats')     return handleStats(req, res);
+  if (urlPath === '/api/error-log') return handleErrorLog(req, res);
 
   res.setHeader('Access-Control-Allow-Origin', '*');
   if (req.method === 'OPTIONS') return res.status(204).end();
@@ -176,6 +292,17 @@ module.exports = async function handler(req, res) {
       return res.status(200).json({ ok: true, tip: '把你刚发的那条消息对应的 external_userid 填到 ALERT_OPENID', senders, raw_count: msgs.length });
     } catch(e) {
       return res.status(200).json({ ok: false, error: e.message });
+    }
+  }
+
+  // ── 查看错误日志 ────────────────────────────────────────────────────────────
+  if (action === 'errors') {
+    try {
+      const n      = Math.min(parseInt(req.query.n || '50', 10), 200);
+      const errors = await getErrors(n);
+      return res.status(200).json({ ok: true, count: errors.length, errors });
+    } catch (e) {
+      return res.status(500).json({ ok: false, error: e.message });
     }
   }
 
