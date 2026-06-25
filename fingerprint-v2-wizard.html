@@ -1433,6 +1433,7 @@ body {
       <div class="result-label">AI 皮纹天赋分析</div>
       <div class="result-type" id="resultType">认知型 W</div>
       <div class="result-tagline" id="resultTagline">主见权威 · 好奇心强 · 探索型</div>
+      <div id="upgradeHint" style="display:none;margin-top:8px;padding:8px 12px;background:rgba(255,180,0,.12);border-left:3px solid #f0a500;border-radius:6px;font-size:12px;color:#a07000;line-height:1.5;"></div>
     </div>
 
     <div id="reportContent"></div>
@@ -2139,6 +2140,13 @@ function showResult() {
         loadingEl.classList.remove('active');
         document.getElementById('resultType').textContent = result.mainType;
         document.getElementById('resultTagline').textContent = result.tagline;
+        const hintEl = document.getElementById('upgradeHint');
+        if (result.upgradeHint) {
+          hintEl.textContent = '⚠️ ' + result.upgradeHint + '，上传总表精确分型 →';
+          hintEl.style.display = 'block';
+        } else {
+          hintEl.style.display = 'none';
+        }
         document.getElementById('reportContent').innerHTML = generateReport(result);
         window._currentResult = result;
         showScreen('result');
