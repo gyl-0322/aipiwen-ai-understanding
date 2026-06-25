@@ -63,18 +63,15 @@ async function getWxToken() {
 }
 
 async function sendAlert(entry) {
-  const adminOpenid = process.env.ALERT_OPENID || '';
-  const kfid        = process.env.WECHAT_OPEN_KFID || '';
-  if (!adminOpenid || !kfid) return;
-  const token = await getWxToken().catch(() => null);
-  if (!token) return;
+  const webhook = process.env.ALERT_WEBHOOK || '';
+  if (!webhook) return;   // 未配置就跳过，不影响主流程
   const timeStr = new Date(entry.ts).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai', hour12: false });
   const lines = [`🔴 用户出错了`, `时间：${timeStr}`, `页面：${entry.page || '-'}`, `错误：${entry.msg}`];
   if (entry.context) lines.push(`场景：${entry.context.slice(0, 200)}`);
   if (entry.stack)   lines.push(`堆栈：${entry.stack.slice(0, 300)}`);
-  await fetch(`https://qyapi.weixin.qq.com/cgi-bin/kf/send_msg?access_token=${token}`, {
+  await fetch(webhook, {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ touser: adminOpenid, open_kfid: kfid, msgtype: 'text', text: { content: lines.join('\n') } }),
+    body: JSON.stringify({ msgtype: 'text', text: { content: lines.join('\n') } }),
   }).catch(() => {});
 }
 
