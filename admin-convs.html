@@ -66,6 +66,13 @@
   .page-chip.error-chip.active{
     background:var(--red);border-color:var(--red);color:#fff;
   }
+  .chip-badge{
+    display:inline-flex;align-items:center;justify-content:center;
+    background:var(--red);color:#fff;font-size:10px;font-weight:700;
+    border-radius:10px;min-width:16px;height:16px;padding:0 4px;
+    margin-left:4px;vertical-align:middle;
+  }
+  .page-chip.active .chip-badge{background:rgba(255,255,255,.35);}
 
   /* ── Filter tabs ── */
   .filters{
@@ -185,7 +192,7 @@
     <div class="topbar-row1">
       <div class="page-chips">
         <button class="page-chip active" id="chip-convs" onclick="switchPanel('convs')">💬 对话记录</button>
-        <button class="page-chip error-chip" id="chip-errors" onclick="switchPanel('errors')">🔴 错误日志</button>
+        <button class="page-chip error-chip" id="chip-errors" onclick="switchPanel('errors')">🔴 错误日志<span class="chip-badge" id="error-badge" style="display:none"></span></button>
       </div>
       <div class="topbar-right">
         <div class="topbar-count" id="count-label"></div>
@@ -254,6 +261,7 @@ async function loadSessions() {
   document.getElementById('main-screen').style.display  = 'block';
   document.getElementById('export-btn').style.display   = 'block';
   renderList(_allSessions);
+  checkNewErrors(); // 登录后静默检查是否有新错误，有就显示角标
   updateCount();
 }
 
@@ -267,7 +275,12 @@ function switchPanel(panel) {
   // 导出按钮：只在对话记录时显示
   document.getElementById('export-btn').style.display = panel === 'convs' ? 'block' : 'none';
   updateCount();
-  if (panel === 'errors' && !_errorLoaded) loadErrors();
+  if (panel === 'errors') {
+    // 标记已读：更新 last_seen 时间戳，清除角标
+    localStorage.setItem('admin_errors_last_seen', Date.now());
+    document.getElementById('error-badge').style.display = 'none';
+    if (!_errorLoaded) loadErrors();
+  }
 }
 
 function updateCount() {
@@ -404,6 +417,22 @@ function renderErrors(errors) {
       </div>
     `;
   }).join('');
+}
+
+// ── 新错误角标检查（登录后静默调用）────────────────────────────────────────────
+async function checkNewErrors() {
+  try {
+    const lastSeen = parseInt(localStorage.getItem('admin_errors_last_seen') || '0', 10);
+    const res  = await fetch(`/api/error-log?secret=${encodeURIComponent(_secret)}&n=50`);
+    if (!res.ok) return;
+    const data = await res.json();
+    const newCount = (data.errors || []).filter(e => (e.ts || 0) > lastSeen).length;
+    const badge = document.getElementById('error-badge');
+    if (newCount > 0) {
+      badge.textContent = newCount > 99 ? '99+' : String(newCount);
+      badge.style.display = 'inline-flex';
+    }
+  } catch(e) { /* 静默失败，不影响主界面 */ }
 }
 
 function toggleStack(btn) {
