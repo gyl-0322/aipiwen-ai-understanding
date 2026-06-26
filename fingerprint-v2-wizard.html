@@ -572,7 +572,7 @@ body {
   background: rgba(255,255,255,.04);
   border: 1px solid rgba(255,255,255,.1);
   border-radius: 20px;
-  padding: 22px 20px;
+  padding: 22px 20px 20px;
   text-align: center;
   margin-bottom: 20px;
 }
@@ -581,41 +581,66 @@ body {
   font-size: 18px;
   font-weight: normal;
   color: #fff;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
   line-height: 1.4;
 }
-.lead-box p {
+.lead-box .lead-sub {
   font-size: 13px;
-  color: rgba(255,255,255,.45);
-  line-height: 1.7;
+  color: rgba(255,255,255,.4);
   margin-bottom: 18px;
 }
 .lead-box .qr-wrap {
-  background: white;
-  border-radius: 12px;
+  background: #fff;
+  border-radius: 14px;
   padding: 10px;
   display: inline-block;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
+  box-shadow: 0 4px 20px rgba(0,0,0,.25);
 }
-.lead-box .qr-wrap img { width: 110px; height: 110px; display: block; border-radius: 6px; }
-.lead-box .qr-cta { font-size: 12px; color: var(--ink-20); }
+.lead-box .qr-wrap img {
+  width: 156px;
+  height: 156px;
+  display: block;
+  border-radius: 6px;
+}
+.lead-box .qr-hint {
+  font-size: 12px;
+  color: rgba(255,255,255,.35);
+  margin-bottom: 14px;
+  letter-spacing: .02em;
+}
+.lead-box .or-line {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+  color: rgba(255,255,255,.2);
+  font-size: 12px;
+}
+.lead-box .or-line::before,
+.lead-box .or-line::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: rgba(255,255,255,.1);
+}
 .lead-box .kfid-btn {
   display: block;
   width: 100%;
   box-sizing: border-box;
-  background: rgba(194,105,42,.18);
-  border: 1.5px solid rgba(194,105,42,.55);
+  background: rgba(194,105,42,.15);
+  border: 1.5px solid rgba(194,105,42,.45);
   color: var(--amber);
   border-radius: 14px;
-  padding: 14px 20px;
-  font-size: 15px;
+  padding: 13px 20px;
+  font-size: 14px;
   font-weight: 600;
   cursor: pointer;
   text-decoration: none;
   letter-spacing: .02em;
-  transition: background .2s, opacity .2s;
+  transition: background .2s;
 }
-.lead-box .kfid-btn:hover { background: rgba(194,105,42,.28); }
+.lead-box .kfid-btn:hover { background: rgba(194,105,42,.25); }
 
 .result-actions {
   display: flex;
@@ -1509,9 +1534,14 @@ body {
 
     <!-- Lead magnet -->
     <div class="lead-box">
-      <h3>还有问题？直接问顾问</h3>
-      <p>选兴趣班、设计学习环境、如何和孩子沟通——顾问结合你的天赋类型给出具体建议。</p>
-      <a class="kfid-btn" href="javascript:void(0)" onclick="wecomeClick(event)">💬 联系企业微信顾问</a>
+      <h3>直接联系天赋顾问</h3>
+      <div class="lead-sub">长按识别二维码，一步进入对话</div>
+      <div class="qr-wrap">
+        <img src="/images/客服二维码.jpg" alt="企业微信客服二维码" />
+      </div>
+      <div class="qr-hint">微信长按图片 → 识别图中二维码</div>
+      <div class="or-line">或</div>
+      <a class="kfid-btn" href="javascript:void(0)" onclick="wecomeClick(event)">💬 点击联系客服</a>
     </div>
 
     <div class="result-actions">
