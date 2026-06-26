@@ -325,45 +325,76 @@ module.exports = async function handler(req, res) {
 
   let fingers = normalizeFingers(rawFingers);
 
-  // ── 二次校验：未检测到任何 Rl → 针对性重询（触发条件升级：只要没有 Rl 就校验）
-  // 原因：白皓博情形——L2=7 Rl 混在 Wc/Xn/Lu 中，不是全 Lu，allLu 不触发但 Rl 同样被漏读
-  const hasRl = Object.values(fingers).some(f => f.sym === 'Rl');
-  if (!hasRl) {
-    console.warn('[extract-fp] no Rl detected, running targeted Rl verification pass');
+  // ── 二次校验：两条触发路径，prompt 不同 ─────────────────────────────────
+  // 路径①  allLu（全10指=Lu）→ W型/X型/Rl 都可能被误读，需全量重询
+  //         郭艳玲：Wpe/Wsp 被读成 Lu，导致超级模仿型
+  // 路径②  !hasRl 且非 allLu → 只问 Rl，不打扰其他正确读出的符号
+  //         白皓博：L2=Rl 混在 Wc/Xn/Lu 中被漏读
+  const allLu  = Object.values(fingers).every(f => f.sym === 'Lu');
+  const hasRl  = Object.values(fingers).some(f => f.sym === 'Rl');
+  const needsVerify = allLu || !hasRl;
+
+  if (needsVerify) {
+    console.warn(`[extract-fp] verify pass triggered: allLu=${allLu} hasRl=${hasRl}`);
     try {
-      // 三步法验证（Emma方案）：c1→c2→c3 逐字母识别，程序层兜底：c1=R且c2=l→强制Rl
-      const RL_VERIFY_PROMPT = `我在读取这张皮纹报告时，没有检测到任何 Rl（反箕纹）。
-请对图中所有 10 个脑区，用三步法重新核查每个纹型符号：
+      const ZONE_KW_MAP = [
+        { keywords: ['逻辑','语言功能'],         key: 'R2' },
+        { keywords: ['空间','心像','构思'],       key: 'L2' },
+        { keywords: ['听觉辨识','语言理解'],      key: 'R4' },
+        { keywords: ['听觉感受','音乐'],          key: 'L4' },
+        { keywords: ['视觉辨识','观察'],          key: 'R5' },
+        { keywords: ['视觉感受','图像'],          key: 'L5' },
+        { keywords: ['体觉辨识','操作'],          key: 'R3' },
+        { keywords: ['体觉感受','艺术'],          key: 'L3' },
+        { keywords: ['沟通','计划'],              key: 'R1' },
+        { keywords: ['创造','领导','目标憧憬'],   key: 'L1' },
+      ];
+      function zoneToKey(zoneName) {
+        for (const { keywords, key } of ZONE_KW_MAP) {
+          if (keywords.some(kw => zoneName.includes(kw))) return key;
+        }
+        return null;
+      }
+
+      // ── 路径①：全 Lu → 全量重询（W型/Rl/X型都可能被漏读） ──────────────
+      // ── 路径②：非全 Lu 但无 Rl → 只询 Rl ────────────────────────────────
+      const VERIFY_PROMPT = allLu
+        ? `我刚才把这份皮纹报告的全部10个脑区都读成了 Lu（正箕纹）。这极有可能是错误的——图中可能有斗型（W开头：Wt/Ws/We/Wc/Wd/Wi/Wpe/Wsp/Wsc）、反箕（Rl）或帽篷弧（Xn）被误读成了 Lu。
+
+请用三步法，仔细重新识别全部10个脑区的纹型符号：
 
 【第一步 c1】只看第一个字母（R / L / W / X 四选一）
-  R = 右侧有斜腿向外伸出的大写R
-  L = 一竖一横成直角的大写L（无斜腿）
-  W = 大写W
+  W = 大写W，像两个V相连（≠ L，L只有一竖一横）
+  R = 大写R，右侧有斜腿
+  L = 大写L，一竖一横成直角
   X = 大写X
 
-【第二步 c2】再看第二个字符（不看第一个，只看第二个）
-  c1=R时：是小写 l（像数字1的细竖线）还是 p 还是 w？
-  c1=L时：是 u（圆弧，像字母U）还是 s 还是 f？
-  c1=W时：是 s/t/e/c/d/i/S 等？
+【第二步 c2】再看第二个字符
+  c1=W时：s / t / e / c / d / i / p（→ Ws/Wt/We/Wc/Wd/Wi/Wpe等）
+  c1=R时：l（细竖线）/ p / w（→ Rl/Rpe/Rwl）
+  c1=L时：u / s / f（→ Lu/Ls/Lf）
+  c1=X时：n 或无（→ Xn/X）
 
-【第三步 c3】有第三个字符吗？有则填，无则 null。
+【第三步 c3】有无第三字符（c/e/r/p/l）→ 有则填，无则 null
 
-将 c1+c2+c3 组合为最终符号 sym。
+将 c1+c2+c3 拼为 sym。
 
-⚠️ 关键：c1=R 且 c2=l（细竖线，不是圆弧的u）→ sym 必须是 Rl（反箕纹）
+输出严格 JSON（无注释）：
+{"decomp":[{"zone":"脑区中文名","c1":"","c2":"","c3":null,"sym":""},...]}`
+        : `我在读取这张皮纹报告时，没有检测到任何 Rl（反箕纹）。
+请用三步法重新核查所有10个脑区，找出是否有 Rl 被漏读：
 
-输出严格的 JSON（不要加注释）：
-{
-  "decomp": [
-    {"zone": "脑区中文名", "c1": "第一字母", "c2": "第二字符", "c3": "第三字符或null", "sym": "组合结果"},
-    ...共10条...
-  ],
-  "has_rl": true或false,
-  "rl_zones": ["区名1"]
-}`;
+【第一步 c1】只看第一个字母：R（有斜腿）/ L（直角）/ W / X
+【第二步 c2】c1=R时看第二字符：l（细竖线，非圆弧u）/ p / w
+【第三步 c3】有无第三字符（e/l等）
+
+⚠️ c1=R 且 c2=l → 必须是 Rl（反箕纹，逆思型）
+
+输出严格 JSON：
+{"decomp":[{"zone":"脑区中文名","c1":"","c2":"","c3":null,"sym":""},...],"has_rl":false,"rl_zones":[]}`;
 
       const ctrl2 = new AbortController();
-      const t2 = setTimeout(() => ctrl2.abort(), 25000);
+      const t2 = setTimeout(() => ctrl2.abort(), 30000);
       const rlRes = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
         method: 'POST',
         headers: {
@@ -371,13 +402,13 @@ module.exports = async function handler(req, res) {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'qwen-vl-plus',
-          max_tokens: 150,
+          model: 'qwen-vl-max',
+          max_tokens: 800,          // 全量10区 decomp 需要更多 token
           messages: [{
             role: 'user',
             content: [
               { type: 'image_url', image_url: { url: `data:${imageMimeType};base64,${imageBase64}` } },
-              { type: 'text', text: RL_VERIFY_PROMPT },
+              { type: 'text', text: VERIFY_PROMPT },
             ],
           }],
         }),
@@ -389,59 +420,44 @@ module.exports = async function handler(req, res) {
         const rlData  = await rlRes.json().catch(() => null);
         const rlRaw   = rlData?.choices?.[0]?.message?.content?.trim() || '';
         const rlCheck = extractJSON(rlRaw);
-        console.log('[extract-fp] Rl check result:', rlRaw.slice(0, 300));
+        console.log('[extract-fp] verify result:', rlRaw.slice(0, 400));
 
-        const ZONE_KW_MAP = [
-          { keywords: ['逻辑','语言功能'],         key: 'R2' },
-          { keywords: ['空间','心像','构思'],       key: 'L2' },
-          { keywords: ['听觉辨识','语言理解'],      key: 'R4' },
-          { keywords: ['听觉感受','音乐'],          key: 'L4' },
-          { keywords: ['视觉辨识','观察'],          key: 'R5' },
-          { keywords: ['视觉感受','图像'],          key: 'L5' },
-          { keywords: ['体觉辨识','操作'],          key: 'R3' },
-          { keywords: ['体觉感受','艺术'],          key: 'L3' },
-          { keywords: ['沟通','计划'],              key: 'R1' },
-          { keywords: ['创造','领导','目标憧憬'],   key: 'L1' },
-        ];
-
-        function zoneToKey(zoneName) {
-          for (const { keywords, key } of ZONE_KW_MAP) {
-            if (keywords.some(kw => zoneName.includes(kw))) return key;
-          }
-          return null;
-        }
-
-        // ── 路径 A：程序性兜底——从 decomp 中找 c1=R && c2=l 的条目 ──────────
-        // 即使模型在 sym 字段写错了，只要字母分解正确就能纠正
         if (Array.isArray(rlCheck?.decomp)) {
           for (const entry of rlCheck.decomp) {
             const c1  = String(entry.c1 || '').trim();
             const c2  = String(entry.c2 || '').trim();
             const sym = String(entry.sym || '').trim();
-            // c1=R 且 c2=l（小写L） → 确定是 Rl，sym 字段写错也纠正
+            const k   = zoneToKey(entry.zone || '');
+            if (!k) continue;
+
+            // ── 程序性兜底 A：c1=R 且 c2=l/L/1 → 强制 Rl ──────────────────
             if (c1 === 'R' && (c2 === 'l' || c2 === 'L' || c2 === '1')) {
-              const k = zoneToKey(entry.zone || '');
-              if (k) {
-                console.log(`[extract-fp] decomp override ${k}: c1=R c2=${c2} sym="${sym}" → Rl (zone="${entry.zone}")`);
-                fingers = { ...fingers, [k]: { ...fingers[k], sym: 'Rl' } };
-              }
+              console.log(`[extract-fp] force Rl ${k} (c1=R c2=${c2} sym="${sym}")`);
+              fingers = { ...fingers, [k]: { ...fingers[k], sym: 'Rl' } };
+              continue;
+            }
+
+            // ── 全量校验（allLu路径）：信任 decomp 的 sym（需在白名单内且≠Lu）──
+            if (allLu && VALID_SYMS.has(sym) && sym !== 'Lu') {
+              console.log(`[extract-fp] allLu correct ${k}: Lu → ${sym} (zone="${entry.zone}")`);
+              fingers = { ...fingers, [k]: { ...fingers[k], sym } };
             }
           }
         }
 
-        // ── 路径 B：has_rl / rl_zones 字段（原逻辑，兜底 decomp 未输出时）──
-        if (rlCheck?.has_rl && Array.isArray(rlCheck.rl_zones) && rlCheck.rl_zones.length > 0) {
+        // ── 路径②兜底：has_rl/rl_zones 字段（decomp 未输出时） ───────────────
+        if (!allLu && rlCheck?.has_rl && Array.isArray(rlCheck.rl_zones)) {
           for (const zone of rlCheck.rl_zones) {
             const k = zoneToKey(zone);
             if (k && fingers[k]?.sym !== 'Rl') {
-              console.log(`[extract-fp] rl_zones correcting ${k}: → Rl (zone="${zone}")`);
+              console.log(`[extract-fp] rl_zones ${k} → Rl`);
               fingers = { ...fingers, [k]: { ...fingers[k], sym: 'Rl' } };
             }
           }
         }
       }
     } catch(e) {
-      console.warn('[extract-fp] Rl verify pass error (non-blocking):', e.message);
+      console.warn('[extract-fp] verify pass error (non-blocking):', e.message);
     }
   }
 
