@@ -351,8 +351,11 @@ html,body{height:100%;overflow:hidden;background:#060810;
   justify-content:center;padding:24px;}
 #cmodal.open{display:flex;}
 .cmodal-box{width:300px;background:var(--bg);border:1px solid rgba(194,105,42,.2);
-  border-radius:18px;padding:24px 20px;display:flex;flex-direction:column;}
-.cmodal-title{font-size:15px;font-weight:700;color:var(--text);margin-bottom:4px;}
+  border-radius:18px;padding:24px 20px;display:flex;flex-direction:column;position:relative;}
+#cmodal-x{position:absolute;top:14px;right:14px;width:28px;height:28px;border:none;
+  background:rgba(255,255,255,.08);border-radius:50%;color:var(--dim);font-size:16px;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;font-family:inherit;}
+.cmodal-title{font-size:15px;font-weight:700;color:var(--text);margin-bottom:4px;padding-right:32px;}
 .cmodal-sub{font-size:12px;color:var(--dim);line-height:1.6;margin-bottom:16px;}
 #cmodal-qr{margin:0 auto 14px;width:160px;height:160px;background:#fff;
   border-radius:10px;padding:6px;display:flex;align-items:center;justify-content:center;}
@@ -522,6 +525,7 @@ button, a, .must-item, .fp-option-card, .back-btn, .issue-chip {
 <!-- Client Link Modal -->
 <div id="cmodal">
   <div class="cmodal-box">
+    <button id="cmodal-x">✕</button>
     <div class="cmodal-title">发送专属报告</div>
     <div class="cmodal-sub">扫码或点链接，即可打开专属翻页报告<br>链接 30 天内有效</div>
     <div id="cmodal-qr"></div>
@@ -1441,6 +1445,7 @@ qs('#rv-share-btn').addEventListener('click', () => qs('#smodal').classList.add(
 qs('#rv-client-btn').addEventListener('click', () => qs('#cmodal').classList.add('open'));
 qs('#cmodal').addEventListener('click', e => { if (e.target===qs('#cmodal')) qs('#cmodal').classList.remove('open'); });
 qs('#cmodal-close-btn').addEventListener('click', () => qs('#cmodal').classList.remove('open'));
+qs('#cmodal-x').addEventListener('click', () => qs('#cmodal').classList.remove('open'));
 qs('#cmodal-copy').addEventListener('click', () => {
   if (!_clientShareUrl) return;
   const btn = qs('#cmodal-copy');
