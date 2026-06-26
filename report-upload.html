@@ -214,27 +214,28 @@ html,body{height:100%;overflow:hidden;background:#060810;
   font-family:inherit;width:100%;text-align:left;touch-action:manipulation;}
 
 /* ── 数据可视化 slide ────────────────────────────────────────── */
+.dv-wrap{display:flex;flex-direction:column;min-height:100%;}
 .dv-title{font-size:11px;letter-spacing:.18em;color:var(--th-p);text-transform:uppercase;
-  font-weight:700;margin-bottom:18px;}
-.dv-brain{display:flex;align-items:center;gap:10px;margin-bottom:20px;
+  font-weight:700;margin-bottom:20px;}
+.dv-brain{display:flex;align-items:center;gap:12px;margin-bottom:28px;
   background:var(--th-card);border:1px solid var(--th-border);
-  border-radius:var(--th-radius);padding:14px 16px;}
-.dv-brain-label{font-size:11px;color:var(--th-dim);flex-shrink:0;width:40px;}
-.dv-brain-bar{flex:1;height:10px;background:rgba(255,255,255,.08);border-radius:5px;overflow:hidden;}
-.dv-brain-fill-l{height:100%;border-radius:5px 0 0 5px;background:var(--th-p);transition:width .8s ease;}
-.dv-brain-fill-r{height:100%;border-radius:0 5px 5px 0;float:right;background:var(--th-p2);transition:width .8s ease;}
-.dv-func-list{display:flex;flex-direction:column;gap:9px;}
-.dv-func-row{display:grid;grid-template-columns:52px 1fr 36px;align-items:center;gap:10px;}
-.dv-func-name{font-size:12px;color:var(--th-dim);}
-.dv-func-bar-wrap{height:8px;background:rgba(255,255,255,.07);border-radius:4px;overflow:hidden;}
-.dv-func-bar{height:100%;border-radius:4px;background:var(--th-p);transition:width .9s ease;}
-.dv-func-val{font-size:12px;color:var(--th-p);font-weight:600;text-align:right;}
-.dv-badges{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0;}
-.dv-badge{display:flex;flex-direction:column;gap:3px;background:var(--th-card);
+  border-radius:var(--th-radius);padding:16px 18px;}
+.dv-brain-label{font-size:12px;color:var(--th-dim);flex-shrink:0;width:44px;line-height:1.5;}
+.dv-brain-bar{flex:1;height:12px;background:rgba(255,255,255,.08);border-radius:6px;overflow:hidden;}
+.dv-brain-fill-l{height:100%;border-radius:6px 0 0 6px;background:var(--th-p);transition:width .8s ease;}
+.dv-brain-fill-r{height:100%;border-radius:0 6px 6px 0;float:right;background:var(--th-p2);transition:width .8s ease;}
+.dv-func-list{display:flex;flex-direction:column;gap:18px;flex:1;margin-bottom:24px;}
+.dv-func-row{display:grid;grid-template-columns:62px 1fr 42px;align-items:center;gap:12px;}
+.dv-func-name{font-size:13px;color:var(--th-dim);}
+.dv-func-bar-wrap{height:12px;background:rgba(255,255,255,.07);border-radius:6px;overflow:hidden;}
+.dv-func-bar{height:100%;border-radius:6px;background:var(--th-p);transition:width .9s ease;}
+.dv-func-val{font-size:15px;color:var(--th-p);font-weight:700;text-align:right;}
+.dv-badges{display:flex;flex-wrap:wrap;gap:10px;}
+.dv-badge{display:flex;flex-direction:column;gap:6px;background:var(--th-card);
   border:1px solid var(--th-border);border-radius:var(--th-radius);
-  padding:10px 14px;flex:1;min-width:calc(50% - 4px);}
-.dv-badge-label{font-size:10px;color:var(--th-faint);letter-spacing:.1em;}
-.dv-badge-val{font-size:13px;color:var(--th-p);font-weight:600;}
+  padding:14px 16px;flex:1;min-width:calc(50% - 5px);}
+.dv-badge-label{font-size:10px;color:var(--th-faint);letter-spacing:.12em;text-transform:uppercase;}
+.dv-badge-val{font-size:14px;color:var(--th-p);font-weight:700;line-height:1.3;}
 /* ── Cover slide ─────────────────────────────────────────── */
 .cv-wrap{display:flex;flex-direction:column;align-items:center;padding-top:8px;}
 .cv-theme-badge{font-size:10px;letter-spacing:.2em;color:var(--th-p);text-transform:uppercase;
@@ -990,37 +991,39 @@ function buildDataVizSlide(E) {
   const chanPct = E.学习通道?.占比 || {};
 
   return `
-    <div class="dv-title">数据总览 · DATA OVERVIEW</div>
-    <div class="dv-brain">
-      <div class="dv-brain-label" style="text-align:right;font-size:10px">左脑<br>${brainL}%</div>
-      <div style="flex:1">
-        <div class="dv-brain-bar" style="position:relative;height:12px;background:rgba(255,255,255,.08);border-radius:6px;overflow:hidden;">
-          <div style="position:absolute;left:0;top:0;height:100%;width:${brainL}%;background:var(--th-p);border-radius:6px 0 0 6px;"></div>
-          <div style="position:absolute;right:0;top:0;height:100%;width:${brainR}%;background:var(--th-p2);border-radius:0 6px 6px 0;opacity:.7;"></div>
-        </div>
-        <div style="text-align:center;font-size:11px;color:var(--th-faint);margin-top:5px;">${brainConclusion}</div>
-      </div>
-      <div class="dv-brain-label" style="font-size:10px">右脑<br>${brainR}%</div>
-    </div>
-    <div class="dv-func-list">
-      ${funcRows.map(f => {
-        const val = func5[f.key] || 0;
-        const pct = Math.round(val / maxTRC * 100);
-        const isAbove = val >= avgTRC;
-        return `<div class="dv-func-row">
-          <div class="dv-func-name">${f.name}</div>
-          <div class="dv-func-bar-wrap">
-            <div class="dv-func-bar" style="width:${pct}%;background:${isAbove ? 'var(--th-p)' : 'var(--th-p2)'};opacity:${isAbove ? 1 : 0.6};"></div>
+    <div class="dv-wrap">
+      <div class="dv-title">数据总览 · DATA OVERVIEW</div>
+      <div class="dv-brain">
+        <div class="dv-brain-label" style="text-align:right">左脑<br><b style="color:var(--th-p)">${brainL}%</b></div>
+        <div style="flex:1">
+          <div style="position:relative;height:12px;background:rgba(255,255,255,.08);border-radius:6px;overflow:hidden;">
+            <div style="position:absolute;left:0;top:0;height:100%;width:${brainL}%;background:var(--th-p);border-radius:6px 0 0 6px;"></div>
+            <div style="position:absolute;right:0;top:0;height:100%;width:${brainR}%;background:var(--th-p2);opacity:.7;border-radius:0 6px 6px 0;"></div>
           </div>
-          <div class="dv-func-val">${val}</div>
-        </div>`;
-      }).join('')}
-    </div>
-    <div class="dv-badges">
-      <div class="dv-badge"><div class="dv-badge-label">学习通道</div><div class="dv-badge-val">${E.学习通道?.主通道 || '—'}</div></div>
-      <div class="dv-badge"><div class="dv-badge-label">行为模式</div><div class="dv-badge-val">${E.行为模式?.结论 || '—'}</div></div>
-      <div class="dv-badge"><div class="dv-badge-label">ATD 角度</div><div class="dv-badge-val">${E.ATD?.分区 || '—'}${ST.atd ? ' · ' + ST.atd + '°' : ''}</div></div>
-      <div class="dv-badge"><div class="dv-badge-label">个人均值</div><div class="dv-badge-val">${avgTRC} TRC</div></div>
+          <div style="text-align:center;font-size:12px;color:var(--th-dim);margin-top:7px;">${brainConclusion}</div>
+        </div>
+        <div class="dv-brain-label">右脑<br><b style="color:var(--th-p2)">${brainR}%</b></div>
+      </div>
+      <div class="dv-func-list">
+        ${funcRows.map(f => {
+          const val = func5[f.key] || 0;
+          const pct = Math.round(val / maxTRC * 100);
+          const isAbove = val >= avgTRC;
+          return `<div class="dv-func-row">
+            <div class="dv-func-name">${f.name}</div>
+            <div class="dv-func-bar-wrap">
+              <div class="dv-func-bar" style="width:${pct}%;background:${isAbove ? 'var(--th-p)' : 'var(--th-p2)'};opacity:${isAbove ? 1 : 0.55};"></div>
+            </div>
+            <div class="dv-func-val">${val}</div>
+          </div>`;
+        }).join('')}
+      </div>
+      <div class="dv-badges">
+        <div class="dv-badge"><div class="dv-badge-label">学习通道</div><div class="dv-badge-val">${E.学习通道?.主通道 || '—'}</div></div>
+        <div class="dv-badge"><div class="dv-badge-label">行为模式</div><div class="dv-badge-val">${E.行为模式?.结论 || '—'}</div></div>
+        <div class="dv-badge"><div class="dv-badge-label">ATD 角度</div><div class="dv-badge-val">${E.ATD?.分区 || '—'}${ST.atd ? ' · ' + ST.atd + '°' : ''}</div></div>
+        <div class="dv-badge"><div class="dv-badge-label">个人均值</div><div class="dv-badge-val">${avgTRC} TRC</div></div>
+      </div>
     </div>`;
 }
 
