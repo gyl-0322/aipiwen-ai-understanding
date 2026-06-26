@@ -106,10 +106,36 @@ async function handleWechat(req, res) {
         const text = (msg.text?.content) || '';
         const fromUser = msg.external_userid;
         if (!fromUser || !text.trim()) continue;
+
+        // ── 皮纹天赋测评用户（来自速测结果页"联系顾问"按钮）──────────────
+        if (text.includes('AIPIWEN皮纹天赋测评') || text.includes('皮纹天赋')) {
+          const typeMatch    = text.match(/天赋类型是【(.+?)】/);
+          const taglineMatch = text.match(/】（(.+?)）/);
+          const typeName = typeMatch    ? typeMatch[1]    : '';
+          const tagline  = taglineMatch ? taglineMatch[1] : '';
+          const typeGreet = typeName
+            ? `收到！你孩子的速测天赋类型是【${typeName}】${tagline ? `——${tagline}` : ''}。\n\n`
+            : '收到你的皮纹天赋速测结果！\n\n';
+          await wxSendMsg(at, fromUser, openKfId,
+            `你好 👋\n\n${typeGreet}` +
+            `速测只能看到类型轮廓。完整的10指TRC报告还包括：\n` +
+            `✅ 精确五大功能区（哪些能力真正领先）\n` +
+            `✅ 学习通道占比（听觉 / 视觉 / 体觉）\n` +
+            `✅ ATD反应速度（情绪敏感度）\n` +
+            `✅ 高频成长问题四段式解读\n` +
+            `✅ 可下载完整翻页报告\n\n` +
+            `顾问会在工作时间内联系你了解孩子详细情况（9:00–21:00，通常30分钟内回复），帮你制定匹配天赋的成长方案。\n\n` +
+            `等不及的话，也可以先上传10指TRC总表，AI立刻生成完整报告 👇\n` +
+            `https://www.aipiwen.cn/report-upload.html`
+          );
+          continue;
+        }
+
+        // ── 旧行为分析系统：发来 aipiwen.cn 报告链接 ─────────────────────
         if (text.includes('aipewen.cn') || text.includes('aipiwen.cn')) {
           const data = wxDecodeReport(text);
           if (data) {
-            const rm = text.match(/[?&]r=([A-Za-z0-9+/=_%-]+)/);
+            const rm  = text.match(/[?&]r=([A-Za-z0-9+/=_%-]+)/);
             const url = rm ? `https://www.aipiwen.cn?r=${rm[1]}` : text.trim();
             await wxSendMsg(at, fromUser, openKfId,
               `✅ 已收到！这是${data.name||'孩子'}的完整行为理解报告。\n\n📋 类型：${WX_TYPE_LABELS[data.type]||'行为理解型'}\n${data.age?`👧 年龄：${data.age}岁\n`:''}\n👉 点击查看完整报告：\n${url}\n\n链接打开后直接显示完整内容，无需重新填写。`);
@@ -118,12 +144,21 @@ async function handleWechat(req, res) {
           }
           continue;
         }
+
+        // ── 旧系统报告编号 ────────────────────────────────────────────────
         if (/AIPIWEN-\d{8}-[A-Z0-9]{4}/i.test(text)) {
           const im = text.match(/AIPIWEN-\d{8}-[A-Z0-9]{4}/i);
-          await wxSendMsg(at, fromUser, openKfId, `收到报告编号 ${im[0]}。\n\n请把 www.aipiwen.cn 页面上「已成为企业微信好友」区域显示的完整链接（含 ?r= 参数）发给我，我立刻发送完整报告。`);
+          await wxSendMsg(at, fromUser, openKfId, `收到报告编号 ${im[0]}。\n\n请把 www.aipiwen.cn 页面上显示的完整链接（含 ?r= 参数）发给我，我立刻发送完整报告。`);
           continue;
         }
-        await wxSendMsg(at, fromUser, openKfId, '你好！👋\n\n请把你在 www.aipiwen.cn 上完成测试后，页面上显示的完整报告链接发给我，我立刻为你发送完整版行为理解报告。\n\n（链接格式：https://www.aipiwen.cn?r=...）');
+
+        // ── 默认回复 ──────────────────────────────────────────────────────
+        await wxSendMsg(at, fromUser, openKfId,
+          `你好 👋\n\n` +
+          `我是AIPIWEN皮纹天赋顾问助手。\n\n` +
+          `如果你刚完成了皮纹速测，顾问会尽快联系你了解孩子情况（工作时间 9:00–21:00，通常30分钟内回复）。\n\n` +
+          `你也可以直接告诉我孩子的年龄和你最关心的成长问题，顾问看到后会第一时间回复你 😊`
+        );
       }
     } catch (e) { console.error('处理客服消息失败:', e.message); }
     return;
