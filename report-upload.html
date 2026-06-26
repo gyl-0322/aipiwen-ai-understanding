@@ -944,8 +944,13 @@ qs('#gen-btn').addEventListener('click', async () => {
     goScreen('s4');
     _saveReportForClient(data.sections); // 后台存档，生成客户分享链接
   } catch(err) {
-    // fetch 本身失败（无网络/连接中断），err.name 通常是 TypeError 或 AbortError
-    qs('#gen-status').textContent = `❌ 网络连接失败，请检查网络后重试（${err.name}）`;
+    // 区分网络错误和渲染错误（fetch 失败 vs buildReportFlipBook 抛出）
+    const isNetErr = err.name === 'AbortError' || (err.name === 'TypeError' && err.message.includes('fetch'));
+    const msg = isNetErr
+      ? `❌ 网络连接失败，请检查网络后重试`
+      : `❌ 报告渲染出错，请重试（${err.name}: ${err.message?.slice(0,60)}）`;
+    qs('#gen-status').textContent = msg;
+    console.error('[gen-report] catch:', err.name, err.message, err.stack?.slice(0, 300));
     btn.disabled = false;
     btn.textContent = '重新生成';
   }
@@ -1056,7 +1061,11 @@ function buildReportFlipBook(sections) {
   // ── Slide 0: Cover ──────────────────────────────────────────────────
   const coverSlide = el('div', 'rv-slide');
   coverSlide.dataset.title = '封面';
-  const overlayTraits = (E?.叠加特质 || []).slice(0, 2).join(' · ');
+  // 叠加特质是对象 {M型, 逆向思维R, R手指}，不是数组，需手动提取
+  const _traits = [];
+  if (E?.叠加特质?.M型)       _traits.push('M型');
+  if (E?.叠加特质?.逆向思维R) _traits.push('逆向思维+R');
+  const overlayTraits = _traits.join(' · ');
   coverSlide.innerHTML = `<div class="cv-wrap">
     ${cfg.deco ? `<div class="cv-deco">${cfg.deco}</div>` : ''}
     <div class="cv-theme-badge">${cfg.badge}</div>
