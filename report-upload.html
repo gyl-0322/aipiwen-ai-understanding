@@ -1184,9 +1184,10 @@ function buildReportFlipBook(sections) {
     });
     document.querySelectorAll('#rv-dl-fin,#rv-dl-btn').forEach(b => {
       b.addEventListener('click', function() {
-        // 手机端 PDF 下载在各厂商浏览器里极不稳定，引导用分享链接
-        if (/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent)) {
-          alert('手机端暂不支持 PDF 下载。\n\n建议：点击右上角「↑ 分享」保存链接，随时可打开完整报告。\n\n如需 PDF 文件，请在电脑浏览器中打开此报告后下载。');
+        // 仅微信内置 WebView 拦截（不支持 blob download）
+        // 华为/小米/Chrome 等手机浏览器原生支持，直接下载
+        if (/MicroMessenger/i.test(navigator.userAgent)) {
+          alert('微信内无法直接下载 PDF。\n\n请点右上角「···」→「在浏览器中打开」，再点下载即可。');
           return;
         }
         generateReportPDF(this, '#rv-track .rv-slide');
