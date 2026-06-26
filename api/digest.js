@@ -15,7 +15,7 @@
  *   DASHSCOPE_API_KEY    通义千问 API Key
  */
 
-const { redisSet, redisGet, generatePortrait } = require('./_lib');
+const { redisSet, redisGet, generatePortrait, callClaude, MODEL_FREE } = require('./_lib');
 
 // ─── 身份验证 ──────────────────────────────────────────────────────────────────
 function isAuthorized(req) {
@@ -141,14 +141,9 @@ ${samplesText}
 
 只输出5行，不要解释，不要序号以外的符号。`;
 
-    const aiRes = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
-      method:  'POST',
-      headers: { Authorization: `Bearer ${process.env.DASHSCOPE_API_KEY || ''}`, 'Content-Type': 'application/json' },
-      body:    JSON.stringify({ model: 'qwen-turbo', max_tokens: 300, messages: [{ role: 'user', content: prompt }] }),
-    });
-
-    const aiData   = await aiRes.json();
-    const patterns = aiData.choices?.[0]?.message?.content || '';
+    const { text: patterns } = await callClaude({
+      model: MODEL_FREE, messages: [{ role: 'user', content: prompt }], maxTokens: 300,
+    }).catch(() => ({ text: '' }));
     if (!patterns) return res.status(500).json({ error: 'AI 返回为空' });
 
     await redisSet('global:patterns', {
@@ -194,13 +189,9 @@ ${samplesText}
 
 请用2-3句话生成一段本周成长小结，温暖有洞察，结尾有一句鼓励家长的话。50字以内。`;
 
-        const aiRes  = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
-          method:  'POST',
-          headers: { Authorization: `Bearer ${process.env.DASHSCOPE_API_KEY || ''}`, 'Content-Type': 'application/json' },
-          body:    JSON.stringify({ model: 'qwen-turbo', max_tokens: 150, messages: [{ role: 'user', content: summaryPrompt }] }),
-        });
-        const aiData = await aiRes.json();
-        const summary = aiData.choices?.[0]?.message?.content || '';
+        const { text: summary } = await callClaude({
+          model: MODEL_FREE, messages: [{ role: 'user', content: summaryPrompt }], maxTokens: 150,
+        }).catch(() => ({ text: '' }));
         if (summary) childSummaries.push({ name: child.name, count: weekRecords.length, summary });
 
         await new Promise(r => setTimeout(r, 300));
@@ -288,14 +279,9 @@ ${sections}
 
 只输出以上内容，不要额外说明。`;
 
-    const aiRes = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
-      method:  'POST',
-      headers: { Authorization: `Bearer ${process.env.DASHSCOPE_API_KEY || ''}`, 'Content-Type': 'application/json' },
-      body:    JSON.stringify({ model: 'qwen-plus', max_tokens: 600, messages: [{ role: 'user', content: prompt }] }),
-    });
-
-    const aiData   = await aiRes.json();
-    const analysis = aiData.choices?.[0]?.message?.content || '';
+    const { text: analysis } = await callClaude({
+      model: MODEL_FREE, messages: [{ role: 'user', content: prompt }], maxTokens: 600,
+    }).catch(() => ({ text: '' }));
     if (!analysis) return res.status(500).json({ error: 'AI 返回为空' });
 
     // 写入 global:patterns（已被 guest-chat.js 注入全域对话）

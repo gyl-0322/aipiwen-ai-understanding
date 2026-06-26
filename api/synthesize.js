@@ -6,7 +6,7 @@
  *       每个 context 是 [{date, behavior, insight}] 数组
  */
 
-const { redisSet, redisGet } = require('./_lib');
+const { redisSet, redisGet, callClaude, MODEL_FREE } = require('./_lib');
 const { buildTypeReferenceForPrompt } = require('./_personality-types');
 
 // 综合分析限流：每 IP 每分钟最多 3 次（成本比 guest-chat 高）
@@ -106,37 +106,11 @@ ${contextSections}
 
   let reply = null;
   try {
-    const ctrl  = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), 25000); // 25s（vercel maxDuration 30s）
-    const aiRes = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
-      method:  'POST',
-      headers: {
-        'Authorization': `Bearer ${process.env.DASHSCOPE_API_KEY || ''}`,
-        'Content-Type':  'application/json',
-      },
-      body: JSON.stringify({ model:'qwen-turbo', max_tokens:600, messages }),
-      signal: ctrl.signal,
-    });
-    clearTimeout(timer);
-
-    const rawText = await aiRes.text();
-
-    if (!aiRes.ok) {
-      console.error('Synthesize: DashScope HTTP', aiRes.status, rawText.slice(0, 300));
-      return res.status(500).json({ error: `AI 调用失败（${aiRes.status}）：${rawText.slice(0, 80)}` });
-    }
-
-    let aiData;
-    try { aiData = JSON.parse(rawText); }
-    catch(e) { return res.status(500).json({ error: 'AI 返回格式错误：' + rawText.slice(0, 80) }); }
-
-    reply = aiData.choices?.[0]?.message?.content?.trim() || null;
-    if (!reply) {
-      console.error('Synthesize: empty choices:', JSON.stringify(aiData).slice(0, 300));
-      return res.status(500).json({ error: 'AI 返回空内容，请检查 Vercel 环境变量 DASHSCOPE_API_KEY 是否配置' });
-    }
+    const { text } = await callClaude({ model: MODEL_FREE, messages, maxTokens: 600 });
+    reply = text;
+    if (!reply) return res.status(500).json({ error: 'AI 返回空内容' });
   } catch(err) {
-    console.error('Synthesize: fetch error:', err.message);
+    console.error('[synthesize] Claude error:', err.message);
     return res.status(500).json({ error: 'AI 网络请求失败：' + err.message });
   }
 

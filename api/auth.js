@@ -278,10 +278,93 @@ module.exports = async function handler(req, res) {
       await redisSet('users:all', list.filter(id => id !== openid));
     }
 
+    // 清除订单、解锁记录、安全事件（user_openid 存在的所有表）
+    await Promise.all([
+      redisSet(`orders:${openid}`,         null, 1),
+      redisSet(`unlock_events:${openid}`,  null, 1),
+      redisSet(`safety_events:${openid}`,  null, 1),
+    ]);
+
     // 清除 session
     await redisSet(`session:${token}`, null, 1);
     res.setHeader('Set-Cookie', 'aipiwen_session=; Path=/; Max-Age=0');
     return res.status(200).json({ ok: true, message: '账号及全部数据已删除' });
+  }
+
+  // ── migrate_account: 将旧 openid 的所有数据迁移到新 openid ─────────────────
+  // 场景：微信网页授权换绑、游客转正式账号
+  if (action === 'migrate_account' && req.method === 'POST') {
+    const token = getSessionToken(req);
+    if (!token) return res.status(401).json({ error: '未登录' });
+    const newOpenid = parseSessionToken(token);
+    if (!newOpenid) return res.status(401).json({ error: 'session无效' });
+
+    let body = {};
+    try {
+      const raw = await new Promise((resolve, reject) => {
+        let d = '';
+        req.on('data', c => { d += c; });
+        req.on('end', () => resolve(d));
+        req.on('error', reject);
+      });
+      body = JSON.parse(raw);
+    } catch(e) { return res.status(400).json({ error: '请求体格式错误' }); }
+
+    const oldOpenid = body.oldOpenid;
+    if (!oldOpenid || oldOpenid === newOpenid) {
+      return res.status(400).json({ error: '无效的 oldOpenid' });
+    }
+
+    // 需要迁移的顶层 key（含 user_openid 的所有表）
+    const topLevelKeys = [
+      `user:${oldOpenid}`,
+      `orders:${oldOpenid}`,
+      `unlock_events:${oldOpenid}`,
+      `safety_events:${oldOpenid}`,
+    ];
+
+    const errors = [];
+    for (const oldKey of topLevelKeys) {
+      try {
+        const val = await redisGet(oldKey).catch(() => null);
+        if (val !== null && val !== undefined) {
+          const newKey = oldKey.replace(oldOpenid, newOpenid);
+          await redisSet(newKey, val, 365 * 86400);
+          await redisSet(oldKey, null, 1); // 清除旧 key
+        }
+      } catch(e) { errors.push(oldKey); }
+    }
+
+    // 迁移孩子记录（子 key 以 openid 为前缀）
+    const oldUser = await redisGet(`user:${newOpenid}`).catch(() => null)
+                 || await redisGet(`user:${oldOpenid}`).catch(() => null);
+    const children = oldUser?.children || [];
+    for (const child of children) {
+      const childKeys = [
+        `records:${oldOpenid}:${child.id}`,
+        `portrait:${oldOpenid}:${child.id}`,
+        `analysis:${oldOpenid}:${child.id}`,
+      ];
+      for (const oldKey of childKeys) {
+        try {
+          const val = await redisGet(oldKey).catch(() => null);
+          if (val !== null && val !== undefined) {
+            const newKey = oldKey.replace(oldOpenid, newOpenid);
+            await redisSet(newKey, val, 365 * 86400);
+            await redisSet(oldKey, null, 1);
+          }
+        } catch(e) { errors.push(oldKey); }
+      }
+    }
+
+    // 更新 users:all 索引
+    const allUsers = await redisGet('users:all').catch(() => []) || [];
+    const updated = allUsers.filter(id => id !== oldOpenid);
+    if (!updated.includes(newOpenid)) updated.push(newOpenid);
+    await redisSet('users:all', updated);
+
+    console.log(`[migrate_account] ${oldOpenid} → ${newOpenid}`, errors.length ? `errors: ${errors.join(',')}` : 'ok');
+    return res.status(200).json({ ok: true, migrated: topLevelKeys.length + children.length * 3, errors });
   }
 
   return res.status(400).json({ error: '无效的 action' });

@@ -12,7 +12,7 @@
  */
 
 const crypto = require('crypto');
-const { redisSet, redisGet, getOpenid, generatePortrait, portraitNeedsRefresh, getGlobalPatterns, archiveRecordsIfNeeded, searchKnowledge } = require('./_lib');
+const { redisSet, redisGet, getOpenid, generatePortrait, portraitNeedsRefresh, getGlobalPatterns, archiveRecordsIfNeeded, searchKnowledge, callClaude, MODEL_FREE } = require('./_lib');
 
 function readBody(req) {
   return new Promise((resolve, reject) => {
@@ -149,21 +149,10 @@ ${recordsText}
 
 语气要像一位真正理解这个家庭的朋友，不要说教，不要夸张，要让家长感觉"对！就是这样！"`;
 
-    const aiRes = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
-      method:  'POST',
-      headers: {
-        'Authorization': `Bearer ${process.env.DASHSCOPE_API_KEY || ''}`,
-        'Content-Type':  'application/json',
-      },
-      body: JSON.stringify({
-        model:      'qwen-turbo',
-        max_tokens: 1000,
-        messages:   [{ role: 'user', content: prompt }],
-      }),
-    });
-
-    const aiData  = await aiRes.json();
-    const analysis = aiData.choices?.[0]?.message?.content || '分析生成失败，请稍后重试。';
+    const { text: analysisText } = await callClaude({
+      model: MODEL_FREE, messages: [{ role: 'user', content: prompt }], maxTokens: 1000,
+    }).catch(() => ({ text: null }));
+    const analysis = analysisText || '分析生成失败，请稍后重试。';
 
     await redisSet(`analysis:${openid}:${id}`, {
       analysis,
@@ -232,21 +221,10 @@ ${historyText ? `此前对话记录（最近15条）：\n${historyText}\n` : ''}
 - 语气像真正关心这个家庭的朋友，不说教，不夸张
 - 回复控制在150字以内，简洁有温度`;
 
-    const aiRes = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
-      method:  'POST',
-      headers: {
-        'Authorization': `Bearer ${process.env.DASHSCOPE_API_KEY || ''}`,
-        'Content-Type':  'application/json',
-      },
-      body: JSON.stringify({
-        model:      'qwen-turbo',
-        max_tokens: 300,
-        messages:   [{ role: 'user', content: prompt }],
-      }),
-    });
-
-    const aiData  = await aiRes.json();
-    const aiReply = aiData.choices?.[0]?.message?.content || '收到，我来帮你分析一下……';
+    const { text: replyText } = await callClaude({
+      model: MODEL_FREE, messages: [{ role: 'user', content: prompt }], maxTokens: 300,
+    }).catch(() => ({ text: null }));
+    const aiReply = replyText || '收到，我来帮你分析一下……';
 
     // 保存家长消息 + AI回复
     const parentMsg = { id: crypto.randomBytes(6).toString('hex'), role: 'parent', content: content.trim(), createdAt: new Date().toISOString() };

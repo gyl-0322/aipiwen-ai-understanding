@@ -9,7 +9,7 @@
  */
 
 const crypto = require('crypto');
-const { redisGet, redisSet, creditReferral } = require('./_lib');
+const { redisGet, redisSet, creditReferral, callClaude, MODEL_DEEP, getOpenid } = require('./_lib');
 
 // ── 案例库索引（Upstash list，max 2000 条）──────────────────────────────────
 function kvUrl()   { return process.env.KV_REST_API_URL   || process.env.REDIS_URL  || ''; }
@@ -194,11 +194,11 @@ const 兴趣班板块Names = new Set([
 
 // ── 限流：每 IP 每分钟最多 3 次（防滥用） ──────────────────────────────
 async function checkRate(ip) {
-  return true; // 🔓 测试阶段：限流关闭（上线前删此行）
+  // Beta 宽松上限：每 IP 每分钟最多 10 次（report 比 chat 低频，10次已很宽松）
   const minute = Math.floor(Date.now() / 60000);
   const key    = `ratelimit:genrpt:${ip}:${minute}`;
   const count  = (await redisGet(key).catch(() => 0)) || 0;
-  if (count >= 3) return false;
+  if (count >= 10) return false;
   await redisSet(key, count + 1, 120);
   return true;
 }
@@ -494,8 +494,23 @@ async function handleReportStore(req, res) {
     const url = new URL(req.url, `https://${req.headers.host}`);
     const id  = url.searchParams.get('id');
     if (!id) return res.status(400).json({ ok: false, error: '缺少 id 参数' });
+
+    // ── 解锁鉴权（PAYMENT_ENABLED=true 时才启用）────────────────────────────
+    const paymentEnabled = process.env.PAYMENT_ENABLED === 'true';
+    if (paymentEnabled) {
+      const openid = getOpenid(req);
+      if (!openid) {
+        return res.status(401).json({ ok: false, error: '请先登录后查看完整报告', needLogin: true });
+      }
+      const unlocked = (await redisGet(`unlock_events:${openid}`).catch(() => null)) || [];
+      const ids = Array.isArray(unlocked) ? unlocked : Object.keys(unlocked);
+      if (!ids.includes(id)) {
+        return res.status(402).json({ ok: false, error: '该报告需解锁后查看', needUnlock: true, reportId: id });
+      }
+    }
+
     const report = await redisGet(`report:${id}`).catch(() => null);
-    if (!report) return res.status(404).json({ ok: false, error: '报告不存在或已过期（30天）' });
+    if (!report) return res.status(404).json({ ok: false, error: '报告不存在或已过期' });
     return res.status(200).json({ ok: true, report });
   }
 
@@ -551,38 +566,25 @@ module.exports = async function handler(req, res) {
     { role: 'user',   content: userMessage },
   ];
 
-  // ── DashScope 调用（qwen-plus，3000 tokens） ──────────────────────────
+  // ── Claude Sonnet 调用（付费深度报告，带 Prompt Caching） ──────────────
   let raw = null;
   try {
-    const ctrl  = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), 55000); // 55s（Vercel function max 60s）
-    const aiRes = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
-      method:  'POST',
-      headers: {
-        'Authorization': `Bearer ${process.env.DASHSCOPE_API_KEY || ''}`,
-        'Content-Type':  'application/json',
-      },
-      body: JSON.stringify({ model:'qwen-plus', max_tokens:3000, messages }),
-      signal: ctrl.signal,
+    const { text } = await callClaude({
+      model:     MODEL_DEEP,
+      messages,                // messages[0] = {role:'system', content: SYSTEM_PROMPT}
+      maxTokens: 3000,
+      cache:     true,         // SYSTEM_PROMPT 走 prompt caching，~90% 节省输入费用
+      timeoutMs: 55000,        // Vercel function max 60s
     });
-    clearTimeout(timer);
-
-    if (!aiRes.ok) {
-      const errText = (await aiRes.text()).slice(0, 400);
-      console.error('[gen-report] DashScope HTTP', aiRes.status, errText);
-      return res.status(200).json({ ok:false, error:`AI 服务异常（${aiRes.status}），请重试` });
-    }
-
-    const aiData = await aiRes.json().catch(() => null);
-    raw = aiData?.choices?.[0]?.message?.content?.trim() || null;
+    raw = text;
 
     if (!raw) {
-      console.error('[gen-report] empty reply:', JSON.stringify(aiData).slice(0, 300));
+      console.error('[gen-report] empty Claude reply');
       return res.status(200).json({ ok:false, error:'AI 未返回内容，请重试' });
     }
   } catch(err) {
-    console.error('[gen-report] fetch error:', err.message);
-    return res.status(200).json({ ok:false, error:`AI 请求失败: ${err.message}` });
+    console.error('[gen-report] Claude error:', err.message);
+    return res.status(200).json({ ok:false, error:`AI 请求失败，请重试` });
   }
 
   const sections = parseSections(raw, requiredMods, selectedIssues);

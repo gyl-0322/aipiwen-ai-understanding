@@ -11,7 +11,7 @@
  *   → { ok: false, error } (不存在/已过期)
  */
 
-const { redisGet, redisSet } = require('./_lib');
+const { redisGet, redisSet, getOpenid } = require('./_lib');
 const crypto = require('crypto');
 
 // ── IP 限流：每 IP 每分钟最多 10 次 POST ─────────────────────────────────
@@ -90,6 +90,20 @@ module.exports = async function handler(req, res) {
     const url = new URL(req.url, `https://${req.headers.host}`);
     const id  = url.searchParams.get('id');
     if (!id) return res.status(400).json({ ok: false, error: '缺少 id 参数' });
+
+    // ── 解锁鉴权（PAYMENT_ENABLED=true 时才启用）────────────────────────────
+    const paymentEnabled = process.env.PAYMENT_ENABLED === 'true';
+    if (paymentEnabled) {
+      const openid = getOpenid(req);
+      if (!openid) {
+        return res.status(401).json({ ok: false, error: '请先登录后查看完整报告', needLogin: true });
+      }
+      const unlocked = (await redisGet(`unlock_events:${openid}`).catch(() => null)) || [];
+      const ids = Array.isArray(unlocked) ? unlocked : Object.keys(unlocked);
+      if (!ids.includes(id)) {
+        return res.status(402).json({ ok: false, error: '该报告需解锁后查看', needUnlock: true, reportId: id });
+      }
+    }
 
     const report = await redisGet(`report:${id}`).catch(() => null);
     if (!report) {

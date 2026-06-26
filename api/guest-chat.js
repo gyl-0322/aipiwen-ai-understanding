@@ -7,7 +7,10 @@
  * POST /api/synthesize   { contexts: { child?, self?, partner?, business? } }
  */
 
-const { getGlobalPatterns, redisSet, redisGet, creditReferral } = require('./_lib');
+const { getGlobalPatterns, redisSet, redisGet, creditReferral, callClaude, MODEL_FREE, MODEL_DEEP } = require('./_lib');
+
+// ★ 免费对话轮数上限（超过提示升级，既控成本又软付费触发）
+const MAX_FREE_ROUNDS = 10;
 const { buildTypeReferenceForPrompt } = require('../lib/trc-knowledge-adapter');
 
 // ── log-session 处理器（merged from log-session.js）────────────────────────
@@ -96,13 +99,12 @@ async function isVipToken(token) {
   return !!val;
 }
 
-// ── IP 限流：每个 IP 每分钟最多10次（防滥用） ────────────────────────────────
+// ── IP 限流：每个 IP 每分钟最多 50 次（Beta 宽松上限，防滥用/bot）─────────
 async function checkRateLimit(ip) {
-  return true; // 🔓 测试阶段：限流关闭（上线前删此行）
   const minute = Math.floor(Date.now() / 60000);
-  const key    = `ratelimit:${ip}:${minute}`;
-  const count  = (await redisGet(key)) || 0;
-  if (count >= 10) return false;
+  const key    = `ratelimit:chat:${ip}:${minute}`;
+  const count  = (await redisGet(key).catch(() => 0)) || 0;
+  if (count >= 50) return false;
   await redisSet(key, count + 1, 120); // TTL 2分钟
   return true;
 }
@@ -823,46 +825,33 @@ ${NO_FILLER}`;
     messages.push({ role: 'user', content: content.trim() });
   }
 
-  // 视觉模式用 qwen-vl-plus（支持图片，稳定），报告追问用 qwen-plus，普通对话用 qwen-turbo
+  // ── 免费对话轮数检查（超 MAX_FREE_ROUNDS 轮提示升级/解锁）──────────────
   const isReportContext = context === 'report';
-  const model     = isVisionMode ? 'qwen-vl-plus' : (isReportContext ? 'qwen-plus' : 'qwen-turbo');
+  if (!isVisionMode && !isReportContext) {
+    const userTurns = history.filter(m => m.role === 'user').length;
+    if (userTurns >= MAX_FREE_ROUNDS) {
+      return res.status(200).json({
+        ok: true,
+        reply: `你已经和我聊了 ${userTurns} 轮，看来你对孩子/自己有很多想深入探索的地方。\n想继续追问更多细节？可以解锁完整版，获得更深度、有数据支撑的专属分析支持。`,
+        roundLimitReached: true,
+      });
+    }
+  }
+
+  // ── Claude API 调用（§15 模型选型规范）─────────────────────────────────
+  // 视觉 → Sonnet（支持图片）；报告追问 → Sonnet（高质量解读）；普通对话 → Haiku（低成本）
+  const model     = (isVisionMode || isReportContext) ? MODEL_DEEP : MODEL_FREE;
   const maxTokens = isVisionMode ? 1200 : (isReportContext ? 1200 : 400);
 
   let reply = null;
 
   try {
-    const controller = new AbortController();
-    const fetchTimer = setTimeout(() => controller.abort(), 25000); // 25s 硬超时
-    const aiRes = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
-      method:  'POST',
-      headers: {
-        'Authorization': `Bearer ${process.env.DASHSCOPE_API_KEY || ''}`,
-        'Content-Type':  'application/json',
-      },
-      body:   JSON.stringify({ model, max_tokens: maxTokens, messages }),
-      signal: controller.signal,
-    });
-    clearTimeout(fetchTimer);
-
-    const rawText = await aiRes.text();
-
-    if (!aiRes.ok) {
-      const errSnip = rawText.slice(0, 400);
-      console.error('DashScope HTTP:', aiRes.status, errSnip);
-      // ok:false 让前端知道这次调用实际失败，不要标记 imageUsed
-      return res.status(200).json({ ok: false, reply: `解读遇到了问题（${aiRes.status}），请重试。` });
-    } else {
-      let aiData;
-      try { aiData = JSON.parse(rawText); } catch(e) { /* ignore */ }
-      if (aiData) {
-        reply = aiData.choices?.[0]?.message?.content?.trim() || null;
-        if (!reply) console.error('DashScope empty choices:', JSON.stringify(aiData).slice(0, 400));
-      }
-    }
+    const { text } = await callClaude({ model, messages, maxTokens, cache: !isVisionMode, timeoutMs: 25000 });
+    reply = text;
+    if (!reply) console.error('[guest-chat] Claude empty reply');
   } catch(err) {
-    console.error('DashScope fetch error:', err.message);
-    // ok:false 让前端知道这次调用失败
-    return res.status(200).json({ ok: false, reply: `网络请求失败：${err.message}` });
+    console.error('[guest-chat] Claude error:', err.message);
+    return res.status(200).json({ ok: false, reply: `解读遇到了问题，请重试。` });
   }
 
   // Task 2: 从 vision 回复中提取 AIPIWEN_DATA 摘要行（供前端缓存，后续追问直接用）
@@ -951,24 +940,9 @@ async function handleSynthesize(req, res) {
 
   let reply = null;
   try {
-    const ctrl  = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), 25000);
-    const aiRes = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${process.env.DASHSCOPE_API_KEY || ''}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model: 'qwen-turbo', max_tokens: 600, messages }),
-      signal: ctrl.signal,
-    });
-    clearTimeout(timer);
-
-    const rawText = await aiRes.text();
-    if (!aiRes.ok) return res.status(500).json({ error: `AI 调用失败（${aiRes.status}）：${rawText.slice(0, 80)}` });
-
-    let aiData;
-    try { aiData = JSON.parse(rawText); } catch(e) { return res.status(500).json({ error: 'AI 返回格式错误' }); }
-
-    reply = aiData.choices?.[0]?.message?.content?.trim() || null;
-    if (!reply) return res.status(500).json({ error: 'AI 返回空内容，请检查 DASHSCOPE_API_KEY' });
+    const { text } = await callClaude({ model: MODEL_FREE, messages, maxTokens: 600 });
+    reply = text;
+    if (!reply) return res.status(500).json({ error: 'AI 返回空内容' });
   } catch(err) {
     return res.status(500).json({ error: 'AI 网络请求失败：' + err.message });
   }

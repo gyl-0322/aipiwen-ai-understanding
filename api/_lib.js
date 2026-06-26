@@ -103,14 +103,9 @@ ${recordsText}
 
 语气客观专业，这段摘要会作为上下文注入给AI顾问，帮助AI更了解这个孩子。不需要给建议，只需要描述事实和规律。`;
 
-    const aiRes = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
-      method:  'POST',
-      headers: { Authorization: `Bearer ${process.env.DASHSCOPE_API_KEY || ''}`, 'Content-Type': 'application/json' },
-      body:    JSON.stringify({ model: 'qwen-turbo', max_tokens: 600, messages: [{ role: 'user', content: prompt }] }),
-    });
-
-    const aiData  = await aiRes.json();
-    const summary = aiData.choices?.[0]?.message?.content;
+    const { text: summary } = await callClaude({
+      model: MODEL_FREE, messages: [{ role: 'user', content: prompt }], maxTokens: 600,
+    }).catch(() => ({ text: null }));
     if (!summary) return null;
 
     const portrait = { summary, generatedAt: new Date().toISOString(), recordCount: records.length };
@@ -232,6 +227,128 @@ async function creditReferral(callerIp, token, event) {
   } catch { return false; }
 }
 
+// ═══════════════════════════════════════════════════════════════════════════
+//  Claude API 共享封装（§15 模型选型规范）
+// ═══════════════════════════════════════════════════════════════════════════
+
+// ★ 模型常量 — C 端任何路径禁止使用 Opus
+const MODEL_FREE = 'claude-haiku-4-5-20251001'; // 免费/轻解读/对话  $1/$5 per M tokens
+const MODEL_DEEP = 'claude-sonnet-4-6';          // 付费/深度报告      $3/$15 per M tokens
+
+const CLAUDE_API = 'https://api.anthropic.com/v1/messages';
+
+/**
+ * 统一 Claude API 调用入口
+ * @param {object} opts
+ * @param {string}   opts.model      MODEL_FREE | MODEL_DEEP
+ * @param {string}   opts.system     系统提示（纯字符串；如需 caching 会自动包装）
+ * @param {Array}    opts.messages   消息数组 [{role:'user'|'assistant', content}]
+ *                                   role:'system' 的消息会被自动提取到 system 字段
+ * @param {number}   opts.maxTokens  最大输出 token（默认 600）
+ * @param {boolean}  opts.cache      是否对 system 开启 prompt caching（默认 false）
+ * @param {number}   opts.timeoutMs  超时毫秒（默认 25000）
+ * @returns {Promise<{text:string, usage:object}>}
+ */
+async function callClaude({ model, system, messages, maxTokens = 600, cache = false, timeoutMs = 25000 }) {
+  const apiKey = process.env.ANTHROPIC_API_KEY || '';
+
+  // 从 messages 里提取 role:system（兼容 OpenAI 格式传入的 messages）
+  const sysMsg = messages.find(m => m.role === 'system');
+  const systemText = system || sysMsg?.content || '';
+  const filteredMsgs = messages.filter(m => m.role !== 'system');
+
+  // 将 OpenAI image_url 格式转为 Claude source 格式
+  const claudeMsgs = filteredMsgs.map(m => {
+    if (!Array.isArray(m.content)) return m;
+    const parts = m.content.map(p => {
+      if (p.type === 'image_url' && p.image_url?.url) {
+        const match = p.image_url.url.match(/^data:([^;]+);base64,(.+)$/);
+        if (match) return { type: 'image', source: { type: 'base64', media_type: match[1], data: match[2] } };
+      }
+      return p;
+    });
+    return { ...m, content: parts };
+  });
+
+  const body = { model, max_tokens: maxTokens, messages: claudeMsgs };
+
+  if (systemText) {
+    body.system = cache
+      ? [{ type: 'text', text: systemText, cache_control: { type: 'ephemeral' } }]
+      : systemText;
+  }
+
+  const headers = {
+    'x-api-key':         apiKey,
+    'anthropic-version': '2023-06-01',
+    'content-type':      'application/json',
+    ...(cache ? { 'anthropic-beta': 'prompt-caching-2024-07-31' } : {}),
+  };
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(CLAUDE_API, { method: 'POST', headers, body: JSON.stringify(body), signal: controller.signal });
+    clearTimeout(timer);
+    const rawText = await res.text();
+    if (!res.ok) {
+      const err = Object.assign(new Error(`Claude ${res.status}`), { status: res.status, body: rawText.slice(0, 300) });
+      console.error('[Claude]', err.message, err.body);
+      throw err;
+    }
+    const data = JSON.parse(rawText);
+    const text = data.content?.[0]?.text?.trim() || null;
+    trackApiSpend(model, data.usage?.input_tokens || 0, data.usage?.output_tokens || 0).catch(() => {});
+    return { text, usage: data.usage || {} };
+  } catch (e) {
+    clearTimeout(timer);
+    throw e;
+  }
+}
+
+// ─── 每日 API Spend 追踪 + WeCom 告警 ────────────────────────────────────────
+const _PRICING = {
+  [MODEL_FREE]: { in: 1 / 1e6, out: 5 / 1e6  },
+  [MODEL_DEEP]: { in: 3 / 1e6, out: 15 / 1e6 },
+};
+const _USD_TO_CNY = 7.2;
+
+async function trackApiSpend(model, inputTokens, outputTokens) {
+  if (!inputTokens && !outputTokens) return;
+  const p = _PRICING[model] || _PRICING[MODEL_DEEP];
+  const costCNY = (inputTokens * p.in + outputTokens * p.out) * _USD_TO_CNY;
+  const yyyymmdd = new Date(Date.now() + 8 * 3600000).toISOString().slice(0, 10).replace(/-/g, '');
+  const key = `spend:daily:${yyyymmdd}`;
+  const prev = (await redisGet(key).catch(() => null)) || 0;
+  const total = prev + costCNY;
+  await redisSet(key, total, 3 * 86400);
+  const threshold = Number(process.env.SPEND_ALERT_CNY || '50');
+  if (total >= threshold && prev < threshold) {
+    sendSpendAlert(total, yyyymmdd, threshold).catch(() => {});
+  }
+}
+
+async function sendSpendAlert(totalCNY, date, threshold) {
+  const corpId      = process.env.WECHAT_CORP_ID;
+  const agentSecret = process.env.WECHAT_AGENT_SECRET;
+  if (!corpId || !agentSecret) return;
+  try {
+    const tk = await fetch(`https://qyapi.weixin.qq.com/cgi-bin/gettoken?corpid=${corpId}&corpsecret=${agentSecret}`)
+      .then(r => r.json()).then(d => d.access_token);
+    if (!tk) return;
+    await fetch(`https://qyapi.weixin.qq.com/cgi-bin/message/send?access_token=${tk}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        touser: process.env.SPEND_ALERT_RECIPIENT || '@all',
+        agentid: process.env.WECHAT_AGENT_ID || '',
+        msgtype: 'text',
+        text: { content: `⚠️ AIPIWEN API 消耗告警\n日期：${date}\n今日已消耗：¥${totalCNY.toFixed(2)}\n告警阈值：¥${threshold}\n请检查是否有异常流量。` },
+      }),
+    });
+  } catch (e) { console.error('[spend-alert]', e.message); }
+}
+
 module.exports = {
   redisSet, redisGet,
   makeSessionToken, parseSessionToken, getSessionToken, getOpenid,
@@ -239,4 +356,6 @@ module.exports = {
   archiveRecordsIfNeeded, MAX_RECORDS,
   searchKnowledge,
   createInviteToken, creditReferral,
+  // Claude API
+  callClaude, MODEL_FREE, MODEL_DEEP, trackApiSpend,
 };

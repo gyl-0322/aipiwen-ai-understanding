@@ -19,7 +19,7 @@
  *          L1~L5 = 左手拇/食/中/无名/小 (右脑)
  */
 
-const { redisGet, redisSet } = require('./_lib');
+const { redisGet, redisSet, callClaude, MODEL_DEEP } = require('./_lib');
 
 // ── 合法纹型符号白名单 ──────────────────────────────────────────────────
 const VALID_SYMS = new Set([
@@ -111,11 +111,11 @@ const EXTRACT_PROMPT = `你是皮纹科学数据提取专家。图片是一份 T
 
 // ── IP 限流（防滥用） ────────────────────────────────────────────────────
 async function checkRate(ip) {
-  return true; // 🔓 测试阶段：限流关闭（上线前删此行）
+  // Beta 宽松上限：每 IP 每分钟最多 10 次（视觉识别，比对话更重）
   const minute = Math.floor(Date.now() / 60000);
   const key    = `ratelimit:extract:${ip}:${minute}`;
   const count  = (await redisGet(key).catch(() => 0)) || 0;
-  if (count >= 5) return false;         // 每 IP 每分钟最多 5 次
+  if (count >= 10) return false;
   await redisSet(key, count + 1, 120);
   return true;
 }
@@ -257,7 +257,7 @@ module.exports = async function handler(req, res) {
     return res.status(400).json({ ok: false, error: '缺少 imageBase64 字段' });
   }
 
-  // ── 调用 DashScope qwen-vl-plus ────────────────────────────────────────
+  // ── 调用 Claude Sonnet Vision ──────────────────────────────────────────
   const messages = [
     {
       role: 'user',
@@ -270,38 +270,14 @@ module.exports = async function handler(req, res) {
 
   let visionRaw = null;
   try {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 55000);
-    const aiRes = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${process.env.DASHSCOPE_API_KEY || ''}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model:      'qwen-vl-max',
-        max_tokens: 800,
-        messages,
-      }),
-      signal: controller.signal,
-    });
-    clearTimeout(timer);
-
-    if (!aiRes.ok) {
-      const errText = (await aiRes.text()).slice(0, 400);
-      console.error('[extract-fp] DashScope HTTP', aiRes.status, errText);
-      return res.status(200).json({ ok: false, error: `Vision 服务异常（${aiRes.status}），请重试` });
-    }
-
-    const aiData = await aiRes.json().catch(() => null);
-    visionRaw = aiData?.choices?.[0]?.message?.content?.trim() || null;
-
+    const { text } = await callClaude({ model: MODEL_DEEP, messages, maxTokens: 800, timeoutMs: 55000 });
+    visionRaw = text;
     if (!visionRaw) {
-      console.error('[extract-fp] empty vision reply:', JSON.stringify(aiData).slice(0, 300));
+      console.error('[extract-fp] empty vision reply');
       return res.status(200).json({ ok: false, error: 'Vision 未返回内容，请重试' });
     }
   } catch(err) {
-    console.error('[extract-fp] fetch error:', err.message);
+    console.error('[extract-fp] Claude error:', err.message);
     return res.status(200).json({ ok: false, error: `Vision 请求失败: ${err.message}` });
   }
 
@@ -408,17 +384,10 @@ module.exports = async function handler(req, res) {
 输出严格 JSON：
 {"decomp":[{"zone":"脑区中文名","c1":"","c2":"","c3":null,"sym":""},...],"has_rl":false,"rl_zones":[]}`;
 
-      const ctrl2 = new AbortController();
-      const t2 = setTimeout(() => ctrl2.abort(), 30000);
-      const rlRes = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${process.env.DASHSCOPE_API_KEY || ''}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: 'qwen-vl-max',
-          max_tokens: 800,          // 全量10区 decomp 需要更多 token
+      const { text: _rlRaw } = await callClaude({
+          model: MODEL_DEEP,
+          maxTokens: 800,
+          timeoutMs: 30000,
           messages: [{
             role: 'user',
             content: [
@@ -426,14 +395,9 @@ module.exports = async function handler(req, res) {
               { type: 'text', text: VERIFY_PROMPT },
             ],
           }],
-        }),
-        signal: ctrl2.signal,
-      });
-      clearTimeout(t2);
-
-      if (rlRes.ok) {
-        const rlData  = await rlRes.json().catch(() => null);
-        const rlRaw   = rlData?.choices?.[0]?.message?.content?.trim() || '';
+        });
+        const rlRaw = _rlRaw || '';
+        if (rlRaw) {
         const rlCheck = extractJSON(rlRaw);
         console.log('[extract-fp] verify result:', rlRaw.slice(0, 400));
 
