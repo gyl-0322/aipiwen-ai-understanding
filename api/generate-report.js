@@ -292,7 +292,10 @@ function buildUserMessage(engineResult, age, name, requiredModules, selectedIssu
   const ageTierDesc = { preschool:'幼儿期(0-6岁)', school:'学龄期(7-12岁)', junior_teen:'初中阶段(13-15岁)', senior_teen:'高中阶段(16-18岁)', young_adult:'青年(19-25岁)', adult:'成人(26岁+)' }[tier];
   const nameLabel = name ? `【被测者】${name}，${age}岁（${ageTierDesc}）` : `【被测者】${age}岁（${ageTierDesc}）`;
 
-  const allModules = [...requiredModules, ...selectedIssues];
+  // 去重：selectedIssues 若包含已在 requiredModules 里的模块，跳过（否则 AI 会生成两遍同一板块）
+  const requiredSet = new Set(requiredModules);
+  const dedupedIssues = selectedIssues.filter(m => !requiredSet.has(m));
+  const allModules = [...requiredModules, ...dedupedIssues];
 
   // 检测是否有兴趣班/职业相关板块
   const has兴趣班 = allModules.some(m => 兴趣班板块Names.has(m));

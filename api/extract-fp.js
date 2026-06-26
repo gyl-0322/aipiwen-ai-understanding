@@ -169,6 +169,8 @@ function normalizeFingers(fingersRaw) {
     }
     let sym = String(entry.sym || '').trim();
     const trc = Math.max(0, Math.round(Number(entry.trc) || 0));
+    // 大小写归一化：首字母大写 + 其余小写（防止模型输出 'wpe'/'WSP' 等变体漏过白名单）
+    if (sym.length >= 1) sym = sym[0].toUpperCase() + sym.slice(1).toLowerCase();
     // Rl 变体纠错（防止大小写/字形变体漏判逆思型）
     if (RL_VARIANTS.has(sym)) sym = 'Rl';
     if (!VALID_SYMS.has(sym)) {
@@ -359,23 +361,31 @@ module.exports = async function handler(req, res) {
       // ── 路径①：全 Lu → 全量重询（W型/Rl/X型都可能被漏读） ──────────────
       // ── 路径②：非全 Lu 但无 Rl → 只询 Rl ────────────────────────────────
       const VERIFY_PROMPT = allLu
-        ? `我刚才把这份皮纹报告的全部10个脑区都读成了 Lu（正箕纹）。这极有可能是错误的——图中可能有斗型（W开头：Wt/Ws/We/Wc/Wd/Wi/Wpe/Wsp/Wsc）、反箕（Rl）或帽篷弧（Xn）被误读成了 Lu。
+        ? `我刚才把这份皮纹报告的全部10个脑区都读成了 Lu（正箕纹）。这极有可能是错误的——图中可能有斗型（W开头）或反箕（Rl）被误读成了 Lu。
+
+⚠️ 最容易被误读为 Lu 的两种斗型符号（请重点核查）：
+- Wpe（孔雀眼）：纹型中心有"眼睛形"或"泪滴形"闭合内核，外圈有环绕弧线，整体是闭合的——不是 Lu
+- Wsp（侧向螺旋斗）：斗纹但旋转中心明显偏向一侧，中心也是闭合的——不是 Lu
+判断关键：只要纹型圆圈是**闭合的**（没有开口），就是W型，不是Lu（Lu有明显开口/缺口）
 
 请用三步法，仔细重新识别全部10个脑区的纹型符号：
 
 【第一步 c1】只看第一个字母（R / L / W / X 四选一）
-  W = 大写W，像两个V相连（≠ L，L只有一竖一横）
+  W = 大写W，像两个V相连（≠ L，L只有一竖一横）；闭合纹型首字母必是W
   R = 大写R，右侧有斜腿
-  L = 大写L，一竖一横成直角
+  L = 大写L，一竖一横成直角（Lu有开口/缺口）
   X = 大写X
 
 【第二步 c2】再看第二个字符
-  c1=W时：s / t / e / c / d / i / p（→ Ws/Wt/We/Wc/Wd/Wi/Wpe等）
-  c1=R时：l（细竖线）/ p / w（→ Rl/Rpe/Rwl）
-  c1=L时：u / s / f（→ Lu/Ls/Lf）
+  c1=W时：s/t/e/c/d/i/p（→ Ws/Wt/We/Wc/Wd/Wi/Wpe等）
+    特别注意：Wpe→c2=p，Wsp→c2=s（第三步c3=p）
+  c1=R时：l（细竖线）/p/w（→ Rl/Rpe/Rwl）
+  c1=L时：u/s/f（→ Lu/Ls/Lf）
   c1=X时：n 或无（→ Xn/X）
 
 【第三步 c3】有无第三字符（c/e/r/p/l）→ 有则填，无则 null
+  Wpe：c1=W c2=p c3=e
+  Wsp：c1=W c2=s c3=p
 
 将 c1+c2+c3 拼为 sym。
 
@@ -426,7 +436,9 @@ module.exports = async function handler(req, res) {
           for (const entry of rlCheck.decomp) {
             const c1  = String(entry.c1 || '').trim();
             const c2  = String(entry.c2 || '').trim();
-            const sym = String(entry.sym || '').trim();
+            // ⚠️ 大小写归一化：'wpe' → 'Wpe'，'WSP' → 'Wsp'（与 normalizeFingers 保持一致）
+            let sym = String(entry.sym || '').trim();
+            if (sym.length >= 1) sym = sym[0].toUpperCase() + sym.slice(1).toLowerCase();
             const k   = zoneToKey(entry.zone || '');
             if (!k) continue;
 

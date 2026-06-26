@@ -1112,10 +1112,19 @@ function formatContent(text) {
     .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
     .replace(/\*(.+?)\*/g, '<em>$1</em>');
   // 把段落拆分，超过2行的独立段落包成引用块
-  const paras = html.split(/\n\n+/);
+  const rawParas = html.split(/\n\n+/);
+  // 去重：AI 有时会重复输出同一段（相同内容段落只保留第一次出现）
+  const seen = new Set();
+  const paras = rawParas.filter(p => {
+    const key = p.trim();
+    if (!key) return false;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
   return paras.map((p, i) => {
     const lines = p.replace(/\n/g, '<br>');
-    // 第一段或含"**"的段落用高亮块
+    // 第一段用高亮块（多段时）
     if (i === 0 && paras.length > 1) {
       return `<div class="hl-block">${lines}</div>`;
     }
@@ -1194,15 +1203,15 @@ function buildReportFlipBook(sections) {
         <div class="fp-parts">
           <div class="fp-part">
             <div class="fp-badge"><div class="fp-badge-n">1</div><div class="fp-badge-t">为什么会这样</div></div>
-            <div class="fp-text">${(sec.why||'').replace(/\n/g,'<br>').replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\*(.+?)\*/g,'<em>$1</em>')}</div>
+            <div class="fp-text">${formatContent(sec.why||'')}</div>
           </div>
           <div class="fp-part">
             <div class="fp-badge"><div class="fp-badge-n">2</div><div class="fp-badge-t">怎么应对</div></div>
-            <div class="fp-text">${(sec.how||'').replace(/\n/g,'<br>').replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\*(.+?)\*/g,'<em>$1</em>')}</div>
+            <div class="fp-text">${formatContent(sec.how||'')}</div>
           </div>
           <div class="fp-part">
             <div class="fp-badge"><div class="fp-badge-n">3</div><div class="fp-badge-t">未来可期</div></div>
-            <div class="fp-text">${(sec.future||'').replace(/\n/g,'<br>').replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\*(.+?)\*/g,'<em>$1</em>')}</div>
+            <div class="fp-text">${formatContent(sec.future||'')}</div>
           </div>
           <button class="fp-cta-btn" onclick="window.location='/child-chat.html'">
             <span>💬 ${sec.cta || '还想深聊？继续问我'}</span>
