@@ -26,6 +26,150 @@ async function pushCaseIndex(entry) {
   }).catch(e => console.warn('[cases] pushCaseIndex failed:', e.message));
 }
 
+// ── 十大能力官方映射（来源：中级研修-十大能力对应兴趣班职业专业）────────────
+// ⚠️ 这是官方唯一映射，不用旧版"近似"反推
+const ABILITY_MAP = [
+  { ability:'管理力', pos:'R1', finger:'右拇（对外目标·事业心）',
+    hobby:'写日记/总结规划、管理零花钱、活动负责人',
+    career:'总经理/CEO/中层管理/项目执行者', major:'营销/电商/物流/安保管理' },
+  { ability:'开创力', pos:'L1', finger:'左拇（对内目标·自我价值）',
+    hobby:'自定目标挑战、活动发起、兴趣独探',
+    career:'创始人/投资人/号召型讲师/董事长', major:'创业/领导力方向' },
+  { ability:'推理力', pos:'R2', finger:'右食（逻辑语言·数理）',
+    hobby:'数学/魔方/棋类/推理故事',
+    career:'会计金融/工程师/软件编程/数学家', major:'财务/计算机/工程师' },
+  { ability:'心像力', pos:'L2', finger:'左食（创意构思·空间想象）',
+    hobby:'创意美术/制作/灵感点子',
+    career:'策划/广告/创新发明者', major:'策划广告/创意设计/表演' },
+  { ability:'操控力', pos:'R3', finger:'右中（小肌肉精细灵活）',
+    hobby:'串珠/做饭/精细手工/整理收纳',
+    career:'工匠/手艺人/精密操作/医疗/维修', major:'操作/制作/维修/驾驶/医学/厨师' },
+  { ability:'律动力', pos:'L3', finger:'左中（大肌肉律动协调）',
+    hobby:'舞蹈/户外运动/模特/体育竞技',
+    career:'舞蹈演员/体育教练/话剧/鉴赏师/模特', major:'舞蹈/表演/体育/鉴赏' },
+  { ability:'语言力', pos:'R4', finger:'右无名（语言表达·记忆理解）',
+    hobby:'阅读朗读/讲故事/背诵/口才演讲',
+    career:'记者/翻译/咨询师/培训讲师/信息收集', major:'教育/传媒/家政/乘务/导游' },
+  { ability:'音受力', pos:'L4', finger:'左无名（音感·共鸣·感动）',
+    hobby:'唱歌/乐器/诗歌朗诵/音乐欣赏',
+    career:'歌手/作曲/乐器演奏/主持人/情感分析师', major:'表演/主持人/音乐/客服' },
+  { ability:'观察力', pos:'R5', finger:'右小（辨识·分类·细节专注）',
+    hobby:'找不同/捉迷藏/自然观察/植物动物',
+    career:'纠察督导/刑侦/校对/督导/检验', major:'物流/安保/流水线/医学' },
+  { ability:'图像力', pos:'L5', finger:'左小（图像审美·直觉感知）',
+    hobby:'美术/画展博物馆/色彩搭配',
+    career:'美术/设计师/形象设计/服装搭配', major:'设计师/形象设计/服装/厨师艺术' },
+];
+
+// 手指位置 → 功能区
+const POS_ZONE = {
+  R1:'精神', L1:'精神', R2:'思维', L2:'思维',
+  R3:'体觉', L3:'体觉', R4:'听觉', L4:'听觉',
+  R5:'视觉', L5:'视觉',
+};
+
+// RULE-F04 修正系数（权威规则）
+// 精神/听觉：高≥均值+3才算高；视觉：raw+2后再比（高=adj≥avg）；体觉：直接比；思维：低3才算低
+const RULE_F04 = {
+  精神: { highDelta: 3,  lowDelta: -3, adj: 0 },
+  听觉: { highDelta: 3,  lowDelta: -3, adj: 0 },
+  视觉: { highDelta: 0,  lowDelta: -3, adj: 2 }, // raw+2后high=adj-avg≥0
+  体觉: { highDelta: 0,  lowDelta: -3, adj: 0 }, // 直接比，≥avg即算高
+  思维: { highDelta: 3,  lowDelta: -3, adj: 0 }, // 低2点仍正常，低3才算低
+};
+
+// 孔雀眼纹型判断（完美家族·官方"天才型"）
+const isPeacockSym = s => s === 'Wpe' || s === 'Rpe';
+
+// RULE-N14: TRC总量 → 建议兴趣班数量
+function getRuleN14(totalTRC) {
+  if (!totalTRC) return { range:'1–2', note:'建议1–2个兴趣班方向' };
+  if (totalTRC <= 120) return { range:'1',   note:'建议聚焦1个兴趣班（TRC≤120，学校进度已偏快）' };
+  if (totalTRC <= 140) return { range:'1–2', note:'建议1–2个兴趣班方向（TRC121–140，正常跟随）' };
+  if (totalTRC <= 160) return { range:'2–3', note:'建议2–3个方向深耕（TRC141–160，需多方向分散）' };
+  return { range:'3',   note:'建议锁定3个方向深度钻研（TRC>160，最晚10岁前确定，否则"广而不精"）' };
+}
+
+// 应用 RULE-F04，计算十大能力高/中/低分档
+// fingers: { R1:{sym,trc}, ..., L5:{sym,trc} }   avg: 五功能区.个人均值
+function compute10Abilities(fingers, avg) {
+  if (!fingers || !avg) return null;
+  const shunshi = [], buDuan = [], peacock = [], rows = [];
+  for (const info of ABILITY_MAP) {
+    const f = fingers[info.pos];
+    if (!f) continue;
+    const raw  = (f.trc != null ? +f.trc : 0);
+    const sym  = f.sym || '';
+    const rule = RULE_F04[POS_ZONE[info.pos]] || RULE_F04['体觉'];
+    const adj  = raw + rule.adj;
+    const diff = +(adj - avg).toFixed(1);
+    let level;
+    if (diff >= rule.highDelta)   level = '高';
+    else if (diff <= rule.lowDelta) level = '低';
+    else                           level = '中';
+    const pc = isPeacockSym(sym);
+    if (level === '高') shunshi.push(info.ability);
+    if (level === '低') buDuan.push(info.ability);
+    if (pc && level !== '高') peacock.push(info.ability);
+    rows.push({ ...info, raw, adj, diff, sign: diff >= 0 ? '+' : '', level, sym, pc });
+  }
+  return { rows, shunshi, buDuan, peacock };
+}
+
+// 兴趣班/职业板块专用 Prompt 片段
+// 只在相关板块被请求时注入，不影响其他板块
+function build兴趣班Prompt(fingers, engineResult, tier) {
+  const fp    = engineResult?.['五功能区'] || {};
+  const avg   = fp['个人均值'] || 0;
+  const total = fp['总TRC']   || 0;
+  if (!avg || !fingers) return '';
+  const res = compute10Abilities(fingers, avg);
+  if (!res) return '';
+  const { rows, shunshi, buDuan, peacock } = res;
+  const n14 = getRuleN14(total);
+  const isChild = ['preschool','school','junior_teen','senior_teen'].includes(tier);
+
+  const tableStr = rows.map(r => {
+    const mark = r.level === '高' ? '★顺势' : r.level === '低' ? '△补短' : '—';
+    let line = `  · ${r.ability}[${r.pos}·${r.finger.replace(/[（）]/g,'')}]：${r.raw}分 差${r.sign}${r.diff}→${mark}`;
+    if (r.pc && r.level !== '高') line += ' ⚠️孔雀眼纹型(纹型天才型，但数值未达高—待栽培潜力，≠当下能力高)';
+    return line;
+  }).join('\n');
+
+  const mapStr = rows.filter(r => r.level === '高').map(r =>
+    `  · ${r.ability}→ 兴趣班：${r.hobby}｜职业：${r.career}${!isChild ? '｜专业：'+r.major : ''}`
+  ).join('\n') || '  (当前无高分区，按中分区找出最接近均值的2–3项顺势推荐)';
+
+  return `
+【⚙️ RULE-F04已修正·十大能力判定（直接使用，不要重新判断高低）】
+个人均值=${avg}（总TRC${total}÷10）
+${tableStr}
+★顺势天赋（数值高）：${shunshi.length ? shunshi.join('、') : '暂无明显高值'}
+△补短区（数值低）：${buDuan.length  ? buDuan.join('、') : '无明显低值'}
+${peacock.length ? `⚠️孔雀眼纹型待栽培（数值中上但纹型顶配，报告里要把"纹型好"和"能力高"分开说）：${peacock.join('、')}` : ''}
+
+RULE-N14兴趣班数量：${n14.note}
+
+【官方职业/兴趣班映射（来源：中级研修，勿用旧"近似"版）】
+${mapStr}
+
+【兴趣班/职业板块·写作规范（严格四段式，区分顺势vs补短，不混）】
+①为什么：说清"测什么"（哪根手指/哪个脑区）→用已修正后的数据说"数据特点"→注意区分"数值高"（RULE-F04判的）vs"纹型质量"（孔雀眼等）→2-3句，不堆术语。
+②怎么办：
+  【顺势部分】按上面官方映射，推荐${n14.range}个${isChild?'兴趣班':'职业/专业'}方向（每条说出具体项目名）；
+  【补短部分】单独另起一段，写补短区对应兴趣班，明确标注"可作兴趣体验，不建议以出名次/出成绩为目标"；
+  顺势和补短必须分开写，不能混在一起。
+③未来趋势：1-2句讲这组天赋组合的价值；再叠加：性格类型+学习通道+ATD行为特点，给出"组合画像落点"一句话（这个人最适合做什么的交集）。
+④还想深聊：一句话邀请，指向最有价值的追问（如"这个通道搭哪类老师更合适？"）。
+`;
+}
+
+// 兴趣班/职业板块相关模块名集合（用于检测）
+const 兴趣班板块Names = new Set([
+  '报什么兴趣班', '我到底擅长啥', '报什么专业',
+  '方向感(专业/职业)', '职业优势',
+]);
+
 // ── 限流：每 IP 每分钟最多 3 次（防滥用） ──────────────────────────────
 async function checkRate(ip) {
   const minute = Math.floor(Date.now() / 60000);
@@ -113,8 +257,7 @@ const SYSTEM_PROMPT = `你是 AIPIWEN 皮纹天赋解读 AI，拥有完整的皮
 - 直接开始正文，禁止任何开场白（"收到""好的""当然"等）`;
 
 // ── 构建用户消息（引擎数据 + 格式规范） ────────────────────────────────
-function buildUserMessage(engineResult, age, name, requiredModules, selectedIssues) {
-  const tier    = getAgeTier(age);
+function buildUserMessage(engineResult, age, name, requiredModules, selectedIssues, fingers, tier) {
   const fp      = engineResult['五功能区'] || {};
   const chan     = engineResult['学习通道'] || {};
   const behav    = engineResult['行为模式'] || {};
@@ -137,11 +280,24 @@ function buildUserMessage(engineResult, age, name, requiredModules, selectedIssu
 
   const allModules = [...requiredModules, ...selectedIssues];
 
-  // 每个问题模块的输出格式说明
+  // 检测是否有兴趣班/职业相关板块
+  const has兴趣班 = allModules.some(m => 兴趣班板块Names.has(m));
+  // 预计算兴趣班提示（RULE-F04已修正数据 + 官方映射 + 写作规范）
+  const 兴趣班提示 = (has兴趣班 && fingers) ? build兴趣班Prompt(fingers, engineResult, tier) : '';
+
+  // 每个问题模块的输出格式说明（兴趣班issue使用专属规范，其余使用通用格式）
   const issueFormatGuide = selectedIssues.length > 0
-    ? `\n【问题模块格式（每个 issue 严格四段式）】\n` + selectedIssues.map(issue =>
-        `===issue:${issue}===\n①为什么（基于具体手指/类型的根本原因，2-3句）\n②怎么办（明天就能做的具体动作，2-4条）\n③未来趋势（这个特质在未来值不值钱，2句）\n④还想深聊？（一句话邀请，指出最有价值的追问方向）`
-      ).join('\n\n')
+    ? `\n【问题模块格式（每个 issue 严格四段式）】\n` + selectedIssues.map(issue => {
+        if (兴趣班板块Names.has(issue)) {
+          // 兴趣班/职业专属格式引用上面的写作规范
+          return `===issue:${issue}===
+①为什么：（按上面"写作规范①"来写，用RULE-F04已修正数据，区分数值高低vs纹型质量）
+②怎么办：（按上面"写作规范②"来写，顺势/补短必须分开，引用RULE-N14数量和官方映射）
+③未来趋势：（按上面"写作规范③"来写，叠加性格类型+通道+ATD组合画像）
+④还想深聊：（按上面"写作规范④"来写，一句话邀请）`;
+        }
+        return `===issue:${issue}===\n①为什么（基于具体手指/类型的根本原因，2-3句）\n②怎么办（明天就能做的具体动作，2-4条）\n③未来趋势（这个特质在未来值不值钱，2句）\n④还想深聊？（一句话邀请，指出最有价值的追问方向）`;
+      }).join('\n\n')
     : '';
 
   return `${nameLabel}
@@ -155,7 +311,7 @@ ATD：${atd['值'] || '未知'}（${atd['分区'] || '未测'}）
 
 【五功能区】${zoneDesc}
 总TRC：${fp['总TRC']}
-
+${兴趣班提示}
 【需要生成的板块】（按顺序）
 ${allModules.map((m,i)=>`${i+1}. ${m}`).join('\n')}
 
@@ -331,7 +487,7 @@ module.exports = async function handler(req, res) {
     return res.status(400).json({ ok:false, error:'请求格式错误' });
   }
 
-  const { engineResult, age, name, selectedIssues = [], refToken = null } = payload;
+  const { engineResult, age, name, selectedIssues = [], refToken = null, fingers = null } = payload;
   if (!engineResult) return res.status(400).json({ ok:false, error:'缺少 engineResult' });
 
   // 邀请积分（异步，不阻塞主流程）
@@ -339,7 +495,7 @@ module.exports = async function handler(req, res) {
 
   const tier          = getAgeTier(age);
   const requiredMods  = REQUIRED_BY_TIER[tier] || REQUIRED_BY_TIER.adult;
-  const userMessage   = buildUserMessage(engineResult, age, name, requiredMods, selectedIssues);
+  const userMessage   = buildUserMessage(engineResult, age, name, requiredMods, selectedIssues, fingers, tier);
 
   const messages = [
     { role: 'system', content: SYSTEM_PROMPT },

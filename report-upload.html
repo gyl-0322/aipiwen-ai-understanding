@@ -904,6 +904,7 @@ qs('#gen-btn').addEventListener('click', async () => {
       headers: { 'Content-Type': 'application/json', ..._genVipHdr },
       body: JSON.stringify({
         engineResult: ST.engineResult,
+        fingers: ST.fingers,        // 十大能力 RULE-F04 计算用
         age: ST.age,
         name: ST.name,
         selectedIssues: ST.selectedIssues,
