@@ -150,8 +150,10 @@ function extractJSON(text) {
 }
 
 // ── 验证 & 归一化 fingers ──────────────────────────────────────────────
-// Rl/Lu 纠错：如果 Vision 返回看起来像 Ri/Ri/RI/rL 之类的变体，统一纠正为 Rl
-const RL_VARIANTS = new Set(['Ri','RI','rL','Rl','rl','rI']);
+// Rl/Lu 纠错：如果 Vision 返回看起来像 Ri/RI/rL/rl 之类的变体，统一纠正为 Rl
+// ⚠️ 重要：'R1'（数字1）也加入变体——模型可能把反箕"Rl"的字母l误读为数字1
+//    'R1'（数字1）作为 sym 值 = 误读；'R1' 作为手指位置键（fingers对象的key）= 右拇指，完全不同
+const RL_VARIANTS = new Set(['Ri','RI','rL','Rl','rl','rI','R1']);
 function normalizeFingers(fingersRaw) {
   const result = {};
   let unknownCount = 0;
