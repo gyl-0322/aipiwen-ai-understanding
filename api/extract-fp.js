@@ -80,6 +80,15 @@ const EXTRACT_PROMPT = `你是皮纹科学数据提取专家。图片是一份 T
 - 各报告版本标签用词可能略有差异，识别关键词：逻辑/语言→logic_verbal；空间/心像→spatial_imagine；听觉辨识→audio_lang；听觉感受/音乐→audio_music；视觉辨识/观察→visual_obs；视觉感受/图像→visual_image；体觉辨识/操作→kinetic_ops；体觉感受/艺术→kinetic_art；沟通/计划→comm_plan；创造/领导→create_lead。
 - 纹型符号合法值：Ws/Wt/We/Wsp/Wl/Wc/Wd/Wsc/Wpe/Rpe/Rwl/Wi/Lu/Ls/Lf/Rl/X/Xn。严格照搬图中文字，X型和Xn均有0 TRC。
 - 每个脑区 trc 必须独立读取，不可复用相同数值。
+
+⚠️ 最易混淆、后果最严重的识别错误——必须逐字核对：
+  Rl（反箕纹）vs Lu（正箕纹）：两者字形极相似，但意义完全不同。
+  · Rl = 大写R + 小写l，图中看到 "Rl" 时，首字母是 R，不是 L。
+  · Lu = 大写L + 小写u，图中看到 "Lu" 时，首字母是 L，不是 R。
+  · 识别方法：先确认第一个字母。第一个字母是 R（且不是 Rpe/Rwl），就填 Rl；第一个字母是 L 后跟 u，就填 Lu。
+  · 后果：Rl 错读为 Lu 会把"逆思型"错判为"超级模仿型"，性格类型完全相反，是最严重的误读。
+  · 如果不确定，宁可填 Rl，不要默认填 Lu。
+
 - 只输出 JSON，首字符必须是 {，末字符必须是 }。`;
 
 // ── IP 限流（防滥用） ────────────────────────────────────────────────────
@@ -130,17 +139,32 @@ function extractJSON(text) {
 }
 
 // ── 验证 & 归一化 fingers ──────────────────────────────────────────────
+// Rl/Lu 纠错：如果 Vision 返回看起来像 Ri/Ri/RI/rL 之类的变体，统一纠正为 Rl
+const RL_VARIANTS = new Set(['Ri','RI','rL','Rl','rl','rI']);
 function normalizeFingers(fingersRaw) {
   const result = {};
+  let unknownCount = 0;
   for (const key of FINGERS) {
     const entry = fingersRaw[key];
     if (!entry) {
       result[key] = { sym: 'Lu', trc: 0 };
       continue;
     }
-    const sym = String(entry.sym || 'Lu').trim();
+    let sym = String(entry.sym || '').trim();
     const trc = Math.max(0, Math.round(Number(entry.trc) || 0));
-    result[key] = { sym: VALID_SYMS.has(sym) ? sym : 'Lu', trc };
+    // Rl 变体纠错（防止大小写/字形变体漏判逆思型）
+    if (RL_VARIANTS.has(sym)) sym = 'Rl';
+    if (!VALID_SYMS.has(sym)) {
+      unknownCount++;
+      console.warn(`[extract-fp] unknown sym "${sym}" for ${key}, fallback Lu`);
+      sym = 'Lu';
+    }
+    result[key] = { sym, trc };
+  }
+  // 后提取校验：若10指全Lu，记录警告（极可能是 Rl 被误读）
+  const allLu = Object.values(result).every(f => f.sym === 'Lu');
+  if (allLu) {
+    console.warn('[extract-fp] ⚠️  ALL 10 fingers = Lu → 超级模仿型风险，请核查是否有 Rl 被误读');
   }
   return result;
 }
