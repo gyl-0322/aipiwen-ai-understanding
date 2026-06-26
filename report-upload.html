@@ -1183,7 +1183,14 @@ function buildReportFlipBook(sections) {
       b.addEventListener('click', () => qs('#smodal').classList.add('open'));
     });
     document.querySelectorAll('#rv-dl-fin,#rv-dl-btn').forEach(b => {
-      b.addEventListener('click', function() { generateReportPDF(this, '#rv-track .rv-slide'); });
+      b.addEventListener('click', function() {
+        // 手机端 PDF 下载在各厂商浏览器里极不稳定，引导用分享链接
+        if (/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent)) {
+          alert('📱 手机端建议：\n\n点击「分享这份报告」，把链接发给客户，随时可看完整报告。\n\n如需 PDF 文件，请在电脑浏览器打开后下载。');
+          return;
+        }
+        generateReportPDF(this, '#rv-track .rv-slide');
+      });
     });
   }, 100);
 }
@@ -1226,7 +1233,16 @@ async function generateReportPDF(btnEl, slideSelector) {
       pdf.addImage(canvas.toDataURL('image/jpeg', 0.88), 'JPEG',
                    0, yOff, PW, Math.min(imgH_mm, PH));
     }
-    pdf.save('aipiwen-皮纹报告.pdf');
+    // 手机浏览器 blob URL 会导致页面跳转卡死，用显式 <a download> 替代 pdf.save()
+    const _pdfBlob = pdf.output('blob');
+    const _pdfUrl  = URL.createObjectURL(_pdfBlob);
+    const _pdfA    = document.createElement('a');
+    _pdfA.href     = _pdfUrl;
+    _pdfA.download = 'aipiwen-皮纹报告.pdf';
+    _pdfA.style.cssText = 'position:fixed;left:-9999px;top:0;visibility:hidden;';
+    document.body.appendChild(_pdfA);
+    _pdfA.click();
+    setTimeout(() => { document.body.removeChild(_pdfA); URL.revokeObjectURL(_pdfUrl); }, 5000);
   } catch(e) {
     alert('PDF生成失败，请稍后重试。\n' + e.message);
   } finally {
