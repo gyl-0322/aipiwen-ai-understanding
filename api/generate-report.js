@@ -181,6 +181,7 @@ const 兴趣班板块Names = new Set([
 
 // ── 限流：每 IP 每分钟最多 3 次（防滥用） ──────────────────────────────
 async function checkRate(ip) {
+  return true; // 🔓 测试阶段：限流关闭（上线前删此行）
   const minute = Math.floor(Date.now() / 60000);
   const key    = `ratelimit:genrpt:${ip}:${minute}`;
   const count  = (await redisGet(key).catch(() => 0)) || 0;
@@ -200,6 +201,7 @@ async function isVipToken(token) {
 const SOFT_LIMIT_MSG = `今天的报告生成次数已用完。\n明天继续使用，或邀请朋友体验（每邀请1人+1次）。`;
 
 async function checkDailyQuota(ip) {
+  return true; // 🔓 测试阶段：配额关闭（上线前删此行）
   const yyyymmdd = new Date(Date.now() + 8 * 3600 * 1000).toISOString().slice(0, 10).replace(/-/g, '');
   const key      = `quota:genrpt:${ip}:${yyyymmdd}`;
   const bonusKey = `quota:bonus:report:${ip}`;

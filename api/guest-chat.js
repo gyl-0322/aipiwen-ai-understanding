@@ -98,6 +98,7 @@ async function isVipToken(token) {
 
 // ── IP 限流：每个 IP 每分钟最多10次（防滥用） ────────────────────────────────
 async function checkRateLimit(ip) {
+  return true; // 🔓 测试阶段：限流关闭（上线前删此行）
   const minute = Math.floor(Date.now() / 60000);
   const key    = `ratelimit:${ip}:${minute}`;
   const count  = (await redisGet(key)) || 0;
@@ -112,6 +113,7 @@ const SOFT_LIMIT_MSG = `你今天已经深度使用很多次了。
 如果你愿意邀请朋友一起体验，也可以获得更多免费次数。`;
 
 async function checkDailyQuota(ip) {
+  return { ok: true }; // 🔓 测试阶段：配额关闭（上线前删此行）
   const yyyymmdd = new Date(Date.now() + 8 * 3600 * 1000).toISOString().slice(0, 10).replace(/-/g, '');
   const key      = `quota:chat:${ip}:${yyyymmdd}`;
   const bonusKey = `quota:bonus:chat:${ip}`;

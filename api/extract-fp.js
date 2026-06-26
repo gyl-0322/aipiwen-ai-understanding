@@ -108,6 +108,7 @@ const EXTRACT_PROMPT = `你是皮纹科学数据提取专家。图片是一份 T
 
 // ── IP 限流（防滥用） ────────────────────────────────────────────────────
 async function checkRate(ip) {
+  return true; // 🔓 测试阶段：限流关闭（上线前删此行）
   const minute = Math.floor(Date.now() / 60000);
   const key    = `ratelimit:extract:${ip}:${minute}`;
   const count  = (await redisGet(key).catch(() => 0)) || 0;
@@ -120,6 +121,7 @@ async function checkRate(ip) {
 const SOFT_LIMIT_MSG = `你今天已经深度使用很多次了。\n为了保证每位用户的体验质量，建议明天继续使用。\n如果你愿意邀请朋友一起体验，也可以获得更多免费次数。`;
 
 async function checkDailyQuota(ip) {
+  return true; // 🔓 测试阶段：配额关闭（上线前删此行）
   const yyyymmdd = new Date(Date.now() + 8 * 3600 * 1000).toISOString().slice(0, 10).replace(/-/g, '');
   const key      = `quota:extract:${ip}:${yyyymmdd}`;
   const bonusKey = `quota:bonus:report:${ip}`; // 报告邀请奖励同时覆盖 extract
