@@ -11,6 +11,21 @@
 const crypto = require('crypto');
 const { redisGet, redisSet, creditReferral } = require('./_lib');
 
+// ── 案例库索引（Upstash list，max 2000 条）──────────────────────────────────
+function kvUrl()   { return process.env.KV_REST_API_URL   || process.env.REDIS_URL  || ''; }
+function kvToken() { return process.env.KV_REST_API_TOKEN || ''; }
+
+async function pushCaseIndex(entry) {
+  await fetch(`${kvUrl()}/pipeline`, {
+    method:  'POST',
+    headers: { Authorization: `Bearer ${kvToken()}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify([
+      ['LPUSH', 'cases:index', JSON.stringify(entry)],
+      ['LTRIM', 'cases:index', 0, 1999],
+    ]),
+  }).catch(e => console.warn('[cases] pushCaseIndex failed:', e.message));
+}
+
 // ── 限流：每 IP 每分钟最多 3 次（防滥用） ──────────────────────────────
 async function checkRate(ip) {
   const minute = Math.floor(Date.now() / 60000);
@@ -249,7 +264,24 @@ async function handleReportStore(req, res) {
     if (!sections?.length || !engineResult) return res.status(400).json({ ok: false, error: '缺少 sections 或 engineResult' });
 
     const id = crypto.randomBytes(4).toString('hex');
-    await redisSet(`report:${id}`, { sections, engineResult, fingers: fingers || [], name: name ? String(name).slice(0, 40) : null, age: age ? Number(age) || null : null, createdAt: Date.now(), ip }, 30 * 86400);
+    const ageNum = age ? Number(age) || null : null;
+    const nameStr = name ? String(name).slice(0, 40) : null;
+    // 完整报告：TTL 1年（原30天）
+    await redisSet(`report:${id}`, { sections, engineResult, fingers: fingers || [], name: nameStr, age: ageNum, createdAt: Date.now(), ip }, 365 * 86400);
+    // 案例库索引：只存摘要（不含完整 sections，节省空间）
+    pushCaseIndex({
+      id,
+      type:     engineResult?.主性格类型 || null,
+      key:      engineResult?.key || null,
+      age:      ageNum,
+      name:     nameStr,
+      channel:  engineResult?.学习通道?.主通道 || null,
+      brain:    engineResult?.左右脑?.结论 || null,
+      mType:    engineResult?.叠加特质?.M型 || false,
+      plusR:    engineResult?.叠加特质?.逆向思维R || false,
+      ip,
+      createdAt: Date.now(),
+    });
     return res.status(200).json({ ok: true, id });
   }
 

@@ -6,6 +6,8 @@
  * GET /api/admin-convs?secret=xxx&action=export  → 导出全部会话 JSON（最新300条含消息）
  * GET /api/admin-convs?secret=xxx&action=errors  → 查看最近错误日志
  * GET /api/admin-convs?secret=xxx&action=kf_who  → 查企业微信客服发信人 external_userid
+ * GET /api/admin-convs?secret=xxx&action=cases[&n=50&offset=0&type=认知型&age=15&export=1] → 案例库列表
+ * GET /api/admin-convs?secret=xxx&action=cases_detail&id=xxx → 某条完整报告
  * POST /api/stats  { event, meta? }              → 埋点（公开）
  * GET  /api/stats?admin=1&secret=xxx             → 查看统计数据（管理端）
  * POST /api/error-log  { msg, stack, page... }   → 前端上报错误（无需登录）
@@ -483,6 +485,61 @@ module.exports = async function handler(req, res) {
     } catch(e) {
       return res.status(200).json({ ok: false, error: e.message });
     }
+  }
+
+  // ── 案例库（皮纹报告上传记录）──────────────────────────────────────────────
+  // GET /api/admin-convs?secret=xxx&action=cases           → 案例摘要列表
+  //     ?n=50 &offset=0 &type=认知型 &age=15 &export=1
+  // GET /api/admin-convs?secret=xxx&action=cases_detail&id=xxx → 某条完整报告
+  if (action === 'cases') {
+    try {
+      const n      = Math.min(parseInt(req.query.n      || '50',  10), 200);
+      const offset = Math.max(parseInt(req.query.offset || '0',   10), 0);
+      const filterType = req.query.type || '';
+      const filterAge  = req.query.age  ? parseInt(req.query.age, 10) : null;
+      const wantExport = req.query.export === '1';
+
+      // LRANGE cases:index
+      const raw = await fetch(`${kvUrl()}/lrange/cases:index/0/1999`, {
+        headers: { Authorization: `Bearer ${kvToken()}` },
+      });
+      const data = await raw.json();
+      let cases = (data.result || []).map(s => { try { return JSON.parse(s); } catch { return null; } }).filter(Boolean);
+
+      // 过滤
+      if (filterType) cases = cases.filter(c => c.type === filterType);
+      if (filterAge)  cases = cases.filter(c => c.age === filterAge);
+
+      // 统计（全量，过滤后）
+      const total = cases.length;
+      const typeDist = {};
+      for (const c of cases) {
+        const t = c.type || '未知';
+        typeDist[t] = (typeDist[t] || 0) + 1;
+      }
+
+      // 分页
+      const page = cases.slice(offset, offset + n).map(c => ({
+        ...c,
+        createdAt: c.createdAt ? new Date(c.createdAt).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' }) : '',
+      }));
+
+      if (wantExport) {
+        res.setHeader('Content-Disposition', 'attachment; filename="aipiwen-cases.json"');
+        return res.status(200).json({ total, cases: page });
+      }
+      return res.status(200).json({ total, typeDist, offset, n, cases: page });
+    } catch(e) {
+      return res.status(500).json({ ok: false, error: e.message });
+    }
+  }
+
+  if (action === 'cases_detail') {
+    const caseId = req.query.id;
+    if (!caseId) return res.status(400).json({ error: '缺少 id 参数' });
+    const report = await redisGet(`report:${caseId}`).catch(() => null);
+    if (!report) return res.status(404).json({ error: '报告不存在或已过期' });
+    return res.status(200).json({ ok: true, id: caseId, report });
   }
 
   // ── 查看错误日志 ────────────────────────────────────────────────────────────
