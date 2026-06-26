@@ -126,7 +126,11 @@ html,body{height:100%;overflow:hidden;background:#060810;
   background:rgba(194,105,42,.06);border:1px solid rgba(194,105,42,.18);
   border-radius:12px;font-size:13.5px;color:var(--amber);}
 .must-item::before{content:'✓';font-size:11px;opacity:.7;}
-.issue-grid{display:flex;flex-wrap:wrap;gap:8px;}
+.issue-grid{display:flex;flex-direction:column;gap:14px;}
+.issue-group{display:flex;flex-direction:column;gap:8px;}
+.issue-group-title{font-size:11px;font-weight:700;letter-spacing:.08em;
+  color:var(--dim);opacity:.6;text-transform:uppercase;padding-left:2px;}
+.issue-chips{display:flex;flex-wrap:wrap;gap:8px;}
 .issue-chip{padding:8px 14px;border:1px solid var(--border);border-radius:20px;
   font-size:13px;color:var(--dim);cursor:pointer;transition:all .2s;user-select:none;}
 .issue-chip.selected{border-color:var(--amber);color:var(--amber);
@@ -470,7 +474,7 @@ button, a, .must-item, .fp-option-card, .back-btn, .issue-chip {
   <div class="s3-body">
     <div class="s2-section-label">必给模块（自动包含）</div>
     <div class="must-list" id="must-list"></div>
-    <div class="s2-section-label" style="margin-top:20px;">选择你最想了解的问题（最多 3 个）</div>
+    <div class="s2-section-label" style="margin-top:20px;">选择你最想了解的问题（最多 6 个、至少 1 个）</div>
     <div class="issue-grid" id="issue-grid"></div>
     <div id="gen-status"></div>
   </div>
@@ -595,61 +599,126 @@ const SYM_OPTIONS = [
 ];
 
 // ── 问题选项池（按年龄段，可配置常量）── 来源：知识库 00i ─────────────────
-// 规则：0-18 家长视角，18+ 本人视角；最多选 3 个；每段精确 6 题
+// 规则：0-18 家长视角，18+ 本人视角；每段 10 项按主题分组；最多选 6、至少 1
+// ⚠️ 去重铁律：不得含与必给模块同名/同义的项（天赋底色/职业优势/自我成长等已自动给）
 const ISSUE_POOL = {
-  // 0–6 岁·家长视角
+  // 0–6 岁·家长视角（必给已含：兴趣班潜能 · 成长引导）
   seg_0_6: [
-    '报什么兴趣班',
-    '要顺什么、补什么',
-    '学习习惯怎么从小启蒙',
-    '说话不顶牛的沟通方式',
-    '坐不住/专注力短，怎么看',
-    '爱哭/认生/敏感，怎么带',
+    { group: '日常沟通', items: [
+      '怎么跟这型孩子说话他才听',
+      '立规矩 vs 给自由，怎么拿捏',
+      '怎么激励他最有效（奖励还是鼓励）',
+      '这型孩子最怕家长怎么对他',
+    ]},
+    { group: '情绪行为', items: [
+      '他坐不住/专注短，是天生还是要管',
+      '爱哭/认生/敏感，怎么安抚',
+    ]},
+    { group: '关系引导', items: [
+      '和兄弟姐妹/同伴相处怎么引导',
+      '隔代养育/父母不一致怎么统一',
+    ]},
+    { group: '成长启蒙', items: [
+      '几岁该立什么习惯（节奏表）',
+      '早期最该保护的天赋火苗是什么',
+    ]},
   ],
-  // 7–12 岁·家长视角
+  // 7–12 岁·家长视角（必给已含：学科潜能 · 成长引导）
   seg_7_12: [
-    '最适合哪种学习方式（听·看·动手）',
-    '专注力与作业拖拉怎么破',
-    '叛逆/顶嘴，怎么沟通不吵架',
-    '报什么兴趣班',
-    '怎么激励他/她最有效',
-    '交友/人际怎么引导',
+    { group: '学习成长', items: [
+      '适合哪种学习方式（听·看·动手）',
+      '作业拖拉/磨蹭怎么破',
+      '怎么激励他主动学（内驱力）',
+      '这型孩子最怕的老师/课堂是什么',
+      '兴趣特长怎么聚焦不广而不精',
+    ]},
+    { group: '沟通相处', items: [
+      '开始顶嘴/叛逆，怎么沟通不炸',
+      '手机/游戏怎么约定不对抗',
+    ]},
+    { group: '情绪心理', items: [
+      '考试焦虑/输不起怎么疏导',
+    ]},
+    { group: '关系引导', items: [
+      '交朋友/人际上怎么引导',
+      '亲子冲突的根源与化解',
+    ]},
   ],
-  // 13–18 岁·家长/本人视角
+  // 13–18 岁·家长/本人视角（必给已含：学科/职业潜能 · 成长引导）
   seg_13_18: [
-    '文理/选科，天赋更偏哪边',
-    '报什么专业',
-    '青春期情绪与压力怎么接',
-    '学习动机/自驱力不足怎么办',
-    '亲子怎么少吵架',
-    '偏科/学习方法要怎么调',
+    { group: '学习升学', items: [
+      '文理/选科，天赋更偏哪边',
+      '偏科/学习方法怎么调',
+      '学习动机/自驱力不足的根子',
+      '升学决策：冲名校还是选适合专业',
+    ]},
+    { group: '情绪心理', items: [
+      '青春期情绪与压力怎么接',
+      '考试焦虑/抗压怎么练',
+      '手机沉迷/拖延怎么破',
+    ]},
+    { group: '关系相处', items: [
+      '亲子怎么不吵架（沟通）',
+      '早恋/交友怎么看怎么谈',
+      '他和父母的"三观差"怎么相处',
+    ]},
   ],
-  // 18–25 岁·本人视角
+  // 18–25 岁·本人视角（必给已含：职业优势 · 自我成长）
   seg_18_25: [
-    '职业优势',
-    '考研还是就业，怎么定',
-    '方向感(专业/职业)',
-    '恋爱里我是怎样的人',
-    '总内耗/不自信怎么办',
-    '适合团队里的什么角色',
+    { group: '职业决策', items: [
+      '考研还是就业，怎么定',
+      '适合哪类细分行业/岗位',
+      '考公/进体制 vs 闯市场',
+      '我适合团队什么角色',
+    ]},
+    { group: '关系相处', items: [
+      '恋爱里我是怎样的人',
+      '跟父母/原生家庭怎么相处',
+      '怎么跟不同类型的人合作',
+    ]},
+    { group: '情绪心理', items: [
+      '总内耗/不自信怎么办',
+      '社恐/人际累怎么调',
+      '拖延/三分钟热度怎么破',
+    ]},
   ],
-  // 25–40 岁·本人视角
+  // 25–40 岁·本人视角（必给已含：职业优势 · 自我成长）
   seg_25_40: [
-    '职业优势',
-    '职业瓶颈/要不要转型',
-    '婚姻/伴侣沟通',
-    '怎么懂自己的孩子',
-    '总内耗/情绪累怎么办',
-    '团队里我适合什么角色',
+    { group: '职业决策', items: [
+      '职业瓶颈：突破还是转型',
+      '适合创业还是打工',
+      '团队里适合带人还是做专家',
+      '工作与家庭的精力怎么分配',
+    ]},
+    { group: '关系相处', items: [
+      '婚姻/伴侣沟通',
+      '怎么懂我的孩子（育儿）',
+      '跟父母/公婆/原生家庭相处',
+      '怎么跟不同性格的同事/客户打交道',
+    ]},
+    { group: '情绪心理', items: [
+      '总内耗/情绪累怎么办',
+      '中年焦虑/价值感低怎么调',
+    ]},
   ],
-  // 40+ 岁·本人视角
+  // 40+ 岁·本人视角（必给已含：职业优势 · 自我成长）
   seg_40plus: [
-    '二次成长/转型，往哪走',
-    '与成年/青春期子女怎么相处',
-    '怎么带教、把经验传下去',
-    '价值重定位：我还能发力在哪',
-    '情绪/节奏怎么管，别硬扛',
-    '婚姻关系的新阶段怎么经营',
+    { group: '职业决策', items: [
+      '二次成长/转型/再出发往哪走',
+      '怎么带教、把经验传下去',
+      '退休/半退后做什么有价值感',
+      '价值重定位：我还能发力在哪',
+    ]},
+    { group: '关系相处', items: [
+      '与成年/青春期子女怎么相处',
+      '婚姻关系的新阶段怎么经营',
+      '跟年轻人/下属沟通不代沟',
+      '跟父母养老/照护的相处',
+    ]},
+    { group: '情绪心理', items: [
+      '情绪/精力/节奏怎么管',
+      '健康焦虑/空巢期怎么调适',
+    ]},
   ],
 };
 
@@ -943,16 +1012,17 @@ function buildIssuesScreen() {
     mustList.appendChild(item);
   });
 
-  // issue chips
+  // issue chips — 按主题分组渲染（来源：知识库 00i 规则5）
   const grid = qs('#issue-grid');
   grid.innerHTML = '';
-  const issues = ISSUE_POOL[getIssueSegment(ST.age)] || ISSUE_POOL.seg_7_12;
-  issues.forEach(issue => {
+  const groups = ISSUE_POOL[getIssueSegment(ST.age)] || ISSUE_POOL.seg_7_12;
+
+  function addChip(issue, container) {
     const chip = el('div', 'issue-chip', issue);
     chip.addEventListener('click', () => {
       const sel = chip.classList.contains('selected');
-      if (!sel && ST.selectedIssues.length >= 3) {
-        qs('#gen-status').textContent = '最多选 3 个问题';
+      if (!sel && ST.selectedIssues.length >= 6) {
+        qs('#gen-status').textContent = '最多选 6 个问题';
         setTimeout(() => qs('#gen-status').textContent = '', 2000);
         return;
       }
@@ -960,9 +1030,19 @@ function buildIssuesScreen() {
       if (!sel) ST.selectedIssues.push(issue);
       else ST.selectedIssues = ST.selectedIssues.filter(x => x !== issue);
       qs('#gen-status').textContent = ST.selectedIssues.length > 0
-        ? `已选 ${ST.selectedIssues.length} 个问题` : '';
+        ? `已选 ${ST.selectedIssues.length} 个` : '';
     });
-    grid.appendChild(chip);
+    container.appendChild(chip);
+  }
+
+  groups.forEach(({ group, items }) => {
+    const groupDiv = el('div', 'issue-group');
+    const titleDiv = el('div', 'issue-group-title', group);
+    const chipsDiv = el('div', 'issue-chips');
+    items.forEach(issue => addChip(issue, chipsDiv));
+    groupDiv.appendChild(titleDiv);
+    groupDiv.appendChild(chipsDiv);
+    grid.appendChild(groupDiv);
   });
 }
 
@@ -970,6 +1050,14 @@ qs('#s3-back').addEventListener('click', () => goScreen('s2'));
 
 qs('#gen-btn').addEventListener('click', async () => {
   const btn = qs('#gen-btn');
+
+  // 校验：至少选 1 个问题（00i 规则：至少 1，丰俭由人不强制选满）
+  if (ST.selectedIssues.length === 0) {
+    qs('#gen-status').textContent = '请至少选 1 个你最想了解的问题';
+    setTimeout(() => qs('#gen-status').textContent = '', 2500);
+    return;
+  }
+
   btn.disabled = true;
   btn.textContent = '正在生成…';
   qs('#gen-status').textContent = 'AI 正在为你生成专属报告，约需 20-40 秒…';
