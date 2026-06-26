@@ -338,8 +338,14 @@ html,body{height:100%;overflow:hidden;background:#060810;
 .fpc-tags{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-bottom:14px;}
 .fpc-tag{border:1px solid var(--amber-dim);border-radius:20px;padding:3px 10px;font-size:10.5px;color:var(--dim);}
 .fpc-hr{width:100%;height:1px;background:rgba(255,255,255,.06);margin-bottom:10px;}
-.fpc-foot{font-size:9.5px;color:var(--faint);text-align:center;letter-spacing:.08em;line-height:2;}
+.fpc-foot{font-size:9.5px;color:var(--faint);text-align:center;letter-spacing:.08em;line-height:1.9;}
 .fpc-foot b{color:var(--amber);}
+.fpc-qr-row{display:flex;align-items:center;gap:10px;width:100%;margin-top:10px;}
+.fpc-qr-wrap{background:white;border-radius:6px;padding:4px;flex-shrink:0;line-height:0;}
+.fpc-qr-hint{font-size:9px;color:var(--dim);line-height:1.7;}
+.fpc-qr-hint b{color:var(--amber);display:block;font-size:9.5px;letter-spacing:.04em;}
+.fin-refer{font-size:12px;color:var(--dim);text-align:center;margin-top:10px;}
+.fin-refer a{color:var(--amber);text-decoration:none;font-weight:600;}
 .smodal-btns{display:flex;gap:10px;width:300px;}
 .smodal-btns button{flex:1;padding:13px;border:none;border-radius:12px;
   font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;}
@@ -514,7 +520,11 @@ button, a, .must-item, .fp-option-card, .back-btn, .issue-chip {
     <div class="fpc-hook" id="p-hook"></div>
     <div class="fpc-tags" id="p-tags"></div>
     <div class="fpc-hr"></div>
-    <div class="fpc-foot">皮纹遗传度 <b>h²高达0.94</b> · 胎儿第13—19周形成 · 终生不变<br>aipiwen.cn</div>
+    <div class="fpc-foot">皮纹遗传度 <b>h²高达0.94</b> · 胎儿第13—19周形成 · 终生不变</div>
+    <div class="fpc-qr-row">
+      <div class="fpc-qr-wrap"><div id="p-qr"></div></div>
+      <div class="fpc-qr-hint"><b>扫码测你的天赋</b>aipiwen.cn<br>免费 AI 皮纹分析</div>
+    </div>
   </div>
   <div class="smodal-btns">
     <button id="sm-save">保存图片</button>
@@ -1227,7 +1237,8 @@ function buildReportFlipBook(sections) {
       <button class="btn-primary" onclick="openDeepChat()" style="background:var(--th-p);border-color:var(--th-p)">继续深聊 →</button>
       <button class="btn-sec" id="rv-share-open">分享这份报告</button>
       <button class="btn-sec" id="rv-dl-fin">下载报告 PDF</button>
-    </div>`;
+    </div>
+    <div class="fin-refer">还不知道朋友是什么类型？<a href="https://aipiwen.cn" target="_blank">带他来测测 →</a></div>`;
   track.appendChild(finSlide);
   RV.slides.push({ title:'继续探索', sub:'Next Steps' });
 
@@ -1247,6 +1258,15 @@ function buildReportFlipBook(sections) {
   [type, E?.学习通道?.主通道||'', E?.行为模式?.结论||''].filter(Boolean).forEach(t => {
     const d = el('div', 'fpc-tag', t); ptags.appendChild(d);
   });
+
+  // 裂变入口：海报二维码（保存图片后他人可扫码到 aipiwen.cn）
+  try {
+    const pqrEl = qs('#p-qr');
+    if (pqrEl && !pqrEl.hasChildNodes()) {
+      new QRCode(pqrEl, {text:'https://aipiwen.cn', width:60, height:60,
+        colorDark:'#1A1714', colorLight:'#FFFFFF'});
+    }
+  } catch(e) {}
 
   setTimeout(() => {
     document.querySelectorAll('#rv-share-open,#rv-share-btn').forEach(b => {
