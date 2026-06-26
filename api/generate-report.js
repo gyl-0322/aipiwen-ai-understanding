@@ -164,19 +164,32 @@ ${mapStr}
 `;
 }
 
-// 兴趣班/职业板块相关模块名集合（用于检测）
-// 包含旧名（向后兼容）+ 00i 新选项池名
+// 需要 RULE-F04 十大能力数据的模块名集合（必给 + 可选均含，用于检测）
 const 兴趣班板块Names = new Set([
-  // 旧名（向后兼容）
+  // ── 必给模块新名（00i REQUIRED_BY_STAGE 中的模块2，全部需要能力数据）
+  '兴趣启蒙与潜能',
+  '学科潜能与兴趣特长',
+  '选科与升学/专业方向',
+  '职业起步方向',
+  '职业优势与发展',
+  '职业价值与二次发展',
+  // ── 旧名（向后兼容已生成报告）
   '报什么兴趣班', '我到底擅长啥', '报什么专业',
   '方向感(专业/职业)', '职业优势',
-  // 00i 新选项池名（需 RULE-F04 十大能力+官方映射处理）
+  // ── 00i 可选池：职业决策类（需要 RULE-F04 + 官方映射）
   '文理/选科，天赋更偏哪边',
-  '最适合哪种学习方式（听·看·动手）',
-  '职业瓶颈/要不要转型',
+  '升学决策：冲名校还是选适合专业',
   '考研还是就业，怎么定',
-  '二次成长/转型，往哪走',
+  '适合哪类细分行业/岗位',
+  '考公/进体制 vs 闯市场',
+  '我适合团队什么角色',
+  '职业瓶颈：突破还是转型',
+  '适合创业还是打工',
+  '团队里适合带人还是做专家',
+  '二次成长/转型/再出发往哪走',
+  '退休/半退后做什么有价值感',
   '价值重定位：我还能发力在哪',
+  '怎么带教、把经验传下去',
 ]);
 
 // ── 限流：每 IP 每分钟最多 3 次（防滥用） ──────────────────────────────
@@ -223,18 +236,21 @@ function getAgeTier(age) {
   if (n <= 12) return 'school';
   if (n <= 15) return 'junior_teen';
   if (n <= 18) return 'senior_teen';
-  if (n <= 25) return 'young_adult';  // 知识库：18-25青年，独立层级
-  return 'adult';
+  if (n <= 25) return 'young_adult';  // 知识库：18-25大学/初入职
+  if (n <= 40) return 'adult';        // 25-40 职业发展期
+  return 'mature_adult';              // 40+ 成熟·转型期
 }
 
-// ── 必给模块（按年龄段） ────────────────────────────────────────────────
-const REQUIRED_BY_TIER = {
-  preschool:    ['天赋底色', '怎么带不拧巴', '安全感与情绪'],
-  school:       ['天赋底色', '怎么学最省力', '行为解读'],
-  junior_teen:  ['天赋底色', '学习方法', '自我认知', '情绪压力'],
-  senior_teen:  ['天赋底色', '学习方法', '自我认知', '情绪压力'],
-  young_adult:  ['天赋底色', '方向感(专业/职业)', '自我认知'],  // 知识库：18-25青年
-  adult:        ['天赋底色', '职业优势', '自我成长'],
+// ── 必给模块（按人生阶段定制，来源：知识库 00i 规则1 表格） ────────────
+// 模块1「天赋底色」全龄通用；模块2 随阶段换主题；模块3 随阶段侧重
+const REQUIRED_BY_STAGE = {
+  preschool:    ['天赋底色', '兴趣启蒙与潜能',        '性格养育引导'],
+  school:       ['天赋底色', '学科潜能与兴趣特长',    '成长引导'],
+  junior_teen:  ['天赋底色', '选科与升学/专业方向',   '成长引导'],
+  senior_teen:  ['天赋底色', '选科与升学/专业方向',   '成长引导'],
+  young_adult:  ['天赋底色', '职业起步方向',           '自我成长'],
+  adult:        ['天赋底色', '职业优势与发展',         '自我成长'],
+  mature_adult: ['天赋底色', '职业价值与二次发展',     '自我成长'],
 };
 
 // ── 系统提示词（AIPIWEN 解读语气底座） ─────────────────────────────────
@@ -291,7 +307,12 @@ function buildUserMessage(engineResult, age, name, requiredModules, selectedIssu
     return `${z}(${v}) ${tag}`;
   }).join('  ');
 
-  const ageTierDesc = { preschool:'幼儿期(0-6岁)', school:'学龄期(7-12岁)', junior_teen:'初中阶段(13-15岁)', senior_teen:'高中阶段(16-18岁)', young_adult:'青年(19-25岁)', adult:'成人(26岁+)' }[tier];
+  const ageTierDesc = {
+    preschool:'学龄前(0-6岁)', school:'小学阶段(7-12岁)',
+    junior_teen:'初中阶段(13-15岁)', senior_teen:'高中阶段(16-18岁)',
+    young_adult:'大学·初入职(18-25岁)', adult:'职业发展期(25-40岁)',
+    mature_adult:'成熟·转型期(40岁+)',
+  }[tier];
   const nameLabel = name ? `【被测者】${name}，${age}岁（${ageTierDesc}）` : `【被测者】${age}岁（${ageTierDesc}）`;
 
   // 去重：selectedIssues 若包含已在 requiredModules 里的模块，跳过（否则 AI 会生成两遍同一板块）
@@ -304,16 +325,18 @@ function buildUserMessage(engineResult, age, name, requiredModules, selectedIssu
   // 预计算兴趣班提示（RULE-F04已修正数据 + 官方映射 + 写作规范）
   const 兴趣班提示 = (has兴趣班 && fingers) ? build兴趣班Prompt(fingers, engineResult, tier) : '';
 
-  // 每个问题模块的输出格式说明（兴趣班issue使用专属规范，其余使用通用格式）
-  const issueFormatGuide = selectedIssues.length > 0
-    ? `\n【问题模块格式（每个 issue 严格四段式）】\n` + selectedIssues.map(issue => {
+  // ⚠️ 同源一致：可选问题里的职业/能力类只能延伸必给模块2的结论，不得重新判断高低
+  // 用 dedupedIssues（已去掉与必给重复项），避免 AI 收到冗余格式指令
+  const issueFormatGuide = dedupedIssues.length > 0
+    ? `\n【问题模块格式（每个 issue 严格四段式）】\n` + dedupedIssues.map(issue => {
         if (兴趣班板块Names.has(issue)) {
-          // 兴趣班/职业专属格式引用上面的写作规范
+          // 职业/能力类延伸问题：必须在必给模块2结论基础上展开，禁止重新判断高低
           return `===issue:${issue}===
-①为什么：（按上面"写作规范①"来写，用RULE-F04已修正数据，区分数值高低vs纹型质量）
-②怎么办：（按上面"写作规范②"来写，顺势/补短必须分开，引用RULE-N14数量和官方映射）
-③未来趋势：（按上面"写作规范③"来写，叠加性格类型+通道+ATD组合画像）
-④还想深聊：（按上面"写作规范④"来写，一句话邀请）`;
+⚠️ 此板块是上方「${requiredModules[1]}」的延伸决策——直接基于其已给出的能力结论，聚焦「${issue}」这个具体问题，禁止重新做高低判断，数据用上方 RULE-F04 已修正结果。
+①为什么：（在「${requiredModules[1]}」结论基础上，点明此决策的关键数据依据，1-2句）
+②怎么办：（针对"${issue}"给出3-4条具体可选路径，引用官方职业/方向映射，今天就能落地）
+③未来趋势：（这个方向的长期价值，1-2句）
+④还想深聊：（一句话邀请，指向最有价值的下一个追问）`;
         }
         return `===issue:${issue}===\n①为什么（基于具体手指/类型的根本原因，2-3句）\n②怎么办（明天就能做的具体动作，2-4条）\n③未来趋势（这个特质在未来值不值钱，2句）\n④还想深聊？（一句话邀请，指出最有价值的追问方向）`;
       }).join('\n\n')
@@ -335,6 +358,7 @@ ${兴趣班提示}
 ${allModules.map((m,i)=>`${i+1}. ${m}`).join('\n')}
 
 【必给板块格式】每个必给板块用 ===板块名=== 开头，正文2-3段，具体有比喻，"被说中"型。
+⚠️ 同源一致（00i 规则2）：凡涉及职业/能力/兴趣班的必给板块（如「${requiredModules[1]}」），同样严格基于上方 RULE-F04 已修正判定展开，不另行重算高低；后续可选延伸问题将在此结论基础上深化，必须保持一致。
 
 ${issueFormatGuide}
 
@@ -513,7 +537,7 @@ module.exports = async function handler(req, res) {
   if (refToken) creditReferral(ip, refToken, 'report').catch(() => {});
 
   const tier          = getAgeTier(age);
-  const requiredMods  = REQUIRED_BY_TIER[tier] || REQUIRED_BY_TIER.adult;
+  const requiredMods  = REQUIRED_BY_STAGE[tier] || REQUIRED_BY_STAGE.adult;
   const userMessage   = buildUserMessage(engineResult, age, name, requiredMods, selectedIssues, fingers, tier);
 
   const messages = [
