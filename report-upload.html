@@ -1249,7 +1249,7 @@ function buildReportFlipBook(sections) {
   coverSlide.innerHTML = `<div class="cv-wrap">
     ${cfg.deco ? `<div class="cv-deco">${cfg.deco}</div>` : ''}
     <div class="cv-theme-badge">${cfg.badge}</div>
-    <div class="cv-fp"><img src="${fpSrc}" alt="指纹图"></div>
+    <div class="cv-fp"><img src="${fpSrc}" alt=""></div>
     <div class="cv-type">${type}</div>
     <div class="cv-line"></div>
     <div class="cv-tagline">${ST.name ? '<strong>' + ST.name + '</strong> · ' : ''}${ST.age}岁 · 专属皮纹报告</div>
@@ -1404,30 +1404,82 @@ function buildReportFlipBook(sections) {
 // 根本原因：克隆的 .rv-slide 不在 #s4 内，CSS 自定义变量 --th-* 无法继承
 // 解决方案：完全用内联 style 重建每页 HTML，不依赖 CSS 变量
 function getPDFTheme(ageTier) {
+  // dim=正文近白(.92); 各段主题继承 web CSS 里的 --th-* 变量值
   const T = {
-    preschool:   { bg:'#1A0F06',acc:'#FF8C42',acc2:'#FFB347',text:'#FDFCF8',dim:'rgba(253,252,248,.7)',faint:'rgba(253,252,248,.36)',border:'rgba(255,140,66,.22)',card:'rgba(255,140,66,.09)',r:'14px',serif:'Georgia,"Noto Serif SC",serif',badge:'学龄前报告' },
-    school:      { bg:'#081420',acc:'#3E9BDB',acc2:'#5AB8E8',text:'#FDFCF8',dim:'rgba(253,252,248,.7)',faint:'rgba(253,252,248,.36)',border:'rgba(62,155,219,.22)',card:'rgba(62,155,219,.08)',r:'13px',serif:'Georgia,"Noto Serif SC",serif',badge:'小学阶段报告' },
-    junior_teen: { bg:'#0D0A1E',acc:'#8B5CF6',acc2:'#00D4FF',text:'#FDFCF8',dim:'rgba(253,252,248,.7)',faint:'rgba(253,252,248,.36)',border:'rgba(139,92,246,.26)',card:'rgba(139,92,246,.09)',r:'12px',serif:'"PingFang SC","Noto Sans SC",sans-serif',badge:'初中阶段报告' },
-    senior_teen: { bg:'#080C14',acc:'#C9A84C',acc2:'#E2C97E',text:'#FDFCF8',dim:'rgba(253,252,248,.7)',faint:'rgba(253,252,248,.36)',border:'rgba(201,168,76,.24)',card:'rgba(201,168,76,.08)',r:'10px',serif:'Georgia,"Noto Serif SC",serif',badge:'高中阶段报告' },
-    adult:       { bg:'#0E1118',acc:'#C2692A',acc2:'#E8854A',text:'#FDFCF8',dim:'rgba(253,252,248,.7)',faint:'rgba(253,252,248,.36)',border:'rgba(255,255,255,.09)',card:'rgba(255,255,255,.05)',r:'12px',serif:'Georgia,"Noto Serif SC",serif',badge:'成人报告' },
-    mature_adult:{ bg:'#0E1118',acc:'#C2692A',acc2:'#E8854A',text:'#FDFCF8',dim:'rgba(253,252,248,.7)',faint:'rgba(253,252,248,.36)',border:'rgba(255,255,255,.09)',card:'rgba(255,255,255,.05)',r:'12px',serif:'Georgia,"Noto Serif SC",serif',badge:'成人报告' },
+    preschool:   { bg:'#1A0F06', acc:'#FF8C42', acc2:'#FFB347', text:'#FDFCF8',
+                   dim:'rgba(253,252,248,.92)', faint:'rgba(253,252,248,.38)',
+                   border:'rgba(255,140,66,.22)', card:'rgba(255,140,66,.10)',
+                   r:'18px', serif:'Georgia,"Noto Serif SC",serif',
+                   glow:'rgba(255,140,66,.55)', badge:'学龄前报告' },
+    school:      { bg:'#081420', acc:'#3E9BDB', acc2:'#5AB8E8', text:'#FDFCF8',
+                   dim:'rgba(253,252,248,.92)', faint:'rgba(253,252,248,.38)',
+                   border:'rgba(62,155,219,.22)', card:'rgba(62,155,219,.09)',
+                   r:'16px', serif:'Georgia,"Noto Serif SC",serif',
+                   glow:'rgba(62,155,219,.50)', badge:'小学阶段报告' },
+    junior_teen: { bg:'#0D0A1E', acc:'#8B5CF6', acc2:'#00D4FF', text:'#FDFCF8',
+                   dim:'rgba(253,252,248,.92)', faint:'rgba(253,252,248,.38)',
+                   border:'rgba(139,92,246,.26)', card:'rgba(139,92,246,.10)',
+                   r:'12px', serif:'"PingFang SC","Noto Sans SC",sans-serif',
+                   glow:'rgba(139,92,246,.55)', badge:'初中阶段报告' },
+    senior_teen: { bg:'#080C14', acc:'#C9A84C', acc2:'#E2C97E', text:'#FDFCF8',
+                   dim:'rgba(253,252,248,.92)', faint:'rgba(253,252,248,.38)',
+                   border:'rgba(201,168,76,.24)', card:'rgba(201,168,76,.09)',
+                   r:'10px', serif:'Georgia,"Noto Serif SC",serif',
+                   glow:'rgba(201,168,76,.50)', badge:'高中阶段报告' },
+    young_adult: { bg:'#111827', acc:'#C2692A', acc2:'#D97F3A', text:'#FDFCF8',
+                   dim:'rgba(253,252,248,.92)', faint:'rgba(253,252,248,.38)',
+                   border:'rgba(194,105,42,.18)', card:'rgba(194,105,42,.07)',
+                   r:'12px', serif:'Georgia,"Noto Serif SC",serif',
+                   glow:'rgba(194,105,42,.45)', badge:'大学·初职报告' },
+    adult:       { bg:'#111827', acc:'#C2692A', acc2:'#D97F3A', text:'#FDFCF8',
+                   dim:'rgba(253,252,248,.92)', faint:'rgba(253,252,248,.38)',
+                   border:'rgba(255,255,255,.09)', card:'rgba(255,255,255,.04)',
+                   r:'12px', serif:'Georgia,"Noto Serif SC",serif',
+                   glow:'rgba(194,105,42,.42)', badge:'职业发展报告' },
+    mature_adult:{ bg:'#111827', acc:'#C2692A', acc2:'#D97F3A', text:'#FDFCF8',
+                   dim:'rgba(253,252,248,.92)', faint:'rgba(253,252,248,.38)',
+                   border:'rgba(255,255,255,.09)', card:'rgba(255,255,255,.04)',
+                   r:'12px', serif:'Georgia,"Noto Serif SC",serif',
+                   glow:'rgba(194,105,42,.42)', badge:'成熟·转型报告' },
   };
   return T[ageTier] || T.adult;
 }
 // 内联样式正文格式化（PDF 无 CSS 类，必须全用 style）
+// 规则：**关键词** → 橙色高亮；*斜体* → 橙色；▸ 开头行 → 单独动作行；正文近白(.92)；行距 2.0
 function fmtPDF(text, th, bf) {
   if (!text) return '';
-  let html = text
-    .replace(/\*\*(.+?)\*\*/g, `<strong style="color:${th.text};font-weight:600;">$1</strong>`)
+  // 先处理 ▸ 动作行（单独成行，橙色标记）
+  const lines0 = text.split('\n');
+  const processedLines = lines0.map(line => {
+    if (/^▸/.test(line.trim())) {
+      const content = line.trim().replace(/^▸\s*/, '');
+      return `<DIV_ACTION>${content}</DIV_ACTION>`;
+    }
+    return line;
+  }).join('\n');
+  // 处理加粗（关键词橙色高亮）和斜体
+  let html = processedLines
+    .replace(/\*\*(.+?)\*\*/g, `<strong style="color:${th.acc};font-weight:700;">$1</strong>`)
     .replace(/\*(.+?)\*/g, `<em style="color:${th.acc};font-style:normal;">$1</em>`);
+  // 拆段落，去重
   const rawParas = html.split(/\n\n+/);
   const seen = new Set();
   const paras = rawParas.filter(p => { const k=p.trim(); if(!k||seen.has(k)) return false; seen.add(k); return true; });
-  return paras.map((p,i) => {
-    const lines = p.replace(/\n/g,'<br>');
-    if (i===0 && paras.length>1)
-      return `<div style="border-left:3px solid ${th.acc};background:${th.card};border-radius:0 ${th.r} ${th.r} 0;padding:12px 14px;margin-bottom:11px;font-size:13.5px;line-height:1.82;font-style:italic;font-family:${bf};">${lines}</div>`;
-    return `<p style="font-size:13.5px;line-height:1.85;margin-bottom:10px;color:${th.dim};font-family:${bf};">${lines}</p>`;
+  return paras.map((p, i) => {
+    // 动作行单独渲染
+    if (p.includes('<DIV_ACTION>')) {
+      return p.replace(/<DIV_ACTION>(.*?)<\/DIV_ACTION>/gs, (_, c) =>
+        `<div style="display:flex;align-items:flex-start;gap:8px;padding:5px 0;color:${th.text};font-size:13.5px;line-height:1.9;font-family:${bf};">` +
+        `<span style="color:${th.acc};flex-shrink:0;font-weight:700;">▸</span><span>${c}</span></div>`
+      );
+    }
+    const ln = p.replace(/\n/g, '<br>');
+    if (i === 0 && paras.length > 1)
+      return `<div style="border-left:3px solid ${th.acc};background:${th.card};border-radius:0 ${th.r} ${th.r} 0;` +
+             `padding:13px 16px;margin-bottom:12px;font-size:14px;line-height:2.0;font-style:italic;` +
+             `font-family:${bf};color:${th.text};">${ln}</div>`;
+    return `<p style="font-size:13.5px;line-height:2.0;margin-bottom:11px;` +
+           `color:rgba(253,252,248,.92);font-family:${bf};">${ln}</p>`;
   }).join('');
 }
 async function generateReportPDF(btnEl) {
@@ -1479,7 +1531,9 @@ async function generateReportPDF(btnEl) {
         <div style="font-size:9px;letter-spacing:.24em;color:${th.acc};font-weight:700;text-transform:uppercase;margin-bottom:18px;align-self:flex-start;font-family:${bf};">AIPIWEN · 专属报告</div>
         <div style="border:1px solid ${th.border};border-radius:20px;padding:4px 16px;font-size:9.5px;letter-spacing:.15em;color:${th.acc};text-transform:uppercase;margin-bottom:20px;font-family:${bf};">${th.badge}</div>
         <div style="margin-bottom:18px;text-align:center;">
-          <img src="${fpSrc}" style="width:145px;height:145px;object-fit:contain;" alt="">
+          <img src="${fpSrc}" crossorigin="anonymous"
+               style="width:145px;height:145px;object-fit:contain;filter:drop-shadow(0 0 28px ${th.glow});" alt=""
+               onerror="this.style.opacity='0'">
         </div>
         <div style="font-family:${th.serif};font-size:36px;font-weight:700;color:${th.text};text-align:center;margin-bottom:7px;line-height:1.2;">${type}</div>
         <div style="width:36px;height:2px;background:${th.acc};border-radius:1px;margin:0 auto 13px;"></div>
@@ -1512,50 +1566,78 @@ async function generateReportPDF(btnEl) {
   }
 
   // ── 数据总览（Slide 1）────────────────────────────────────────────────────
+  // 条形图规则：全橙色填充；强势区(≥均值)=th.acc 满透明度；发展区(<均值)=th.acc 28%透明度
+  // 均值线：白色竖线标在均值位置；图例在底部
   function buildData() {
     if (!E) return null;
-    const f5 = E.五功能区 || {};
-    const mx = Math.max(f5.精神||0,f5.思维||0,f5.体觉||0,f5.听觉||0,f5.视觉||0,1);
+    const f5  = E.五功能区 || {};
+    const mx  = Math.max(f5.精神||0, f5.思维||0, f5.体觉||0, f5.听觉||0, f5.视觉||0, 1);
     const avg = f5.个人均值 || 0;
+    const avgPct = Math.round(avg / mx * 100);
     const bL  = E.左右脑?.左脑占比 || 50;
-    const bR  = (100-bL).toFixed(1);
+    const bR  = (100 - bL).toFixed(1);
     const rows = [['精神功能','精神'],['思维功能','思维'],['体觉功能','体觉'],['听觉功能','听觉'],['视觉功能','视觉']];
     return wrap(`
       ${pHdr('02')}
-      <div style="flex:1;padding:18px 24px 14px;display:flex;flex-direction:column;gap:16px;">
+      <div style="flex:1;padding:18px 24px 14px;display:flex;flex-direction:column;gap:13px;">
         <div style="font-size:10px;letter-spacing:.2em;color:${th.acc};text-transform:uppercase;font-weight:700;">数据总览 · DATA OVERVIEW</div>
-        <div style="background:${th.card};border:1px solid ${th.border};border-radius:${th.r};padding:14px 16px;">
+
+        <!-- 左右脑 -->
+        <div style="background:${th.card};border:1px solid ${th.border};border-radius:${th.r};padding:13px 16px;">
           <div style="display:flex;align-items:center;gap:12px;">
-            <div style="font-size:11px;color:${th.dim};width:44px;text-align:right;flex-shrink:0;line-height:1.6;">左脑<br><strong style="color:${th.acc};font-size:15px;">${bL}%</strong></div>
+            <div style="font-size:11px;color:rgba(253,252,248,.9);width:44px;text-align:right;flex-shrink:0;line-height:1.7;">左脑<br><strong style="color:${th.acc};font-size:16px;">${bL}%</strong></div>
             <div style="flex:1;">
-              <div style="height:10px;background:rgba(255,255,255,.08);border-radius:5px;overflow:hidden;display:flex;">
-                <div style="width:${bL}%;background:${th.acc};height:100%;"></div>
-                <div style="width:${bR}%;background:${th.acc2};height:100%;opacity:.65;"></div>
+              <div style="height:12px;background:rgba(255,255,255,.08);border-radius:6px;overflow:hidden;display:flex;">
+                <div style="width:${bL}%;background:${th.acc};height:100%;border-radius:6px 0 0 6px;"></div>
+                <div style="width:${bR}%;background:${th.acc};height:100%;opacity:.28;border-radius:0 6px 6px 0;"></div>
               </div>
-              <div style="text-align:center;font-size:10.5px;color:${th.faint};margin-top:5px;">${E.左右脑?.结论||''}</div>
+              <div style="text-align:center;font-size:10px;color:${th.faint};margin-top:5px;">${E.左右脑?.结论||''}</div>
             </div>
-            <div style="font-size:11px;color:${th.dim};width:44px;text-align:left;flex-shrink:0;line-height:1.6;">右脑<br><strong style="color:${th.acc2};font-size:15px;">${bR}%</strong></div>
+            <div style="font-size:11px;color:rgba(253,252,248,.9);width:44px;text-align:left;flex-shrink:0;line-height:1.7;">右脑<br><strong style="color:${th.acc};font-size:16px;opacity:.6;">${bR}%</strong></div>
           </div>
         </div>
-        <div style="display:flex;flex-direction:column;gap:11px;">
-          ${rows.map(([name,key])=>{
-            const v=f5[key]||0,pct=Math.round(v/mx*100),above=v>=avg;
-            return `<div style="display:grid;grid-template-columns:70px 1fr 38px;align-items:center;gap:10px;">
-              <div style="font-size:12px;color:${th.dim};">${name}</div>
-              <div style="height:10px;background:rgba(255,255,255,.07);border-radius:5px;overflow:hidden;">
-                <div style="width:${pct}%;height:100%;background:${above?th.acc:th.acc2};opacity:${above?1:.6};border-radius:5px;"></div>
+
+        <!-- 五功能区条形图 -->
+        <div style="background:${th.card};border:1px solid ${th.border};border-radius:${th.r};padding:14px 16px;display:flex;flex-direction:column;gap:12px;">
+          <div style="font-size:9px;letter-spacing:.12em;color:${th.faint};text-transform:uppercase;">五功能区  均值 ${avg} TRC</div>
+          ${rows.map(([name, key]) => {
+            const v = f5[key] || 0;
+            const pct = Math.round(v / mx * 100);
+            const above = v >= avg;
+            return `<div style="display:grid;grid-template-columns:68px 1fr 32px;align-items:center;gap:10px;">
+              <div style="font-size:11.5px;color:rgba(253,252,248,.9);">${name}</div>
+              <div style="position:relative;height:14px;">
+                <div style="position:absolute;inset:0;background:rgba(255,255,255,.06);border-radius:7px;overflow:hidden;">
+                  <div style="width:${pct}%;height:100%;background:${th.acc};opacity:${above ? 1 : 0.28};border-radius:7px;"></div>
+                </div>
+                <div style="position:absolute;left:${avgPct}%;top:-2px;bottom:-2px;width:2px;background:rgba(253,252,248,.32);border-radius:1px;"></div>
               </div>
-              <div style="font-size:14px;color:${th.acc};font-weight:700;text-align:right;">${v}</div>
+              <div style="font-size:13px;color:${above ? th.acc : 'rgba(253,252,248,.4)'};font-weight:700;text-align:right;">${v}</div>
             </div>`;
           }).join('')}
+          <!-- 图例 -->
+          <div style="display:flex;align-items:center;gap:14px;font-size:9.5px;color:${th.faint};margin-top:2px;flex-wrap:wrap;">
+            <div style="display:flex;align-items:center;gap:5px;">
+              <div style="width:2px;height:13px;background:rgba(253,252,248,.32);border-radius:1px;"></div>均值线 ${avg}
+            </div>
+            <div style="display:flex;align-items:center;gap:5px;">
+              <div style="width:16px;height:4px;background:${th.acc};border-radius:2px;"></div>
+              <span style="color:${th.acc};">强势区</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:5px;">
+              <div style="width:16px;height:4px;background:${th.acc};opacity:.28;border-radius:2px;"></div>发展区
+            </div>
+          </div>
         </div>
+
+        <!-- 4 stat cards -->
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:auto;">
-          ${[['学习通道',E.学习通道?.主通道||'—'],['行为模式',E.行为模式?.结论||'—'],['ATD 角度',(E.ATD?.分区||'—')+(ST.atd?' · '+ST.atd+'°':'')],['个人均值',avg+' TRC']].map(([l,v])=>
-            `<div style="background:${th.card};border:1px solid ${th.border};border-radius:${th.r};padding:11px 13px;">
+          ${[['学习通道',E.学习通道?.主通道||'—'],['行为模式',E.行为模式?.结论||'—'],
+             ['ATD 角度',(E.ATD?.分区||'—')+(ST.atd?' · '+ST.atd+'°':'')],['个人均值',avg+' TRC']]
+            .map(([l,v]) => `<div style="background:${th.card};border:1px solid ${th.border};border-radius:${th.r};padding:11px 13px;">
               <div style="font-size:9px;color:${th.faint};letter-spacing:.12em;text-transform:uppercase;margin-bottom:4px;">${l}</div>
               <div style="font-size:13.5px;color:${th.acc};font-weight:700;">${v}</div>
-            </div>`
-          ).join('')}
+            </div>`).join('')}
         </div>
       </div>
       ${pFtr()}
@@ -1564,43 +1646,49 @@ async function generateReportPDF(btnEl) {
 
   // ── 内容页（必给/issue）────────────────────────────────────────────────────
   function buildContent(sec, n) {
-    const isIssue = sec.type==='issue', isFound = sec.type==='foundation';
-    const label = isFound?'★ 必读 · 天赋地基':isIssue?'◉ 专项解读':`▸ 专项`;
-    const kwMatches = (sec.content||'').match(/\*\*(.+?)\*\*/g)||[];
-    const kws = kwMatches.slice(0,4).map(k=>k.replace(/\*\*/g,''));
-    const kwHTML = kws.length?`<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:11px;">
-      ${kws.map(k=>`<span style="border:1px solid ${th.border};border-radius:20px;padding:3px 10px;font-size:11px;color:${th.acc};background:${th.card};">${k}</span>`).join('')}
-    </div>`:'';
+    const isIssue = sec.type === 'issue', isFound = sec.type === 'foundation';
+    const label = isFound ? '★ 必读 · 天赋地基' : isIssue ? '◉ 专项解读' : '▸ 专项';
+    // 关键词 pill 徽章（从 **加粗** 词提取）
+    const kwMatches = ((isIssue ? (sec.why||'')+(sec.how||'')+(sec.future||'') : sec.content||''))
+                      .match(/\*\*(.+?)\*\*/g) || [];
+    const kws = kwMatches.slice(0, 4).map(k => k.replace(/\*\*/g, ''));
+    const kwHTML = kws.length ? `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;">
+      ${kws.map(k => `<span style="border:1px solid ${th.border};border-radius:20px;padding:4px 11px;font-size:11px;color:${th.acc};background:${th.card};">${k}</span>`).join('')}
+    </div>` : '';
+    // issue 卡片体（近白正文 + 橙色关键词）
+    function issueCard(num, titleTxt, body) {
+      if (!body) return '';
+      const bodyHtml = body
+        .replace(/\*\*(.+?)\*\*/g, `<strong style="color:${th.acc};font-weight:700;">$1</strong>`)
+        .replace(/▸\s*(.+)/g, `<div style="display:flex;align-items:flex-start;gap:7px;padding:4px 0;"><span style="color:${th.acc};font-weight:700;flex-shrink:0;">▸</span><span>$1</span></div>`)
+        .replace(/\n/g, '<br>');
+      return `<div style="background:${th.card};border:1px solid ${th.border};border-radius:${th.r};padding:13px 15px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:9px;">
+          <div style="width:22px;height:22px;background:${th.acc};color:${th.bg};border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;">${num}</div>
+          <div style="font-size:10px;font-weight:700;color:${th.acc};letter-spacing:.1em;text-transform:uppercase;">${titleTxt}</div>
+        </div>
+        <div style="font-size:13px;color:rgba(253,252,248,.92);line-height:2.0;">${bodyHtml}</div>
+      </div>`;
+    }
     const bodyHTML = isIssue
       ? `<div style="display:flex;flex-direction:column;gap:9px;">
-          ${sec.why?`<div style="background:${th.card};border:1px solid ${th.border};border-radius:${th.r};padding:12px 14px;">
-            <div style="display:flex;align-items:center;gap:7px;margin-bottom:7px;">
-              <div style="width:20px;height:20px;background:${th.acc};color:${th.bg};border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;">1</div>
-              <div style="font-size:10px;font-weight:700;color:${th.acc};letter-spacing:.1em;text-transform:uppercase;">为什么会这样</div>
-            </div>
-            <div style="font-size:13px;color:${th.dim};line-height:1.8;">${sec.why.replace(/\*\*(.+?)\*\*/g,`<strong style="color:${th.text};">$1</strong>`).replace(/\n/g,'<br>')}</div>
-          </div>`:''}
-          ${sec.how?`<div style="background:${th.card};border:1px solid ${th.border};border-radius:${th.r};padding:12px 14px;">
-            <div style="display:flex;align-items:center;gap:7px;margin-bottom:7px;">
-              <div style="width:20px;height:20px;background:${th.acc};color:${th.bg};border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;">2</div>
-              <div style="font-size:10px;font-weight:700;color:${th.acc};letter-spacing:.1em;text-transform:uppercase;">怎么应对</div>
-            </div>
-            <div style="font-size:13px;color:${th.dim};line-height:1.8;">${sec.how.replace(/\*\*(.+?)\*\*/g,`<strong style="color:${th.text};">$1</strong>`).replace(/\n/g,'<br>')}</div>
-          </div>`:''}
-          ${sec.future?`<div style="background:${th.card};border:1px solid ${th.border};border-radius:${th.r};padding:12px 14px;">
-            <div style="display:flex;align-items:center;gap:7px;margin-bottom:7px;">
-              <div style="width:20px;height:20px;background:${th.acc};color:${th.bg};border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;">3</div>
-              <div style="font-size:10px;font-weight:700;color:${th.acc};letter-spacing:.1em;text-transform:uppercase;">未来可期</div>
-            </div>
-            <div style="font-size:13px;color:${th.dim};line-height:1.8;">${sec.future.replace(/\*\*(.+?)\*\*/g,`<strong style="color:${th.text};">$1</strong>`).replace(/\n/g,'<br>')}</div>
-          </div>`:''}
+          ${issueCard(1, '为什么会这样', sec.why)}
+          ${issueCard(2, '怎么应对', sec.how)}
+          ${issueCard(3, '未来可期', sec.future)}
         </div>`
-      : fmtPDF(sec.content||'', th, bf);
+      : fmtPDF(sec.content || '', th, bf);
     return wrap(`
       ${pHdr(n)}
       <div style="flex:1;padding:16px 24px 14px;display:flex;flex-direction:column;">
-        <div style="display:flex;align-items:center;gap:8px;font-size:9.5px;letter-spacing:.15em;color:${th.acc};text-transform:uppercase;font-weight:700;margin-bottom:9px;">${label}</div>
-        <div style="font-family:${th.serif};font-size:21px;font-weight:700;color:${th.text};margin-bottom:11px;line-height:1.32;">${sec.title}</div>
+        <!-- eyebrow（对应 web .sec-eyebrow::before 装饰线） -->
+        <div style="display:flex;align-items:center;gap:8px;font-size:9.5px;letter-spacing:.15em;color:${th.acc};text-transform:uppercase;font-weight:700;margin-bottom:11px;">
+          <div style="width:18px;height:1.5px;background:${th.acc};border-radius:1px;flex-shrink:0;"></div>
+          ${label}
+        </div>
+        <!-- 标题 -->
+        <div style="font-family:${th.serif};font-size:21px;font-weight:700;color:${th.text};margin-bottom:10px;line-height:1.3;">${sec.title}</div>
+        <!-- 分隔线 -->
+        <div style="width:100%;height:1px;background:${th.border};margin-bottom:12px;"></div>
         ${kwHTML}
         <div style="flex:1;">${bodyHTML}</div>
       </div>
@@ -1608,18 +1696,37 @@ async function generateReportPDF(btnEl) {
     `);
   }
 
-  // ── 结尾页 ─────────────────────────────────────────────────────────────────
+  // ── 结尾页（PDF 版不含下载按钮，仅展示品牌 + 结语）──────────────────────────
   function buildFinal(n) {
+    const traitStr = (() => {
+      const t = [];
+      if (E?.叠加特质?.M型) t.push('M型');
+      if (E?.叠加特质?.逆向思维R) t.push('逆向思维+R');
+      return t.join(' · ');
+    })();
     return wrap(`
       ${pHdr(n)}
-      <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:36px 32px;text-align:center;">
-        <div style="margin-bottom:18px;"><img src="${fpSrc}" style="width:88px;height:88px;object-fit:contain;" alt=""></div>
-        <div style="font-family:${th.serif};font-size:22px;font-weight:700;color:${th.text};margin-bottom:9px;line-height:1.3;">${type}，就是你。</div>
-        <div style="width:32px;height:2px;background:${th.acc};border-radius:1px;margin:0 auto 14px;"></div>
-        <div style="font-size:13px;color:${th.dim};line-height:1.82;margin-bottom:26px;">${cfg.finMsg}<br><br>想了解更多，欢迎继续探索。</div>
-        <div style="border:1px solid ${th.border};border-radius:${th.r};padding:13px 20px;width:100%;background:${th.card};">
-          <div style="font-size:10.5px;color:${th.faint};margin-bottom:3px;">访问 aipiwen.cn 继续深度解读</div>
-          <div style="font-size:14px;color:${th.acc};font-weight:700;letter-spacing:.04em;">AIPIWEN.CN</div>
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:30px 28px;text-align:center;">
+        <!-- 指纹图（带 glow） -->
+        <div style="margin-bottom:20px;">
+          <img src="${fpSrc}" crossorigin="anonymous"
+               style="width:96px;height:96px;object-fit:contain;filter:drop-shadow(0 0 22px ${th.glow});" alt=""
+               onerror="this.style.opacity='0'">
+        </div>
+        <!-- 标题 -->
+        <div style="font-family:${th.serif};font-size:24px;font-weight:700;color:${th.text};margin-bottom:8px;line-height:1.3;">${type}，就是你。</div>
+        <div style="width:36px;height:2px;background:${th.acc};border-radius:1px;margin:0 auto 16px;"></div>
+        <!-- 结语 -->
+        <div style="font-size:13px;color:rgba(253,252,248,.82);line-height:1.92;margin-bottom:24px;max-width:300px;">${cfg.finMsg}</div>
+        <!-- 数据摘要胶囊 -->
+        <div style="display:flex;flex-wrap:wrap;gap:7px;justify-content:center;margin-bottom:22px;">
+          ${[type, E?.学习通道?.主通道, E?.行为模式?.结论, traitStr].filter(Boolean)
+            .map(t => `<span style="border:1px solid ${th.border};border-radius:20px;padding:5px 14px;font-size:11.5px;color:${th.acc};background:${th.card};">${t}</span>`).join('')}
+        </div>
+        <!-- 品牌卡片 -->
+        <div style="border:1px solid ${th.border};border-radius:${th.r};padding:14px 20px;width:100%;background:${th.card};">
+          <div style="font-size:9px;letter-spacing:.2em;color:${th.faint};text-transform:uppercase;margin-bottom:5px;">专属解读 · 持续进化</div>
+          <div style="font-size:15px;color:${th.acc};font-weight:700;letter-spacing:.06em;">AIPIWEN.CN</div>
         </div>
       </div>
       ${pFtr()}
