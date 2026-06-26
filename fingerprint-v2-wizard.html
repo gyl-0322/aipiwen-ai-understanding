@@ -2486,13 +2486,7 @@ function wecomeClick(e) {
       showToast('✓ 已复制天赋结果，到企微直接粘贴给顾问即可');
     }).catch(() => {});
   } catch (e) {}
-  // 微信内置浏览器：weixin:// 深链接直接唤起客服对话，无需中间确认页
-  const isWeChat = /MicroMessenger/i.test(navigator.userAgent);
-  if (isWeChat) {
-    window.location.href = 'weixin://dl/business/?t=' + WECOM_KFID;
-  } else {
-    window.open('https://work.weixin.qq.com/kfid/' + WECOM_KFID, '_blank');
-  }
+  window.open('https://work.weixin.qq.com/kfid/' + WECOM_KFID, '_blank');
 }
 </script>
 <script src="js/growth-tracker.js"></script>
