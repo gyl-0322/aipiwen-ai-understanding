@@ -306,7 +306,94 @@ module.exports = async function handler(req, res) {
     rawFingers = parsed.fingers;
   }
 
-  const fingers = normalizeFingers(rawFingers);
+  let fingers = normalizeFingers(rawFingers);
+
+  // ── 二次校验：未检测到任何 Rl → 针对性重询（触发条件升级：只要没有 Rl 就校验）
+  // 原因：白皓博情形——L2=7 Rl 混在 Wc/Xn/Lu 中，不是全 Lu，allLu 不触发但 Rl 同样被漏读
+  const hasRl = Object.values(fingers).some(f => f.sym === 'Rl');
+  if (!hasRl) {
+    console.warn('[extract-fp] no Rl detected, running targeted Rl verification pass');
+    try {
+      // 关键改进（Emma思路）：拆成两步——先判断第一个字母是 R/L/W，再看第二个字母
+      // 模型识别单个字母比识别整体符号 "Rl vs Lu" 更可靠
+      const RL_VERIFY_PROMPT = `我在读取这张皮纹报告时，没有检测到任何 Rl（反箕纹）。
+但 Rl 最容易被误读：它第一个字母是大写 R，而 Lu 第一个字母是大写 L，两者字形相似。
+
+请按以下两步核查所有 10 个脑区：
+
+【第一步】只看每个脑区纹型符号的第一个字母，分辨是 R、L、还是 W：
+- R（大写R，右边有斜腿向外伸出的字母）
+- L（大写L，一竖一横成直角的字母）
+- W（大写W）
+
+【第二步】对第一步中确认是 R 开头的脑区，再看第二个字母：
+- 第二个字母是小写 l（像数字1的竖线）→ 这是 Rl（反箕纹，逆思型标志符号）
+- 第二个字母是 pe → 这是 Rpe，不是 Rl
+- 第二个字母是 wl → 这是 Rwl，不是 Rl
+
+只输出 JSON：
+{"has_rl": true 或 false, "rl_zones": ["脑区中文名1", "脑区中文名2"]}
+如没有 Rl 则 rl_zones 为空数组。`;
+
+      const ctrl2 = new AbortController();
+      const t2 = setTimeout(() => ctrl2.abort(), 25000);
+      const rlRes = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${process.env.DASHSCOPE_API_KEY || ''}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'qwen-vl-plus',
+          max_tokens: 150,
+          messages: [{
+            role: 'user',
+            content: [
+              { type: 'image_url', image_url: { url: `data:${imageMimeType};base64,${imageBase64}` } },
+              { type: 'text', text: RL_VERIFY_PROMPT },
+            ],
+          }],
+        }),
+        signal: ctrl2.signal,
+      });
+      clearTimeout(t2);
+
+      if (rlRes.ok) {
+        const rlData  = await rlRes.json().catch(() => null);
+        const rlRaw   = rlData?.choices?.[0]?.message?.content?.trim() || '';
+        const rlCheck = extractJSON(rlRaw);
+        console.log('[extract-fp] Rl check result:', rlRaw.slice(0, 200));
+
+        if (rlCheck?.has_rl && Array.isArray(rlCheck.rl_zones) && rlCheck.rl_zones.length > 0) {
+          // 按脑区中文关键词映射到手指键
+          const ZONE_KW_MAP = [
+            { keywords: ['逻辑','语言功能'],         key: 'R2' },
+            { keywords: ['空间','心像','构思'],       key: 'L2' },
+            { keywords: ['听觉辨识','语言理解'],      key: 'R4' },
+            { keywords: ['听觉感受','音乐'],          key: 'L4' },
+            { keywords: ['视觉辨识','观察'],          key: 'R5' },
+            { keywords: ['视觉感受','图像'],          key: 'L5' },
+            { keywords: ['体觉辨识','操作'],          key: 'R3' },
+            { keywords: ['体觉感受','艺术'],          key: 'L3' },
+            { keywords: ['沟通','计划'],              key: 'R1' },
+            { keywords: ['创造','领导','目标憧憬'],   key: 'L1' },
+          ];
+          for (const zone of rlCheck.rl_zones) {
+            for (const { keywords, key } of ZONE_KW_MAP) {
+              if (keywords.some(kw => zone.includes(kw))) {
+                console.log(`[extract-fp] correcting ${key}: Lu → Rl (zone="${zone}")`);
+                fingers = { ...fingers, [key]: { ...fingers[key], sym: 'Rl' } };
+                break;
+              }
+            }
+          }
+        }
+      }
+    } catch(e) {
+      console.warn('[extract-fp] Rl verify pass error (non-blocking):', e.message);
+    }
+  }
+
   const atd     = (parsed.atd !== null && parsed.atd !== undefined)
                   ? parseFloat(String(parsed.atd)) : null;
   const name    = parsed.name  ? String(parsed.name).trim()  : null;
