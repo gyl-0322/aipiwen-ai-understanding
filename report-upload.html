@@ -1314,17 +1314,57 @@ qs('#rv-track').addEventListener('touchend',   e => {
   if (Math.abs(dx) > 45) rvGoTo(RV.cur + (dx<0?1:-1));
 }, {passive:true});
 
-// Share modal
-qs('#smodal').addEventListener('click', e => { if(e.target===qs('#smodal')) qs('#smodal').classList.remove('open'); });
-qs('#sm-close').addEventListener('click', () => qs('#smodal').classList.remove('open'));
+// Share modal — 关闭时还原状态（移除已生成的 img/提示，显回 poster-card）
+function _resetShareModal() {
+  const card = qs('#poster-card');
+  if (card) card.style.display = '';
+  qs('#smodal')?.querySelectorAll('.sm-gen-img,.sm-gen-hint').forEach(el => el.remove());
+  const btn = qs('#sm-save');
+  if (btn) { btn.textContent = '保存图片'; btn.disabled = false; }
+}
+
+qs('#smodal').addEventListener('click', e => {
+  if (e.target === qs('#smodal')) { qs('#smodal').classList.remove('open'); _resetShareModal(); }
+});
+qs('#sm-close').addEventListener('click', () => {
+  qs('#smodal').classList.remove('open'); _resetShareModal();
+});
+
 qs('#sm-save').addEventListener('click', async () => {
+  const btn = qs('#sm-save');
+  const origText = btn.textContent;
+  btn.disabled = true; btn.textContent = '生成中…';
   try {
-    const c = await html2canvas(qs('#poster-card'), {backgroundColor:'#0E1118',scale:3,useCORS:true});
-    const a = document.createElement('a');
-    a.download = `aipiwen-${ST.engineResult?.主性格类型||'report'}.png`;
-    a.href = c.toDataURL('image/png');
-    a.click();
-  } catch(e) { alert('保存失败，请截图保存'); }
+    const c = await html2canvas(qs('#poster-card'), {backgroundColor:'#0E1118', scale:3, useCORS:true});
+    const dataUrl = c.toDataURL('image/png');
+    const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+    if (isMobile) {
+      // 手机端：渲染成 <img>，引导长按保存（<a download> 在微信/各厂浏览器被拦截）
+      const img = document.createElement('img');
+      img.src = dataUrl;
+      img.className = 'sm-gen-img';
+      img.style.cssText = 'width:100%;max-width:320px;border-radius:16px;display:block;margin:0 auto;';
+      const hint = document.createElement('p');
+      hint.className = 'sm-gen-hint';
+      hint.textContent = '长按图片 → 保存到相册';
+      hint.style.cssText = 'text-align:center;color:rgba(253,252,248,.45);font-size:13px;margin:10px 0 0;letter-spacing:.04em;';
+      const card = qs('#poster-card');
+      card.style.display = 'none';                        // 隐藏原 DOM 海报
+      card.parentNode.insertBefore(img,  card.nextSibling);
+      card.parentNode.insertBefore(hint, img.nextSibling);
+      btn.textContent = '长按上方图片保存'; btn.disabled = false;
+    } else {
+      // PC 端：<a download> 正常下载
+      const a = document.createElement('a');
+      a.download = `aipiwen-${ST.engineResult?.主性格类型||'report'}.png`;
+      a.href = dataUrl;
+      a.click();
+      btn.textContent = origText; btn.disabled = false;
+    }
+  } catch(e) {
+    alert('生成失败，请截图保存');
+    btn.textContent = origText; btn.disabled = false;
+  }
 });
 
 // Screen 1 share btn (in report, added lazily)
