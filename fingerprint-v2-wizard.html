@@ -808,6 +808,7 @@ body {
   text-align: center;
   background: var(--cream);
   transition: all .18s;
+  position: relative; /* 🔍 zoom icon 绝对定位基准 */
 }
 .s6-whorl-card:hover { border-color: var(--amber); background: var(--amber-soft); }
 .s6-whorl-card.selected { border-color: var(--amber); background: var(--amber-soft); }
@@ -850,6 +851,7 @@ body {
   text-align: center;
   background: var(--cream);
   transition: all .18s;
+  position: relative; /* 🔍 zoom icon 绝对定位基准 */
 }
 .s6-arc-card:hover { border-color: var(--amber); background: var(--amber-soft); }
 .s6-arc-card.selected { border-color: var(--amber); background: var(--amber-soft); }
@@ -867,6 +869,30 @@ body {
 /* ─── ZOOM MODAL ─── */
 .zoomable { cursor: zoom-in; transition: transform .18s; }
 .zoomable:hover { transform: scale(1.08); }
+/* 🔍 独立缩放按钮（s6 拇指子型卡片右上角）*/
+.s6-card-zoom-btn {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 16px;
+  height: 16px;
+  font-size: 9px;
+  line-height: 1;
+  padding: 0;
+  border: none;
+  background: rgba(0,0,0,.10);
+  border-radius: 3px;
+  cursor: pointer;
+  color: var(--ink-40);
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity .15s;
+}
+.s6-whorl-card:hover .s6-card-zoom-btn,
+.s6-arc-card:hover .s6-card-zoom-btn { opacity: 1; }
 .zoom-modal {
   display: none;
   position: fixed;
@@ -2445,6 +2471,44 @@ function wecomeClick() {
 <script>
 // Growth tracker init — fires after tracker loads
 if (window.GT) GT.track('page_open');
+</script>
+<script>
+/* ─────────────────────────────────────────────────────────────────
+   P0① FIX: S6 拇指子型卡片 — 点图不能选中
+   根因: img.onclick = "event.stopPropagation();showZoom(...)" 阻断了
+         父 .s6-whorl-card / .s6-arc-card 的 onclick="s6WSelect(...)"
+   修法: 移除 img 上的冲突 onclick，改为右上角单独的 🔍 小按钮触发缩放
+         这样「点卡片任意区域 = 选中」「点🔍 = 放大确认（不干扰选中态）」
+   ─────────────────────────────────────────────────────────────── */
+(function fixS6CardZoom() {
+  const cards = document.querySelectorAll('.s6-whorl-card img, .s6-arc-card img');
+  cards.forEach(function(img) {
+    var oc = img.getAttribute('onclick') || '';
+    // 只处理含 stopPropagation 的图片（即 s6 子型卡片内的图片）
+    if (oc.indexOf('stopPropagation') === -1) return;
+    // 提取 showZoom 参数
+    var m = oc.match(/showZoom\('([^']+)','([^']+)'\)/);
+    if (!m) { img.removeAttribute('onclick'); return; }
+    var zSrc = m[1], zName = m[2];
+    // 移除图片的冲突 onclick，img 变成普通展示图片（点击冒泡到父卡片 → 选中）
+    img.removeAttribute('onclick');
+    img.classList.remove('zoomable');
+    img.style.cursor = 'pointer'; // 跟卡片保持一致
+    // 向父卡片注入 🔍 缩放按钮（仅注入一次）
+    var card = img.parentElement;
+    if (!card || card.querySelector('.s6-card-zoom-btn')) return;
+    var btn = document.createElement('button');
+    btn.className = 's6-card-zoom-btn';
+    btn.setAttribute('title', '放大查看');
+    btn.setAttribute('type', 'button');
+    btn.textContent = '🔍';
+    btn.addEventListener('click', function(e) {
+      e.stopPropagation(); // 仅缩放，不触发选中
+      showZoom(zSrc, zName);
+    });
+    card.appendChild(btn);
+  });
+})();
 </script>
 </body>
 </html>
