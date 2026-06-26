@@ -9,7 +9,7 @@
 <meta property="og:title" content="AIPIWEN · 专属报告解读">
 <meta property="og:description" content="上传皮纹测评总表，AI 精确解读天赋数据，生成专属个性化报告。">
 <meta property="og:image" content="https://www.aipiwen.cn/share/aipiwen-practitioner-card.jpg">
-<meta property="og:url" content="https://www.aipiwen.cn/report-upload">
+<!-- og:url 不写死：微信转发含 ?rid= 的链接时，若写死 base URL 微信会剥离 ?rid= 参数，导致收件人打开看到上传页 -->
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="AIPIWEN · 专属报告解读">
 <meta name="twitter:description" content="上传皮纹测评总表，AI 精确解读天赋数据，生成专属个性化报告。">
@@ -1375,7 +1375,22 @@ function buildReportFlipBook(sections) {
         // 仅微信内置 WebView 拦截（不支持 blob download）
         // 华为/小米/Chrome 等手机浏览器原生支持，直接下载
         if (/MicroMessenger/i.test(navigator.userAgent)) {
-          alert('微信内无法直接下载 PDF。\n\n请点右上角「···」→「在浏览器中打开」，再点下载即可。');
+          // 构造可在外部浏览器打开并自动触发 PDF 下载的链接
+          const pdfUrl = (_clientShareUrl || '') + (_clientShareUrl ? '&pdf=1' : '');
+          if (pdfUrl && _clientShareUrl) {
+            // 复制到剪贴板（微信内 clipboard.writeText 兼容性差，用 execCommand 兜底）
+            try {
+              const ta = document.createElement('textarea');
+              ta.value = pdfUrl; ta.style.cssText = 'position:fixed;left:-9999px;opacity:0;';
+              document.body.appendChild(ta); ta.select(); document.execCommand('copy');
+              document.body.removeChild(ta);
+              alert('已复制报告链接！\n\n请点右上角「···」→「在浏览器中打开」，浏览器会自动开始下载 PDF。\n\n（或在浏览器地址栏粘贴刚才复制的链接）');
+            } catch(_) {
+              alert('微信内无法直接下载 PDF。\n\n请复制链接在外部浏览器打开：\n' + pdfUrl);
+            }
+          } else {
+            alert('微信内无法直接下载 PDF。\n\n请点右上角「···」→「在浏览器中打开」，再点下载即可。');
+          }
           return;
         }
         generateReportPDF(this, '#rv-track .rv-slide');
@@ -1642,6 +1657,15 @@ qs('#cmodal-copy').addEventListener('click', () => {
       buildReportFlipBook(rep.sections);
       goScreen('s4');
       qs('#rv-client-btn').style.display = 'none'; // 客户不看"发客户"按钮
+
+      // ?pdf=1：从微信「在浏览器中打开」跳转来的，自动触发 PDF 下载
+      const autoPdf = new URLSearchParams(location.search).get('pdf');
+      if (autoPdf === '1') {
+        setTimeout(() => {
+          const dlBtn = qs('#rv-dl-btn');
+          if (dlBtn) dlBtn.click();
+        }, 1200); // 等翻书动画稳定后再触发
+      }
     })
     .catch(() => {
       loadEl.remove();
