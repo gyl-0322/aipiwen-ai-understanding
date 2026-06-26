@@ -102,10 +102,23 @@ async function handleWechat(req, res) {
       const msgData  = await wxSyncMessages(at, kfToken, openKfId);
       if (!msgData.msg_list?.length) return;
       for (const msg of msgData.msg_list) {
+        const fromUser = msg.external_userid || msg.open_kfid;
+        if (!fromUser) continue;
+
+        // ── 进入会话事件 → 主动发欢迎语（覆盖企微后台静态欢迎语）──────────
+        if (msg.msgtype === 'event' && msg.event?.event_type === 'enter_session') {
+          await wxSendMsg(at, msg.external_userid, openKfId,
+            `你好 👋\n\n` +
+            `我是AIPIWEN皮纹天赋顾问助手，很高兴见到你！\n\n` +
+            `如果你刚完成了皮纹速测，可以把你的天赋类型告诉我；顾问会在工作时间（9:00–21:00）联系你，帮你了解孩子的成长方案。\n\n` +
+            `也可以直接告诉我你最想解答的问题 😊`
+          );
+          continue;
+        }
+
         if (msg.msgtype !== 'text') continue;
         const text = (msg.text?.content) || '';
-        const fromUser = msg.external_userid;
-        if (!fromUser || !text.trim()) continue;
+        if (!text.trim()) continue;
 
         // ── 皮纹天赋测评用户（来自速测结果页"联系顾问"按钮）──────────────
         if (text.includes('AIPIWEN皮纹天赋测评') || text.includes('皮纹天赋')) {
