@@ -1044,9 +1044,21 @@ function closeShareCard() {
   document.getElementById('share-overlay').classList.remove('show');
 }
 
-document.getElementById('share-overlay').addEventListener('click', function(e) {
-  if (e.target === this) closeShareCard();
-});
+// #share-overlay 在 DOM 靠后位置（line 1123），此脚本早于它执行
+// 用 readyState 守卫，避免 null.addEventListener 错误
+(function () {
+  function _bindShareOverlay() {
+    var el = document.getElementById('share-overlay');
+    if (el) el.addEventListener('click', function (e) {
+      if (e.target === this) closeShareCard();
+    });
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', _bindShareOverlay);
+  } else {
+    _bindShareOverlay();
+  }
+})();
 
 // ── 首次使用引导 ──────────────────────────────────────────────
 (function() {
