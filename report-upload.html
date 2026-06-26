@@ -802,8 +802,8 @@ function getAgeTier(age) {
   if (n <= 6)  return 'preschool';
   if (n <= 12) return 'school';
   if (n <= 15) return 'junior_teen';
-  if (n <= 18) return 'senior_teen';
-  if (n <= 25) return 'young_adult';  // 18-25 大学·初入职
+  if (n <= 18) return 'senior_teen';  // ≤18 → 中学段（00i：18岁高考生用中学段，不进18-25段）
+  if (n <= 25) return 'young_adult';  // ≥19 → 大学·初入职
   if (n <= 40) return 'adult';        // 25-40 职业发展期
   return 'mature_adult';              // 40+ 成熟·转型期
 }

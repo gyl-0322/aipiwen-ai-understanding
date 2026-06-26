@@ -35,14 +35,17 @@ const VALID_SYMS = new Set([
 const FINGERS = ['R1','R2','R3','R4','R5','L1','L2','L3','L4','L5'];
 
 // ── 脑区 → 手指键 固定映射（跨机构通用）──────────────────────────────────
-// 正确对应关系（经 Emma 确认）：
+// ⚠️ 拇指映射要按【列标题名称】对应，不能按表格位置/左右顺序：
+//   "创造领导/目标憧憬" = 开创力 → R1（右拇指）
+//   "沟通管理/计划判断" = 管理力 → L1（左拇指）
+// 错误反转会导致高低互换、职业推荐完全相反（陈凯歌案例已确认）
 const ZONE_TO_FINGER = {
-  comm_plan:       'R1',  // 沟通管理/计划判断   → 右拇指
+  create_lead:     'R1',  // 创造领导/目标憧憬   → 右拇指（开创力）
   logic_verbal:    'R2',  // 逻辑推理/语言功能   → 右食指
   kinetic_ops:     'R3',  // 体觉辨识/操作理解   → 右中指
   audio_lang:      'R4',  // 听觉辨识/语言理解   → 右无名指
   visual_obs:      'R5',  // 视觉辨识/观察理解   → 右小指
-  create_lead:     'L1',  // 创造领导/目标憧憬   → 左拇指
+  comm_plan:       'L1',  // 沟通管理/计划判断   → 左拇指（管理力）
   spatial_imagine: 'L2',  // 空间心像/构思拟想   → 左食指
   kinetic_art:     'L3',  // 体觉感受/艺术欣赏   → 左中指
   audio_music:     'L4',  // 听觉感受/音乐欣赏   → 左无名指
@@ -350,8 +353,8 @@ module.exports = async function handler(req, res) {
         { keywords: ['视觉感受','图像'],          key: 'L5' },
         { keywords: ['体觉辨识','操作'],          key: 'R3' },
         { keywords: ['体觉感受','艺术'],          key: 'L3' },
-        { keywords: ['沟通','计划'],              key: 'R1' },
-        { keywords: ['创造','领导','目标憧憬'],   key: 'L1' },
+        { keywords: ['创造','领导','目标憧憬'],   key: 'R1' },  // 开创力 → 右拇
+        { keywords: ['沟通','计划'],              key: 'L1' },  // 管理力 → 左拇
       ];
       function zoneToKey(zoneName) {
         for (const { keywords, key } of ZONE_KW_MAP) {
