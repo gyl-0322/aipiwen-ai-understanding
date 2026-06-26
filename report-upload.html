@@ -1224,7 +1224,7 @@ function buildReportFlipBook(sections) {
     <div class="fin-h">${type}，就是你。</div>
     <div class="fin-sub">${cfg.finMsg}<br><br>想聊更多，我在这里。</div>
     <div class="btn-row">
-      <button class="btn-primary" onclick="window.location='/child-chat.html'" style="background:var(--th-p);border-color:var(--th-p)">继续深聊 →</button>
+      <button class="btn-primary" onclick="openDeepChat()" style="background:var(--th-p);border-color:var(--th-p)">继续深聊 →</button>
       <button class="btn-sec" id="rv-share-open">分享这份报告</button>
       <button class="btn-sec" id="rv-dl-fin">下载报告 PDF</button>
     </div>`;
@@ -1440,6 +1440,42 @@ qs('#sm-save').addEventListener('click', async () => {
 
 // Screen 1 share btn (in report, added lazily)
 qs('#rv-share-btn').addEventListener('click', () => qs('#smodal').classList.add('open'));
+
+// ─── 继续深聊：把当前报告数据打包存入 sessionStorage，跳转到对话页 ────────
+function openDeepChat() {
+  const E = ST.engineResult;
+  if (!E) { window.location = '/child-chat.html?for=self'; return; }
+
+  const name    = ST.name || '';
+  const age     = ST.age  || '';
+  const type    = E.主性格类型 || '';
+  const fn      = E.五功能区 || {};
+  const chan    = E.学习通道 || {};
+  const bm      = E.行为模式 || {};
+  const lr      = E.左右脑   || {};
+  const atd     = E.ATD      || {};
+
+  // 构建报告摘要，含性格类型关键词 → guest-chat.js 自动注入完整 TRC 知识库
+  const summary = [
+    `【皮纹天赋报告数据·深聊上下文】`,
+    name  ? `姓名：${name}` : '',
+    age   ? `年龄：${age}岁` : '',
+    type  ? `性格主类型：${type}${E.叠加特质?.逆向思维R ? '（含逆向思维叠加）' : ''}` : '',
+    chan.主通道              ? `学习通道：${chan.主通道}` : '',
+    bm.结论                  ? `行为模式：${bm.结论}` : '',
+    lr.结论                  ? `左右脑：${lr.结论}，左脑占比${lr.左脑占比}%` : '',
+    fn.总TRC                 ? `TRC总分：${fn.总TRC}，均值：${fn.个人均值}` : '',
+    atd.值                   ? `ATD：${atd.值}°（${atd.分区}）` : '',
+    (fn.精神 || fn.思维)     ? `五功能区——精神:${fn.精神} 思维:${fn.思维} 体觉:${fn.体觉} 听觉:${fn.听觉} 视觉:${fn.视觉}` : '',
+    `（用户刚看完以上皮纹报告，希望继续追问深入了解天赋特征）`,
+  ].filter(Boolean).join('\n');
+
+  try { sessionStorage.setItem('aipiwen_report_deepchat', summary); } catch(e) {}
+
+  // 18岁及以下用 child 视角，18+ 用 self
+  const forParam = (age && Number(age) <= 18) ? 'child' : 'self';
+  window.location = `/child-chat.html?for=${forParam}&mode=report`;
+}
 
 // ─── 客户分享弹窗 ─────────────────────────────────────────────────────────
 qs('#rv-client-btn').addEventListener('click', () => qs('#cmodal').classList.add('open'));

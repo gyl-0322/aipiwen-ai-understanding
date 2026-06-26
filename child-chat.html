@@ -377,7 +377,10 @@ body.chat-mode { height:100vh; overflow:hidden; }
 <script src="js/aipiwen-core.js"></script>
 <script>
 // ── Context config ────────────────────────────────────────────
-const _for = new URLSearchParams(location.search).get('for') || 'child';
+const _urlParams = new URLSearchParams(location.search);
+const _for  = _urlParams.get('for')  || 'child';
+const _mode = _urlParams.get('mode') || '';      // 'report' = 从报告页跳转的深聊
+const REPORT_DEEPCHAT_KEY = 'aipiwen_report_deepchat';
 let _subjectAge = null;   // 被测者年龄，由年龄芯片选择设置
 
 // ── 邀请来源捕获 & 本机邀请 token ─────────────────────────────
@@ -619,6 +622,17 @@ function saveMemorySession(behavior, firstAIReply) {
 }
 
 function buildPreviousContext() {
+  // 优先：从报告页跳转时存入 sessionStorage 的报告摘要
+  // 摘要含性格类型关键词 → guest-chat.js 自动注入完整 TRC 知识库
+  try {
+    const reportCtx = sessionStorage.getItem(REPORT_DEEPCHAT_KEY);
+    if (reportCtx) {
+      sessionStorage.removeItem(REPORT_DEEPCHAT_KEY);
+      return reportCtx;
+    }
+  } catch(e) {}
+
+  // 常规：本地历史记忆
   const mem = loadMemory();
   if (!mem.length) return '';
   return mem.slice(0, 3).map((m, i) =>
@@ -642,6 +656,20 @@ let chatHistory = [];
 let currentReportId = '';
 let isProcessing = false;
 let sessionPrevContext = ''; // 每次 session 开始时设置，全程复用
+
+// ── mode=report：从报告页跳转，自动预填并直接提交 ─────────────────────────
+if (_mode === 'report') {
+  // 等页面渲染完毕后触发，避免 submitBehavior 找不到 DOM
+  window.addEventListener('DOMContentLoaded', () => {
+    const ta = document.getElementById('behavior-input');
+    if (ta) ta.value = '我刚看完了我的皮纹报告，想继续深入了解我的天赋特征';
+    // 隐藏年龄选择行（年龄已在报告摘要里）
+    const ageRow = document.getElementById('age-row');
+    if (ageRow) ageRow.style.display = 'none';
+    // 延迟 300ms 让动画完成后提交
+    setTimeout(() => submitBehavior(), 300);
+  });
+}
 let _sessionId = '';          // 每次对话唯一ID，用于服务端日志
 
 async function submitBehavior() {
