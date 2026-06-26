@@ -1225,6 +1225,7 @@ function buildReportFlipBook(sections) {
   const track = qs('#rv-track');
   track.innerHTML = '';
   RV.slides = [];
+  RV.sections = sections; // PDF 渲染时直接读取原始 sections（内联主题版）
 
   const E   = ST.engineResult;
   const tier = ST.ageTier || 'school';
@@ -1393,65 +1394,283 @@ function buildReportFlipBook(sections) {
           }
           return;
         }
-        generateReportPDF(this, '#rv-track .rv-slide');
+        generateReportPDF(this);
       });
     });
   }, 100);
 }
 
-// ─── PDF 下载（jsPDF 多页翻书）────────────────────────────────────────────────
-async function generateReportPDF(btnEl, slideSelector) {
+// ─── PDF 下载（内联主题版 · 修复 CSS 变量继承 · 按年龄段差异化渲染）─────────────
+// 根本原因：克隆的 .rv-slide 不在 #s4 内，CSS 自定义变量 --th-* 无法继承
+// 解决方案：完全用内联 style 重建每页 HTML，不依赖 CSS 变量
+function getPDFTheme(ageTier) {
+  const T = {
+    preschool:   { bg:'#1A0F06',acc:'#FF8C42',acc2:'#FFB347',text:'#FDFCF8',dim:'rgba(253,252,248,.7)',faint:'rgba(253,252,248,.36)',border:'rgba(255,140,66,.22)',card:'rgba(255,140,66,.09)',r:'14px',serif:'Georgia,"Noto Serif SC",serif',badge:'学龄前报告' },
+    school:      { bg:'#081420',acc:'#3E9BDB',acc2:'#5AB8E8',text:'#FDFCF8',dim:'rgba(253,252,248,.7)',faint:'rgba(253,252,248,.36)',border:'rgba(62,155,219,.22)',card:'rgba(62,155,219,.08)',r:'13px',serif:'Georgia,"Noto Serif SC",serif',badge:'小学阶段报告' },
+    junior_teen: { bg:'#0D0A1E',acc:'#8B5CF6',acc2:'#00D4FF',text:'#FDFCF8',dim:'rgba(253,252,248,.7)',faint:'rgba(253,252,248,.36)',border:'rgba(139,92,246,.26)',card:'rgba(139,92,246,.09)',r:'12px',serif:'"PingFang SC","Noto Sans SC",sans-serif',badge:'初中阶段报告' },
+    senior_teen: { bg:'#080C14',acc:'#C9A84C',acc2:'#E2C97E',text:'#FDFCF8',dim:'rgba(253,252,248,.7)',faint:'rgba(253,252,248,.36)',border:'rgba(201,168,76,.24)',card:'rgba(201,168,76,.08)',r:'10px',serif:'Georgia,"Noto Serif SC",serif',badge:'高中阶段报告' },
+    adult:       { bg:'#0E1118',acc:'#C2692A',acc2:'#E8854A',text:'#FDFCF8',dim:'rgba(253,252,248,.7)',faint:'rgba(253,252,248,.36)',border:'rgba(255,255,255,.09)',card:'rgba(255,255,255,.05)',r:'12px',serif:'Georgia,"Noto Serif SC",serif',badge:'成人报告' },
+    mature_adult:{ bg:'#0E1118',acc:'#C2692A',acc2:'#E8854A',text:'#FDFCF8',dim:'rgba(253,252,248,.7)',faint:'rgba(253,252,248,.36)',border:'rgba(255,255,255,.09)',card:'rgba(255,255,255,.05)',r:'12px',serif:'Georgia,"Noto Serif SC",serif',badge:'成人报告' },
+  };
+  return T[ageTier] || T.adult;
+}
+// 内联样式正文格式化（PDF 无 CSS 类，必须全用 style）
+function fmtPDF(text, th, bf) {
+  if (!text) return '';
+  let html = text
+    .replace(/\*\*(.+?)\*\*/g, `<strong style="color:${th.text};font-weight:600;">$1</strong>`)
+    .replace(/\*(.+?)\*/g, `<em style="color:${th.acc};font-style:normal;">$1</em>`);
+  const rawParas = html.split(/\n\n+/);
+  const seen = new Set();
+  const paras = rawParas.filter(p => { const k=p.trim(); if(!k||seen.has(k)) return false; seen.add(k); return true; });
+  return paras.map((p,i) => {
+    const lines = p.replace(/\n/g,'<br>');
+    if (i===0 && paras.length>1)
+      return `<div style="border-left:3px solid ${th.acc};background:${th.card};border-radius:0 ${th.r} ${th.r} 0;padding:12px 14px;margin-bottom:11px;font-size:13.5px;line-height:1.82;font-style:italic;font-family:${bf};">${lines}</div>`;
+    return `<p style="font-size:13.5px;line-height:1.85;margin-bottom:10px;color:${th.dim};font-family:${bf};">${lines}</p>`;
+  }).join('');
+}
+async function generateReportPDF(btnEl) {
   const origText = btnEl ? btnEl.textContent : '';
   if (btnEl) { btnEl.disabled = true; btnEl.textContent = '生成中…'; }
+
+  const th  = getPDFTheme(ST.ageTier || 'adult');
+  const E   = ST.engineResult;
+  const cfg = getThemeConfig(ST.ageTier || 'adult');
+  const fpSrc  = FP_IMGS[KEY2IMG[E?.key||'w'] || 'whorl'];
+  const type   = E?.主性格类型 || '天赋型';
+  const reportId = `FP-${new Date().getFullYear()}-${(E?.key||'w').toUpperCase().slice(0,2)}${Math.floor(Math.random()*900+100)}`;
+  const sections = RV.sections || [];
+  const bf = `-apple-system,'PingFang SC','Noto Sans SC',sans-serif`; // body font
+
   const renderDiv = document.createElement('div');
-  Object.assign(renderDiv.style, {
-    position: 'fixed', left: '-9999px', top: '0',
-    width: '390px', background: '#0E1118', overflow: 'hidden', zIndex: '-999'
-  });
+  Object.assign(renderDiv.style, { position:'fixed', left:'-9999px', top:'0', width:'390px', overflow:'visible', zIndex:'-999' });
   document.body.appendChild(renderDiv);
+
+  // ── 共用页头/页尾 ─────────────────────────────────────────────────────────
+  function pHdr(n) {
+    return `<div style="display:flex;align-items:center;justify-content:space-between;padding:15px 24px 12px;border-bottom:1px solid ${th.border};">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <div style="width:18px;height:1.5px;background:${th.acc};border-radius:1px;"></div>
+        <div style="font-size:9px;letter-spacing:.24em;color:${th.acc};font-weight:700;text-transform:uppercase;font-family:${bf};">AIPIWEN</div>
+      </div>
+      <div style="font-size:9.5px;color:${th.faint};font-family:${bf};">${n}</div>
+    </div>`;
+  }
+  function pFtr() {
+    return `<div style="padding:9px 24px 11px;border-top:1px solid ${th.border};text-align:center;">
+      <div style="font-size:8.5px;color:${th.faint};letter-spacing:.1em;font-family:${bf};">皮纹测评专属报告 · AIPIWEN.CN</div>
+    </div>`;
+  }
+  function wrap(inner) {
+    return `<div style="width:390px;background:${th.bg};font-family:${bf};color:${th.text};overflow:hidden;display:flex;flex-direction:column;">${inner}</div>`;
+  }
+
+  // ── 封面（Slide 0）──────────────────────────────────────────────────────────
+  function buildCover() {
+    const traits = [];
+    if (E?.叠加特质?.M型) traits.push('M型');
+    if (E?.叠加特质?.逆向思维R) traits.push('逆向思维+R');
+    const traitStr = traits.join(' · ');
+    const deco = cfg?.deco ? `<div style="font-size:22px;letter-spacing:8px;text-align:center;margin-bottom:10px;">${cfg.deco}</div>` : '';
+    return wrap(`
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;padding:30px 28px 22px;">
+        ${deco}
+        <div style="font-size:9px;letter-spacing:.24em;color:${th.acc};font-weight:700;text-transform:uppercase;margin-bottom:18px;align-self:flex-start;font-family:${bf};">AIPIWEN · 专属报告</div>
+        <div style="border:1px solid ${th.border};border-radius:20px;padding:4px 16px;font-size:9.5px;letter-spacing:.15em;color:${th.acc};text-transform:uppercase;margin-bottom:20px;font-family:${bf};">${th.badge}</div>
+        <div style="margin-bottom:18px;text-align:center;">
+          <img src="${fpSrc}" style="width:145px;height:145px;object-fit:contain;" alt="">
+        </div>
+        <div style="font-family:${th.serif};font-size:36px;font-weight:700;color:${th.text};text-align:center;margin-bottom:7px;line-height:1.2;">${type}</div>
+        <div style="width:36px;height:2px;background:${th.acc};border-radius:1px;margin:0 auto 13px;"></div>
+        <div style="font-size:12.5px;color:${th.dim};text-align:center;margin-bottom:16px;line-height:1.7;">${ST.name?`<strong style="color:${th.text};">${ST.name}</strong> · `:''} ${ST.age}岁 · 专属皮纹报告</div>
+        <div style="display:flex;flex-wrap:wrap;gap:7px;justify-content:center;margin-bottom:18px;">
+          ${[E?.学习通道?.主通道,E?.行为模式?.结论,E?.ATD?.分区].filter(Boolean).map(t=>
+            `<div style="border:1px solid ${th.border};border-radius:20px;padding:4px 12px;font-size:10.5px;color:${th.acc};background:${th.card};">${t}</div>`
+          ).join('')}
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%;margin-bottom:13px;">
+          <div style="background:${th.card};border:1px solid ${th.border};border-radius:${th.r};padding:11px 13px;">
+            <div style="font-size:9px;color:${th.faint};letter-spacing:.12em;text-transform:uppercase;margin-bottom:4px;">左脑占比</div>
+            <div style="font-size:18px;color:${th.acc};font-weight:700;">${E?.左右脑?.左脑占比||'—'}%</div>
+          </div>
+          <div style="background:${th.card};border:1px solid ${th.border};border-radius:${th.r};padding:11px 13px;">
+            <div style="font-size:9px;color:${th.faint};letter-spacing:.12em;text-transform:uppercase;margin-bottom:4px;">个人均值</div>
+            <div style="font-size:18px;color:${th.acc};font-weight:700;">${E?.五功能区?.个人均值||'—'} TRC</div>
+          </div>
+          ${traitStr?`<div style="grid-column:1/-1;background:${th.card};border:1px solid ${th.border};border-radius:${th.r};padding:10px 13px;">
+            <div style="font-size:9px;color:${th.faint};letter-spacing:.12em;text-transform:uppercase;margin-bottom:4px;">叠加特质</div>
+            <div style="font-size:13px;color:${th.acc};font-weight:600;">${traitStr}</div>
+          </div>`:''}
+        </div>
+        <div style="width:100%;height:1px;background:${th.border};margin-bottom:10px;"></div>
+        <div style="font-size:9.5px;color:${th.faint};text-align:center;line-height:1.9;">
+          报告编号 <span style="color:${th.acc};">${reportId}</span>&nbsp;·&nbsp;${new Date().toLocaleDateString('zh-CN')}
+        </div>
+      </div>
+    `);
+  }
+
+  // ── 数据总览（Slide 1）────────────────────────────────────────────────────
+  function buildData() {
+    if (!E) return null;
+    const f5 = E.五功能区 || {};
+    const mx = Math.max(f5.精神||0,f5.思维||0,f5.体觉||0,f5.听觉||0,f5.视觉||0,1);
+    const avg = f5.个人均值 || 0;
+    const bL  = E.左右脑?.左脑占比 || 50;
+    const bR  = (100-bL).toFixed(1);
+    const rows = [['精神功能','精神'],['思维功能','思维'],['体觉功能','体觉'],['听觉功能','听觉'],['视觉功能','视觉']];
+    return wrap(`
+      ${pHdr('02')}
+      <div style="flex:1;padding:18px 24px 14px;display:flex;flex-direction:column;gap:16px;">
+        <div style="font-size:10px;letter-spacing:.2em;color:${th.acc};text-transform:uppercase;font-weight:700;">数据总览 · DATA OVERVIEW</div>
+        <div style="background:${th.card};border:1px solid ${th.border};border-radius:${th.r};padding:14px 16px;">
+          <div style="display:flex;align-items:center;gap:12px;">
+            <div style="font-size:11px;color:${th.dim};width:44px;text-align:right;flex-shrink:0;line-height:1.6;">左脑<br><strong style="color:${th.acc};font-size:15px;">${bL}%</strong></div>
+            <div style="flex:1;">
+              <div style="height:10px;background:rgba(255,255,255,.08);border-radius:5px;overflow:hidden;display:flex;">
+                <div style="width:${bL}%;background:${th.acc};height:100%;"></div>
+                <div style="width:${bR}%;background:${th.acc2};height:100%;opacity:.65;"></div>
+              </div>
+              <div style="text-align:center;font-size:10.5px;color:${th.faint};margin-top:5px;">${E.左右脑?.结论||''}</div>
+            </div>
+            <div style="font-size:11px;color:${th.dim};width:44px;text-align:left;flex-shrink:0;line-height:1.6;">右脑<br><strong style="color:${th.acc2};font-size:15px;">${bR}%</strong></div>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:11px;">
+          ${rows.map(([name,key])=>{
+            const v=f5[key]||0,pct=Math.round(v/mx*100),above=v>=avg;
+            return `<div style="display:grid;grid-template-columns:70px 1fr 38px;align-items:center;gap:10px;">
+              <div style="font-size:12px;color:${th.dim};">${name}</div>
+              <div style="height:10px;background:rgba(255,255,255,.07);border-radius:5px;overflow:hidden;">
+                <div style="width:${pct}%;height:100%;background:${above?th.acc:th.acc2};opacity:${above?1:.6};border-radius:5px;"></div>
+              </div>
+              <div style="font-size:14px;color:${th.acc};font-weight:700;text-align:right;">${v}</div>
+            </div>`;
+          }).join('')}
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:auto;">
+          ${[['学习通道',E.学习通道?.主通道||'—'],['行为模式',E.行为模式?.结论||'—'],['ATD 角度',(E.ATD?.分区||'—')+(ST.atd?' · '+ST.atd+'°':'')],['个人均值',avg+' TRC']].map(([l,v])=>
+            `<div style="background:${th.card};border:1px solid ${th.border};border-radius:${th.r};padding:11px 13px;">
+              <div style="font-size:9px;color:${th.faint};letter-spacing:.12em;text-transform:uppercase;margin-bottom:4px;">${l}</div>
+              <div style="font-size:13.5px;color:${th.acc};font-weight:700;">${v}</div>
+            </div>`
+          ).join('')}
+        </div>
+      </div>
+      ${pFtr()}
+    `);
+  }
+
+  // ── 内容页（必给/issue）────────────────────────────────────────────────────
+  function buildContent(sec, n) {
+    const isIssue = sec.type==='issue', isFound = sec.type==='foundation';
+    const label = isFound?'★ 必读 · 天赋地基':isIssue?'◉ 专项解读':`▸ 专项`;
+    const kwMatches = (sec.content||'').match(/\*\*(.+?)\*\*/g)||[];
+    const kws = kwMatches.slice(0,4).map(k=>k.replace(/\*\*/g,''));
+    const kwHTML = kws.length?`<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:11px;">
+      ${kws.map(k=>`<span style="border:1px solid ${th.border};border-radius:20px;padding:3px 10px;font-size:11px;color:${th.acc};background:${th.card};">${k}</span>`).join('')}
+    </div>`:'';
+    const bodyHTML = isIssue
+      ? `<div style="display:flex;flex-direction:column;gap:9px;">
+          ${sec.why?`<div style="background:${th.card};border:1px solid ${th.border};border-radius:${th.r};padding:12px 14px;">
+            <div style="display:flex;align-items:center;gap:7px;margin-bottom:7px;">
+              <div style="width:20px;height:20px;background:${th.acc};color:${th.bg};border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;">1</div>
+              <div style="font-size:10px;font-weight:700;color:${th.acc};letter-spacing:.1em;text-transform:uppercase;">为什么会这样</div>
+            </div>
+            <div style="font-size:13px;color:${th.dim};line-height:1.8;">${sec.why.replace(/\*\*(.+?)\*\*/g,`<strong style="color:${th.text};">$1</strong>`).replace(/\n/g,'<br>')}</div>
+          </div>`:''}
+          ${sec.how?`<div style="background:${th.card};border:1px solid ${th.border};border-radius:${th.r};padding:12px 14px;">
+            <div style="display:flex;align-items:center;gap:7px;margin-bottom:7px;">
+              <div style="width:20px;height:20px;background:${th.acc};color:${th.bg};border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;">2</div>
+              <div style="font-size:10px;font-weight:700;color:${th.acc};letter-spacing:.1em;text-transform:uppercase;">怎么应对</div>
+            </div>
+            <div style="font-size:13px;color:${th.dim};line-height:1.8;">${sec.how.replace(/\*\*(.+?)\*\*/g,`<strong style="color:${th.text};">$1</strong>`).replace(/\n/g,'<br>')}</div>
+          </div>`:''}
+          ${sec.future?`<div style="background:${th.card};border:1px solid ${th.border};border-radius:${th.r};padding:12px 14px;">
+            <div style="display:flex;align-items:center;gap:7px;margin-bottom:7px;">
+              <div style="width:20px;height:20px;background:${th.acc};color:${th.bg};border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;">3</div>
+              <div style="font-size:10px;font-weight:700;color:${th.acc};letter-spacing:.1em;text-transform:uppercase;">未来可期</div>
+            </div>
+            <div style="font-size:13px;color:${th.dim};line-height:1.8;">${sec.future.replace(/\*\*(.+?)\*\*/g,`<strong style="color:${th.text};">$1</strong>`).replace(/\n/g,'<br>')}</div>
+          </div>`:''}
+        </div>`
+      : fmtPDF(sec.content||'', th, bf);
+    return wrap(`
+      ${pHdr(n)}
+      <div style="flex:1;padding:16px 24px 14px;display:flex;flex-direction:column;">
+        <div style="display:flex;align-items:center;gap:8px;font-size:9.5px;letter-spacing:.15em;color:${th.acc};text-transform:uppercase;font-weight:700;margin-bottom:9px;">${label}</div>
+        <div style="font-family:${th.serif};font-size:21px;font-weight:700;color:${th.text};margin-bottom:11px;line-height:1.32;">${sec.title}</div>
+        ${kwHTML}
+        <div style="flex:1;">${bodyHTML}</div>
+      </div>
+      ${pFtr()}
+    `);
+  }
+
+  // ── 结尾页 ─────────────────────────────────────────────────────────────────
+  function buildFinal(n) {
+    return wrap(`
+      ${pHdr(n)}
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:36px 32px;text-align:center;">
+        <div style="margin-bottom:18px;"><img src="${fpSrc}" style="width:88px;height:88px;object-fit:contain;" alt=""></div>
+        <div style="font-family:${th.serif};font-size:22px;font-weight:700;color:${th.text};margin-bottom:9px;line-height:1.3;">${type}，就是你。</div>
+        <div style="width:32px;height:2px;background:${th.acc};border-radius:1px;margin:0 auto 14px;"></div>
+        <div style="font-size:13px;color:${th.dim};line-height:1.82;margin-bottom:26px;">${cfg.finMsg}<br><br>想了解更多，欢迎继续探索。</div>
+        <div style="border:1px solid ${th.border};border-radius:${th.r};padding:13px 20px;width:100%;background:${th.card};">
+          <div style="font-size:10.5px;color:${th.faint};margin-bottom:3px;">访问 aipiwen.cn 继续深度解读</div>
+          <div style="font-size:14px;color:${th.acc};font-weight:700;letter-spacing:.04em;">AIPIWEN.CN</div>
+        </div>
+      </div>
+      ${pFtr()}
+    `);
+  }
+
+  // ── 渲染 & 生成 PDF ────────────────────────────────────────────────────────
   try {
     const { jsPDF } = window.jspdf;
     const PW = 148, PH = 210; // A5 mm
-    const pdf = new jsPDF({ unit: 'mm', format: [PW, PH] });
-    const allSlides = [...document.querySelectorAll(slideSelector)];
-    for (let i = 0; i < allSlides.length; i++) {
-      if (i > 0) pdf.addPage([PW, PH], 'portrait');
-      const clone = allSlides[i].cloneNode(true);
-      Object.assign(clone.style, {
-        width: '390px', height: 'auto', minHeight: 'auto',
-        padding: '48px 26px 40px', background: '#0E1118',
-        overflow: 'visible', display: 'flex', flexDirection: 'column'
-      });
-      renderDiv.innerHTML = '';
-      renderDiv.appendChild(clone);
-      await Promise.all([...clone.querySelectorAll('img')].map(img =>
+    const pdf = new jsPDF({ unit:'mm', format:[PW,PH] });
+
+    // 组装各页 HTML（有 engineResult 才出数据页）
+    const pages = [buildCover()];
+    const dataH = buildData();
+    if (dataH) pages.push(dataH);
+    sections.forEach((sec, i) => {
+      pages.push(buildContent(sec, String(pages.length + 1).padStart(2,'0')));
+    });
+    pages.push(buildFinal(String(pages.length + 1).padStart(2,'0')));
+
+    for (let i = 0; i < pages.length; i++) {
+      if (i > 0) pdf.addPage([PW,PH],'portrait');
+      renderDiv.innerHTML = pages[i];
+      // 等待图片加载完再截图
+      await Promise.all([...renderDiv.querySelectorAll('img')].map(img =>
         img.complete ? Promise.resolve()
-                     : new Promise(r => { img.onload = r; img.onerror = r; })
+                     : new Promise(r => { img.onload=r; img.onerror=r; })
       ));
       await new Promise(r => setTimeout(r, 80));
       const canvas = await html2canvas(renderDiv, {
-        backgroundColor: '#0E1118', scale: 2, useCORS: true, logging: false, width: 390
+        backgroundColor: th.bg, scale:2, useCORS:true, logging:false, width:390
       });
       const imgH_mm = (canvas.height / canvas.width) * PW;
-      const yOff = Math.max(0, (PH - Math.min(imgH_mm, PH)) / 2);
-      pdf.addImage(canvas.toDataURL('image/jpeg', 0.88), 'JPEG',
-                   0, yOff, PW, Math.min(imgH_mm, PH));
+      const yOff = Math.max(0, (PH - Math.min(imgH_mm,PH)) / 2);
+      pdf.addImage(canvas.toDataURL('image/jpeg',0.92),'JPEG', 0,yOff, PW, Math.min(imgH_mm,PH));
     }
-    // 手机浏览器 blob URL 会导致页面跳转卡死，用显式 <a download> 替代 pdf.save()
-    const _pdfBlob = pdf.output('blob');
-    const _pdfUrl  = URL.createObjectURL(_pdfBlob);
-    const _pdfA    = document.createElement('a');
-    _pdfA.href     = _pdfUrl;
-    _pdfA.download = 'aipiwen-皮纹报告.pdf';
-    _pdfA.style.cssText = 'position:fixed;left:-9999px;top:0;visibility:hidden;';
-    document.body.appendChild(_pdfA);
-    _pdfA.click();
-    setTimeout(() => { document.body.removeChild(_pdfA); URL.revokeObjectURL(_pdfUrl); }, 5000);
+
+    // 手机浏览器 blob URL 会导致页面跳转，用 <a download> 触发
+    const _blob = pdf.output('blob');
+    const _url  = URL.createObjectURL(_blob);
+    const _a    = document.createElement('a');
+    _a.href = _url; _a.download = 'aipiwen-皮纹报告.pdf';
+    _a.style.cssText = 'position:fixed;left:-9999px;top:0;visibility:hidden;';
+    document.body.appendChild(_a); _a.click();
+    setTimeout(() => { document.body.removeChild(_a); URL.revokeObjectURL(_url); }, 5000);
   } catch(e) {
     alert('PDF生成失败，请稍后重试。\n' + e.message);
   } finally {
     document.body.removeChild(renderDiv);
-    if (btnEl) { btnEl.disabled = false; btnEl.textContent = origText; }
+    if (btnEl) { btnEl.disabled=false; btnEl.textContent=origText; }
   }
 }
 
