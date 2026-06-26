@@ -1186,7 +1186,7 @@ function buildReportFlipBook(sections) {
       b.addEventListener('click', function() {
         // 手机端 PDF 下载在各厂商浏览器里极不稳定，引导用分享链接
         if (/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent)) {
-          alert('📱 手机端建议：\n\n点击「分享这份报告」，把链接发给客户，随时可看完整报告。\n\n如需 PDF 文件，请在电脑浏览器打开后下载。');
+          alert('手机端暂不支持 PDF 下载。\n\n建议：点击右上角「↑ 分享」保存链接，随时可打开完整报告。\n\n如需 PDF 文件，请在电脑浏览器中打开此报告后下载。');
           return;
         }
         generateReportPDF(this, '#rv-track .rv-slide');
