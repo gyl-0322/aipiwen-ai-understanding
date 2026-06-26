@@ -255,7 +255,7 @@ module.exports = async function handler(req, res) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model:      'qwen-vl-plus',
+        model:      'qwen-vl-max',
         max_tokens: 800,
         messages,
       }),
