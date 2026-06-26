@@ -81,13 +81,24 @@ const EXTRACT_PROMPT = `你是皮纹科学数据提取专家。图片是一份 T
 - 纹型符号合法值：Ws/Wt/We/Wsp/Wl/Wc/Wd/Wsc/Wpe/Rpe/Rwl/Wi/Lu/Ls/Lf/Rl/X/Xn。严格照搬图中文字，X型和Xn均有0 TRC。
 - 每个脑区 trc 必须独立读取，不可复用相同数值。
 
-⚠️ 最易混淆、后果最严重的识别错误——必须逐字核对：
-  Rl（反箕纹）vs Lu（正箕纹）：两者字形极相似，但意义完全不同。
-  · Rl = 大写R + 小写l，图中看到 "Rl" 时，首字母是 R，不是 L。
-  · Lu = 大写L + 小写u，图中看到 "Lu" 时，首字母是 L，不是 R。
-  · 识别方法：先确认第一个字母。第一个字母是 R（且不是 Rpe/Rwl），就填 Rl；第一个字母是 L 后跟 u，就填 Lu。
-  · 后果：Rl 错读为 Lu 会把"逆思型"错判为"超级模仿型"，性格类型完全相反，是最严重的误读。
-  · 如果不确定，宁可填 Rl，不要默认填 Lu。
+⚠️ 纹型符号必须按三步逐字母识别，不得直接猜读整体符号：
+
+【第一步】只看第一个字母（只有四种可能）：
+  R（大写R，右侧有斜腿/弯腿向外伸出）
+  L（大写L，一竖一横成直角，没有斜腿）
+  W（大写W，像两个V相连）
+  X（大写X，两笔交叉）
+
+【第二步】再看第二个字符：
+  第一步=R 时：第二字符是小写 l（像数字1的细竖线）→ 组合=Rl；pe → Rpe；wl → Rwl
+  第一步=L 时：第二字符是 u（圆弧形，像字母U）→ Lu；s → Ls；f → Lf
+  第一步=W 时：第二字符是 s/t/e/c/d/i/l/p/S（见合法值）
+  第一步=X 时：第二字符是 n → Xn；无第二字符 → X
+
+【第三步】有第三个字符就读（如 Wsp/Wsr/Wsc/Rpe/Rwl），没有就结束，将各步结果组合为最终符号。
+
+⚠️ 最严重误读（性格类型完全相反）：Rl（R+l）被误读为 Lu（L+u）→ 逆思型变超级模仿型。
+   若第一步确认首字母是 R（有斜腿），第二字符是 l（竖线，非圆弧u）→ 必须填 Rl，不能填 Lu。
 
 - 只输出 JSON，首字符必须是 {，末字符必须是 }。`;
 
@@ -314,26 +325,36 @@ module.exports = async function handler(req, res) {
   if (!hasRl) {
     console.warn('[extract-fp] no Rl detected, running targeted Rl verification pass');
     try {
-      // 关键改进（Emma思路）：拆成两步——先判断第一个字母是 R/L/W，再看第二个字母
-      // 模型识别单个字母比识别整体符号 "Rl vs Lu" 更可靠
+      // 三步法验证（Emma方案）：c1→c2→c3 逐字母识别，程序层兜底：c1=R且c2=l→强制Rl
       const RL_VERIFY_PROMPT = `我在读取这张皮纹报告时，没有检测到任何 Rl（反箕纹）。
-但 Rl 最容易被误读：它第一个字母是大写 R，而 Lu 第一个字母是大写 L，两者字形相似。
+请对图中所有 10 个脑区，用三步法重新核查每个纹型符号：
 
-请按以下两步核查所有 10 个脑区：
+【第一步 c1】只看第一个字母（R / L / W / X 四选一）
+  R = 右侧有斜腿向外伸出的大写R
+  L = 一竖一横成直角的大写L（无斜腿）
+  W = 大写W
+  X = 大写X
 
-【第一步】只看每个脑区纹型符号的第一个字母，分辨是 R、L、还是 W：
-- R（大写R，右边有斜腿向外伸出的字母）
-- L（大写L，一竖一横成直角的字母）
-- W（大写W）
+【第二步 c2】再看第二个字符（不看第一个，只看第二个）
+  c1=R时：是小写 l（像数字1的细竖线）还是 p 还是 w？
+  c1=L时：是 u（圆弧，像字母U）还是 s 还是 f？
+  c1=W时：是 s/t/e/c/d/i/S 等？
 
-【第二步】对第一步中确认是 R 开头的脑区，再看第二个字母：
-- 第二个字母是小写 l（像数字1的竖线）→ 这是 Rl（反箕纹，逆思型标志符号）
-- 第二个字母是 pe → 这是 Rpe，不是 Rl
-- 第二个字母是 wl → 这是 Rwl，不是 Rl
+【第三步 c3】有第三个字符吗？有则填，无则 null。
 
-只输出 JSON：
-{"has_rl": true 或 false, "rl_zones": ["脑区中文名1", "脑区中文名2"]}
-如没有 Rl 则 rl_zones 为空数组。`;
+将 c1+c2+c3 组合为最终符号 sym。
+
+⚠️ 关键：c1=R 且 c2=l（细竖线，不是圆弧的u）→ sym 必须是 Rl（反箕纹）
+
+输出严格的 JSON（不要加注释）：
+{
+  "decomp": [
+    {"zone": "脑区中文名", "c1": "第一字母", "c2": "第二字符", "c3": "第三字符或null", "sym": "组合结果"},
+    ...共10条...
+  ],
+  "has_rl": true或false,
+  "rl_zones": ["区名1"]
+}`;
 
       const ctrl2 = new AbortController();
       const t2 = setTimeout(() => ctrl2.abort(), 25000);
@@ -362,29 +383,53 @@ module.exports = async function handler(req, res) {
         const rlData  = await rlRes.json().catch(() => null);
         const rlRaw   = rlData?.choices?.[0]?.message?.content?.trim() || '';
         const rlCheck = extractJSON(rlRaw);
-        console.log('[extract-fp] Rl check result:', rlRaw.slice(0, 200));
+        console.log('[extract-fp] Rl check result:', rlRaw.slice(0, 300));
 
-        if (rlCheck?.has_rl && Array.isArray(rlCheck.rl_zones) && rlCheck.rl_zones.length > 0) {
-          // 按脑区中文关键词映射到手指键
-          const ZONE_KW_MAP = [
-            { keywords: ['逻辑','语言功能'],         key: 'R2' },
-            { keywords: ['空间','心像','构思'],       key: 'L2' },
-            { keywords: ['听觉辨识','语言理解'],      key: 'R4' },
-            { keywords: ['听觉感受','音乐'],          key: 'L4' },
-            { keywords: ['视觉辨识','观察'],          key: 'R5' },
-            { keywords: ['视觉感受','图像'],          key: 'L5' },
-            { keywords: ['体觉辨识','操作'],          key: 'R3' },
-            { keywords: ['体觉感受','艺术'],          key: 'L3' },
-            { keywords: ['沟通','计划'],              key: 'R1' },
-            { keywords: ['创造','领导','目标憧憬'],   key: 'L1' },
-          ];
-          for (const zone of rlCheck.rl_zones) {
-            for (const { keywords, key } of ZONE_KW_MAP) {
-              if (keywords.some(kw => zone.includes(kw))) {
-                console.log(`[extract-fp] correcting ${key}: Lu → Rl (zone="${zone}")`);
-                fingers = { ...fingers, [key]: { ...fingers[key], sym: 'Rl' } };
-                break;
+        const ZONE_KW_MAP = [
+          { keywords: ['逻辑','语言功能'],         key: 'R2' },
+          { keywords: ['空间','心像','构思'],       key: 'L2' },
+          { keywords: ['听觉辨识','语言理解'],      key: 'R4' },
+          { keywords: ['听觉感受','音乐'],          key: 'L4' },
+          { keywords: ['视觉辨识','观察'],          key: 'R5' },
+          { keywords: ['视觉感受','图像'],          key: 'L5' },
+          { keywords: ['体觉辨识','操作'],          key: 'R3' },
+          { keywords: ['体觉感受','艺术'],          key: 'L3' },
+          { keywords: ['沟通','计划'],              key: 'R1' },
+          { keywords: ['创造','领导','目标憧憬'],   key: 'L1' },
+        ];
+
+        function zoneToKey(zoneName) {
+          for (const { keywords, key } of ZONE_KW_MAP) {
+            if (keywords.some(kw => zoneName.includes(kw))) return key;
+          }
+          return null;
+        }
+
+        // ── 路径 A：程序性兜底——从 decomp 中找 c1=R && c2=l 的条目 ──────────
+        // 即使模型在 sym 字段写错了，只要字母分解正确就能纠正
+        if (Array.isArray(rlCheck?.decomp)) {
+          for (const entry of rlCheck.decomp) {
+            const c1  = String(entry.c1 || '').trim();
+            const c2  = String(entry.c2 || '').trim();
+            const sym = String(entry.sym || '').trim();
+            // c1=R 且 c2=l（小写L） → 确定是 Rl，sym 字段写错也纠正
+            if (c1 === 'R' && (c2 === 'l' || c2 === 'L' || c2 === '1')) {
+              const k = zoneToKey(entry.zone || '');
+              if (k) {
+                console.log(`[extract-fp] decomp override ${k}: c1=R c2=${c2} sym="${sym}" → Rl (zone="${entry.zone}")`);
+                fingers = { ...fingers, [k]: { ...fingers[k], sym: 'Rl' } };
               }
+            }
+          }
+        }
+
+        // ── 路径 B：has_rl / rl_zones 字段（原逻辑，兜底 decomp 未输出时）──
+        if (rlCheck?.has_rl && Array.isArray(rlCheck.rl_zones) && rlCheck.rl_zones.length > 0) {
+          for (const zone of rlCheck.rl_zones) {
+            const k = zoneToKey(zone);
+            if (k && fingers[k]?.sym !== 'Rl') {
+              console.log(`[extract-fp] rl_zones correcting ${k}: → Rl (zone="${zone}")`);
+              fingers = { ...fingers, [k]: { ...fingers[k], sym: 'Rl' } };
             }
           }
         }
