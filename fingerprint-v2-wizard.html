@@ -1492,7 +1492,7 @@ body {
     <div class="lead-box">
       <h3>了解如何激活这份天赋</h3>
       <p>皮纹只是起点——真正的成长需要匹配天赋的教育策略。添加顾问，获取专属成长方案：如何选择兴趣班、如何设计学习环境、如何与孩子沟通才最有效。</p>
-      <a class="kfid-btn" href="https://work.weixin.qq.com/kfid/kfc6ce446e6e057c683" target="_blank" onclick="wecomeClick()">💬 点击联系企业微信客服</a>
+      <a class="kfid-btn" href="javascript:void(0)" onclick="wecomeClick(event)">💬 点击联系企业微信客服</a>
     </div>
 
     <div class="result-actions">
@@ -2455,7 +2455,10 @@ function showToast(msg, duration) {
 }
 
 // ── 企微点击：先复制天赋类型到剪贴板，再跳转 ──────────────────────
-function wecomeClick() {
+// 微信内置浏览器用 weixin:// 深链接直接打开客服，省去"要打开微信吗"中间弹窗
+const WECOM_KFID = 'kfc6ce446e6e057c683';
+function wecomeClick(e) {
+  if (e) e.preventDefault();
   const r = window._currentResult || {};
   if (window.GT) GT.track('wecom_click', { type: r.key || '' });
   const msg = `您好！我刚完成AIPIWEN皮纹天赋测评，我的天赋类型是【${r.mainType || ''}】（${r.tagline || ''}），想了解孩子的成长方案。`;
@@ -2464,7 +2467,13 @@ function wecomeClick() {
       showToast('✓ 已复制天赋结果，到企微直接粘贴给顾问即可');
     }).catch(() => {});
   } catch (e) {}
-  // href 仍负责跳转，这里不阻止默认行为
+  // 微信内置浏览器：weixin:// 深链接直接唤起客服对话，无需中间确认页
+  const isWeChat = /MicroMessenger/i.test(navigator.userAgent);
+  if (isWeChat) {
+    window.location.href = 'weixin://dl/business/?t=' + WECOM_KFID;
+  } else {
+    window.open('https://work.weixin.qq.com/kfid/' + WECOM_KFID, '_blank');
+  }
 }
 </script>
 <script src="js/growth-tracker.js"></script>
