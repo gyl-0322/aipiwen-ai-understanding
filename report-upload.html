@@ -575,7 +575,7 @@ const POSTER_HOOKS = {
   super_w_a:'能量越大，\n引力越强。',
   super_w_b:'万物皆可整合，\n是他的超能力。',
   super_w_c:'深耕之处，\n自有光芒。',
-  super_l:'成就别人，\n是他最长的路。',
+  super_l:'托举他人，\n是他与生俱来的天赋。',
   combo_open:'吸收一切，\n是他的第一天赋。',
   combo_w_l:'独立又温柔，\n是最难得的底色。',
   combo_w:'融合而不失自我，\n是他的核心力量。'
@@ -1548,7 +1548,8 @@ qs('#cmodal-copy').addEventListener('click', () => {
       ST.engineResult = rep.engineResult;
       ST.fingers      = rep.fingers || [];
       ST.name         = rep.name   || null;
-      ST.age          = rep.age    || rep.engineResult?.age || 6;
+      ST.age          = rep.age    || rep.engineResult?.age || null;
+      ST.ageTier      = getAgeTier(ST.age);   // FIX: shared-link loads never set ageTier → adult report showed school theme
       buildReportFlipBook(rep.sections);
       goScreen('s4');
       qs('#rv-client-btn').style.display = 'none'; // 客户不看"发客户"按钮
