@@ -9,7 +9,7 @@
  */
 
 const crypto = require('crypto');
-const { redisGet, redisSet, creditReferral, callClaude, MODEL_DEEP, getOpenid } = require('./_lib');
+const { redisGet, redisSet, creditReferral, callClaude, MODEL_DEEP, MODEL_FREE, getOpenid } = require('./_lib');
 
 // ── 案例库索引（Upstash list，max 2000 条）──────────────────────────────────
 function kvUrl()   { return process.env.KV_REST_API_URL   || process.env.REDIS_URL  || ''; }
@@ -717,25 +717,53 @@ module.exports = async function handler(req, res) {
     { role: 'user',   content: userMessage },
   ];
 
-  // ── Claude Sonnet 调用（付费深度报告，带 Prompt Caching） ──────────────
+  // ── DashScope 报告生成（主力 qwen-vl-max → 降级 qwen-plus）────────────
   let raw = null;
+
+  // 把错误详情写入 Redis，方便 admin 面板诊断（key=lastErr:genrpt，TTL 1天）
+  async function logErr(label, err) {
+    const detail = {
+      label, msg: err?.message || String(err),
+      status: err?.status || null,
+      body:   err?.body   || null,
+      ts: new Date().toISOString(),
+    };
+    console.error('[gen-report]', label, detail.msg, detail.status || '', detail.body || '');
+    await redisSet('lastErr:genrpt', detail, 86400).catch(() => {});
+    return detail;
+  }
+
+  // 第一次：qwen-vl-max（深度，原配置）
   try {
     const { text } = await callClaude({
-      model:     MODEL_DEEP,
-      messages,                // messages[0] = {role:'system', content: SYSTEM_PROMPT}
+      model:     MODEL_DEEP,       // qwen-vl-max
+      messages,
       maxTokens: 3000,
-      cache:     true,         // SYSTEM_PROMPT 走 prompt caching，~90% 节省输入费用
-      timeoutMs: 55000,        // Vercel function max 60s
+      timeoutMs: 50000,
     });
     raw = text;
-
-    if (!raw) {
-      console.error('[gen-report] empty Claude reply');
-      return res.status(200).json({ ok:false, error:'AI 未返回内容，请重试' });
+  } catch (err1) {
+    await logErr('primary_fail', err1);
+    // 降级：qwen-plus（更快，适合文字报告）
+    try {
+      const { text } = await callClaude({
+        model:     MODEL_FREE,     // qwen-plus
+        messages,
+        maxTokens: 2500,
+        timeoutMs: 50000,
+      });
+      raw = text;
+      console.log('[gen-report] fallback qwen-plus succeeded');
+    } catch (err2) {
+      const d = await logErr('fallback_fail', err2);
+      const code = err2?.status ? `DS${err2.status}` : (err2?.name || 'ERR');
+      return res.status(200).json({ ok:false, error:`AI 请求失败 [${code}]，请重试` });
     }
-  } catch(err) {
-    console.error('[gen-report] Claude error:', err.message);
-    return res.status(200).json({ ok:false, error:`AI 请求失败，请重试` });
+  }
+
+  if (!raw) {
+    console.error('[gen-report] empty reply after both attempts');
+    return res.status(200).json({ ok:false, error:'AI 未返回内容，请重试' });
   }
 
   const sections = parseSections(raw, requiredMods, selectedIssues);

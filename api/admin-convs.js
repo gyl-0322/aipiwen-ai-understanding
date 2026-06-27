@@ -442,6 +442,16 @@ module.exports = async function handler(req, res) {
     return res.status(200).json({ ok: true, ip: targetIp, totalBonus: existing + addCount });
   }
 
+  // ── 查看最近 AI 报错（generate-report / guest-chat）────────────────────────
+  // GET /api/admin-convs?secret=xxx&action=last_err
+  if (action === 'last_err') {
+    const [genErr, chatErr] = await Promise.all([
+      redisGet('lastErr:genrpt').catch(() => null),
+      redisGet('lastErr:chat').catch(() => null),
+    ]);
+    return res.status(200).json({ ok: true, generate_report: genErr, guest_chat: chatErr });
+  }
+
   // ── 单次会话完整对话 ────────────────────────────────────────────────────────
   if (sid) {
     const msgs = await redisGet(`convlog:msgs:${sid}`) || [];
