@@ -228,81 +228,59 @@ async function creditReferral(callerIp, token, event) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-//  Claude API 共享封装（§15 模型选型规范）
+//  AI API 共享封装 — 使用阿里云 DashScope（通义千问，支持支付宝充值）
+//  接口格式 OpenAI-compatible，与 Claude 调用签名完全相同，其他文件无需改动
 // ═══════════════════════════════════════════════════════════════════════════
 
-// ★ 模型常量 — C 端任何路径禁止使用 Opus
-const MODEL_FREE = 'claude-haiku-4-5-20251001'; // 免费/轻解读/对话  $1/$5 per M tokens
-const MODEL_DEEP = 'claude-sonnet-4-6';          // 付费/深度报告      $3/$15 per M tokens
+// ★ 模型常量
+const MODEL_FREE = 'qwen-plus';    // 对话/文本解读（便宜快速）
+const MODEL_DEEP = 'qwen-vl-max'; // 视觉识别 + 深度报告（支持图片）
 
-const CLAUDE_API = 'https://api.anthropic.com/v1/messages';
+const DS_API = 'https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions';
 
 /**
- * 统一 Claude API 调用入口
- * @param {object} opts
- * @param {string}   opts.model      MODEL_FREE | MODEL_DEEP
- * @param {string}   opts.system     系统提示（纯字符串；如需 caching 会自动包装）
- * @param {Array}    opts.messages   消息数组 [{role:'user'|'assistant', content}]
- *                                   role:'system' 的消息会被自动提取到 system 字段
- * @param {number}   opts.maxTokens  最大输出 token（默认 600）
- * @param {boolean}  opts.cache      是否对 system 开启 prompt caching（默认 false）
- * @param {number}   opts.timeoutMs  超时毫秒（默认 25000）
- * @returns {Promise<{text:string, usage:object}>}
+ * 统一 AI 调用入口（DashScope OpenAI-compatible）
+ * 调用签名与原 callClaude 完全一致，上层代码无需修改
  */
 async function callClaude({ model, system, messages, maxTokens = 600, cache = false, timeoutMs = 25000 }) {
-  const apiKey = process.env.ANTHROPIC_API_KEY || '';
+  const apiKey = process.env.DASHSCOPE_API_KEY || '';
 
-  // 从 messages 里提取 role:system（兼容 OpenAI 格式传入的 messages）
+  // 合并 system 提示（DashScope 走 role:system message）
   const sysMsg = messages.find(m => m.role === 'system');
   const systemText = system || sysMsg?.content || '';
   const filteredMsgs = messages.filter(m => m.role !== 'system');
 
-  // 将 OpenAI image_url 格式转为 Claude source 格式
-  const claudeMsgs = filteredMsgs.map(m => {
-    if (!Array.isArray(m.content)) return m;
-    const parts = m.content.map(p => {
-      if (p.type === 'image_url' && p.image_url?.url) {
-        // 用 [\s\S] 代替 . 以匹配换行符（部分手机/编码器 base64 每76字符插入 \n）
-        const match = p.image_url.url.match(/^data:([^;]+);base64,([\s\S]+)$/);
-        if (match) return {
-          type: 'image',
-          source: { type: 'base64', media_type: match[1], data: match[2].replace(/\s/g, '') },
-        };
-      }
-      return p;
-    });
-    return { ...m, content: parts };
-  });
+  const allMessages = systemText
+    ? [{ role: 'system', content: systemText }, ...filteredMsgs]
+    : filteredMsgs;
 
-  const body = { model, max_tokens: maxTokens, messages: claudeMsgs };
-
-  if (systemText) {
-    body.system = cache
-      ? [{ type: 'text', text: systemText, cache_control: { type: 'ephemeral' } }]
-      : systemText;
-  }
+  // DashScope Qwen-VL 原生支持 image_url 格式，无需转换
+  const body = {
+    model,
+    max_tokens: maxTokens,
+    messages:   allMessages,
+  };
 
   const headers = {
-    'x-api-key':         apiKey,
-    'anthropic-version': '2023-06-01',
-    'content-type':      'application/json',
-    ...(cache ? { 'anthropic-beta': 'prompt-caching-2024-07-31' } : {}),
+    'Authorization': `Bearer ${apiKey}`,
+    'Content-Type':  'application/json',
   };
 
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
-    const res = await fetch(CLAUDE_API, { method: 'POST', headers, body: JSON.stringify(body), signal: controller.signal });
+    const res = await fetch(DS_API, { method: 'POST', headers, body: JSON.stringify(body), signal: controller.signal });
     clearTimeout(timer);
     const rawText = await res.text();
     if (!res.ok) {
-      const err = Object.assign(new Error(`Claude ${res.status}`), { status: res.status, body: rawText.slice(0, 300) });
-      console.error('[Claude]', err.message, err.body);
+      const err = Object.assign(new Error(`DS ${res.status}`), { status: res.status, body: rawText.slice(0, 300) });
+      console.error('[DashScope]', err.message, err.body);
       throw err;
     }
     const data = JSON.parse(rawText);
-    const text = data.content?.[0]?.text?.trim() || null;
-    trackApiSpend(model, data.usage?.input_tokens || 0, data.usage?.output_tokens || 0).catch(() => {});
+    // OpenAI-compatible 响应格式
+    const text = data.choices?.[0]?.message?.content?.trim() || null;
+    trackApiSpend(model, data.usage?.prompt_tokens || 0, data.usage?.completion_tokens || 0).catch(() => {});
     return { text, usage: data.usage || {} };
   } catch (e) {
     clearTimeout(timer);
@@ -310,12 +288,12 @@ async function callClaude({ model, system, messages, maxTokens = 600, cache = fa
   }
 }
 
-// ─── 每日 API Spend 追踪 + WeCom 告警 ────────────────────────────────────────
+// ─── 每日 API Spend 追踪（DashScope 人民币计费） ──────────────────────────────
 const _PRICING = {
-  [MODEL_FREE]: { in: 1 / 1e6, out: 5 / 1e6  },
-  [MODEL_DEEP]: { in: 3 / 1e6, out: 15 / 1e6 },
+  [MODEL_FREE]: { in: 0.0008 / 1000, out: 0.002 / 1000 }, // qwen-plus CNY/token
+  [MODEL_DEEP]: { in: 0.12   / 1000, out: 0.12  / 1000 }, // qwen-vl-max CNY/token
 };
-const _USD_TO_CNY = 7.2;
+const _USD_TO_CNY = 1; // DashScope 已是人民币，直接用
 
 async function trackApiSpend(model, inputTokens, outputTokens) {
   if (!inputTokens && !outputTokens) return;

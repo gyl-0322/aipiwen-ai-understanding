@@ -850,8 +850,8 @@ ${NO_FILLER}`;
     reply = text;
     if (!reply) console.error('[guest-chat] Claude empty reply');
   } catch(err) {
-    console.error('[guest-chat] Claude error:', err.message);
-    return res.status(200).json({ ok: false, reply: `解读遇到了问题，请重试。` });
+    console.error('[guest-chat] AI error:', err.message, '| body:', err.body || '');
+    return res.status(200).json({ ok: false, reply: '解读遇到了问题，请重试。' });
   }
 
   // Task 2: 从 vision 回复中提取 AIPIWEN_DATA 摘要行（供前端缓存，后续追问直接用）
