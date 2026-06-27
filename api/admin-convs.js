@@ -452,6 +452,38 @@ module.exports = async function handler(req, res) {
     return res.status(200).json({ ok: true, generate_report: genErr, guest_chat: chatErr });
   }
 
+  // ── DashScope 连通性 + API Key 诊断 ─────────────────────────────────────────
+  // GET /api/admin-convs?secret=xxx&action=ping_ai
+  if (action === 'ping_ai') {
+    const apiKey = process.env.DASHSCOPE_API_KEY || '';
+    const keyInfo = apiKey
+      ? `set(${apiKey.slice(0,4)}...${apiKey.slice(-4)},len=${apiKey.length})`
+      : 'MISSING';
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 10000);
+    let pingResult;
+    try {
+      const r = await fetch('https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ model:'qwen-plus', messages:[{role:'user',content:'ok'}], max_tokens:3 }),
+        signal: controller.signal,
+      });
+      clearTimeout(timer);
+      const txt = await r.text();
+      if (r.ok) {
+        const d = JSON.parse(txt);
+        pingResult = { status:'ok', http:r.status, reply:d.choices?.[0]?.message?.content };
+      } else {
+        pingResult = { status:'http_err', http:r.status, body:txt.slice(0,300) };
+      }
+    } catch(e) {
+      clearTimeout(timer);
+      pingResult = { status:'error', name:e.name, msg:e.message };
+    }
+    return res.status(200).json({ ok:true, key:keyInfo, ping:pingResult, region:process.env.VERCEL_REGION||'?' });
+  }
+
   // ── 单次会话完整对话 ────────────────────────────────────────────────────────
   if (sid) {
     const msgs = await redisGet(`convlog:msgs:${sid}`) || [];
