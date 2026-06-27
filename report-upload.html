@@ -892,7 +892,7 @@ qs('#s1-extract-btn').addEventListener('click', async () => {
         const _invUrl = _tok ? `https://aipiwen.cn/report-upload.html?ref=${_tok}` : 'https://aipiwen.cn';
         qs('#s1-status').innerHTML = `今天的皮纹识别次数已用完。<br>明天继续使用，或 <a href="${_invUrl}" style="color:#C2692A">邀请朋友体验（+1次）</a> 获得更多次数。`;
       } else {
-        qs('#s1-status').textContent = '❌ ' + (data.error || '识别失败，请重试');
+        qs('#s1-status').textContent = '❌ ' + (data.error || '识别失败，请重试') + (data._debug ? '\n[debug] ' + String(data._debug).slice(0, 120) : '');
       }
       btn.disabled = false;
       btn.textContent = '重新识别';

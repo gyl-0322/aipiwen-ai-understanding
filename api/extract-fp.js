@@ -281,7 +281,8 @@ module.exports = async function handler(req, res) {
     const userMsg = err.status === 400
       ? '图片识别失败（格式或尺寸问题），请压缩图片后重试'
       : `图片识别暂时失败，请重试（${err.message}）`;
-    return res.status(200).json({ ok: false, error: userMsg });
+    // TODO-DEBUG: 上线后删除 _debug 字段
+    return res.status(200).json({ ok: false, error: userMsg, _debug: err.body || err.message });
   }
 
   // ── 解析 JSON ─────────────────────────────────────────────────────────
