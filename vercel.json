@@ -197,7 +197,8 @@
       "maxDuration": 60
     },
     "api/generate-report.js": {
-      "maxDuration": 60
+      "maxDuration": 60,
+      "regions": ["iad1"]
     }
   },
   "crons": [
