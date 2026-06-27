@@ -938,14 +938,18 @@ async function handleSynthesize(req, res) {
     { role: 'user',   content: userPrompt },
   ];
 
+  // 单次重试：第一次失败等 800ms 后再试一次（应对 Claude API 偶发超时）
   let reply = null;
-  try {
-    const { text } = await callClaude({ model: MODEL_FREE, messages, maxTokens: 600 });
-    reply = text;
-    if (!reply) return res.status(500).json({ error: 'AI 返回空内容' });
-  } catch(err) {
-    return res.status(500).json({ error: 'AI 网络请求失败：' + err.message });
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    try {
+      const { text } = await callClaude({ model: MODEL_FREE, messages, maxTokens: 600, timeoutMs: 22000 });
+      if (text) { reply = text; break; }
+    } catch (err) {
+      if (attempt === 2) return res.status(503).json({ error: 'AI 服务繁忙，请稍后重试 🔄' });
+      await new Promise(r => setTimeout(r, 800));
+    }
   }
+  if (!reply) return res.status(500).json({ error: 'AI 返回内容为空，请重试' });
 
   const themeMatch       = reply.match(/\*\*系统主题\*\*[：:]?\s*([\s\S]*?)(?=\*\*跨场景联系\*\*|$)/);
   const connectionsMatch = reply.match(/\*\*跨场景联系\*\*[：:]?\s*([\s\S]*?)(?=\*\*可能的天赋类型\*\*|\*\*优先改变建议\*\*|$)/);

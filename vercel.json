@@ -185,7 +185,7 @@
       "maxDuration": 15
     },
     "api/guest-chat.js": {
-      "maxDuration": 30
+      "maxDuration": 60
     },
     "api/digest.js": {
       "maxDuration": 60
