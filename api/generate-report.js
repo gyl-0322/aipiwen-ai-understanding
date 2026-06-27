@@ -735,32 +735,21 @@ module.exports = async function handler(req, res) {
     return detail;
   }
 
-  // 第一次：qwen-plus（文字报告主力，速度快、稳定，适合纯文字生成）
+  // qwen-plus 主力（文字报告，无图片，IAD1→阿里云跨境约35-50s生成2000token）
+  // timeoutMs=55s：Vercel 60s 限制内留 5s 余量；maxTokens=2000 确保按时完成
+  // 不设 fallback：55s 内 qwen-plus 仍超时说明 DashScope 本身过载，turbo 质量不够用
   try {
     const { text } = await callClaude({
       model:     MODEL_FREE,       // qwen-plus
       messages,
-      maxTokens: 2500,
-      timeoutMs: 43000,
+      maxTokens: 2000,
+      timeoutMs: 55000,
     });
     raw = text;
   } catch (err1) {
-    await logErr('primary_fail', err1);
-    // 降级：qwen-turbo（极速兜底，12s 内必有结果）
-    try {
-      const { text } = await callClaude({
-        model:     'qwen-turbo',
-        messages,
-        maxTokens: 2000,
-        timeoutMs: 12000,
-      });
-      raw = text;
-      console.log('[gen-report] fallback qwen-turbo succeeded');
-    } catch (err2) {
-      const d = await logErr('fallback_fail', err2);
-      const code = err2?.status ? `DS${err2.status}` : (err2?.name || 'ERR');
-      return res.status(200).json({ ok:false, error:`AI 请求失败 [${code}]，请重试` });
-    }
+    const d = await logErr('primary_fail', err1);
+    const code = err1?.status ? `DS${err1.status}` : (err1?.name || 'ERR');
+    return res.status(200).json({ ok:false, error:`AI 请求失败 [${code}]，请重试` });
   }
 
   if (!raw) {
