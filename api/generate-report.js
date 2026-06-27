@@ -732,9 +732,10 @@ module.exports = async function handler(req, res) {
     { role: 'user',   content: userMessage },
   ];
 
-  // ── DashScope 报告生成（主力 qwen-plus → 降级 qwen-turbo）─────────────
-  // ⚠️ 不使用 qwen-vl-max：视觉模型对文字报告过慢，50s+50s 会超 Vercel 60s 限制 → 504
-  // qwen-plus 文字生成快（5–15s），43s timeout + 12s fallback = 55s，Vercel 60s 内安全完成
+  // ── DashScope 报告生成（qwen-plus 单次调用，无 fallback）──────────────
+  // ⚠️ 不使用 qwen-vl-max：视觉模型对文字报告过慢，会超 Vercel 60s 限制 → 504
+  // qwen-plus 文字生成（5–15s），timeoutMs=55s，Vercel 60s 内安全完成
+  // 不设 fallback：55s 仍超时说明 DashScope 本身过载，turbo 质量不够用于完整报告
   let raw = null;
 
   // 把错误详情写入 Redis，方便 admin 面板诊断（key=lastErr:genrpt，TTL 1天）
