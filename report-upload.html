@@ -474,7 +474,7 @@ button, a, .must-item, .fp-option-card, .back-btn, .issue-chip {
   <div class="s3-body">
     <div class="s2-section-label">必给模块（自动包含）</div>
     <div class="must-list" id="must-list"></div>
-    <div class="s2-section-label" style="margin-top:20px;">选择你最想了解的问题（最多 6 个、至少 1 个）</div>
+    <div class="s2-section-label" style="margin-top:20px;">选择你最想了解的问题（最多 4 个、至少 1 个）</div>
     <div class="issue-grid" id="issue-grid"></div>
     <div id="gen-status"></div>
   </div>
@@ -1021,8 +1021,8 @@ function buildIssuesScreen() {
     const chip = el('div', 'issue-chip', issue);
     chip.addEventListener('click', () => {
       const sel = chip.classList.contains('selected');
-      if (!sel && ST.selectedIssues.length >= 6) {
-        qs('#gen-status').textContent = '最多选 6 个问题';
+      if (!sel && ST.selectedIssues.length >= 4) {
+        qs('#gen-status').textContent = '最多选 4 个问题';
         setTimeout(() => qs('#gen-status').textContent = '', 2000);
         return;
       }
