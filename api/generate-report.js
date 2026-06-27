@@ -717,7 +717,9 @@ module.exports = async function handler(req, res) {
     { role: 'user',   content: userMessage },
   ];
 
-  // ── DashScope 报告生成（主力 qwen-vl-max → 降级 qwen-plus）────────────
+  // ── DashScope 报告生成（主力 qwen-plus → 降级 qwen-turbo）─────────────
+  // ⚠️ 不使用 qwen-vl-max：视觉模型对文字报告过慢，50s+50s 会超 Vercel 60s 限制 → 504
+  // qwen-plus 文字生成快（5–15s），43s timeout + 12s fallback = 55s，Vercel 60s 内安全完成
   let raw = null;
 
   // 把错误详情写入 Redis，方便 admin 面板诊断（key=lastErr:genrpt，TTL 1天）
@@ -733,27 +735,27 @@ module.exports = async function handler(req, res) {
     return detail;
   }
 
-  // 第一次：qwen-vl-max（深度，原配置）
+  // 第一次：qwen-plus（文字报告主力，速度快、稳定，适合纯文字生成）
   try {
     const { text } = await callClaude({
-      model:     MODEL_DEEP,       // qwen-vl-max
+      model:     MODEL_FREE,       // qwen-plus
       messages,
-      maxTokens: 3000,
-      timeoutMs: 50000,
+      maxTokens: 2500,
+      timeoutMs: 43000,
     });
     raw = text;
   } catch (err1) {
     await logErr('primary_fail', err1);
-    // 降级：qwen-plus（更快，适合文字报告）
+    // 降级：qwen-turbo（极速兜底，12s 内必有结果）
     try {
       const { text } = await callClaude({
-        model:     MODEL_FREE,     // qwen-plus
+        model:     'qwen-turbo',
         messages,
-        maxTokens: 2500,
-        timeoutMs: 50000,
+        maxTokens: 2000,
+        timeoutMs: 12000,
       });
       raw = text;
-      console.log('[gen-report] fallback qwen-plus succeeded');
+      console.log('[gen-report] fallback qwen-turbo succeeded');
     } catch (err2) {
       const d = await logErr('fallback_fail', err2);
       const code = err2?.status ? `DS${err2.status}` : (err2?.name || 'ERR');
