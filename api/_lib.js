@@ -262,8 +262,12 @@ async function callClaude({ model, system, messages, maxTokens = 600, cache = fa
     if (!Array.isArray(m.content)) return m;
     const parts = m.content.map(p => {
       if (p.type === 'image_url' && p.image_url?.url) {
-        const match = p.image_url.url.match(/^data:([^;]+);base64,(.+)$/);
-        if (match) return { type: 'image', source: { type: 'base64', media_type: match[1], data: match[2] } };
+        // 用 [\s\S] 代替 . 以匹配换行符（部分手机/编码器 base64 每76字符插入 \n）
+        const match = p.image_url.url.match(/^data:([^;]+);base64,([\s\S]+)$/);
+        if (match) return {
+          type: 'image',
+          source: { type: 'base64', media_type: match[1], data: match[2].replace(/\s/g, '') },
+        };
       }
       return p;
     });

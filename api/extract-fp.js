@@ -277,8 +277,11 @@ module.exports = async function handler(req, res) {
       return res.status(200).json({ ok: false, error: 'Vision 未返回内容，请重试' });
     }
   } catch(err) {
-    console.error('[extract-fp] Claude error:', err.message);
-    return res.status(200).json({ ok: false, error: `Vision 请求失败: ${err.message}` });
+    console.error('[extract-fp] Claude error:', err.message, '| body:', err.body || '(no body)');
+    const userMsg = err.status === 400
+      ? '图片识别失败（格式或尺寸问题），请压缩图片后重试'
+      : `图片识别暂时失败，请重试（${err.message}）`;
+    return res.status(200).json({ ok: false, error: userMsg });
   }
 
   // ── 解析 JSON ─────────────────────────────────────────────────────────
