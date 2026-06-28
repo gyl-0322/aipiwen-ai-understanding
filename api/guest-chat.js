@@ -8,7 +8,7 @@
  */
 
 const { getGlobalPatterns, redisSet, redisGet, creditReferral, callClaude, MODEL_FREE, MODEL_DEEP,
-        checkAndConsumeQuota, getOpenid } = require('./_lib');
+        checkAndConsumeQuota, getOpenid, checkRateLimit } = require('./_lib');
 
 // ★ 免费对话轮数上限（超过提示升级，既控成本又软付费触发）
 const MAX_FREE_ROUNDS = 10;
@@ -204,10 +204,16 @@ module.exports = async function handler(req, res) {
   const isVisionMode = !!imageBase64;
   if (!isVisionMode && !content?.trim()) return res.status(400).json({ error: '内容不能为空' });
 
+  // ── 防滥用限流（独立层，只打机器人，不影响正常用户）────────────────────────
+  const quotaType = isVisionMode ? 'report' : 'chat';
+  const rl = await checkRateLimit(ip, quotaType);
+  if (!rl.allowed) {
+    return res.status(429).json({ error: '请求过于频繁，请稍后再试', retryAfter: rl.retryAfter });
+  }
+
   // ── 里程碑2：软付费墙 quota 检查（PAYMENT_ENABLED=false 时透明放行）─────────
   const openid = getOpenid(req); // 未登录 guest = null，openid 为 sessionId 兜底
   const quotaKey = openid || `guest:${sessionId || ip}`;
-  const quotaType = isVisionMode ? 'report' : 'chat';
   const qr = await checkAndConsumeQuota(quotaKey, quotaType).catch(() => ({ allowed: true, remaining: 999 }));
   if (!qr.allowed) {
     return res.status(429).json({

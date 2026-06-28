@@ -13,7 +13,7 @@
 
 const crypto = require('crypto');
 const { redisSet, redisGet, getOpenid, generatePortrait, portraitNeedsRefresh, getGlobalPatterns, archiveRecordsIfNeeded, searchKnowledge, callClaude, MODEL_FREE,
-        checkAndConsumeQuota } = require('./_lib');
+        checkAndConsumeQuota, checkRateLimit } = require('./_lib');
 
 function readBody(req) {
   return new Promise((resolve, reject) => {
@@ -25,6 +25,7 @@ function readBody(req) {
 }
 
 module.exports = async function handler(req, res) {
+  const ip = req.headers['x-real-ip'] || req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket?.remoteAddress || 'unknown';
   const openid = getOpenid(req);
   if (!openid) return res.status(401).json({ error: '未登录' });
 
@@ -191,6 +192,11 @@ ${recordsText}
     const { content } = await readBody(req);
     if (!content?.trim()) return res.status(400).json({ error: '内容不能为空' });
 
+    // 里程碑2：防滥用限流（独立层）
+    const crl = await checkRateLimit(ip, 'chat');
+    if (!crl.allowed) {
+      return res.status(429).json({ error: '请求过于频繁，请稍后再试', retryAfter: crl.retryAfter });
+    }
     // 里程碑2：软付费墙（chat quota，PAYMENT_ENABLED=false 透明放行）
     const cqr = await checkAndConsumeQuota(openid, 'chat').catch(() => ({ allowed: true }));
     if (!cqr.allowed) {

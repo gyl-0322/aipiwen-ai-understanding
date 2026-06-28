@@ -493,6 +493,88 @@ function current2hSlot() {
   return Math.floor(Date.now() / (2 * 3600 * 1000));
 }
 
+// ── 独立防滥用限流（与 quota 完全隔离，只针对异常高频 / 机器人）─────────────────
+// 正常真人用户几乎不会触发，触发返回 429 + retryAfter
+const RATE_LIMIT_PER_MINUTE = {
+  chat:    30,  // 1分钟内最多30次 chat（真人极限已够宽）
+  report:  10,  // 1分钟内最多10次 report
+  default: 60,
+};
+
+/**
+ * 检查 IP 级别防滥用限流（独立于 quota，不影响正常用户）。
+ * @param {string} ip
+ * @param {'chat'|'report'|'default'} type
+ * @returns {{ allowed: boolean, retryAfter?: number }}
+ */
+async function checkRateLimit(ip, type = 'default') {
+  if (!ip) return { allowed: true };
+  const minute = Math.floor(Date.now() / 60000);
+  const key = `rl:${type}:${ip}:${minute}`;
+  try {
+    const count = ((await redisGet(key)) || 0) + 1;
+    const limit = RATE_LIMIT_PER_MINUTE[type] ?? RATE_LIMIT_PER_MINUTE.default;
+    if (count > limit) return { allowed: false, retryAfter: 60 };
+    await redisSet(key, count, 120); // 2分钟 TTL，自动清理
+    return { allowed: true };
+  } catch {
+    return { allowed: true }; // Redis 异常不影响业务
+  }
+}
+
+// ── 升级钩子：触顶埋点 + 高意向信号 ────────────────────────────────────────────
+/**
+ * 每次触顶时调用，记录日触顶次数并写高意向信号（>=2次即标记）。
+ * @param {string} openid
+ * @param {'chat'|'report'} type
+ * @returns {{ hitCount: number, isHighIntent: boolean }}
+ */
+async function trackQuotaHit(openid, type) {
+  if (!openid) return { hitCount: 1, isHighIntent: false };
+  try {
+    const hitKey = `quota_hits:${openid}:${todayKey()}`;
+    const count = ((await redisGet(hitKey)) || 0) + 1;
+    await redisSet(hitKey, count, 2 * 86400);
+
+    const isHighIntent = count >= 2;
+    if (isHighIntent) {
+      const intentKey = `intent:high:${openid}`;
+      const existing = (await redisGet(intentKey)) || {};
+      await redisSet(intentKey, {
+        firstSeenAt:   existing.firstSeenAt || new Date().toISOString(),
+        lastHitAt:     new Date().toISOString(),
+        totalHitCount: (existing.totalHitCount || 0) + 1,
+        lastType:      type,
+      }, 90 * 86400); // 保留90天供运营分析
+    }
+    return { hitCount: count, isHighIntent };
+  } catch {
+    return { hitCount: 1, isHighIntent: false };
+  }
+}
+
+/**
+ * 按触顶次数返回差异化的升级引导文案（温暖，不施压）。
+ * PAYMENT_ENABLED=false 时：钩子文案仍展示，CTA 收集意向，不强推付款。
+ */
+function buildUpgradeMessage(type, hitCount) {
+  if (type === 'report') {
+    if (hitCount >= 3) {
+      return '你已经多次想出深度报告了 💛 看来对孩子的了解你一直在认真追。升级会员后每天可出更多份，随时查看完整天赋图谱。';
+    } else if (hitCount >= 2) {
+      return '今日深度报告次数用完了，但你还想要更多——这说明报告对你有用！轻会员 ¥99/年，每年 5 份深度报告随时出，感兴趣可以提前登记早鸟意向。';
+    }
+    return `今日深度报告额度已用完（免费 1 次）。请明日再试，或登记早鸟意向，付费开放后第一时间通知你。`;
+  }
+  // chat
+  if (hitCount >= 3) {
+    return '你今天已经多次触到对话上限了 🌟 说明你很依赖这个工具——真的很好！升级轻会员（¥99/年）可以无限对话，2h 刷新也不用等了。';
+  } else if (hitCount >= 2) {
+    return '今日对话次数又用完了，你用得很频繁 💛 说明沐海星辰对你是真有帮助。现阶段付费还未开放，可以先登记早鸟意向，我们优先通知你。';
+  }
+  return `今日行为解读额度已用完（免费 5 次）。2小时后刷新 ${RECOVER_CHAT_PER_SLOT} 次，或登记早鸟意向以便付费开放时第一时间升级。`;
+}
+
 /** 读取用户套餐；未设置则返回 free */
 async function getUserTier(openid) {
   if (!openid) return 'free';
@@ -509,11 +591,18 @@ async function getUserTier(openid) {
  * @returns {{ allowed: boolean, remaining: number, reason?: string, recover2hAt?: number }}
  */
 async function checkAndConsumeQuota(openid, type) {
-  // PAYMENT_ENABLED=false → 全部放行，只记录
+  // PAYMENT_ENABLED=false → 全部放行，只记录用量（不拦截，但埋点高意向）
   if (!PAYMENT_ENABLED) {
     const dayKey = `quota:daily:${type}:${openid}:${todayKey()}`;
     const used = (await redisGet(dayKey).catch(() => 0)) || 0;
     await redisSet(dayKey, used + 1, 2 * 86400).catch(() => {});
+    // 免费阶段：高频用户埋点（超过免费限额后仍继续用 = 高意向信号）
+    if (openid) {
+      const freeLimit = (QUOTA_LIMITS.free)[type] || 0;
+      if (used >= freeLimit) {
+        trackQuotaHit(openid, type).catch(() => {}); // 异步，不阻塞
+      }
+    }
     return { allowed: true, remaining: 999 };
   }
 
@@ -544,12 +633,12 @@ async function checkAndConsumeQuota(openid, type) {
   if (effective >= limit) {
     const nextSlot = current2hSlot() + 1;
     const nextSlotMs = nextSlot * 2 * 3600 * 1000;
+    // 触顶埋点：记日触顶次数 + 写高意向信号（异步，不阻塞返回）
+    const { hitCount } = await trackQuotaHit(openid, type);
     return {
       allowed: false,
       remaining: 0,
-      reason: type === 'chat'
-        ? `今日行为解读额度已用完（${limit}次）。2小时后刷新 ${RECOVER_CHAT_PER_SLOT} 次，或升级会员继续使用。`
-        : `今日深度报告额度已用完（${limit}次）。请明日再试，或升级会员获得更多次数。`,
+      reason: buildUpgradeMessage(type, hitCount),
       recover2hAt: nextSlotMs,
       upgradeUrl: '/membership',
     };
@@ -601,6 +690,7 @@ module.exports = {
   TENANT_ENABLED, TENANT_LEVEL, ROLES,
   getTenant, saveTenant, listSubTenants,
   getTenantContext, requireRole, ensureUserTenant,
-  // 里程碑 2：软付费墙
+  // 里程碑 2：软付费墙 + 升级钩子 + 防滥用
   PAYMENT_ENABLED, checkAndConsumeQuota, getQuotaStatus, getUserTier,
+  checkRateLimit, trackQuotaHit, buildUpgradeMessage,
 };

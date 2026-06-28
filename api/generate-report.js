@@ -10,7 +10,7 @@
 
 const crypto = require('crypto');
 const { redisGet, redisSet, creditReferral, callClaude, MODEL_DEEP, MODEL_FREE, getOpenid,
-        checkAndConsumeQuota } = require('./_lib');
+        checkAndConsumeQuota, checkRateLimit } = require('./_lib');
 
 // ── 案例库索引（Upstash list，max 2000 条）──────────────────────────────────
 function kvUrl()   { return process.env.KV_REST_API_URL   || process.env.REDIS_URL  || ''; }
@@ -720,6 +720,12 @@ module.exports = async function handler(req, res) {
 
   const { engineResult, age, name, selectedIssues = [], refToken = null, fingers = null } = payload;
   if (!engineResult) return res.status(400).json({ ok:false, error:'缺少 engineResult' });
+
+  // ── 防滥用限流（独立层）──────────────────────────────────────────────────────
+  const reportRl = await checkRateLimit(ip, 'report');
+  if (!reportRl.allowed) {
+    return res.status(429).json({ ok: false, error: '请求过于频繁，请稍后再试', retryAfter: reportRl.retryAfter });
+  }
 
   // ── 里程碑2：软付费墙 quota 检查（report 类型，PAYMENT_ENABLED=false 时透明放行）──
   const reportOpenid = getOpenid(req);
