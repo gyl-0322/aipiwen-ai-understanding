@@ -14,6 +14,14 @@
       "dest": "/membership.html"
     },
     {
+      "src": "/partner",
+      "dest": "/partner.html"
+    },
+    {
+      "src": "/partner.html",
+      "dest": "/partner.html"
+    },
+    {
       "src": "/api/growth",
       "dest": "/api/admin-convs"
     },

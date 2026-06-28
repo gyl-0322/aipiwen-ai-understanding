@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>沐海星辰 · 采集代理合作</title>
+<meta name="description" content="加入沐海星辰采集代理计划，开展皮纹天赋测评业务。设备+平台+培训全套支持，合同签约保障。">
+<script src="/js/brand.js" defer></script>
+<style>
+:root {
+  --cream:      #FDFCF8;
+  --cream-deep: #F5F3EE;
+  --ink:        #1A1714;
+  --ink-70:     #4A4540;
+  --ink-40:     #8C8580;
+  --ink-20:     #C8C4C0;
+  --amber:      #C2692A;
+  --amber-lt:   #F5E6D8;
+  --ok:         #2E8B5A;
+  --dark:       #231F1C;
+  --r-sm:       8px;
+  --r-md:       12px;
+  --r-lg:       18px;
+  --brand-primary: #C2692A;
+}
+* { box-sizing:border-box; margin:0; padding:0; }
+html { background:var(--cream); color:var(--ink); font-family:-apple-system,'PingFang SC','Helvetica Neue',sans-serif; }
+body { max-width:520px; margin:0 auto; padding-bottom:80px; }
+a { color:inherit; text-decoration:none; }
+
+/* ── HEADER ── */
+.site-header {
+  position:sticky; top:0; z-index:100;
+  display:flex; align-items:center; justify-content:space-between;
+  padding:14px 20px;
+  background:rgba(253,252,248,.92); backdrop-filter:blur(12px);
+  border-bottom:1px solid rgba(194,105,42,.1);
+}
+.logo-wrap { display:flex; align-items:center; gap:10px; }
+.logo-text  { font-size:15px; font-weight:700; letter-spacing:.06em; }
+.back-btn   { font-size:14px; color:var(--amber); font-weight:500; }
+
+/* ── HERO ── */
+.hero {
+  padding:40px 24px 32px;
+  background:linear-gradient(160deg, #1A1714 0%, #2C2420 60%, #3A2F28 100%);
+  color:#FAF9F6;
+  border-radius:0 0 24px 24px;
+}
+.hero-tag {
+  display:inline-block;
+  font-size:11px; font-weight:600; letter-spacing:.12em;
+  color:var(--amber); border:1px solid rgba(194,105,42,.4);
+  padding:4px 10px; border-radius:20px; margin-bottom:16px;
+}
+.hero-title { font-size:26px; font-weight:700; line-height:1.35; margin-bottom:12px; }
+.hero-title em { color:var(--amber); font-style:normal; }
+.hero-sub { font-size:14px; color:rgba(250,249,246,.6); line-height:1.7; margin-bottom:28px; }
+.hero-cta {
+  display:inline-flex; align-items:center; gap:8px;
+  background:var(--amber); color:#fff;
+  border-radius:var(--r-md); padding:14px 24px;
+  font-size:15px; font-weight:600;
+  border:none; cursor:pointer; transition:opacity .15s;
+}
+.hero-cta:active { opacity:.85; }
+
+/* ── SECTION COMMON ── */
+.section { padding:36px 20px 0; }
+.section-label {
+  font-size:11px; font-weight:700; letter-spacing:.12em; color:var(--amber);
+  margin-bottom:10px; text-transform:uppercase;
+}
+.section-title { font-size:20px; font-weight:700; line-height:1.4; margin-bottom:6px; }
+.section-sub   { font-size:14px; color:var(--ink-40); line-height:1.7; margin-bottom:20px; }
+
+/* ── WHY US — 3 CARDS ── */
+.why-grid { display:grid; grid-template-columns:1fr; gap:12px; }
+.why-card {
+  background:#fff; border-radius:var(--r-md);
+  border:1px solid rgba(0,0,0,.07);
+  padding:16px 18px;
+  display:flex; gap:14px; align-items:flex-start;
+}
+.why-icon {
+  width:38px; height:38px; border-radius:10px;
+  background:var(--amber-lt); display:flex; align-items:center; justify-content:center;
+  flex-shrink:0; font-size:18px;
+}
+.why-title { font-size:14px; font-weight:600; margin-bottom:3px; }
+.why-text  { font-size:13px; color:var(--ink-40); line-height:1.6; }
+
+/* ── DEVICE SECTION ── */
+.device-section { padding:36px 20px 0; }
+.device-imgs { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px; }
+.device-img-slot {
+  aspect-ratio:4/3; border-radius:var(--r-md);
+  background:var(--cream-deep);
+  border:1.5px dashed var(--ink-20);
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:6px; color:var(--ink-40); font-size:12px;
+  overflow:hidden;
+}
+.device-img-slot img { width:100%; height:100%; object-fit:cover; }
+.device-img-slot svg { width:28px; height:28px; opacity:.35; }
+.device-desc { font-size:14px; color:var(--ink-70); line-height:1.7; }
+.device-spec-list { margin-top:14px; display:flex; flex-direction:column; gap:8px; }
+.device-spec {
+  display:flex; align-items:flex-start; gap:10px;
+  background:var(--cream-deep); border-radius:var(--r-sm); padding:10px 14px;
+  font-size:13px;
+}
+.device-spec-dot { color:var(--amber); font-weight:700; margin-top:1px; flex-shrink:0; }
+
+/* ── PRICING ── */
+.pricing-section { padding:36px 20px 0; }
+.plan-tabs { display:flex; gap:8px; margin-bottom:16px; }
+.plan-tab {
+  flex:1; padding:10px; border-radius:var(--r-sm);
+  font-size:13px; font-weight:600; text-align:center;
+  border:1.5px solid var(--ink-20); cursor:pointer; transition:all .15s;
+  background:#fff;
+}
+.plan-tab.active { border-color:var(--amber); background:var(--amber-lt); color:var(--amber); }
+
+.plan-card {
+  background:#fff; border-radius:var(--r-lg);
+  border:1.5px solid rgba(0,0,0,.08);
+  overflow:hidden;
+  display:none;
+}
+.plan-card.active { display:block; }
+
+.plan-header {
+  background:var(--dark); color:#FAF9F6;
+  padding:20px 20px 16px;
+}
+.plan-tier { font-size:11px; font-weight:700; letter-spacing:.1em; color:var(--amber); margin-bottom:6px; }
+.plan-name { font-size:18px; font-weight:700; margin-bottom:4px; }
+.plan-price { font-size:28px; font-weight:800; color:var(--amber); }
+.plan-price span { font-size:14px; font-weight:500; color:rgba(250,249,246,.6); }
+
+.plan-body { padding:18px 20px; }
+.plan-rows { display:flex; flex-direction:column; gap:0; }
+.plan-row {
+  display:grid; grid-template-columns:90px 1fr;
+  gap:10px; padding:11px 0;
+  border-bottom:1px solid var(--cream-deep);
+  font-size:13px;
+}
+.plan-row:last-child { border-bottom:none; }
+.plan-row-label { color:var(--ink-40); font-weight:500; padding-top:1px; }
+.plan-row-val   { color:var(--ink-70); line-height:1.6; }
+.plan-row-val strong { color:var(--ink); font-weight:600; }
+
+.plan-note {
+  margin-top:14px; padding:12px 14px;
+  background:var(--amber-lt); border-radius:var(--r-sm);
+  font-size:12px; color:var(--amber); line-height:1.6;
+}
+
+/* ── HOW IT WORKS ── */
+.steps-section { padding:36px 20px 0; }
+.steps-list { display:flex; flex-direction:column; gap:0; position:relative; }
+.steps-list::before {
+  content:''; position:absolute; left:17px; top:0; bottom:0; width:2px;
+  background:linear-gradient(to bottom, var(--amber-lt), transparent);
+}
+.step { display:flex; gap:16px; padding-bottom:24px; position:relative; }
+.step:last-child { padding-bottom:0; }
+.step-num {
+  width:34px; height:34px; border-radius:50%;
+  background:var(--amber); color:#fff;
+  font-size:14px; font-weight:700;
+  display:flex; align-items:center; justify-content:center;
+  flex-shrink:0; z-index:1;
+}
+.step-title { font-size:15px; font-weight:600; margin-bottom:4px; }
+.step-desc  { font-size:13px; color:var(--ink-40); line-height:1.6; }
+
+/* ── FAQ ── */
+.faq-section { padding:36px 20px 0; }
+.faq-list { display:flex; flex-direction:column; gap:8px; }
+.faq-item {
+  background:#fff; border-radius:var(--r-md);
+  border:1px solid rgba(0,0,0,.07);
+  overflow:hidden;
+}
+.faq-q {
+  width:100%; text-align:left; background:none; border:none;
+  padding:14px 16px; font-size:14px; font-weight:600; color:var(--ink);
+  display:flex; justify-content:space-between; align-items:center;
+  cursor:pointer;
+}
+.faq-q svg { flex-shrink:0; transition:transform .2s; }
+.faq-item.open .faq-q svg { transform:rotate(180deg); }
+.faq-a {
+  display:none; padding:0 16px 14px;
+  font-size:13px; color:var(--ink-70); line-height:1.7;
+}
+.faq-item.open .faq-a { display:block; }
+
+/* ── STICKY CTA ── */
+.sticky-cta {
+  position:fixed; bottom:0; left:50%; transform:translateX(-50%);
+  width:100%; max-width:520px;
+  padding:12px 20px 20px;
+  background:linear-gradient(to top, rgba(253,252,248,1) 60%, rgba(253,252,248,0));
+}
+.sticky-cta-btn {
+  width:100%; padding:15px;
+  background:var(--amber); color:#fff;
+  border:none; border-radius:var(--r-md);
+  font-size:16px; font-weight:700; cursor:pointer;
+  display:flex; align-items:center; justify-content:center; gap:8px;
+}
+.sticky-cta-btn:active { opacity:.88; }
+
+/* ── WECHAT MODAL ── */
+.modal-overlay {
+  position:fixed; inset:0; background:rgba(0,0,0,.5);
+  display:flex; align-items:flex-end; justify-content:center;
+  z-index:200; opacity:0; pointer-events:none;
+  transition:opacity .2s;
+}
+.modal-overlay.show { opacity:1; pointer-events:auto; }
+.modal-sheet {
+  width:100%; max-width:520px;
+  background:#fff; border-radius:20px 20px 0 0;
+  padding:28px 24px 40px;
+  transform:translateY(100%);
+  transition:transform .3s cubic-bezier(.4,0,.2,1);
+}
+.modal-overlay.show .modal-sheet { transform:translateY(0); }
+.modal-title { font-size:18px; font-weight:700; margin-bottom:6px; }
+.modal-sub   { font-size:14px; color:var(--ink-40); line-height:1.6; margin-bottom:20px; }
+.modal-wechat-box {
+  background:var(--cream-deep); border-radius:var(--r-md);
+  padding:20px; text-align:center; margin-bottom:16px;
+}
+/* 微信二维码图片占位 */
+.wechat-qr {
+  width:160px; height:160px; margin:0 auto 12px;
+  background:#e8e4de; border-radius:var(--r-sm);
+  display:flex; align-items:center; justify-content:center;
+  overflow:hidden;
+}
+.wechat-qr img { width:100%; height:100%; object-fit:cover; }
+.wechat-qr-placeholder { font-size:12px; color:var(--ink-40); text-align:center; }
+.wechat-id-row {
+  display:flex; align-items:center; justify-content:center; gap:8px;
+  font-size:14px; font-weight:600;
+}
+.copy-btn {
+  font-size:12px; padding:4px 10px;
+  background:var(--amber); color:#fff;
+  border:none; border-radius:6px; cursor:pointer;
+}
+.modal-close {
+  width:100%; padding:13px; background:var(--cream-deep);
+  border:none; border-radius:var(--r-md); font-size:15px; font-weight:600;
+  color:var(--ink-70); cursor:pointer;
+}
+.modal-tip { font-size:12px; color:var(--ink-40); text-align:center; margin-top:10px; }
+
+/* toast */
+.toast {
+  position:fixed; bottom:100px; left:50%; transform:translateX(-50%) translateY(10px);
+  background:var(--dark); color:#fff;
+  font-size:13px; padding:9px 20px; border-radius:20px;
+  opacity:0; pointer-events:none; transition:all .25s; z-index:300;
+}
+.toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <a href="/" class="logo-wrap">
+    <svg width="26" height="26" viewBox="0 0 36 36" fill="none">
+      <circle cx="18" cy="18" r="16" stroke="#C2692A" stroke-width="1.5" opacity=".35"/>
+      <circle cx="18" cy="18" r="5" fill="#C2692A" opacity=".9"/>
+      <path d="M18 4 L18 8 M18 28 L18 32 M4 18 L8 18 M28 18 L32 18" stroke="#C2692A" stroke-width="1.5" stroke-linecap="round" opacity=".5"/>
+    </svg>
+    <span class="logo-text" data-brand-name>沐海星辰</span>
+  </a>
+  <a href="javascript:history.back()" class="back-btn">返回</a>
+</header>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-tag">采集代理合作计划</div>
+  <h1 class="hero-title">
+    开展皮纹天赋采集业务，<br>
+    <em>从这里开始</em>
+  </h1>
+  <p class="hero-sub">
+    一套采集设备 + 沐海星辰 AI 报告系统 + 专业培训支持。<br>
+    合同签约沐海星辰，我们负责后续服务。
+  </p>
+  <button class="hero-cta" onclick="openWechat()">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.5a19.79 19.79 0 01-3-8.57A2 2 0 012.1 1h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.91 8.37a16 16 0 006 9.5l1.33-1.44a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
+    立即联系咨询
+  </button>
+</section>
+
+<!-- WHY US -->
+<div class="section">
+  <div class="section-label">为什么选择沐海星辰</div>
+  <h2 class="section-title">不只是设备，更是完整的业务支撑</h2>
+  <p class="section-sub">与直接签约魔纹密码相比，加入沐海星辰代理体系，你获得的更多。</p>
+
+  <div class="why-grid">
+    <div class="why-card">
+      <div class="why-icon">🤖</div>
+      <div>
+        <div class="why-title">AI 报告平台独家接入</div>
+        <div class="why-text">代理商独享沐海星辰 AIPIWEN 智能解读系统，自动生成专业天赋报告，无需手动分析，效率提升数倍。</div>
+      </div>
+    </div>
+    <div class="why-card">
+      <div class="why-icon">📋</div>
+      <div>
+        <div class="why-title">合同签我们，保障更清晰</div>
+        <div class="why-text">合同主体为沐海星辰，我们负责售后、培训、系统支持，你只需专注采集和客户服务。</div>
+      </div>
+    </div>
+    <div class="why-card">
+      <div class="why-icon">🎓</div>
+      <div>
+        <div class="why-title">培训 + 运营持续支持</div>
+        <div class="why-text">初级测评解读师培训、数据分析培训，以及沐海星辰运营经验共享，帮你更快跑通本地市场。</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DEVICE -->
+<div class="device-section">
+  <div class="section-label">采集设备</div>
+  <h2 class="section-title">魔纹密码指纹采集终端</h2>
+  <p class="section-sub" style="margin-bottom:16px">专业皮纹采集硬件，10指同步扫描，配合 AI 平台输出完整天赋分析报告。</p>
+
+  <!-- ★ 图片占位：Emma 上传设备图后替换 src -->
+  <div class="device-imgs">
+    <div class="device-img-slot" id="device-img-1">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+      <span>设备正面图</span>
+    </div>
+    <div class="device-img-slot" id="device-img-2">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M7 11.5l3 3 7-7"/><circle cx="12" cy="12" r="10"/></svg>
+      <span>采集效果图</span>
+    </div>
+  </div>
+
+  <div class="device-spec-list">
+    <div class="device-spec">
+      <span class="device-spec-dot">◆</span>
+      <span>十指皮纹全采集，采集时间约 10 分钟，操作简便，无专业医学背景也可上手</span>
+    </div>
+    <div class="device-spec">
+      <span class="device-spec-dot">◆</span>
+      <span>采集数据实时上传 AI 系统，自动生成多维度天赋分析报告</span>
+    </div>
+    <div class="device-spec">
+      <span class="device-spec-dot">◆</span>
+      <span>适用场景：幼儿园、培训机构、亲子课堂、早教中心、家庭测评</span>
+    </div>
+    <div class="device-spec">
+      <span class="device-spec-dot">◆</span>
+      <span>设备由魔纹密码官方提供，授权正规，含售后维保</span>
+    </div>
+  </div>
+</div>
+
+<!-- PRICING -->
+<div class="pricing-section">
+  <div class="section-label">代理方案</div>
+  <h2 class="section-title">两套方案，按需选择</h2>
+  <p class="section-sub">定价与魔纹密码官方一致，签约沐海星辰享受更完善的配套服务。</p>
+
+  <div class="plan-tabs">
+    <div class="plan-tab active" onclick="switchPlan('a')">方案 A · 份数版</div>
+    <div class="plan-tab" onclick="switchPlan('b')">方案 B · 年费版</div>
+  </div>
+
+  <!-- 方案A -->
+  <div class="plan-card active" id="plan-a">
+    <div class="plan-header">
+      <div class="plan-tier">采集中心 A</div>
+      <div class="plan-name">按份数购买报告</div>
+      <div class="plan-price">¥23,000 <span>/ 加盟</span></div>
+    </div>
+    <div class="plan-body">
+      <div class="plan-rows">
+        <div class="plan-row">
+          <div class="plan-row-label">包含内容</div>
+          <div class="plan-row-val">
+            <strong>一套采集设备</strong>（服务时限3年，采购点数自动延期）<br>
+            完整版报告 <strong>200份</strong><br>
+            基础版报告 <strong>300份</strong>
+          </div>
+        </div>
+        <div class="plan-row">
+          <div class="plan-row-label">培训内容</div>
+          <div class="plan-row-val">初级测评解读师线上课程<br>数据分析培训</div>
+        </div>
+        <div class="plan-row">
+          <div class="plan-row-label">到期续费</div>
+          <div class="plan-row-val">
+            赋号份数 <strong>3000元 / 3年</strong><br>
+            完整版 60元/份（起购100份）<br>
+            基础版 40元/份
+          </div>
+        </div>
+        <div class="plan-row">
+          <div class="plan-row-label">报告出具</div>
+          <div class="plan-row-val">自行出具 / 总部出具 20元/份</div>
+        </div>
+      </div>
+      <div class="plan-note">
+        ★ 推荐其他代理加入沐海星辰，奖励4000元（现金或抵扣设备费）
+      </div>
+    </div>
+  </div>
+
+  <!-- 方案B -->
+  <div class="plan-card" id="plan-b">
+    <div class="plan-header">
+      <div class="plan-tier">采集中心 B</div>
+      <div class="plan-name">一年内无限制出具报告</div>
+      <div class="plan-price">¥23,000 <span>/ 加盟</span></div>
+    </div>
+    <div class="plan-body">
+      <div class="plan-rows">
+        <div class="plan-row">
+          <div class="plan-row-label">包含内容</div>
+          <div class="plan-row-val">
+            <strong>一套采集设备</strong><br>
+            <strong>一年内无限制出具报告</strong>（无份数上限）
+          </div>
+        </div>
+        <div class="plan-row">
+          <div class="plan-row-label">培训内容</div>
+          <div class="plan-row-val">初级测评解读师线上课程<br>数据分析培训</div>
+        </div>
+        <div class="plan-row">
+          <div class="plan-row-label">到期续费</div>
+          <div class="plan-row-val">
+            全版 <strong>2万元 / 年</strong><br>
+            基础版 <strong>1万元 / 年</strong>
+          </div>
+        </div>
+        <div class="plan-row">
+          <div class="plan-row-label">报告出具</div>
+          <div class="plan-row-val">自行出具 / 总部出具 20元/份</div>
+        </div>
+      </div>
+      <div class="plan-note">
+        ★ 方案B适合已有稳定客源、报告量较大的机构；年内不限量，回本更快
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- HOW IT WORKS -->
+<div class="steps-section">
+  <div class="section-label">申请流程</div>
+  <h2 class="section-title">三步开始合作</h2>
+
+  <div style="margin-top:20px;" class="steps-list">
+    <div class="step">
+      <div class="step-num">1</div>
+      <div>
+        <div class="step-title">联系咨询</div>
+        <div class="step-desc">微信联系沐海星辰，告知所在城市、计划方向，我们为你详细解答。</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div>
+        <div class="step-title">签约备案</div>
+        <div class="step-desc">确认方案后签订合作合同（合同主体：沐海星辰），缴纳加盟费，开通平台账号。</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div>
+        <div class="step-title">设备到位 · 正式运营</div>
+        <div class="step-desc">采集设备发货，完成线上培训，接入 AIPIWEN 系统，即可在本地开展测评业务。</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FAQ -->
+<div class="faq-section">
+  <div class="section-label">常见问题</div>
+  <h2 class="section-title" style="margin-bottom:16px">你可能想问的</h2>
+
+  <div class="faq-list">
+    <div class="faq-item">
+      <button class="faq-q" onclick="toggleFaq(this)">
+        我没有教育背景，可以做吗？
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <div class="faq-a">完全可以。采集操作简便，无需医学或教育专业背景。我们提供线上培训课程，帮你快速掌握测评解读和客户服务技能，大多数代理2-3天即可上手。</div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-q" onclick="toggleFaq(this)">
+        和直接签魔纹有什么区别？
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <div class="faq-a">签约沐海星辰额外获得：AIPIWEN AI报告平台使用权（智能生成报告，效率大幅提升）、沐海星辰运营经验支持、中文本地化培训。定价与魔纹官方一致，服务更完善。</div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-q" onclick="toggleFaq(this)">
+        方案A和方案B怎么选？
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <div class="faq-a">方案A（份数版）适合刚入门、客源还在积累阶段的代理，按需购买，风险低。方案B（年费版）适合已有稳定机构资源、预计年内报告量较大（建议月均出具30+份以上）的代理，年度无限量性价比更高。</div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-q" onclick="toggleFaq(this)">
+        报告怎么给到客户？
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <div class="faq-a">采集完成后，数据进入 AIPIWEN 平台，AI 自动生成报告。你可以选择自行向客户出具，也可以由总部出具（20元/份服务费）。报告可以微信分享或打印，客户端也可扫码在线查看。</div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-q" onclick="toggleFaq(this)">
+        我可以再往下发展代理吗？
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <div class="faq-a">采集中心暂不支持继续向下发展采集代理。如你对服务中心及更高层级合作感兴趣，欢迎咨询，我们会根据实际情况为你介绍更合适的合作路径。</div>
+    </div>
+  </div>
+</div>
+
+<!-- STICKY CTA -->
+<div class="sticky-cta">
+  <button class="sticky-cta-btn" onclick="openWechat()">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="9" cy="12" r="1"/><circle cx="15" cy="12" r="1"/><path d="M8 6c-4.4 0-7 2.7-7 5.5 0 1.4.6 2.7 1.6 3.6L2 19l3.8-1.4c.9.3 1.9.4 3 .4M11 11.5c0-3 2.7-5.5 6-5.5s6 2.5 6 5.5-2.7 5.5-6 5.5c-.8 0-1.5-.1-2.2-.3L12 17.5l.5-3c-.9-.9-1.5-2.1-1.5-3.4 0-.2 0-.4.01-.6"/></svg>
+    微信咨询，了解合作详情
+  </button>
+</div>
+
+<!-- WECHAT MODAL -->
+<div class="modal-overlay" id="wechat-modal" onclick="closeWechatOutside(event)">
+  <div class="modal-sheet">
+    <div class="modal-title">添加沐海星辰微信</div>
+    <div class="modal-sub">扫码或搜索微信号，告知你在哪个城市、想了解哪个方案，我们尽快回复。</div>
+    <div class="modal-wechat-box">
+      <!-- ★ 微信二维码占位：将 src 替换为实际二维码图片 -->
+      <div class="wechat-qr" id="wechat-qr-wrap">
+        <div class="wechat-qr-placeholder">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#C2692A" stroke-width="1.5" style="margin-bottom:8px"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3M17 17v4M21 14v7"/></svg>
+          <div style="font-size:11px;color:#8C8580;margin-top:4px">微信二维码<br>（待替换）</div>
+        </div>
+      </div>
+      <div class="wechat-id-row">
+        微信号：<strong id="wechat-id-text">muhaixin2024</strong>
+        <button class="copy-btn" onclick="copyWechatId()">复制</button>
+      </div>
+    </div>
+    <button class="modal-close" onclick="closeWechat()">关闭</button>
+    <div class="modal-tip">长按二维码识别 · 或打开微信搜索上方微信号</div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* Plan tab switch */
+function switchPlan(plan) {
+  document.querySelectorAll('.plan-tab').forEach((t, i) => {
+    t.classList.toggle('active', (plan === 'a' && i === 0) || (plan === 'b' && i === 1));
+  });
+  document.getElementById('plan-a').classList.toggle('active', plan === 'a');
+  document.getElementById('plan-b').classList.toggle('active', plan === 'b');
+}
+
+/* FAQ toggle */
+function toggleFaq(btn) {
+  btn.closest('.faq-item').classList.toggle('open');
+}
+
+/* WeChat modal */
+function openWechat() {
+  document.getElementById('wechat-modal').classList.add('show');
+  document.body.style.overflow = 'hidden';
+}
+function closeWechat() {
+  document.getElementById('wechat-modal').classList.remove('show');
+  document.body.style.overflow = '';
+}
+function closeWechatOutside(e) {
+  if (e.target === document.getElementById('wechat-modal')) closeWechat();
+}
+
+/* Copy WeChat ID */
+function copyWechatId() {
+  const id = document.getElementById('wechat-id-text').textContent;
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(id).then(() => showToast('微信号已复制，去微信搜索添加 ✓'));
+  } else {
+    const el = document.createElement('textarea');
+    el.value = id; document.body.appendChild(el);
+    el.select(); document.execCommand('copy');
+    document.body.removeChild(el);
+    showToast('微信号已复制，去微信搜索添加 ✓');
+  }
+}
+
+/* Toast */
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+</script>
+</body>
+</html>
