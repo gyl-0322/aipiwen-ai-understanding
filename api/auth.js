@@ -19,7 +19,7 @@
 const crypto = require('crypto');
 const { redisSet, redisGet, makeSessionToken, getSessionToken, parseSessionToken, registerUser,
         createInviteToken, creditReferral, ensureUserTenant,
-        getQuotaStatus } = require('./_lib');
+        getQuotaStatus, getTenantBrand, getOpenid } = require('./_lib');
 
 const APPID        = process.env.WECHAT_OPEN_APPID || 'wxcd1f11f34b4cf731';
 const SECRET       = process.env.WECHAT_OPEN_SECRET || '';
@@ -226,7 +226,12 @@ module.exports = async function handler(req, res) {
 
   // ── 1. 生成微信授权链接 ──────────────────────────────────────────────────
   if (action === 'login_url') {
-    const state = crypto.randomBytes(8).toString('hex');
+    // tid：来源租户 ID（B端链接进来时携带；默认 consumer）
+    // 编入 state：{c: csrf, t: tenantId}，base64url 编码（URL 安全、无 =）
+    const csrf = crypto.randomBytes(8).toString('hex');
+    const tid  = (req.query.tid || 'consumer').replace(/[^a-z0-9_-]/gi, '').slice(0, 64);
+    const state = Buffer.from(JSON.stringify({ c: csrf, t: tid }))
+      .toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
     const url = `https://open.weixin.qq.com/connect/qrconnect`
       + `?appid=${APPID}`
       + `&redirect_uri=${encodeURIComponent(REDIRECT_URI)}`
@@ -239,6 +244,16 @@ module.exports = async function handler(req, res) {
   // ── 2. 微信回调：用 code 换 access_token，获取用户信息 ───────────────────
   if (action === 'callback' && code) {
     try {
+      // 解析 state，提取来源租户 tid（兼容旧格式纯 hex state）
+      let sourceTenantId = 'consumer';
+      try {
+        const stateRaw = req.query.state || '';
+        const padded = stateRaw.replace(/-/g, '+').replace(/_/g, '/');
+        const decoded = Buffer.from(padded, 'base64').toString();
+        const parsed  = JSON.parse(decoded);
+        if (parsed.t && /^[a-z0-9_-]+$/i.test(parsed.t)) sourceTenantId = parsed.t;
+      } catch {} // 旧格式或空 state：保持 consumer
+
       const tokenRes  = await fetch(
         `https://api.weixin.qq.com/sns/oauth2/access_token`
         + `?appid=${APPID}&secret=${SECRET}&code=${code}&grant_type=authorization_code`
@@ -256,17 +271,21 @@ module.exports = async function handler(req, res) {
       const userKey = `user:${openid}`;
       let user = await redisGet(userKey);
       if (!user) {
+        // 新用户：记录来源租户（M3 B端返点/归属依据）
         user = {
           openid,
-          unionid:   unionid || '',
-          nickname:  userInfo.nickname || '',
-          avatar:    userInfo.headimgurl || '',
-          createdAt: new Date().toISOString(),
-          children:  [],
+          unionid:        unionid || '',
+          nickname:       userInfo.nickname || '',
+          avatar:         userInfo.headimgurl || '',
+          createdAt:      new Date().toISOString(),
+          sourceTenantId, // ★ 来源租户，一旦写入不再覆盖
+          children:       [],
         };
       } else {
         user.nickname = userInfo.nickname  || user.nickname;
         user.avatar   = userInfo.headimgurl || user.avatar;
+        // 老用户：仅在 sourceTenantId 未设置时补写（避免覆盖历史归属）
+        if (!user.sourceTenantId) user.sourceTenantId = sourceTenantId;
       }
       await redisSet(userKey, user);
       // 把 openid 写入全局用户索引，供定时任务遍历
@@ -447,6 +466,27 @@ module.exports = async function handler(req, res) {
       await redisSet(key, existing.slice(-10), 90 * 86400).catch(() => {}); // 保留最近10条，90天
     }
     return res.status(200).json({ ok: true });
+  }
+
+  // ── 里程碑2/M3预埋：返回当前会话所属租户的品牌配置 ─────────────────────────
+  // 未登录时用 ?tid= 查询参数（公开营销页按 B端链接渲染品牌）
+  if (action === 'brand') {
+    let tenantId = 'consumer';
+    // 优先从登录用户 session 读取 sourceTenantId
+    const token = getSessionToken(req);
+    if (token) {
+      const openid = parseSessionToken(token);
+      if (openid) {
+        const user = await redisGet(`user:${openid}`).catch(() => null);
+        if (user?.sourceTenantId) tenantId = user.sourceTenantId;
+      }
+    }
+    // 未登录时：用 ?tid= 参数（B端链接带过来）
+    if (tenantId === 'consumer' && req.query.tid) {
+      tenantId = req.query.tid.replace(/[^a-z0-9_-]/gi, '').slice(0, 64) || 'consumer';
+    }
+    const brand = await getTenantBrand(tenantId);
+    return res.status(200).json({ ok: true, tenantId, ...brand });
   }
 
   return res.status(400).json({ error: '无效的 action' });

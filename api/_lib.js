@@ -438,6 +438,7 @@ async function requireRole(req, res, ...allowedRoles) {
 /**
  * 首次登录时给老用户补充 role / tenantId（幂等，已设置则跳过）。
  * TENANT_ENABLED=false 时直接返回。
+ * sourceTenantId：注册时记录的来源租户，M3 开启后作为用户归属依据。
  */
 async function ensureUserTenant(openid) {
   if (!TENANT_ENABLED) return;
@@ -445,8 +446,33 @@ async function ensureUserTenant(openid) {
   if (!user) return;
   if (user.role && user.tenantId) return; // 已设置，跳过
   user.role     = PLATFORM_ADMIN_OPENIDS.includes(openid) ? ROLES.PLATFORM_ADMIN : ROLES.CONSUMER;
-  user.tenantId = 'consumer';
+  // 优先用注册时记录的来源租户（M3 B端家长归属）；无则默认 consumer
+  user.tenantId = user.sourceTenantId || 'consumer';
   await redisSet(`user:${openid}`, user);
+}
+
+/**
+ * 获取租户品牌配置（logo / 名称 / 主色）。
+ * M3 B端租户可在 tenant 记录中配置 brand 字段；现阶段只有 consumer = aipiwen 默认。
+ * @param {string} tenantId
+ * @returns {{ name: string, logoUrl: string, primaryColor: string, accentColor: string }}
+ */
+const CONSUMER_BRAND = {
+  name:         '沐海星辰',
+  logoUrl:      '/assets/logo.png',
+  primaryColor: '#D97706', // amber-600
+  accentColor:  '#FDE68A', // amber-200
+};
+
+async function getTenantBrand(tenantId) {
+  if (!tenantId || tenantId === 'consumer') return CONSUMER_BRAND;
+  try {
+    const tenant = await getTenant(tenantId);
+    if (!tenant?.brand) return CONSUMER_BRAND;
+    return { ...CONSUMER_BRAND, ...tenant.brand }; // 未配置项 fallback 到 consumer 默认值
+  } catch {
+    return CONSUMER_BRAND;
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -689,7 +715,7 @@ module.exports = {
   // 里程碑 1：多租户
   TENANT_ENABLED, TENANT_LEVEL, ROLES,
   getTenant, saveTenant, listSubTenants,
-  getTenantContext, requireRole, ensureUserTenant,
+  getTenantContext, requireRole, ensureUserTenant, getTenantBrand,
   // 里程碑 2：软付费墙 + 升级钩子 + 防滥用
   PAYMENT_ENABLED, checkAndConsumeQuota, getQuotaStatus, getUserTier,
   checkRateLimit, trackQuotaHit, buildUpgradeMessage,
