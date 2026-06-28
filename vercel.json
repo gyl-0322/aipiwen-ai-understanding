@@ -2,6 +2,10 @@
   "version": 2,
   "routes": [
     {
+      "src": "/api/tenant",
+      "dest": "/api/tenant"
+    },
+    {
       "src": "/api/growth",
       "dest": "/api/admin-convs"
     },

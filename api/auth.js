@@ -18,7 +18,7 @@
 
 const crypto = require('crypto');
 const { redisSet, redisGet, makeSessionToken, getSessionToken, parseSessionToken, registerUser,
-        createInviteToken, creditReferral } = require('./_lib');
+        createInviteToken, creditReferral, ensureUserTenant } = require('./_lib');
 
 const APPID        = process.env.WECHAT_OPEN_APPID || 'wxcd1f11f34b4cf731';
 const SECRET       = process.env.WECHAT_OPEN_SECRET || '';
@@ -270,6 +270,7 @@ module.exports = async function handler(req, res) {
       await redisSet(userKey, user);
       // 把 openid 写入全局用户索引，供定时任务遍历
       registerUser(openid).catch(() => {}); // 非阻塞
+      ensureUserTenant(openid).catch(() => {}); // 里程碑1：补充 role/tenantId（幂等，TENANT_ENABLED=false 时无操作）
 
       const sessionToken = makeSessionToken(openid);
       await redisSet(`session:${sessionToken}`, openid, 30 * 24 * 3600);
@@ -292,6 +293,7 @@ module.exports = async function handler(req, res) {
     if (!openid) return res.status(401).json({ error: 'session无效' });
     const user = await redisGet(`user:${openid}`);
     if (!user) return res.status(401).json({ error: '用户不存在' });
+    await ensureUserTenant(openid).catch(() => {}); // 里程碑1：补 role/tenantId（幂等）
     return res.status(200).json({ user });
   }
 
