@@ -9,7 +9,8 @@
  */
 
 const crypto = require('crypto');
-const { redisGet, redisSet, creditReferral, callClaude, MODEL_DEEP, MODEL_FREE, getOpenid } = require('./_lib');
+const { redisGet, redisSet, creditReferral, callClaude, MODEL_DEEP, MODEL_FREE, getOpenid,
+        checkAndConsumeQuota } = require('./_lib');
 
 // ── 案例库索引（Upstash list，max 2000 条）──────────────────────────────────
 function kvUrl()   { return process.env.KV_REST_API_URL   || process.env.REDIS_URL  || ''; }
@@ -719,6 +720,19 @@ module.exports = async function handler(req, res) {
 
   const { engineResult, age, name, selectedIssues = [], refToken = null, fingers = null } = payload;
   if (!engineResult) return res.status(400).json({ ok:false, error:'缺少 engineResult' });
+
+  // ── 里程碑2：软付费墙 quota 检查（report 类型，PAYMENT_ENABLED=false 时透明放行）──
+  const reportOpenid = getOpenid(req);
+  const reportQuotaKey = reportOpenid || `guest:${ip}`;
+  const rqr = await checkAndConsumeQuota(reportQuotaKey, 'report').catch(() => ({ allowed: true, remaining: 999 }));
+  if (!rqr.allowed) {
+    return res.status(429).json({
+      ok: false,
+      error: rqr.reason || '今日深度报告额度已用完',
+      quota_exhausted: true,
+      upgradeUrl: rqr.upgradeUrl || '/membership',
+    });
+  }
 
   // 邀请积分（异步，不阻塞主流程）
   if (refToken) creditReferral(ip, refToken, 'report').catch(() => {});

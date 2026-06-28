@@ -7,7 +7,8 @@
  * POST /api/synthesize   { contexts: { child?, self?, partner?, business? } }
  */
 
-const { getGlobalPatterns, redisSet, redisGet, creditReferral, callClaude, MODEL_FREE, MODEL_DEEP } = require('./_lib');
+const { getGlobalPatterns, redisSet, redisGet, creditReferral, callClaude, MODEL_FREE, MODEL_DEEP,
+        checkAndConsumeQuota, getOpenid } = require('./_lib');
 
 // ★ 免费对话轮数上限（超过提示升级，既控成本又软付费触发）
 const MAX_FREE_ROUNDS = 10;
@@ -202,6 +203,20 @@ module.exports = async function handler(req, res) {
   // 图片上传模式：content 可以为空（纯看图）或追加问题
   const isVisionMode = !!imageBase64;
   if (!isVisionMode && !content?.trim()) return res.status(400).json({ error: '内容不能为空' });
+
+  // ── 里程碑2：软付费墙 quota 检查（PAYMENT_ENABLED=false 时透明放行）─────────
+  const openid = getOpenid(req); // 未登录 guest = null，openid 为 sessionId 兜底
+  const quotaKey = openid || `guest:${sessionId || ip}`;
+  const quotaType = isVisionMode ? 'report' : 'chat';
+  const qr = await checkAndConsumeQuota(quotaKey, quotaType).catch(() => ({ allowed: true, remaining: 999 }));
+  if (!qr.allowed) {
+    return res.status(429).json({
+      error: qr.reason || '今日额度已用完',
+      quota_exhausted: true,
+      recover2hAt: qr.recover2hAt,
+      upgradeUrl: qr.upgradeUrl || '/membership',
+    });
+  }
 
   // ── 年龄/阶段分层：根据 subjectAge / context 决定 AI 解读语气和场景聚焦 ──────
   function getAgeTier(age) {

@@ -6,6 +6,14 @@
       "dest": "/api/tenant"
     },
     {
+      "src": "/membership",
+      "dest": "/membership.html"
+    },
+    {
+      "src": "/membership.html",
+      "dest": "/membership.html"
+    },
+    {
       "src": "/api/growth",
       "dest": "/api/admin-convs"
     },

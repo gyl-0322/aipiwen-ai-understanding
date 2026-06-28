@@ -449,6 +449,145 @@ async function ensureUserTenant(openid) {
   await redisSet(`user:${openid}`, user);
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// 里程碑 2 — 软付费墙 / Quota 系统
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * PAYMENT_ENABLED=false（默认）→ 所有 quota 检查通过，只记录用量，不拦截。
+ * PAYMENT_ENABLED=true → 严格按 tier 限额执行。
+ *
+ * 套餐 tier: 'free' | 'lite' | 'pro'
+ *
+ * 每日限额（PAYMENT_ENABLED=true 时生效）：
+ *   free:  chat=5,  report=1
+ *   lite:  chat=999(无限), report=5
+ *   pro:   chat=999, report=999
+ *
+ * 2h 恢复槽：免费用户当日 chat 耗尽后，每 2 小时补 2 次。
+ * Redis keys：
+ *   quota:daily:{type}:{openid}:{YYYYMMDD}     — 当日已用量
+ *   quota:2h:{openid}:{slot}                  — 该 2h 槽已领取的恢复次数
+ *   membership:{openid}                        — 用户套餐 { tier, expiresAt }
+ */
+
+const PAYMENT_ENABLED = process.env.PAYMENT_ENABLED === 'true';
+
+// 每日限额配置（PAYMENT_ENABLED=true 时）
+const QUOTA_LIMITS = {
+  free: { chat: 5,   report: 1   },
+  lite: { chat: 999, report: 5   },
+  pro:  { chat: 999, report: 999 },
+};
+
+// 2h 恢复量（free 用户专属，每 2h 槽补充 chat 次数）
+const RECOVER_CHAT_PER_SLOT = 2;
+
+/** 获取当前日期字符串 YYYYMMDD（北京时间） */
+function todayKey() {
+  return new Date(Date.now() + 8 * 3600000).toISOString().slice(0, 10).replace(/-/g, '');
+}
+
+/** 获取当前 2h 槽号（UTC时间每2小时一个槽）*/
+function current2hSlot() {
+  return Math.floor(Date.now() / (2 * 3600 * 1000));
+}
+
+/** 读取用户套餐；未设置则返回 free */
+async function getUserTier(openid) {
+  if (!openid) return 'free';
+  const m = await redisGet(`membership:${openid}`);
+  if (!m || !m.tier) return 'free';
+  if (m.expiresAt && new Date(m.expiresAt) < new Date()) return 'free'; // 过期降级
+  return m.tier;
+}
+
+/**
+ * 检查并消费一次配额。
+ * @param {string} openid
+ * @param {'chat'|'report'} type
+ * @returns {{ allowed: boolean, remaining: number, reason?: string, recover2hAt?: number }}
+ */
+async function checkAndConsumeQuota(openid, type) {
+  // PAYMENT_ENABLED=false → 全部放行，只记录
+  if (!PAYMENT_ENABLED) {
+    const dayKey = `quota:daily:${type}:${openid}:${todayKey()}`;
+    const used = (await redisGet(dayKey).catch(() => 0)) || 0;
+    await redisSet(dayKey, used + 1, 2 * 86400).catch(() => {});
+    return { allowed: true, remaining: 999 };
+  }
+
+  const tier = await getUserTier(openid);
+  const limit = (QUOTA_LIMITS[tier] || QUOTA_LIMITS.free)[type] || 0;
+
+  // 无限额度直接放行
+  if (limit >= 999) {
+    return { allowed: true, remaining: 999 };
+  }
+
+  const dayKey = `quota:daily:${type}:${openid}:${todayKey()}`;
+  const used = (await redisGet(dayKey).catch(() => 0)) || 0;
+
+  // 2h 恢复槽（仅 free + chat）
+  let bonus = 0;
+  if (tier === 'free' && type === 'chat' && used >= limit) {
+    const slot = current2hSlot();
+    const slotKey = `quota:2h:${openid}:${slot}`;
+    const slotUsed = (await redisGet(slotKey).catch(() => 0)) || 0;
+    bonus = Math.max(0, RECOVER_CHAT_PER_SLOT - slotUsed);
+    if (bonus > 0) {
+      await redisSet(slotKey, slotUsed + 1, 4 * 3600).catch(() => {});
+    }
+  }
+
+  const effective = used - bonus;
+  if (effective >= limit) {
+    const nextSlot = current2hSlot() + 1;
+    const nextSlotMs = nextSlot * 2 * 3600 * 1000;
+    return {
+      allowed: false,
+      remaining: 0,
+      reason: type === 'chat'
+        ? `今日行为解读额度已用完（${limit}次）。2小时后刷新 ${RECOVER_CHAT_PER_SLOT} 次，或升级会员继续使用。`
+        : `今日深度报告额度已用完（${limit}次）。请明日再试，或升级会员获得更多次数。`,
+      recover2hAt: nextSlotMs,
+      upgradeUrl: '/membership',
+    };
+  }
+
+  // 消费
+  await redisSet(dayKey, used + 1, 2 * 86400).catch(() => {});
+  return { allowed: true, remaining: limit - used - 1 };
+}
+
+/**
+ * 返回用户当日 quota 摘要（用于 membership 页显示）。
+ */
+async function getQuotaStatus(openid) {
+  const tier = await getUserTier(openid);
+  const limits = QUOTA_LIMITS[tier] || QUOTA_LIMITS.free;
+  const today = todayKey();
+
+  const [chatUsed, reportUsed] = await Promise.all([
+    redisGet(`quota:daily:chat:${openid}:${today}`).catch(() => 0),
+    redisGet(`quota:daily:report:${openid}:${today}`).catch(() => 0),
+  ]);
+
+  const chatRemain   = Math.max(0, limits.chat   - (chatUsed   || 0));
+  const reportRemain = Math.max(0, limits.report - (reportUsed || 0));
+
+  return {
+    tier,
+    paymentEnabled: PAYMENT_ENABLED,
+    quota: {
+      chatRemain:   PAYMENT_ENABLED ? chatRemain   : 999,
+      reportRemain: PAYMENT_ENABLED ? reportRemain : 999,
+      chatLimit:    limits.chat,
+      reportLimit:  limits.report,
+    },
+  };
+}
+
 module.exports = {
   redisSet, redisGet,
   makeSessionToken, parseSessionToken, getSessionToken, getOpenid,
@@ -462,4 +601,6 @@ module.exports = {
   TENANT_ENABLED, TENANT_LEVEL, ROLES,
   getTenant, saveTenant, listSubTenants,
   getTenantContext, requireRole, ensureUserTenant,
+  // 里程碑 2：软付费墙
+  PAYMENT_ENABLED, checkAndConsumeQuota, getQuotaStatus, getUserTier,
 };

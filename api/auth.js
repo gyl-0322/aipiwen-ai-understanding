@@ -18,7 +18,8 @@
 
 const crypto = require('crypto');
 const { redisSet, redisGet, makeSessionToken, getSessionToken, parseSessionToken, registerUser,
-        createInviteToken, creditReferral, ensureUserTenant } = require('./_lib');
+        createInviteToken, creditReferral, ensureUserTenant,
+        getQuotaStatus } = require('./_lib');
 
 const APPID        = process.env.WECHAT_OPEN_APPID || 'wxcd1f11f34b4cf731';
 const SECRET       = process.env.WECHAT_OPEN_SECRET || '';
@@ -415,6 +416,37 @@ module.exports = async function handler(req, res) {
 
     console.log(`[migrate_account] ${oldOpenid} → ${newOpenid}`, errors.length ? `errors: ${errors.join(',')}` : 'ok');
     return res.status(200).json({ ok: true, migrated: topLevelKeys.length + children.length * 3, errors });
+  }
+
+  // ── 里程碑2：quota_status — 返回当前用户额度摘要 ─────────────────────────
+  if (action === 'quota_status') {
+    const token = getSessionToken(req);
+    if (!token) return res.status(401).json({ error: '未登录' });
+    const openid = parseSessionToken(token);
+    if (!openid) return res.status(401).json({ error: 'session无效' });
+    const status = await getQuotaStatus(openid);
+    return res.status(200).json({ ok: true, ...status });
+  }
+
+  // ── 里程碑2：upgrade_intent — 记录用户升级意向（付费未开放时收集）────────
+  if (action === 'upgrade_intent' && req.method === 'POST') {
+    const token = getSessionToken(req);
+    const openid = token ? parseSessionToken(token) : null;
+    let body = {};
+    try {
+      const raw = await new Promise((resolve, reject) => {
+        let d = ''; req.on('data', c => { d += c; }); req.on('end', () => resolve(d));
+      });
+      body = JSON.parse(raw);
+    } catch {}
+    const { tier = 'unknown', label = '' } = body;
+    if (openid) {
+      const key = `upgrade_intent:${openid}`;
+      const existing = await redisGet(key).catch(() => []) || [];
+      existing.push({ tier, label, at: new Date().toISOString() });
+      await redisSet(key, existing.slice(-10), 90 * 86400).catch(() => {}); // 保留最近10条，90天
+    }
+    return res.status(200).json({ ok: true });
   }
 
   return res.status(400).json({ error: '无效的 action' });

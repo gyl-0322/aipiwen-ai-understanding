@@ -12,7 +12,8 @@
  */
 
 const crypto = require('crypto');
-const { redisSet, redisGet, getOpenid, generatePortrait, portraitNeedsRefresh, getGlobalPatterns, archiveRecordsIfNeeded, searchKnowledge, callClaude, MODEL_FREE } = require('./_lib');
+const { redisSet, redisGet, getOpenid, generatePortrait, portraitNeedsRefresh, getGlobalPatterns, archiveRecordsIfNeeded, searchKnowledge, callClaude, MODEL_FREE,
+        checkAndConsumeQuota } = require('./_lib');
 
 function readBody(req) {
   return new Promise((resolve, reject) => {
@@ -189,6 +190,12 @@ ${recordsText}
   if (action === 'chat' && id && req.method === 'POST') {
     const { content } = await readBody(req);
     if (!content?.trim()) return res.status(400).json({ error: '内容不能为空' });
+
+    // 里程碑2：软付费墙（chat quota，PAYMENT_ENABLED=false 透明放行）
+    const cqr = await checkAndConsumeQuota(openid, 'chat').catch(() => ({ allowed: true }));
+    if (!cqr.allowed) {
+      return res.status(429).json({ error: cqr.reason || '今日对话额度已用完', quota_exhausted: true, upgradeUrl: '/membership' });
+    }
 
     const child = (user.children || []).find(c => c.id === id);
     if (!child) return res.status(404).json({ error: '孩子不存在' });

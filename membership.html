@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>AIPIWEN · 会员计划</title>
+<style>
+:root {
+  --cream:      #FDFCF8;
+  --cream-deep: #F5F3EE;
+  --ink:        #1A1714;
+  --ink-70:     #4A4540;
+  --ink-40:     #8C8580;
+  --ink-20:     #C8C3BC;
+  --ink-10:     #EAE7E2;
+  --amber:      #C2692A;
+  --amber-soft: #F5EDE4;
+  --amber-glow: rgba(194,105,42,.10);
+  --ok:         #3A7D5E;
+  --r-sm:10px; --r-md:16px; --r-lg:24px;
+  --font-sans: -apple-system,'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif;
+}
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+body {
+  font-family: var(--font-sans);
+  background: var(--cream); color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh; overflow-x: hidden;
+}
+
+/* ── HEADER ── */
+.site-header {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:16px 20px;
+  position:sticky; top:0;
+  background:rgba(253,252,248,.94);
+  backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);
+  z-index:100; border-bottom:1px solid var(--ink-10);
+}
+.logo-wrap { display:flex; align-items:center; gap:10px; text-decoration:none; color:inherit; }
+.logo-text { font-size:15px; font-weight:700; letter-spacing:.06em; }
+.back-btn {
+  font-size:13px; color:var(--ink-70); text-decoration:none;
+  padding:6px 0; display:flex; align-items:center; gap:4px;
+}
+.back-btn::before { content:'←'; }
+
+/* ── HERO ── */
+.hero {
+  padding:36px 20px 20px;
+  text-align:center;
+}
+.hero-badge {
+  display:inline-block; font-size:11px; font-weight:600; letter-spacing:.08em;
+  color:var(--amber); background:var(--amber-soft); border-radius:20px;
+  padding:4px 12px; margin-bottom:14px; text-transform:uppercase;
+}
+.hero h1 {
+  font-size:26px; font-weight:800; line-height:1.25; margin-bottom:10px;
+  letter-spacing:-.01em;
+}
+.hero h1 span { color:var(--amber); }
+.hero p {
+  font-size:14px; color:var(--ink-70); line-height:1.65; max-width:280px; margin:0 auto;
+}
+
+/* ── QUOTA STATUS BAR (if logged in) ── */
+.quota-bar {
+  margin:16px 20px;
+  background:var(--cream-deep); border-radius:var(--r-md);
+  padding:14px 16px; display:none;
+}
+.quota-bar.visible { display:block; }
+.quota-bar-title { font-size:12px; color:var(--ink-40); margin-bottom:8px; font-weight:500; }
+.quota-items { display:flex; gap:16px; flex-wrap:wrap; }
+.quota-item { font-size:13px; color:var(--ink-70); }
+.quota-item strong { color:var(--ink); font-weight:700; }
+.quota-item.warn strong { color:var(--amber); }
+.quota-item.empty strong { color:#b94040; }
+
+/* ── PLANS ── */
+.plans {
+  padding:8px 12px 24px;
+  display:flex; flex-direction:column; gap:12px;
+}
+
+.plan-card {
+  background:#fff; border-radius:var(--r-lg);
+  border:1.5px solid var(--ink-10);
+  overflow:hidden;
+  transition:box-shadow .2s;
+}
+.plan-card.recommended {
+  border-color:var(--amber);
+  box-shadow:0 4px 24px var(--amber-glow);
+}
+.plan-card-head {
+  padding:20px 20px 16px;
+  position:relative;
+}
+.plan-card.recommended .plan-card-head {
+  background:linear-gradient(135deg,#fdf0e7 0%,#fff8f2 100%);
+}
+.rec-badge {
+  position:absolute; top:14px; right:14px;
+  font-size:10px; font-weight:700; letter-spacing:.06em;
+  background:var(--amber); color:#fff;
+  padding:3px 9px; border-radius:20px;
+  text-transform:uppercase;
+}
+.plan-name {
+  font-size:13px; font-weight:700; letter-spacing:.04em;
+  color:var(--ink-40); text-transform:uppercase; margin-bottom:6px;
+}
+.plan-price-row {
+  display:flex; align-items:baseline; gap:4px; margin-bottom:4px;
+}
+.plan-price {
+  font-size:32px; font-weight:800; color:var(--ink); letter-spacing:-.02em;
+}
+.plan-price-unit { font-size:14px; color:var(--ink-70); }
+.plan-price-period { font-size:12px; color:var(--ink-40); }
+.plan-desc { font-size:13px; color:var(--ink-70); line-height:1.55; margin-top:4px; }
+
+.plan-card-body { padding:0 20px 20px; }
+.plan-features { list-style:none; padding:0; margin:12px 0 16px; display:flex; flex-direction:column; gap:8px; }
+.plan-features li {
+  font-size:13px; color:var(--ink-70); line-height:1.45;
+  display:flex; align-items:flex-start; gap:8px;
+}
+.plan-features li::before {
+  content:'✓'; font-size:12px; font-weight:700;
+  color:var(--ok); flex-shrink:0; margin-top:1px;
+}
+.plan-features li.limit::before { content:'·'; color:var(--ink-40); font-size:18px; margin-top:-2px; }
+.plan-features .highlight { color:var(--ink); font-weight:600; }
+
+.plan-cta {
+  display:block; width:100%; padding:14px;
+  border-radius:var(--r-md); border:none; cursor:pointer;
+  font-size:15px; font-weight:700; font-family:var(--font-sans);
+  transition:opacity .15s, transform .1s;
+  text-align:center; text-decoration:none;
+}
+.plan-cta:active { transform:scale(.97); }
+.plan-cta-primary {
+  background:var(--amber); color:#fff;
+}
+.plan-cta-secondary {
+  background:var(--ink-10); color:var(--ink-70);
+}
+.plan-cta-outline {
+  background:transparent; color:var(--ink);
+  border:1.5px solid var(--ink-20);
+}
+.plan-cta-current {
+  background:var(--cream-deep); color:var(--ink-40);
+  cursor:default; pointer-events:none;
+}
+.plan-cta-disabled {
+  opacity:.55; cursor:not-allowed;
+}
+
+/* ── SINGLE-REPORT SPECIAL CARD ── */
+.plan-card.single {
+  display:flex; flex-direction:row;
+  align-items:center; gap:0;
+}
+.plan-card.single .plan-card-head {
+  flex:1; padding:16px 16px 16px 20px;
+}
+.plan-card.single .plan-card-body {
+  padding:16px; flex-shrink:0; width:132px;
+  display:flex; align-items:center; justify-content:center;
+}
+.plan-card.single .plan-features { margin:6px 0 0; gap:5px; }
+
+/* ── FAQ / NOTE ── */
+.note-section {
+  padding:0 20px 32px;
+}
+.note-section h3 {
+  font-size:14px; font-weight:700; margin-bottom:12px; color:var(--ink);
+}
+.note-item {
+  font-size:13px; color:var(--ink-70); line-height:1.65; margin-bottom:10px;
+  padding-left:14px; position:relative;
+}
+.note-item::before {
+  content:'Q';
+  position:absolute; left:0; font-size:11px; font-weight:700;
+  color:var(--amber); top:1px;
+}
+.note-item .answer {
+  display:block; color:var(--ink-40); margin-top:3px; padding-left:14px;
+  position:relative;
+}
+.note-item .answer::before {
+  content:'A';
+  position:absolute; left:0; font-size:11px; font-weight:700; color:var(--ok); top:0;
+}
+
+/* ── PAYMENT COMING SOON OVERLAY ── */
+.coming-banner {
+  margin:0 20px 16px;
+  background:var(--amber-soft);
+  border-radius:var(--r-md); padding:12px 16px;
+  display:flex; gap:10px; align-items:flex-start;
+}
+.coming-banner-icon { font-size:18px; flex-shrink:0; }
+.coming-banner p { font-size:13px; color:var(--ink-70); line-height:1.55; }
+.coming-banner strong { color:var(--ink); }
+
+/* ── TOAST ── */
+.toast {
+  position:fixed; bottom:28px; left:50%; transform:translateX(-50%) translateY(20px);
+  background:var(--ink); color:#fff; font-size:13px; padding:10px 20px;
+  border-radius:30px; white-space:nowrap; z-index:999;
+  opacity:0; transition:opacity .25s, transform .25s; pointer-events:none;
+}
+.toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+
+/* ── LOGO SVG ── */
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <a href="/" class="logo-wrap">
+    <svg width="28" height="28" viewBox="0 0 36 36" fill="none">
+      <circle cx="18" cy="18" r="16" stroke="#C2692A" stroke-width="1.5" opacity=".35"/>
+      <circle cx="18" cy="18" r="5" fill="#C2692A" opacity=".9"/>
+      <path d="M18 4 L18 8 M18 28 L18 32 M4 18 L8 18 M28 18 L32 18" stroke="#C2692A" stroke-width="1.5" stroke-linecap="round" opacity=".5"/>
+    </svg>
+    <span class="logo-text">AIPIWEN</span>
+  </a>
+  <a href="javascript:history.back()" class="back-btn">返回</a>
+</header>
+
+<!-- Hero -->
+<div class="hero">
+  <div class="hero-badge">会员计划</div>
+  <h1>读懂，<span>深一点</span></h1>
+  <p>免费使用核心功能，按需升级获得更多 AI 深度洞察与解读次数</p>
+</div>
+
+<!-- 额度状态（登录后显示） -->
+<div class="quota-bar" id="quotaBar">
+  <div class="quota-bar-title">今日剩余额度</div>
+  <div class="quota-items" id="quotaItems">
+    <div class="quota-item"><strong id="qChat">-</strong> 行为解读</div>
+    <div class="quota-item"><strong id="qReport">-</strong> 深度报告</div>
+  </div>
+</div>
+
+<!-- 开放倒计时提示 -->
+<div class="coming-banner">
+  <div class="coming-banner-icon">🔔</div>
+  <p><strong>付费功能即将开放。</strong>现在登记意向，优先获得早鸟价格与通知，所有计划试用期间完全免费。</p>
+</div>
+
+<!-- 定价卡片 -->
+<div class="plans">
+
+  <!-- 免费 -->
+  <div class="plan-card" id="card-free">
+    <div class="plan-card-head">
+      <div class="plan-name">免费</div>
+      <div class="plan-price-row">
+        <div class="plan-price">¥0</div>
+        <div class="plan-price-period">永久</div>
+      </div>
+      <div class="plan-desc">入门洞察，随时开始</div>
+    </div>
+    <div class="plan-card-body">
+      <ul class="plan-features">
+        <li>行为解读 <span class="highlight">5次/天</span></li>
+        <li>孩子成长对话 <span class="highlight">10次/天</span></li>
+        <li>皮纹报告解读 <span class="highlight">1次/月</span></li>
+        <li class="limit">深度全报告需升级</li>
+        <li class="limit">无成长画像历史</li>
+      </ul>
+      <button class="plan-cta plan-cta-current" id="cta-free">当前计划</button>
+    </div>
+  </div>
+
+  <!-- 轻会员 -->
+  <div class="plan-card recommended" id="card-lite">
+    <div class="plan-card-head">
+      <div class="rec-badge">推荐</div>
+      <div class="plan-name">轻会员</div>
+      <div class="plan-price-row">
+        <div class="plan-price">¥99</div>
+        <div class="plan-price-unit">/年</div>
+        <div class="plan-price-period">≈¥8.3/月</div>
+      </div>
+      <div class="plan-desc">每天都在用的家长，最具性价比</div>
+    </div>
+    <div class="plan-card-body">
+      <ul class="plan-features">
+        <li>行为解读 <span class="highlight">无限次</span></li>
+        <li>孩子成长对话 <span class="highlight">无限次</span></li>
+        <li>皮纹报告解读 <span class="highlight">5次/月</span></li>
+        <li>成长画像 <span class="highlight">30天历史</span></li>
+        <li class="limit">深度全报告需升级或单次购买</li>
+      </ul>
+      <button class="plan-cta plan-cta-primary" onclick="handleUpgrade('lite','轻会员·¥99/年')">登记早鸟意向</button>
+    </div>
+  </div>
+
+  <!-- 会员 -->
+  <div class="plan-card" id="card-pro">
+    <div class="plan-card-head">
+      <div class="plan-name">会员</div>
+      <div class="plan-price-row">
+        <div class="plan-price">¥299</div>
+        <div class="plan-price-unit">/年</div>
+        <div class="plan-price-period">≈¥25/月</div>
+      </div>
+      <div class="plan-desc">完整能力，深度陪伴成长</div>
+    </div>
+    <div class="plan-card-body">
+      <ul class="plan-features">
+        <li>所有轻会员权益</li>
+        <li>深度全报告 <span class="highlight">每月5份</span></li>
+        <li>成长画像 <span class="highlight">全量历史</span></li>
+        <li>AI 追问不限次</li>
+        <li>优先体验新功能</li>
+      </ul>
+      <button class="plan-cta plan-cta-secondary" onclick="handleUpgrade('pro','会员·¥299/年')">登记早鸟意向</button>
+    </div>
+  </div>
+
+  <!-- 单次报告 -->
+  <div class="plan-card single" id="card-once">
+    <div class="plan-card-head">
+      <div class="plan-name">单次报告</div>
+      <div class="plan-price-row">
+        <div class="plan-price">¥19.9</div>
+      </div>
+      <ul class="plan-features">
+        <li>一份完整深度皮纹报告</li>
+        <li>无需订阅，按需购买</li>
+      </ul>
+    </div>
+    <div class="plan-card-body">
+      <button class="plan-cta plan-cta-outline" onclick="handleUpgrade('once','单次报告·¥19.9')">登记意向</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- FAQ -->
+<div class="note-section">
+  <h3>常见问题</h3>
+  <div class="note-item">
+    额度用完了怎么办？
+    <span class="answer">每天零点重置；另外每隔2小时会补充少量额度，不必等到明天。免费用户额度用完后仍可升级或次日继续。</span>
+  </div>
+  <div class="note-item">
+    现在购买吗？
+    <span class="answer">暂未开放付费，登记意向后我们会在正式开放时第一时间通知你，并提供早鸟优惠。</span>
+  </div>
+  <div class="note-item">
+    皮纹报告和深度全报告有什么区别？
+    <span class="answer">皮纹报告解读基础指标（TRC/ATD/纹型）；深度全报告涵盖天赋画像、成长建议、选题方向等完整内容，约3000字，生成时间约1分钟。</span>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ── 读取登录态 & 额度 ────────────────────────────────────────────────────────
+async function loadQuota() {
+  try {
+    const r = await fetch('/api/auth?action=quota_status');
+    if (!r.ok) return;
+    const d = await r.json();
+    if (!d.ok || !d.quota) return;
+    const bar = document.getElementById('quotaBar');
+    bar.classList.add('visible');
+    const qChat   = document.getElementById('qChat');
+    const qReport = document.getElementById('qReport');
+    qChat.textContent   = d.quota.chatRemain   >= 999 ? '无限' : d.quota.chatRemain;
+    qReport.textContent = d.quota.reportRemain >= 999 ? '无限' : d.quota.reportRemain;
+    if (d.quota.chatRemain   < 3) qChat.parentElement.classList.add('warn');
+    if (d.quota.reportRemain < 1) qReport.parentElement.classList.add('empty');
+    // 标记当前套餐
+    const tier = d.tier || 'free';
+    document.querySelectorAll('.plan-card').forEach(c => c.classList.remove('active'));
+    const activeCard = document.getElementById('card-' + tier);
+    if (activeCard) activeCard.classList.add('active');
+    if (tier !== 'free') {
+      const cta = document.getElementById('cta-free');
+      if (cta) { cta.textContent = '降级'; cta.classList.remove('plan-cta-current'); }
+    }
+  } catch(e) {}
+}
+loadQuota();
+
+// ── 升级意向处理 ─────────────────────────────────────────────────────────────
+async function handleUpgrade(tier, label) {
+  // 记录意向（fire-and-forget）
+  try {
+    await fetch('/api/auth?action=upgrade_intent', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ tier, label })
+    });
+  } catch(e) {}
+  showToast('✓ 已记录意向，开放时优先通知你！');
+}
+
+// ── Toast ────────────────────────────────────────────────────────────────────
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+</script>
+</body>
+</html>
