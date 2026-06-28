@@ -440,7 +440,11 @@ button, a, .must-item, .fp-option-card, .back-btn, .issue-chip {
     <div class="s2-section-label">确认数据 — AI读到的是这样，对吗？</div>
     <div class="info-row">
       <div class="info-field">
-        <div class="if-label">年龄</div>
+        <div class="if-label">出生日期 <span style="color:#aaa;font-size:11px">（自动算年龄）</span></div>
+        <input class="if-input" id="conf-birthday" type="date" placeholder="YYYY-MM-DD" style="font-size:13px">
+      </div>
+      <div class="info-field">
+        <div class="if-label">年龄（岁）</div>
         <input class="if-input" id="conf-age" type="number" placeholder="岁" min="1" max="99">
       </div>
       <div class="info-field">
@@ -899,10 +903,11 @@ qs('#s1-extract-btn').addEventListener('click', async () => {
       return;
     }
 
-    ST.fingers = data.fingers;
-    ST.atd = data.atd;
-    ST.age = data.age;
-    ST.name = data.name;
+    ST.fingers  = data.fingers;
+    ST.atd      = data.atd;
+    ST.age      = data.age;
+    ST.name     = data.name;
+    ST.birthday = data.birthday || null;  // YYYY-MM-DD，供确认页展示/修正
     buildConfirmScreen();
     goScreen('s2');
   } catch(err) {
@@ -913,10 +918,28 @@ qs('#s1-extract-btn').addEventListener('click', async () => {
 });
 
 // ─── SCREEN 2: CONFIRM ───────────────────────────────────────────────────
+// 根据生日（YYYY-MM-DD）计算整数年龄
+function calcAgeFromBirthday(bdStr) {
+  const bd = new Date(String(bdStr));
+  if (isNaN(bd.getTime())) return null;
+  const now = new Date();
+  let a = now.getFullYear() - bd.getFullYear();
+  const md = now.getMonth() - bd.getMonth();
+  if (md < 0 || (md === 0 && now.getDate() < bd.getDate())) a--;
+  return a > 0 ? a : null;
+}
+
 function buildConfirmScreen() {
+  qs('#conf-birthday').value = ST.birthday || '';
   qs('#conf-age').value  = ST.age  || '';
   qs('#conf-atd').value  = ST.atd  || '';
   qs('#conf-name').value = ST.name || '';
+
+  // 生日改动 → 自动重算年龄
+  qs('#conf-birthday').oninput = function() {
+    const a = calcAgeFromBirthday(this.value);
+    if (a !== null) qs('#conf-age').value = a;
+  };
 
   const grid = qs('#finger-grid');
   grid.innerHTML = '';
@@ -964,19 +987,23 @@ qs('#s2-confirm-btn').addEventListener('click', () => {
     const trc = parseInt(qs('#trc-' + key)?.value) || 0;
     fingers[key] = { sym, trc };
   });
-  const age  = parseInt(qs('#conf-age').value) || null;
+  const bdVal = qs('#conf-birthday').value.trim();
+  // 如果用户填了生日，以生日重算年龄（最终真值）
+  const ageFromBd = bdVal ? calcAgeFromBirthday(bdVal) : null;
+  const age  = ageFromBd !== null ? ageFromBd : (parseInt(qs('#conf-age').value) || null);
   const atd  = parseFloat(qs('#conf-atd').value) || null;
   const name = qs('#conf-name').value.trim() || null;
 
   if (!age) {
-    alert('请填写年龄，用于匹配解读模块');
+    alert('请填写出生日期（或年龄），用于匹配解读模块');
     return;
   }
 
-  ST.fingers = fingers;
-  ST.age = age;
-  ST.atd = atd;
-  ST.name = name;
+  ST.fingers  = fingers;
+  ST.age      = age;
+  ST.birthday = bdVal || null;
+  ST.atd      = atd;
+  ST.name     = name;
   ST.ageTier = getAgeTier(age);
 
   // run engine

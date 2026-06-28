@@ -75,7 +75,7 @@ const EXTRACT_PROMPT = `你是皮纹科学数据提取专家。图片是一份 T
   },
   "atd": （ATD或反应速度数值，小数，图中无则null）,
   "name": "（姓名，图中无则null）",
-  "birthday": "（被测者生日，格式 YYYY-MM-DD，图中无则null；若只有年份则填 YYYY-01-01）"
+  "birthday": "（被测者【出生日期/生日】，格式 YYYY-MM-DD，图中无则null；若只有出生年份则填 YYYY-01-01。⚠️ 严禁将【测评日期/检测日期/报告日期】误填为此字段，只读出生信息）"
 }
 
 提取规则：
@@ -474,5 +474,8 @@ module.exports = async function handler(req, res) {
     });
   }
 
-  return res.status(200).json({ ok: true, fingers, atd, name, age, raw: visionRaw });
+  // birthday 一并返回给前端，让确认页可展示并允许用户修正
+  const birthday = (parsed.birthday && new Date(String(parsed.birthday)).toString() !== 'Invalid Date')
+    ? String(parsed.birthday) : null;
+  return res.status(200).json({ ok: true, fingers, atd, name, age, birthday, raw: visionRaw });
 };

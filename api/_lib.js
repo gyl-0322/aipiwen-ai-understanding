@@ -331,6 +331,124 @@ async function sendSpendAlert(totalCNY, date, threshold) {
   } catch (e) { console.error('[spend-alert]', e.message); }
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// 里程碑 1 — 多租户地基
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * TENANT_ENABLED=true  → 多租户逻辑生效
+ * TENANT_ENABLED=false（默认）→ 所有现有逻辑完全不变，本节代码透明
+ *
+ * PLATFORM_ADMIN_OPENIDS → 逗号分隔的超管 openid 列表
+ */
+const TENANT_ENABLED          = process.env.TENANT_ENABLED === 'true';
+const PLATFORM_ADMIN_OPENIDS  = (process.env.PLATFORM_ADMIN_OPENIDS || '').split(',').filter(Boolean);
+
+// ─── 租户等级常量 ─────────────────────────────────────────────────────────────
+const TENANT_LEVEL = { CONSUMER: 0, AGENT: 1, SCHOOL: 2 };
+
+// ─── 角色常量 ─────────────────────────────────────────────────────────────────
+const ROLES = {
+  PLATFORM_ADMIN : 'platform_admin', // 平台超管
+  AGENT          : 'agent',          // 代理（L1）
+  SCHOOL         : 'school',         // 幼儿园（L2）
+  CONSULTANT     : 'consultant',     // 顾问
+  CONSUMER       : 'consumer',       // C 端用户（默认）
+};
+
+// ─── 租户 CRUD ────────────────────────────────────────────────────────────────
+
+/** 读取租户对象；consumer 租户不存在时返回默认对象 */
+async function getTenant(tenantId) {
+  if (!tenantId || tenantId === 'consumer') {
+    return { id: 'consumer', level: TENANT_LEVEL.CONSUMER, parentId: null,
+             canInvite: false, brandName: 'AIPIWEN', status: 'active' };
+  }
+  return redisGet(`tenant:${tenantId}`);
+}
+
+/** 保存租户并维护索引 */
+async function saveTenant(tenant) {
+  await redisSet(`tenant:${tenant.id}`, tenant);
+  const all = await redisGet('tenants:all') || [];
+  if (!all.includes(tenant.id)) {
+    all.push(tenant.id);
+    await redisSet('tenants:all', all);
+  }
+  if (tenant.subdomain) {
+    await redisSet(`tenant:by:subdomain:${tenant.subdomain}`, tenant.id);
+  }
+  return tenant;
+}
+
+/** 列出某父级下的直属子租户 */
+async function listSubTenants(parentId) {
+  const all = await redisGet('tenants:all') || [];
+  const results = [];
+  for (const id of all) {
+    const t = await getTenant(id);
+    if (t && t.parentId === parentId && t.status !== 'disabled') results.push(t);
+  }
+  return results;
+}
+
+// ─── 用户租户上下文 ───────────────────────────────────────────────────────────
+
+/**
+ * 从请求中提取当前用户的租户上下文。
+ * TENANT_ENABLED=false 时直接返回 consumer 默认值，不读 Redis。
+ * 返回：{ openid, role, tenantId, tenant } 或 null（未登录）
+ */
+async function getTenantContext(req) {
+  if (!TENANT_ENABLED) {
+    const token  = getSessionToken(req);
+    const openid = token ? parseSessionToken(token) : null;
+    return { openid, role: ROLES.CONSUMER, tenantId: 'consumer', tenant: null };
+  }
+  const token = getSessionToken(req);
+  if (!token) return null;
+  const openid = parseSessionToken(token);
+  if (!openid) return null;
+  const user = await redisGet(`user:${openid}`);
+  if (!user) return null;
+  const role     = user.role     || ROLES.CONSUMER;
+  const tenantId = user.tenantId || 'consumer';
+  const tenant   = await getTenant(tenantId);
+  return { openid, role, tenantId, tenant };
+}
+
+/**
+ * 角色校验：context 满足 allowedRoles 则返回 ctx，否则写 4xx 并返回 null。
+ * 用法：const ctx = await requireRole(req, res, 'platform_admin', 'agent');
+ *       if (!ctx) return;
+ */
+async function requireRole(req, res, ...allowedRoles) {
+  const ctx = await getTenantContext(req);
+  if (!ctx || !ctx.openid) {
+    res.status(401).json({ error: '未登录' });
+    return null;
+  }
+  if (!allowedRoles.includes(ctx.role)) {
+    res.status(403).json({ error: '权限不足', required: allowedRoles, actual: ctx.role });
+    return null;
+  }
+  return ctx;
+}
+
+/**
+ * 首次登录时给老用户补充 role / tenantId（幂等，已设置则跳过）。
+ * TENANT_ENABLED=false 时直接返回。
+ */
+async function ensureUserTenant(openid) {
+  if (!TENANT_ENABLED) return;
+  const user = await redisGet(`user:${openid}`);
+  if (!user) return;
+  if (user.role && user.tenantId) return; // 已设置，跳过
+  user.role     = PLATFORM_ADMIN_OPENIDS.includes(openid) ? ROLES.PLATFORM_ADMIN : ROLES.CONSUMER;
+  user.tenantId = 'consumer';
+  await redisSet(`user:${openid}`, user);
+}
+
 module.exports = {
   redisSet, redisGet,
   makeSessionToken, parseSessionToken, getSessionToken, getOpenid,
@@ -338,6 +456,10 @@ module.exports = {
   archiveRecordsIfNeeded, MAX_RECORDS,
   searchKnowledge,
   createInviteToken, creditReferral,
-  // Claude API
+  // Claude API (DashScope)
   callClaude, MODEL_FREE, MODEL_DEEP, trackApiSpend,
+  // 里程碑 1：多租户
+  TENANT_ENABLED, TENANT_LEVEL, ROLES,
+  getTenant, saveTenant, listSubTenants,
+  getTenantContext, requireRole, ensureUserTenant,
 };
