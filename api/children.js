@@ -32,19 +32,41 @@ module.exports = async function handler(req, res) {
 
   const { action, id } = req.query;
 
-  // ── 获取所有孩子 ─────────────────────────────────────────────────────────
+  // ── 年龄辅助：从生日动态计算整数年龄 ───────────────────────────────────
+  function calcAge(bdStr) {
+    if (!bdStr) return null;
+    const bd = new Date(String(bdStr));
+    if (isNaN(bd.getTime())) return null;
+    const now = new Date();
+    let a = now.getFullYear() - bd.getFullYear();
+    const md = now.getMonth() - bd.getMonth();
+    if (md < 0 || (md === 0 && now.getDate() < bd.getDate())) a--;
+    return a > 0 ? a : null;
+  }
+
+  // ── 获取所有孩子（若有 birthday，动态重算 age） ──────────────────────────
   if (req.method === 'GET' && !action) {
-    return res.status(200).json({ children: user.children || [] });
+    const children = (user.children || []).map(c => {
+      if (c.birthday) {
+        const currentAge = calcAge(c.birthday);
+        if (currentAge !== null) return { ...c, age: currentAge };
+      }
+      return c;
+    });
+    return res.status(200).json({ children });
   }
 
   // ── 新增孩子 ─────────────────────────────────────────────────────────────
   if (action === 'add' && req.method === 'POST') {
-    const { name, age, fingerprint } = await readBody(req);
+    const { name, age, birthday, fingerprint } = await readBody(req);
     if (!name) return res.status(400).json({ error: '孩子姓名不能为空' });
+    // birthday 优先；存在时动态算龄，否则用传入的 age
+    const resolvedAge = birthday ? (calcAge(birthday) ?? age ?? '') : (age || '');
     const child = {
       id:          crypto.randomBytes(6).toString('hex'),
       name,
-      age:         age || '',
+      birthday:    birthday || null,
+      age:         resolvedAge,
       fingerprint: fingerprint || {},
       createdAt:   new Date().toISOString(),
     };
