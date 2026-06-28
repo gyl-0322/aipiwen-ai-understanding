@@ -338,8 +338,8 @@ a { color:inherit; text-decoration:none; }
 <!-- DEVICE -->
 <div class="device-section">
   <div class="section-label">采集设备</div>
-  <h2 class="section-title">魔纹密码指纹采集终端</h2>
-  <p class="section-sub" style="margin-bottom:16px">专业皮纹采集硬件，10指同步扫描，配合 AI 平台输出完整天赋分析报告。</p>
+  <h2 class="section-title">皮纹采集终端（手机版）</h2>
+  <p class="section-sub" style="margin-bottom:16px">滚动式指纹扫描仪 + 手机 APP，无需电脑，随时随地完成十指采集与掌纹定位，全流程约 10 分钟。</p>
 
   <!-- ★ 图片占位：Emma 上传设备图后替换 src -->
   <div class="device-imgs">
@@ -349,26 +349,50 @@ a { color:inherit; text-decoration:none; }
     </div>
     <div class="device-img-slot" id="device-img-2">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M7 11.5l3 3 7-7"/><circle cx="12" cy="12" r="10"/></svg>
-      <span>采集效果图</span>
+      <span>采集过程图</span>
+    </div>
+  </div>
+
+  <!-- 采集流程 mini 步骤（来自官方流程文档）-->
+  <div style="display:flex;gap:0;margin:16px 0 14px;overflow-x:auto;padding-bottom:4px;">
+    <div style="flex:0 0 auto;text-align:center;padding:0 10px;border-right:1px solid #e8e4de;min-width:70px;">
+      <div style="font-size:18px;margin-bottom:4px;">📋</div>
+      <div style="font-size:11px;color:#4A4540;line-height:1.4;">录入信息<br>姓名生日</div>
+    </div>
+    <div style="flex:0 0 auto;text-align:center;padding:0 10px;border-right:1px solid #e8e4de;min-width:70px;">
+      <div style="font-size:18px;margin-bottom:4px;">🖐</div>
+      <div style="font-size:11px;color:#4A4540;line-height:1.4;">十指滚动<br>扫描采集</div>
+    </div>
+    <div style="flex:0 0 auto;text-align:center;padding:0 10px;border-right:1px solid #e8e4de;min-width:70px;">
+      <div style="font-size:18px;margin-bottom:4px;">📷</div>
+      <div style="font-size:11px;color:#4A4540;line-height:1.4;">手掌 ATD<br>定位拍照</div>
+    </div>
+    <div style="flex:0 0 auto;text-align:center;padding:0 10px;min-width:70px;">
+      <div style="font-size:18px;margin-bottom:4px;">📊</div>
+      <div style="font-size:11px;color:#4A4540;line-height:1.4;">AI 生成<br>天赋报告</div>
     </div>
   </div>
 
   <div class="device-spec-list">
     <div class="device-spec">
       <span class="device-spec-dot">◆</span>
-      <span>十指皮纹全采集，采集时间约 10 分钟，操作简便，无专业医学背景也可上手</span>
+      <span><strong>手机端操作</strong>，设备通过 USB 连接手机/平板，无需电脑，采集地点灵活</span>
     </div>
     <div class="device-spec">
       <span class="device-spec-dot">◆</span>
-      <span>采集数据实时上传 AI 系统，自动生成多维度天赋分析报告</span>
+      <span><strong>滚动式扫描</strong>，十指逐一滚动采集，比传统按压式质量更高，清晰度更稳定</span>
     </div>
     <div class="device-spec">
       <span class="device-spec-dot">◆</span>
-      <span>适用场景：幼儿园、培训机构、亲子课堂、早教中心、家庭测评</span>
+      <span><strong>ATD 掌纹定位</strong>，拍照标注左右手三个解剖学关键点，配合指纹数据出完整报告</span>
     </div>
     <div class="device-spec">
       <span class="device-spec-dot">◆</span>
-      <span>设备由魔纹密码官方提供，授权正规，含售后维保</span>
+      <span>适用场景：幼儿园、培训机构、亲子课堂、早教中心、家庭上门测评</span>
+    </div>
+    <div class="device-spec">
+      <span class="device-spec-dot">◆</span>
+      <span>设备由魔纹密码科技（北京）正规授权，含官方售后维保</span>
     </div>
   </div>
 </div>
@@ -387,7 +411,7 @@ a { color:inherit; text-decoration:none; }
   <!-- 方案A -->
   <div class="plan-card active" id="plan-a">
     <div class="plan-header">
-      <div class="plan-tier">采集中心 A</div>
+      <div class="plan-tier">采集中心 A · 3年期</div>
       <div class="plan-name">按份数购买报告</div>
       <div class="plan-price">¥23,000 <span>/ 加盟</span></div>
     </div>
@@ -427,8 +451,8 @@ a { color:inherit; text-decoration:none; }
   <!-- 方案B -->
   <div class="plan-card" id="plan-b">
     <div class="plan-header">
-      <div class="plan-tier">采集中心 B</div>
-      <div class="plan-name">一年内无限制出具报告</div>
+      <div class="plan-tier">采集中心 B · 1年无限制</div>
+      <div class="plan-name">年度内无限次出具报告</div>
       <div class="plan-price">¥23,000 <span>/ 加盟</span></div>
     </div>
     <div class="plan-body">
@@ -457,7 +481,7 @@ a { color:inherit; text-decoration:none; }
         </div>
       </div>
       <div class="plan-note">
-        ★ 方案B适合已有稳定客源、报告量较大的机构；年内不限量，回本更快
+        ★ 方案B适合已有稳定客源、报告量较大的机构；1年内不限量，月均30+份时性价比优于方案A。<br>方案A 3年设备期更长，适合起步阶段慢慢积累。
       </div>
     </div>
   </div>
@@ -529,10 +553,10 @@ a { color:inherit; text-decoration:none; }
     </div>
     <div class="faq-item">
       <button class="faq-q" onclick="toggleFaq(this)">
-        我可以再往下发展代理吗？
+        我有资源，想做更大规模的业务，怎么合作？
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
       </button>
-      <div class="faq-a">采集中心暂不支持继续向下发展采集代理。如你对服务中心及更高层级合作感兴趣，欢迎咨询，我们会根据实际情况为你介绍更合适的合作路径。</div>
+      <div class="faq-a">沐海星辰正在研发自己的皮纹采集平台，未来将向有意向的大规模合作伙伴开放更深层次的合作机会——包括区域独家、机构定制、数据共建等。如果你有幼儿园、学校、培训集团等规模化资源，欢迎微信联系我们详谈，我们会优先记录并在新系统上线时第一时间接洽。</div>
     </div>
   </div>
 </div>
