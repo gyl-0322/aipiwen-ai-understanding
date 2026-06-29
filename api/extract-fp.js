@@ -449,19 +449,18 @@ module.exports = async function handler(req, res) {
                   ? parseFloat(String(parsed.atd)) : null;
   const name    = parsed.name  ? String(parsed.name).trim()  : null;
 
-  // 年龄：从生日算（当前时间 - 报告生日），而不是读报告上写的年龄字段
+  // 年龄：优先从生日年份动态计算（当前年份 - 出生年份），不让用户手算
   let age = null;
   if (parsed.birthday) {
-    const bd = new Date(String(parsed.birthday));
-    if (!isNaN(bd.getTime())) {
-      const now = new Date();
-      age = now.getFullYear() - bd.getFullYear();
-      const monthDiff = now.getMonth() - bd.getMonth();
-      if (monthDiff < 0 || (monthDiff === 0 && now.getDate() < bd.getDate())) age--;
+    const yearMatch = String(parsed.birthday).match(/\d{4}/);
+    const birthYear = yearMatch ? Number(yearMatch[0]) : null;
+    const currentYear = new Date().getFullYear();
+    if (birthYear && birthYear > 1900 && birthYear <= currentYear) {
+      age = currentYear - birthYear;
     }
   } else if (parsed.age) {
     // 兼容旧格式：报告只有年龄字段无生日
-    age = parseInt(String(parsed.age)) || null;
+    age = parseInt(String(parsed.age), 10) || null;
   }
 
   // 合理性检查：TRC 总和不应为 0

@@ -380,8 +380,10 @@ body.chat-mode { height:100vh; overflow:hidden; }
 const _urlParams = new URLSearchParams(location.search);
 const _for  = _urlParams.get('for')  || 'child';
 const _mode = _urlParams.get('mode') || '';      // 'report' = 从报告页跳转的深聊
+const _reportId = _urlParams.get('reportId') || '';
 const REPORT_DEEPCHAT_KEY = 'aipiwen_report_deepchat';
-let _subjectAge = null;   // 被测者年龄，由年龄芯片选择设置
+let _subjectAge = null;   // 被测者年龄，由年龄芯片选择或报告数据设置
+let _reportSummaryForAPI = '';
 
 // ── 邀请来源捕获 & 本机邀请 token ─────────────────────────────
 (function() {
@@ -621,6 +623,50 @@ function saveMemorySession(behavior, firstAIReply) {
   } catch(e) {}
 }
 
+function buildReportDeepContext(report) {
+  if (!report) return '';
+  const E = report.engineResult || {};
+  const f5 = E.五功能区 || {};
+  const lr = E.左右脑 || {};
+  const chan = E.学习通道 || {};
+  const bm = E.行为模式 || {};
+  const atd = E.ATD || {};
+  if (report.age && !_subjectAge) _subjectAge = report.age;
+  const sectionDigest = (report.sections || []).slice(0, 10).map(sec => {
+    const body = sec.type === 'issue'
+      ? [sec.why, sec.how, sec.future].filter(Boolean).join(' ')
+      : (sec.content || '');
+    return `【${sec.title || '报告板块'}】${String(body).replace(/\\s+/g, ' ').slice(0, 420)}`;
+  }).join('\n');
+  return [
+    '【皮纹天赋报告数据·深聊上下文】',
+    _reportId ? `报告ID：${_reportId}` : '',
+    report.name ? `姓名：${report.name}` : '',
+    report.age ? `年龄：${report.age}岁` : '',
+    E.主性格类型 ? `性格主类型：${E.主性格类型}${E.叠加特质?.逆向思维R ? '（含逆向思维叠加）' : ''}` : '',
+    chan.主通道 ? `学习通道：${chan.主通道}` : '',
+    bm.结论 ? `行为模式：${bm.结论}` : '',
+    lr.结论 ? `左右脑：${lr.结论}，左脑占比${lr.左脑占比}%` : '',
+    f5.总TRC ? `TRC总分：${f5.总TRC}，均值：${f5.个人均值}` : '',
+    atd.值 ? `ATD：${atd.值}°（${atd.分区}）` : '',
+    (f5.精神 || f5.思维) ? `五功能区——精神:${f5.精神} 思维:${f5.思维} 体觉:${f5.体觉} 听觉:${f5.听觉} 视觉:${f5.视觉}` : '',
+    sectionDigest ? `\n【已生成报告正文摘要】\n${sectionDigest}` : '',
+    '（用户正在围绕这份已经生成的报告继续追问，请基于报告数据回答，不要退回泛泛行为理解。）',
+  ].filter(Boolean).join('\n');
+}
+
+async function loadReportDeepContext() {
+  if (_mode !== 'report') return '';
+  if (_reportId) {
+    try {
+      const res = await fetch(`/api/report-store?id=${encodeURIComponent(_reportId)}`);
+      const data = await res.json();
+      if (data.ok && data.report) return buildReportDeepContext(data.report);
+    } catch(e) {}
+  }
+  try { return sessionStorage.getItem(REPORT_DEEPCHAT_KEY) || ''; } catch(e) { return ''; }
+}
+
 function buildPreviousContext() {
   // 优先：从报告页跳转时存入 sessionStorage 的报告摘要
   // 摘要含性格类型关键词 → guest-chat.js 自动注入完整 TRC 知识库
@@ -657,16 +703,15 @@ let currentReportId = '';
 let isProcessing = false;
 let sessionPrevContext = ''; // 每次 session 开始时设置，全程复用
 
-// ── mode=report：从报告页跳转，自动预填并直接提交 ─────────────────────────
+// ── mode=report：从报告页跳转，自动带报告上下文并直接提交 ─────────────────
 if (_mode === 'report') {
-  // 等页面渲染完毕后触发，避免 submitBehavior 找不到 DOM
-  window.addEventListener('DOMContentLoaded', () => {
+  window.addEventListener('DOMContentLoaded', async () => {
     const ta = document.getElementById('behavior-input');
-    if (ta) ta.value = '我刚看完了我的皮纹报告，想继续深入了解我的天赋特征';
-    // 隐藏年龄选择行（年龄已在报告摘要里）
+    if (ta) ta.value = '请围绕这份报告，继续帮我做专属解读';
     const ageRow = document.getElementById('age-row');
     if (ageRow) ageRow.style.display = 'none';
-    // 延迟 300ms 让动画完成后提交
+    _reportSummaryForAPI = await loadReportDeepContext();
+    try { sessionStorage.removeItem(REPORT_DEEPCHAT_KEY); } catch(e) {}
     setTimeout(() => submitBehavior(), 300);
   });
 }
@@ -693,7 +738,7 @@ async function submitBehavior() {
   currentReportId = `AIPIWEN-${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}-${Math.random().toString(36).slice(2,6).toUpperCase()}`;
 
   isProcessing = true;
-  sessionPrevContext = buildPreviousContext();
+  sessionPrevContext = _mode === 'report' ? (_reportSummaryForAPI || buildPreviousContext()) : buildPreviousContext();
 
   // Switch to LOADING phase
   document.getElementById('phase-form').style.display = 'none';
@@ -792,10 +837,11 @@ async function callAPI(content) {
   const body = {
     content,
     history:         chatHistory.slice(-8),
-    context:         _for,
+    context:         _mode === 'report' ? 'report' : _for,
     previousContext: sessionPrevContext,
     sessionId:       _sessionId,
     subjectAge:      _subjectAge,        // 年龄分层：AI 自动调整解读语气
+    reportSummary:   _mode === 'report' ? (_reportSummaryForAPI || sessionPrevContext) : null,
     refToken:        _refToken,          // 邀请来源 token（服务端积分，去重安全）
   };
   const headers = { 'Content-Type': 'application/json' };

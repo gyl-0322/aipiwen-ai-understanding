@@ -189,6 +189,14 @@
       "dest": "/share/$1"
     },
     {
+      "src": "/lite",
+      "dest": "/lite.html"
+    },
+    {
+      "src": "/lite.html",
+      "dest": "/lite.html"
+    },
+    {
       "src": "/",
       "dest": "/homepage.html"
     },
@@ -218,7 +226,9 @@
     },
     "api/generate-report.js": {
       "maxDuration": 60,
-      "regions": ["iad1"]
+      "regions": [
+        "iad1"
+      ]
     }
   },
   "crons": [

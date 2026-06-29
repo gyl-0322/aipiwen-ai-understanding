@@ -113,18 +113,20 @@ body {
 .guide-arrow { display:inline-block; animation:guide-bounce 2s ease-in-out infinite; }
 @keyframes guide-bounce { 0%,100%{transform:translateY(0)} 55%{transform:translateY(5px)} }
 
-/* 采集代理入口（Hero 底部轻量二级入口） */
-.agent-entry-link {
-  display:inline-flex; align-items:center; gap:6px;
-  margin-top:14px;
-  font-size:12px; color:rgba(255,255,255,.45);
-  border:1px solid rgba(255,255,255,.12);
-  padding:7px 14px; border-radius:20px;
-  transition:color .15s, border-color .15s;
-  text-decoration:none;
+/* 采集代理入口（皮纹速测后的轻量二级入口） */
+.agent-inline-link {
+  display:flex; align-items:center; justify-content:space-between; gap:12px;
+  margin-top:-6px; padding:13px 16px;
+  background:rgba(194,105,42,.07);
+  border:1px solid rgba(194,105,42,.18);
+  border-radius:16px;
+  color:var(--amber); text-decoration:none;
+  font-size:13px; font-weight:600;
+  transition:background .15s, border-color .15s;
 }
-.agent-entry-link:hover { color:rgba(255,255,255,.75); border-color:rgba(255,255,255,.25); }
-.agent-entry-link svg { flex-shrink:0; opacity:.6; }
+.agent-inline-link:active { background:rgba(194,105,42,.13); border-color:rgba(194,105,42,.32); }
+.agent-inline-link span { color:var(--ink-70); font-weight:500; }
+.agent-inline-link svg { width:16px; height:16px; flex-shrink:0; }
 
 /* ── DIVIDER ── */
 .section-divider {
@@ -424,12 +426,6 @@ body {
     开始理解
     <span class="guide-arrow">↓</span>
   </a>
-
-  <!-- 采集代理入口（面向有业务兴趣的从业者） -->
-  <a class="agent-entry-link" href="/partner">
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.22 4.22l2.12 2.12M17.66 17.66l2.12 2.12M2 12h3M19 12h3M4.22 19.78l2.12-2.12M17.66 6.34l2.12-2.12"/></svg>
-    有意开展皮纹采集业务？了解代理合作 →
-  </a>
 </section>
 
 <!-- ── SOCIAL PROOF ── -->
@@ -563,6 +559,11 @@ body {
       </div>
       <div class="product-cta-status">免费 · 约10分钟</div>
     </div>
+  </a>
+  <a class="agent-inline-link" href="/partner">
+    <span>想把皮纹采集做成自己的服务？</span>
+    了解代理合作
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 8h10M9 4l4 4-4 4"/></svg>
   </a>
 
   <!-- 产品 3：AI 报告深度解读 -->

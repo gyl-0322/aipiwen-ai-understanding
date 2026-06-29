@@ -1,0 +1,1105 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AIPIWEN Lite 内容生成器</title>
+  <style>
+    :root {
+      --cream: #fcfaf6;
+      --cream-deep: #f4efe8;
+      --ink: #1b1a22;
+      --ink-soft: #534f62;
+      --ink-muted: #88839a;
+      --line: #e8e1ee;
+      --line-strong: #d9d0e4;
+      --gold: #b98a45;
+      --gold-soft: #f6eee0;
+      --gold-deep: #8e6730;
+      --violet: #4a3ca6;
+      --violet-deep: #30236f;
+      --violet-soft: #f1edff;
+      --sea: #6b97a6;
+      --sea-soft: #edf6f8;
+      --ok: #3a7d5e;
+      --shadow: 0 18px 42px rgba(47, 34, 99, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+      -webkit-text-size-adjust: 100%;
+      background:
+        radial-gradient(circle at top left, rgba(74, 60, 166, 0.12), transparent 28%),
+        radial-gradient(circle at 85% 15%, rgba(107, 151, 166, 0.10), transparent 22%),
+        radial-gradient(circle at bottom right, rgba(185, 138, 69, 0.10), transparent 24%),
+        var(--cream);
+      color: var(--ink);
+      line-height: 1.6;
+    }
+
+    .page {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 18px 14px 52px;
+    }
+
+    .hero {
+      background:
+        linear-gradient(135deg, rgba(241, 237, 255, 0.86), rgba(255, 255, 255, 0.96) 28%, rgba(237, 246, 248, 0.82) 100%);
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      padding: 26px 22px 22px;
+      margin-bottom: 18px;
+      box-shadow: var(--shadow);
+    }
+
+    .brand {
+      display: inline-block;
+      padding: 8px 14px;
+      margin-bottom: 16px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, var(--violet-soft), #efe8ff);
+      color: var(--gold-deep);
+      font-size: 12px;
+      letter-spacing: 1.6px;
+      font-weight: 700;
+    }
+
+    .hero h1 {
+      margin: 0 0 14px;
+      font-size: clamp(36px, 7.6vw, 56px);
+      line-height: 1.08;
+      letter-spacing: -1.6px;
+      color: var(--violet-deep);
+      font-weight: 800;
+      word-break: keep-all;
+    }
+
+    .hero h1 .subline {
+      display: block;
+      margin-top: 8px;
+      color: var(--violet);
+    }
+
+    .hero p {
+      margin: 0 0 12px;
+      color: var(--ink-soft);
+      font-size: 18px;
+      line-height: 1.75;
+      max-width: 840px;
+    }
+
+    .hero-list {
+      margin: 18px 0 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .hero-list li {
+      margin: 0 0 10px;
+      padding: 14px 16px;
+      border-radius: 18px;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(244, 239, 248, 0.88));
+      border: 1px solid var(--line);
+      color: var(--ink-soft);
+      font-size: 16px;
+    }
+
+    .intro-grid {
+      margin-bottom: 18px;
+    }
+
+    .intro-card {
+      background: #ffffff;
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      padding: 18px;
+      margin-bottom: 12px;
+      box-shadow: var(--shadow);
+    }
+
+    .intro-card strong {
+      display: block;
+      margin-bottom: 8px;
+      color: var(--violet);
+      font-size: 18px;
+    }
+
+    .intro-card p {
+      margin: 0;
+      color: var(--ink-soft);
+      font-size: 15px;
+    }
+
+    .trial {
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(250, 247, 255, 0.96));
+      border: 1px solid var(--line);
+      border-radius: 26px;
+      padding: 20px;
+      box-shadow: var(--shadow);
+      margin-bottom: 18px;
+    }
+
+    .trial h2,
+    .results h2,
+    .results h3 {
+      margin: 0 0 10px;
+      color: var(--violet);
+      font-size: 28px;
+    }
+
+    .trial p.note {
+      margin: 0 0 14px;
+      color: var(--ink-soft);
+      font-size: 15px;
+    }
+
+    .field {
+      margin-bottom: 14px;
+    }
+
+    .field span {
+      display: block;
+      margin-bottom: 6px;
+      color: var(--ink-soft);
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    input,
+    select,
+    button,
+    textarea {
+      font: inherit;
+    }
+
+    input,
+    select {
+      width: 100%;
+      padding: 14px 14px;
+      border-radius: 14px;
+      border: 1px solid var(--line-strong);
+      background: #fff;
+      color: var(--ink);
+    }
+
+    .btn,
+    .btn-light,
+    .btn-line {
+      display: inline-block;
+      padding: 11px 14px;
+      border: 0;
+      border-radius: 12px;
+      cursor: pointer;
+      text-decoration: none;
+      text-align: center;
+      min-height: 44px;
+    }
+
+    .btn {
+      width: 100%;
+      background: linear-gradient(135deg, var(--violet), #6d57cf);
+      color: #fff;
+      font-weight: 700;
+    }
+
+    .btn-light {
+      background: linear-gradient(180deg, #fffdf8, var(--gold-soft));
+      color: var(--gold-deep);
+      border: 1px solid #eadcc4;
+    }
+
+    .btn-line {
+      background: linear-gradient(180deg, #faf8ff, var(--violet-soft));
+      color: var(--violet);
+      border: 1px solid #ddd6f3;
+    }
+
+    .status {
+      margin-top: 12px;
+      padding: 12px 14px;
+      border-radius: 12px;
+      background: #faf7ff;
+      border: 1px solid #e5ddf3;
+      color: var(--ink-soft);
+      font-size: 14px;
+    }
+
+    .status.ok {
+      color: #25694f;
+      background: #edf8f2;
+      border-color: #cfe8d9;
+    }
+
+    .empty {
+      background: #ffffff;
+      border: 1px dashed var(--line-strong);
+      border-radius: 22px;
+      padding: 24px 16px;
+      text-align: center;
+      color: var(--ink-soft);
+      font-size: 15px;
+    }
+
+    .results {
+      margin-top: 18px;
+    }
+
+    .result-block {
+      background: #ffffff;
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      padding: 18px;
+      margin-bottom: 14px;
+      box-shadow: var(--shadow);
+    }
+
+    .result-head {
+      margin-bottom: 12px;
+    }
+
+    .result-head p {
+      margin: 6px 0 0;
+      color: var(--ink-soft);
+      font-size: 15px;
+    }
+
+    .script-card,
+    .direction-card,
+    .cover-card {
+      background: linear-gradient(180deg, #fffdfd, #fcf9ff);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 14px;
+      margin-bottom: 12px;
+    }
+
+    .script-card h4,
+    .direction-card h4,
+    .cover-card h4 {
+      margin: 0 0 8px;
+      color: var(--violet);
+      font-size: 16px;
+    }
+
+    .meta {
+      margin: 0 0 10px;
+    }
+
+    .meta span {
+      display: inline-block;
+      margin: 0 6px 6px 0;
+      padding: 5px 9px;
+      border-radius: 999px;
+      background: var(--gold-soft);
+      border: 1px solid #ecddc3;
+      color: var(--gold-deep);
+      font-size: 12px;
+    }
+
+    pre {
+      margin: 0 0 10px;
+      padding: 12px;
+      border-radius: 12px;
+      background: #f9f6ff;
+      border: 1px solid #e8e0f5;
+      color: var(--ink);
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-size: 13px;
+      line-height: 1.7;
+      font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+    }
+
+    .title-list {
+      margin: 0 0 10px;
+      padding-left: 18px;
+      color: var(--ink-soft);
+      font-size: 14px;
+    }
+
+    .title-list li {
+      margin-bottom: 6px;
+    }
+
+    .actions,
+    .tabs {
+      margin-top: 10px;
+    }
+
+    .actions .btn-light,
+    .actions .btn-line,
+    .tabs .btn-line,
+    .tabs .btn-light {
+      width: 100%;
+      margin-bottom: 8px;
+    }
+
+    .tabs .active-tab {
+      background: var(--violet);
+      color: #fff;
+      border-color: var(--violet);
+    }
+
+    .cover-sample {
+      border-radius: 16px;
+      padding: 18px 14px;
+      min-height: 180px;
+      color: var(--violet-deep);
+      background: linear-gradient(180deg, #fffaf1, #f7efe0);
+      border: 1px solid #ead8be;
+      margin-bottom: 10px;
+    }
+
+    .cover-sample.theme-1 {
+      background: linear-gradient(180deg, #fff8f0, #f6ebdf);
+      border-color: #ead8c0;
+    }
+
+    .cover-sample.theme-2 {
+      background: linear-gradient(180deg, #f5f2ff, #ebe6ff);
+      border-color: #ddd4f7;
+    }
+
+    .cover-sample.theme-3 {
+      background: linear-gradient(180deg, #f1f8fa, #e8f1f4);
+      border-color: #d4e4e8;
+    }
+
+    .cover-top {
+      font-size: 12px;
+      color: var(--ink-muted);
+      margin-bottom: 18px;
+    }
+
+    .cover-title {
+      font-size: 24px;
+      line-height: 1.25;
+      font-weight: 700;
+      margin-bottom: 16px;
+      color: var(--violet-deep);
+    }
+
+    .cover-bottom {
+      font-size: 13px;
+      color: var(--ink-soft);
+    }
+
+    @media (min-width: 860px) {
+      .intro-grid:after,
+      .cards-row:after {
+        content: "";
+        display: table;
+        clear: both;
+      }
+
+      .intro-card {
+        float: left;
+        width: 32%;
+        margin-right: 2%;
+      }
+
+      .intro-card.last {
+        margin-right: 0;
+      }
+
+      .cards-row .script-card,
+      .cards-row .direction-card,
+      .cards-row .cover-card {
+        float: left;
+        width: 32%;
+        margin-right: 2%;
+      }
+
+      .cards-row .last {
+        margin-right: 0;
+      }
+
+      .actions .btn-light,
+      .actions .btn-line,
+      .tabs .btn-line,
+      .tabs .btn-light {
+        width: auto;
+        margin-right: 8px;
+        margin-bottom: 0;
+      }
+    }
+
+    @media (max-width: 720px) {
+      .page {
+        padding: 14px 12px 44px;
+      }
+
+      .hero,
+      .trial,
+      .result-block,
+      .intro-card,
+      .empty {
+        border-radius: 20px;
+      }
+
+      .hero {
+        padding: 18px 16px 16px;
+      }
+
+      .hero h1 {
+        font-size: 32px;
+        line-height: 1.18;
+        letter-spacing: -0.6px;
+      }
+
+      .hero h1 .subline {
+        margin-top: 10px;
+      }
+
+      .hero p {
+        font-size: 15px;
+        line-height: 1.7;
+      }
+
+      .hero-list li {
+        font-size: 15px;
+        line-height: 1.7;
+      }
+
+      .brand {
+        font-size: 11px;
+        letter-spacing: 1.2px;
+      }
+
+      .trial h2,
+      .results h2,
+      .results h3 {
+        font-size: 24px;
+      }
+
+      .trial p.note,
+      .result-head p,
+      .intro-card p,
+      .empty {
+        font-size: 14px;
+      }
+
+      .cover-title {
+        font-size: 20px;
+        line-height: 1.35;
+      }
+
+      pre {
+        font-size: 14px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="hero">
+      <div class="brand">AIPIWEN Lite</div>
+      <h1>一个主题，直接生成<span class="subline">视频号 / 小红书 / 朋友圈三端内容</span></h1>
+      <p>这是 AIPIWEN 的轻量试用版。先保证能打开、能生成、能复制、能发给客户体验。</p>
+      <ul class="hero-list">
+        <li>视频号：15 秒 / 30 秒 / 60 秒三档口播文案</li>
+        <li>小红书：3 个内容方向 + 3 张封面示意卡</li>
+        <li>朋友圈：3 个表达方向 + 支持“换一批”</li>
+      </ul>
+    </div>
+
+    <div class="intro-grid">
+      <div class="intro-card">
+        <strong>先打开就能用</strong>
+        <p>不需要登录，不需要下载，不需要接任何后台。</p>
+      </div>
+      <div class="intro-card">
+        <strong>适合直接发客户</strong>
+        <p>输入一个主题，就能立刻看到完整试发内容结构。</p>
+      </div>
+      <div class="intro-card last">
+        <strong>重点是先试内容方向</strong>
+        <p>不是复杂系统，而是一个能马上拿去试发的内容生成入口。</p>
+      </div>
+    </div>
+
+    <div class="trial" id="trial">
+      <h2>立即试用</h2>
+      <p class="note">先输入主题，再选表达风格。生成后可直接复制文案，或拿封面示意卡做试发参考。</p>
+
+      <form id="generator-form">
+        <div class="field">
+          <span>主题</span>
+          <input id="topic" type="text" placeholder="例如：护肤 / 孩子教育 / 职场焦虑">
+        </div>
+        <div class="field">
+          <span>风格</span>
+          <select id="style">
+            <option value="默认风格">默认风格</option>
+            <option value="专业">专业</option>
+            <option value="情绪">情绪</option>
+            <option value="案例">案例</option>
+            <option value="克制">克制</option>
+          </select>
+        </div>
+        <button class="btn" type="submit">一键生成整套 Lite 内容</button>
+      </form>
+
+      <div id="status" class="status">输入主题后点击生成。</div>
+    </div>
+
+    <div id="empty-state" class="empty">
+      这里会显示完整生成结果。<br>
+      生成后你会看到：视频号三档口播、小红书三方向、朋友圈三方向，以及对应的封面示意卡。
+    </div>
+
+    <div id="output" class="results" style="display:none;"></div>
+  </div>
+
+  <script>
+    var appState = {
+      result: null,
+      momentsBatch: 0,
+      selectedXhs: 0,
+      selectedMoments: 0
+    };
+
+    var outputEl = null;
+    var emptyEl = null;
+    var statusEl = null;
+    var topicInput = null;
+    var styleInput = null;
+
+    function getSafeValue(value, fallback) {
+      var text = "";
+      if (typeof value === "string") {
+        text = value.replace(/^\s+|\s+$/g, "");
+      }
+      return text || fallback;
+    }
+
+    function escapeHtml(text) {
+      return String(text || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+    }
+
+    function setStatus(message, ok) {
+      if (!statusEl) return;
+      statusEl.className = ok ? "status ok" : "status";
+      statusEl.innerHTML = escapeHtml(message);
+    }
+
+    function createElement(tag, className, text) {
+      var node = document.createElement(tag);
+      if (className) node.className = className;
+      if (typeof text === "string") node.innerHTML = escapeHtml(text);
+      return node;
+    }
+
+    function copyText(text) {
+      var area = document.createElement("textarea");
+      area.value = text;
+      area.setAttribute("readonly", "readonly");
+      area.style.position = "fixed";
+      area.style.left = "-9999px";
+      area.style.top = "0";
+      document.body.appendChild(area);
+      area.focus();
+      area.select();
+
+      var success = false;
+      try {
+        success = document.execCommand("copy");
+      } catch (error) {
+        success = false;
+      }
+
+      document.body.removeChild(area);
+      setStatus(success ? "已复制到剪贴板。" : "复制失败，请手动复制。", success);
+    }
+
+    function buildVideoScripts(topic, style) {
+      return [
+        {
+          duration: "15 秒",
+          goal: "快速抓注意力",
+          title: "关于「" + topic + "」先别急着下结论",
+          script: "很多人一提到" + topic + "，第一反应就是表面问题。\n但真正决定结果的，往往不是你看到的动作，而是背后的结构。\n如果你愿意，我可以继续把这个结构拆给你看。"
+        },
+        {
+          duration: "30 秒",
+          goal: "讲清一个核心观点",
+          title: "关于「" + topic + "」，多数人都卡在第一层理解",
+          script: "很多人对" + topic + "的判断，常常停留在“看起来是什么”。\n可一旦你只盯着表面，就容易给错建议、做错动作。\n我更想用" + style + "的方式提醒你：真正决定结果的，不是表面表现，而是背后的触发逻辑、节奏和结构。\n当你开始看结构，很多原本看不懂的问题，就会突然变得清楚。"
+        },
+        {
+          duration: "60 秒",
+          goal: "完整口播",
+          title: "如果你总在「" + topic + "」上反复绕圈，问题可能不在努力",
+          script: "很多人谈" + topic + "的时候，习惯马上给结论。\n比如觉得问题是态度、执行力、习惯，或者单纯不够重视。\n但现实里，很多事情之所以反复出现，不是因为当事人不想改，而是你一直在处理表面，没有看到真正的结构。\n我更建议你先问三个问题：\n第一，它到底是认知问题，还是节奏问题？\n第二，它背后有没有长期被忽略的触发点？\n第三，你现在给的办法，到底是在缓解结果，还是在处理根源？\n如果这三个问题不先想清楚，你越努力，可能越容易走偏。\n所以关于" + topic + "，先别急着纠正，先把结构看清楚，这才是更有效的起点。"
+        }
+      ];
+    }
+
+    function buildXhsDirections(topic, style) {
+      return [
+        {
+          label: "认知纠偏",
+          angle: "先打掉旧理解，再给新框架",
+          title: topic + "｜很多人一开始就理解错了",
+          titleVariants: [
+            topic + "｜很多人一开始就理解错了",
+            topic + "别急着找方法，你可能先看错了问题",
+            "关于" + topic + "，真正该先纠正的是理解方式"
+          ],
+          body: "如果你最近也在想" + topic + "，先别急着找方法。\n很多人真正卡住的地方，不是不会做，而是一开始就理解错了问题本身。\n我想用" + style + "的方式给你一个更清晰的框架：\n\n1. 表面现象不等于真实原因\n2. 结构比动作更值得先看\n3. 一旦看清结构，后面的动作才不会乱\n\n这类内容最适合做成系列，因为它不是给你一个技巧，而是帮你换一个理解方式。",
+          covers: [
+            topic + "别再一开始就看错",
+            "你以为是表面问题，其实不是",
+            topic + "真正该先看的，是结构"
+          ]
+        },
+        {
+          label: "清单拆解",
+          angle: "适合收藏的步骤型表达",
+          title: topic + "｜我会先看这 3 件事",
+          titleVariants: [
+            topic + "｜我会先看这 3 件事",
+            "遇到" + topic + "，先别急，按这 3 步判断",
+            topic + "做不顺时，我会先拆这 3 层"
+          ],
+          body: "如果我要快速判断" + topic + "值不值得继续做，我通常会先看这 3 件事：\n\n第一，看它是短期表现，还是长期结构。\n第二，看你现在的动作，是不是只在处理结果。\n第三，看有没有一个更稳定、更低成本的切入点。\n\n我更喜欢把" + topic + "拆成这种清单式表达，因为读者一眼就知道该怎么判断、怎么开始。\n如果你也想把内容做得更清楚，这种结构会更适合收藏。",
+          covers: [
+            topic + "先看这 3 件事",
+            "别急，按这份清单先判断",
+            topic + "我会先这样拆"
+          ]
+        },
+        {
+          label: "情绪共鸣",
+          angle: "更适合情绪和陪伴感表达",
+          title: topic + "｜你不是做得不够，只是一直在硬扛",
+          titleVariants: [
+            topic + "｜你不是做得不够，只是一直在硬扛",
+            topic + "先别怪自己，你可能只是扛太久了",
+            "很多关于" + topic + "的疲惫，不是因为你不努力"
+          ],
+          body: "很多人对" + topic + "的疲惫，不是因为不努力。\n而是你已经花了很多力气，却始终没有一个更清楚的方向。\n\n所以我想用" + style + "的方式提醒你：\n不是你不够认真，可能只是你一直在硬扛一个没有被看清的问题。\n\n当你换一个角度看" + topic + "，你会发现，很多卡点不是能力问题，而是结构没有理顺。\n这也是为什么，有些内容更适合先给情绪共鸣，再给方法。",
+          covers: [
+            "你不是不够努力，是一直在硬扛",
+            topic + "先别怪自己",
+            "很多卡点，根本不是能力问题"
+          ]
+        }
+      ];
+    }
+
+    function buildMomentsDirections(topic, style, batch) {
+      var sets = [
+        [
+          {
+            label: "观察型",
+            angle: "适合朋友圈自然输出",
+            title: "关于" + topic + "，我最近有个很强的观察",
+            titleVariants: [
+              "关于" + topic + "，我最近有个很强的观察",
+              "最近重新看" + topic + "，我有个新感受",
+              topic + "这件事，我最近越来越确定一个点"
+            ],
+            body: "关于" + topic + "，我最近有个很强的观察：\n很多问题不是不努力，也不是不想改，而是一直在用错理解方式。\n这两天我重新整理的时候，越来越觉得，真正该先看的还是结构。\n只要结构看清楚，后面的动作其实会顺很多。\n今天整理出 3 个很适合用" + style + "方式表达的角度，挺值得继续写下去。",
+            covers: [
+              "我最近对" + topic + "的一个观察",
+              topic + "的问题，可能不是你想的那样",
+              "先把结构看清楚，再谈动作"
+            ]
+          },
+          {
+            label: "观点型",
+            angle: "适合有态度的朋友圈表达",
+            title: "关于" + topic + "，我现在越来越不相信“头痛医头”",
+            titleVariants: [
+              "关于" + topic + "，我现在越来越不相信“头痛医头”",
+              topic + "这件事，我更相信先看结构",
+              "很多关于" + topic + "的做法，我现在其实不太认同"
+            ],
+            body: "关于" + topic + "，我现在越来越不相信“头痛医头”的做法。\n因为很多时候，你越急着解决表面，越容易把真正的问题藏起来。\n我更相信：先看结构，再决定动作。\n这不是慢，而是为了少走弯路。\n今天刚好把这个主题又往前推了一步，越整理越觉得这个角度值得反复讲。",
+            covers: [
+              "我不太相信头痛医头",
+              topic + "别再只修表面",
+              "先看结构，是为了少走弯路"
+            ]
+          },
+          {
+            label: "互动型",
+            angle: "适合引评论、引私聊",
+            title: "如果是你，你会怎么理解" + topic + "？",
+            titleVariants: [
+              "如果是你，你会怎么理解" + topic + "？",
+              topic + "这件事，你现在最困惑的点是什么",
+              "如果你也在卡" + topic + "，你最想先搞清哪一步"
+            ],
+            body: "如果是你，你会怎么理解" + topic + "？\n我最近越来越觉得，很多看似简单的问题，一旦往里看两层，就完全不是原来的答案。\n所以这次我没有急着给方法，而是先整理了几个更底层的判断角度。\n我想用" + style + "的方式继续把这件事讲清楚。\n如果你愿意，也可以回我一句：你现在最困惑的点到底是什么？",
+            covers: [
+              "如果是你，你会怎么理解？",
+              topic + "你最困惑的点是什么",
+              "这次先别急着找答案"
+            ]
+          }
+        ],
+        [
+          {
+            label: "共鸣型",
+            angle: "适合朋友圈温和共鸣输出",
+            title: "关于" + topic + "，很多时候不是你不努力",
+            titleVariants: [
+              "关于" + topic + "，很多时候不是你不努力",
+              topic + "先别急着怪自己",
+              "很多" + topic + "的卡点，其实不是能力问题"
+            ],
+            body: "关于" + topic + "，我这两天反复在想一个点：\n很多时候不是你不努力，而是你一直在用很累的方式硬扛。\n所以我更想先把问题讲轻一点、讲透一点。\n如果先把结构看明白，很多动作都不用那么费劲。\n今天我又整理出一版更适合用" + style + "方式表达的朋友圈稿。",
+            covers: [
+              topic + "先别急着怪自己",
+              "不是你不努力，是方式太累",
+              "先把问题讲清楚，再谈怎么做"
+            ]
+          },
+          {
+            label: "拆解型",
+            angle: "适合朋友圈讲判断方法",
+            title: "如果是" + topic + "，我会先拆这 3 层",
+            titleVariants: [
+              "如果是" + topic + "，我会先拆这 3 层",
+              topic + "别急，我通常先看这三层",
+              "遇到" + topic + "，我会先这样判断"
+            ],
+            body: "如果今天再看" + topic + "，我不会一上来就找答案。\n我通常会先拆三层：表面现象、背后触发、长期结构。\n只看第一层，很容易越做越乱。\n把三层分开，很多判断会一下子变清楚。\n这种内容很适合继续用" + style + "的方式往下写。",
+            covers: [
+              topic + "我会先拆这 3 层",
+              "别急，先把三层看开",
+              "很多判断，输在只看第一层"
+            ]
+          },
+          {
+            label: "提问型",
+            angle: "适合带评论和私聊",
+            title: "如果你也在想" + topic + "，你最卡的是哪一步？",
+            titleVariants: [
+              "如果你也在想" + topic + "，你最卡的是哪一步？",
+              topic + "这件事，你现在最想先解决什么",
+              "聊聊吧，你在" + topic + "上最卡的点是什么"
+            ],
+            body: "如果你也在想" + topic + "，我想先问你一句：\n你现在最卡的，到底是理解、动作，还是坚持？\n我最近越整理越觉得，很多人不是没有方法，而是没有先把问题分层。\n所以这次我不急着给结论，反而更想先听听大家卡在哪。\n你如果愿意，直接回我一句就行。",
+            covers: [
+              "你在" + topic + "上最卡哪一步",
+              "这次先不讲答案，先讲卡点",
+              "你愿意说说你现在最困惑什么吗"
+            ]
+          }
+        ],
+        [
+          {
+            label: "记录型",
+            angle: "适合朋友圈日常记录感",
+            title: "今天整理" + topic + "时，我又确认了一个判断",
+            titleVariants: [
+              "今天整理" + topic + "时，我又确认了一个判断",
+              topic + "这件事，我今天又想明白一点",
+              "重新整理" + topic + "，我更确定一件事"
+            ],
+            body: "今天整理" + topic + "时，我又确认了一个判断。\n很多事情一开始看起来复杂，是因为我们总在结果层打转。\n但只要回到结构层，很多问题会突然变简单。\n所以我现在越来越习惯先整理理解，再决定动作。\n这也是我想继续用" + style + "方式写这个主题的原因。",
+            covers: [
+              "我今天又确认了一个判断",
+              topic + "先回到结构层",
+              "很多复杂，其实是看错层次"
+            ]
+          },
+          {
+            label: "判断型",
+            angle: "适合朋友圈输出方法论",
+            title: "关于" + topic + "，我现在更看重“先判断，再行动”",
+            titleVariants: [
+              "关于" + topic + "，我现在更看重“先判断，再行动”",
+              topic + "这件事，我越来越重视判断顺序",
+              "先判断，再行动，可能更适合" + topic
+            ],
+            body: "关于" + topic + "，我现在越来越重视一件事：先判断，再行动。\n不是所有问题都适合立刻给方法。\n有些时候，判断顺序一错，后面再努力都很容易跑偏。\n所以我宁愿先把逻辑讲清楚，再往下谈怎么做。\n今天这版内容，我会继续按" + style + "的方式去整理。",
+            covers: [
+              "先判断，再行动",
+              topic + "更重要的是顺序",
+              "有些努力，输在判断太快"
+            ]
+          },
+          {
+            label: "对话型",
+            angle: "适合朋友圈更有人味的表达",
+            title: "如果把" + topic + "讲给一个朋友听，我会先说这句",
+            titleVariants: [
+              "如果把" + topic + "讲给一个朋友听，我会先说这句",
+              topic + "如果只说一句，我会先说什么",
+              "如果是朋友来问" + topic + "，我会先这样说"
+            ],
+            body: "如果把" + topic + "讲给一个朋友听，我大概不会一上来就讲方法。\n我会先说：别急，先把你现在看到的这一层放一放。\n很多真正重要的东西，都藏在更里面。\n这也是为什么，我越来越喜欢先用" + style + "的方式把理解讲透。\n等理解到了，动作反而会顺。",
+            covers: [
+              "如果只说一句，我会先说这句",
+              topic + "别急，先放一放",
+              "很多重要的东西，都藏在更里面"
+            ]
+          }
+        ]
+      ];
+
+      return sets[batch % 3];
+    }
+
+    function buildLitePackage(topic, style, batch) {
+      return {
+        topic: topic,
+        style: style,
+        videoScripts: buildVideoScripts(topic, style),
+        xhsDirections: buildXhsDirections(topic, style),
+        momentsDirections: buildMomentsDirections(topic, style, batch)
+      };
+    }
+
+    function renderVideoSection(result) {
+      var block = createElement("div", "result-block", "");
+      var head = createElement("div", "result-head", "");
+      head.innerHTML = "<h2>视频号口播文案</h2><p>这里直接给你 15 秒、30 秒、60 秒三档口播版本。</p>";
+      block.appendChild(head);
+
+      var row = createElement("div", "cards-row", "");
+      var i;
+      for (i = 0; i < result.videoScripts.length; i++) {
+        var item = result.videoScripts[i];
+        var card = createElement("div", "script-card" + (i === result.videoScripts.length - 1 ? " last" : ""), "");
+        var metaHtml = "<div class=\"meta\"><span>" + escapeHtml(item.duration) + "</span><span>" + escapeHtml(item.goal) + "</span></div>";
+        card.innerHTML = "<h4>" + escapeHtml(item.title) + "</h4>" + metaHtml + "<pre>" + escapeHtml(item.script) + "</pre>";
+        var actions = createElement("div", "actions", "");
+        actions.appendChild(makeButton("复制" + item.duration + "口播", "btn-light", item.script));
+        card.appendChild(actions);
+        row.appendChild(card);
+      }
+
+      block.appendChild(row);
+      return block;
+    }
+
+    function makeButton(label, className, copyValue) {
+      var btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = className;
+      btn.innerHTML = escapeHtml(label);
+      if (typeof copyValue === "string") {
+        btn.onclick = function () {
+          copyText(copyValue);
+        };
+      }
+      return btn;
+    }
+
+    function renderTabs(directions, selectedIndex, onSelect) {
+      var tabs = createElement("div", "tabs", "");
+      var i;
+      for (i = 0; i < directions.length; i++) {
+        (function (index) {
+          var btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = index === selectedIndex ? "btn-line active-tab" : "btn-line";
+          btn.innerHTML = escapeHtml(directions[index].label);
+          btn.onclick = function () {
+            onSelect(index);
+          };
+          tabs.appendChild(btn);
+        }(i));
+      }
+      return tabs;
+    }
+
+    function renderDirectionCards(directions, selectedIndex, onUse) {
+      var row = createElement("div", "cards-row", "");
+      var i;
+      for (i = 0; i < directions.length; i++) {
+        var item = directions[i];
+        var card = createElement("div", "direction-card" + (i === directions.length - 1 ? " last" : ""), "");
+        var meta = "<div class=\"meta\"><span>" + escapeHtml(item.label) + "</span><span>" + escapeHtml(item.angle) + "</span></div>";
+        var listHtml = "<ol class=\"title-list\">";
+        var j;
+        for (j = 0; j < item.titleVariants.length; j++) {
+          listHtml += "<li>" + escapeHtml(item.titleVariants[j]) + "</li>";
+        }
+        listHtml += "</ol>";
+        card.innerHTML = "<h4>" + escapeHtml(item.title) + "</h4>" + meta + listHtml + "<pre>" + escapeHtml(item.body) + "</pre>";
+
+        var actions = createElement("div", "actions", "");
+        actions.appendChild(makeButton("复制标题组", "btn-light", item.titleVariants.join("\n")));
+        actions.appendChild(makeButton("复制正文", "btn-light", item.body));
+
+        (function (index) {
+          var useBtn = document.createElement("button");
+          useBtn.type = "button";
+          useBtn.className = index === selectedIndex ? "btn-line active-tab" : "btn-line";
+          useBtn.innerHTML = escapeHtml(index === selectedIndex ? "当前方向" : "用这个方向");
+          useBtn.onclick = function () {
+            onUse(index);
+          };
+          actions.appendChild(useBtn);
+        }(i));
+
+        card.appendChild(actions);
+        row.appendChild(card);
+      }
+      return row;
+    }
+
+    function renderCoverCards(title, direction, platformName) {
+      var block = createElement("div", "result-block", "");
+      var head = createElement("div", "result-head", "");
+      head.innerHTML = "<h3>" + escapeHtml(title) + "</h3><p>下面 3 张是轻量封面示意卡，重点是先让客户看到方向，不追求设计稿精修。</p>";
+      block.appendChild(head);
+
+      var row = createElement("div", "cards-row", "");
+      var i;
+      for (i = 0; i < direction.covers.length; i++) {
+        var card = createElement("div", "cover-card" + (i === direction.covers.length - 1 ? " last" : ""), "");
+        var sample = createElement("div", "cover-sample theme-" + (i + 1), "");
+        sample.innerHTML = "<div class=\"cover-top\">" + escapeHtml(platformName) + " · " + escapeHtml(direction.label) + "</div>" +
+          "<div class=\"cover-title\">" + escapeHtml(direction.covers[i]) + "</div>" +
+          "<div class=\"cover-bottom\">" + escapeHtml(appState.result.topic) + " · AIPIWEN Lite</div>";
+        card.appendChild(sample);
+        card.appendChild(createElement("h4", "", direction.covers[i]));
+        var actions = createElement("div", "actions", "");
+        actions.appendChild(makeButton("复制封面标题", "btn-light", direction.covers[i]));
+        card.appendChild(actions);
+        row.appendChild(card);
+      }
+
+      block.appendChild(row);
+      return block;
+    }
+
+    function renderXhsSection(result) {
+      var block = createElement("div", "result-block", "");
+      var head = createElement("div", "result-head", "");
+      head.innerHTML = "<h2>小红书 3 个方向</h2><p>先选一个最顺手的内容方向，再看下面对应的封面示意卡。</p>";
+      block.appendChild(head);
+
+      block.appendChild(renderTabs(result.xhsDirections, appState.selectedXhs, function (index) {
+        appState.selectedXhs = index;
+        renderOutput();
+        setStatus("已切换到小红书的「" + result.xhsDirections[index].label + "」方向。", true);
+      }));
+
+      block.appendChild(renderDirectionCards(result.xhsDirections, appState.selectedXhs, function (index) {
+        appState.selectedXhs = index;
+        renderOutput();
+        setStatus("已切换到小红书的「" + result.xhsDirections[index].label + "」方向。", true);
+      }));
+
+      block.appendChild(renderCoverCards("小红书封面示意卡", result.xhsDirections[appState.selectedXhs], "小红书"));
+      return block;
+    }
+
+    function renderMomentsSection(result) {
+      var block = createElement("div", "result-block", "");
+      var head = createElement("div", "result-head", "");
+      head.innerHTML = "<h2>朋友圈 3 个方向</h2><p>不满意这批时，可以直接点“换一批朋友圈内容”。</p>";
+      block.appendChild(head);
+
+      var topActions = createElement("div", "actions", "");
+      var refresh = document.createElement("button");
+      refresh.type = "button";
+      refresh.className = "btn-light";
+      refresh.innerHTML = "换一批朋友圈内容";
+      refresh.onclick = function () {
+        regenerateMoments();
+      };
+      topActions.appendChild(refresh);
+      block.appendChild(topActions);
+
+      block.appendChild(renderTabs(result.momentsDirections, appState.selectedMoments, function (index) {
+        appState.selectedMoments = index;
+        renderOutput();
+        setStatus("已切换到朋友圈的「" + result.momentsDirections[index].label + "」方向。", true);
+      }));
+
+      block.appendChild(renderDirectionCards(result.momentsDirections, appState.selectedMoments, function (index) {
+        appState.selectedMoments = index;
+        renderOutput();
+        setStatus("已切换到朋友圈的「" + result.momentsDirections[index].label + "」方向。", true);
+      }));
+
+      block.appendChild(renderCoverCards("朋友圈配图示意卡", result.momentsDirections[appState.selectedMoments], "朋友圈"));
+      return block;
+    }
+
+    function renderOutput() {
+      var summary;
+      while (outputEl.firstChild) {
+        outputEl.removeChild(outputEl.firstChild);
+      }
+
+      if (!appState.result) {
+        emptyEl.style.display = "block";
+        outputEl.style.display = "none";
+        return;
+      }
+
+      emptyEl.style.display = "none";
+      outputEl.style.display = "block";
+
+      summary = createElement("div", "result-block", "");
+      summary.innerHTML = "<div class=\"result-head\"><h2>本次生成结果</h2><p>主题：" + escapeHtml(appState.result.topic) + "｜风格：" + escapeHtml(appState.result.style) + "。这一轮已经生成完整的 3 端试发素材。</p></div>";
+      outputEl.appendChild(summary);
+      outputEl.appendChild(renderVideoSection(appState.result));
+      outputEl.appendChild(renderXhsSection(appState.result));
+      outputEl.appendChild(renderMomentsSection(appState.result));
+    }
+
+    function generate() {
+      var topic = getSafeValue(topicInput.value, "通用主题");
+      var style = getSafeValue(styleInput.value, "默认风格");
+      appState.momentsBatch = 0;
+      appState.selectedXhs = 0;
+      appState.selectedMoments = 0;
+      appState.result = buildLitePackage(topic, style, appState.momentsBatch);
+      renderOutput();
+      setStatus("已生成「" + topic + "」的整套 Lite 内容。", true);
+    }
+
+    function regenerateMoments() {
+      if (!appState.result) return;
+      appState.momentsBatch = (appState.momentsBatch + 1) % 3;
+      appState.selectedMoments = 0;
+      appState.result.momentsDirections = buildMomentsDirections(appState.result.topic, appState.result.style, appState.momentsBatch);
+      renderOutput();
+      setStatus("已为朋友圈换一批内容，当前是第 " + (appState.momentsBatch + 1) + " 批。", true);
+    }
+
+    function init() {
+      var form = document.getElementById("generator-form");
+      outputEl = document.getElementById("output");
+      emptyEl = document.getElementById("empty-state");
+      statusEl = document.getElementById("status");
+      topicInput = document.getElementById("topic");
+      styleInput = document.getElementById("style");
+
+      if (!form || !outputEl || !emptyEl || !statusEl || !topicInput || !styleInput) {
+        return;
+      }
+
+      form.onsubmit = function (event) {
+        if (event && event.preventDefault) event.preventDefault();
+        generate();
+        return false;
+      };
+    }
+
+    init();
+  </script>
+</body>
+</html>

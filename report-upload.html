@@ -478,7 +478,7 @@ button, a, .must-item, .fp-option-card, .back-btn, .issue-chip {
   <div class="s3-body">
     <div class="s2-section-label">必给模块（自动包含）</div>
     <div class="must-list" id="must-list"></div>
-    <div class="s2-section-label" style="margin-top:20px;">选择你最想了解的问题（最多 4 个、至少 1 个）</div>
+    <div class="s2-section-label" style="margin-top:20px;">选择你最想了解的问题（最多 3 个、至少 1 个）</div>
     <div class="issue-grid" id="issue-grid"></div>
     <div id="gen-status"></div>
   </div>
@@ -602,8 +602,8 @@ const SYM_OPTIONS = [
   'X','Xn',                              // 开放家族
 ];
 
-// ── 问题选项池（按年龄段，可配置常量）── 来源：知识库 00i ─────────────────
-// 规则：0-18 家长视角，18+ 本人视角；每段 10 项按主题分组；最多选 6、至少 1
+// ── 问题选项池（按年龄段，可配置常量）─────────────────
+// 规则：0-18 家长视角，18+ 本人视角；每段 10 项按主题分组；最多选 3、至少 1（厚报告稳定上限）
 // ⚠️ 去重铁律：不得含与必给模块同名/同义的项（天赋底色/职业优势/自我成长等已自动给）
 const ISSUE_POOL = {
   // 0–6 岁·家长视角（必给已含：兴趣班潜能 · 成长引导）
@@ -771,6 +771,7 @@ async function getMyInviteToken() {
 
 // ─── 报告存档 & 客户分享链接 ───────────────────────────────────────────────────
 let _clientShareUrl = '';
+let _clientReportId = '';
 
 async function _saveReportForClient(sections) {
   try {
@@ -782,6 +783,7 @@ async function _saveReportForClient(sections) {
     const d = await r.json();
     if (!d.ok || !d.id) return;
     const shareUrl = `https://aipiwen.cn/report-upload.html?rid=${d.id}`;
+    _clientReportId = d.id;
     _clientShareUrl = shareUrl;
     qs('#cmodal-url-text').textContent = shareUrl;
     const qrEl = qs('#cmodal-qr');
@@ -1039,7 +1041,7 @@ function buildIssuesScreen() {
     mustList.appendChild(item);
   });
 
-  // issue chips — 按主题分组渲染（来源：知识库 00i 规则5）
+  // issue chips — 按主题分组渲染
   const grid = qs('#issue-grid');
   grid.innerHTML = '';
   const groups = ISSUE_POOL[getIssueSegment(ST.age)] || ISSUE_POOL.seg_7_12;
@@ -1048,8 +1050,8 @@ function buildIssuesScreen() {
     const chip = el('div', 'issue-chip', issue);
     chip.addEventListener('click', () => {
       const sel = chip.classList.contains('selected');
-      if (!sel && ST.selectedIssues.length >= 4) {
-        qs('#gen-status').textContent = '最多选 4 个问题';
+      if (!sel && ST.selectedIssues.length >= 3) {
+        qs('#gen-status').textContent = '最多选 3 个问题';
         setTimeout(() => qs('#gen-status').textContent = '', 2000);
         return;
       }
@@ -1431,82 +1433,150 @@ function buildReportFlipBook(sections) {
 // 根本原因：克隆的 .rv-slide 不在 #s4 内，CSS 自定义变量 --th-* 无法继承
 // 解决方案：完全用内联 style 重建每页 HTML，不依赖 CSS 变量
 function getPDFTheme(ageTier) {
-  // dim=正文近白(.92); 各段主题继承 web CSS 里的 --th-* 变量值
-  const T = {
-    preschool:   { bg:'#1A0F06', acc:'#FF8C42', acc2:'#FFB347', text:'#FDFCF8',
-                   dim:'rgba(253,252,248,.92)', faint:'rgba(253,252,248,.38)',
-                   border:'rgba(255,140,66,.22)', card:'rgba(255,140,66,.10)',
-                   r:'18px', serif:'Georgia,"Noto Serif SC",serif',
-                   glow:'rgba(255,140,66,.55)', badge:'学龄前报告' },
-    school:      { bg:'#081420', acc:'#3E9BDB', acc2:'#5AB8E8', text:'#FDFCF8',
-                   dim:'rgba(253,252,248,.92)', faint:'rgba(253,252,248,.38)',
-                   border:'rgba(62,155,219,.22)', card:'rgba(62,155,219,.09)',
-                   r:'16px', serif:'Georgia,"Noto Serif SC",serif',
-                   glow:'rgba(62,155,219,.50)', badge:'小学阶段报告' },
-    junior_teen: { bg:'#0D0A1E', acc:'#8B5CF6', acc2:'#00D4FF', text:'#FDFCF8',
-                   dim:'rgba(253,252,248,.92)', faint:'rgba(253,252,248,.38)',
-                   border:'rgba(139,92,246,.26)', card:'rgba(139,92,246,.10)',
-                   r:'12px', serif:'"PingFang SC","Noto Sans SC",sans-serif',
-                   glow:'rgba(139,92,246,.55)', badge:'初中阶段报告' },
-    senior_teen: { bg:'#080C14', acc:'#C9A84C', acc2:'#E2C97E', text:'#FDFCF8',
-                   dim:'rgba(253,252,248,.92)', faint:'rgba(253,252,248,.38)',
-                   border:'rgba(201,168,76,.24)', card:'rgba(201,168,76,.09)',
-                   r:'10px', serif:'Georgia,"Noto Serif SC",serif',
-                   glow:'rgba(201,168,76,.50)', badge:'高中阶段报告' },
-    young_adult: { bg:'#111827', acc:'#C2692A', acc2:'#D97F3A', text:'#FDFCF8',
-                   dim:'rgba(253,252,248,.92)', faint:'rgba(253,252,248,.38)',
-                   border:'rgba(194,105,42,.18)', card:'rgba(194,105,42,.07)',
-                   r:'12px', serif:'Georgia,"Noto Serif SC",serif',
-                   glow:'rgba(194,105,42,.45)', badge:'大学·初职报告' },
-    adult:       { bg:'#111827', acc:'#C2692A', acc2:'#D97F3A', text:'#FDFCF8',
-                   dim:'rgba(253,252,248,.92)', faint:'rgba(253,252,248,.38)',
-                   border:'rgba(255,255,255,.09)', card:'rgba(255,255,255,.04)',
-                   r:'12px', serif:'Georgia,"Noto Serif SC",serif',
-                   glow:'rgba(194,105,42,.42)', badge:'职业发展报告' },
-    mature_adult:{ bg:'#111827', acc:'#C2692A', acc2:'#D97F3A', text:'#FDFCF8',
-                   dim:'rgba(253,252,248,.92)', faint:'rgba(253,252,248,.38)',
-                   border:'rgba(255,255,255,.09)', card:'rgba(255,255,255,.04)',
-                   r:'12px', serif:'Georgia,"Noto Serif SC",serif',
-                   glow:'rgba(194,105,42,.42)', badge:'成熟·转型报告' },
-  };
-  return T[ageTier] || T.adult;
+    // 统一 AIPIWEN 品牌底盘：年龄只改变轻主题、密度和表达重心。
+    const base = {
+        bg: '#FDFCF8',
+        paper: '#FFFFFF',
+        acc: '#C2692A',
+        acc2: '#A0541F',
+        text: '#1A1714',
+        dim: '#4F4740',
+        faint: '#8D8177',
+        border: '#E8DCD0',
+        card: '#F7EFE7',
+        soft: '#FBF5EF',
+        r: '16px',
+        serif: 'Georgia,"Noto Serif SC","Songti SC",serif',
+        glow: 'rgba(194,105,42,.18)',
+        badge: '专属解读报告',
+        audience: '专属皮纹报告',
+        coverLine: '先把行为和报告，翻译成可理解的生活语言。',
+        dataTitle: '先看这份报告的底层结构',
+        contentFocus: '从数据回到真实生活，帮助用户知道下一步怎么做。',
+        finalTitle: '这不是给你贴标签，而是帮你继续理解自己',
+        finalLine: '真正的理解，是把报告里的数据落回生活。',
+        titleSize: '21px',
+        bodySize: '13.2px',
+        lineHeight: '1.78',
+        maxChars: 340,
+        issueMax: 300,
+        issueThreshold: 520,
+    };
+    const T = {
+        preschool: {
+            badge: '学龄前 · 亲子理解报告', audience: '学龄前亲子报告',
+            acc: '#D16D2F', acc2: '#A45C30', card: '#FFF3E8', soft: '#FFF8F1', r: '22px',
+            coverLine: '先看见孩子发育中的信号，再给家长一个能马上用的回应方式。',
+            dataTitle: '先看孩子正在长出的天赋信号',
+            contentFocus: '少讲概念，多给家长能立刻调整的陪伴方式。',
+            finalTitle: '孩子不是难带，是需要被读懂',
+            finalLine: '把报告变成日常陪伴，家长才真正用得上。',
+            titleSize: '22px', bodySize: '13.4px', lineHeight: '1.82', maxChars: 300, issueMax: 260, issueThreshold: 460,
+        },
+        school: {
+            badge: '小学阶段 · 学习与沟通报告', audience: '小学阶段成长报告',
+            acc: '#C2692A', acc2: '#93521E', card: '#F8EFE5', soft: '#FBF4EC', r: '18px',
+            coverLine: '把学习、习惯和亲子沟通，落到孩子能执行的生活场景。',
+            dataTitle: '先看学习和沟通里的关键线索',
+            contentFocus: '重点解释学习节奏、沟通入口和家长可操作的支持方式。',
+            finalTitle: '理解孩子的节奏，才有真正有效的引导',
+            finalLine: '先让方法贴合孩子，再谈坚持和提升。',
+            titleSize: '21px', bodySize: '13.2px', lineHeight: '1.78', maxChars: 330, issueMax: 290, issueThreshold: 500,
+        },
+        junior_teen: {
+            badge: '初中阶段 · 成长理解报告', audience: '青春期成长报告',
+            acc: '#B85F2A', acc2: '#8E4D22', card: '#F7EEE7', soft: '#FBF3EE', r: '14px',
+            coverLine: '把情绪、边界和自我意识，翻译成家庭能沟通的语言。',
+            dataTitle: '先看青春期变化里的稳定底色',
+            contentFocus: '重点处理自我意识、边界感、压力反应和亲子沟通冲突。',
+            finalTitle: '不是叛逆，是正在长出自己的边界',
+            finalLine: '先保护沟通通道，再帮助孩子建立内在秩序。',
+            titleSize: '20px', bodySize: '13px', lineHeight: '1.74', maxChars: 340, issueMax: 300, issueThreshold: 520,
+        },
+        senior_teen: {
+            badge: '高中阶段 · 发展支持报告', audience: '高中阶段发展报告',
+            acc: '#A65A28', acc2: '#81461E', card: '#F6ECE2', soft: '#FAF1E8', r: '12px',
+            coverLine: '在压力、选择和目标之间，看清真正需要被支持的地方。',
+            dataTitle: '先看压力和选择背后的能力结构',
+            contentFocus: '重点解释压力承载、目标感、学习策略和家庭支持边界。',
+            finalTitle: '方向感不是催出来的，是被看清后长出来的',
+            finalLine: '让孩子知道自己如何用力，比单纯加压更重要。',
+            titleSize: '20px', bodySize: '12.8px', lineHeight: '1.72', maxChars: 350, issueMax: 310, issueThreshold: 540,
+        },
+        young_adult: {
+            badge: '大学·初职 · 方向理解报告', audience: '青年发展报告',
+            acc: '#A0541F', acc2: '#7D4219', card: '#F5EDE4', soft: '#FAF2EA', r: '12px',
+            coverLine: '从专业、职业和关系选择里，看见更适合自己的用力方式。',
+            dataTitle: '先看选择和行动背后的个人结构',
+            contentFocus: '重点解释职业倾向、行动风格、关系模式和阶段性选择。',
+            finalTitle: '真正的方向，是更清楚地使用自己',
+            finalLine: '先理解自己的优势和限制，再做更稳的选择。',
+            titleSize: '20px', bodySize: '12.8px', lineHeight: '1.72', maxChars: 360, issueMax: 320, issueThreshold: 560,
+        },
+        adult: {
+            badge: '成人 · 职业与关系报告', audience: '成人专属报告',
+            acc: '#9A5627', acc2: '#763F1B', card: '#F4ECE4', soft: '#FAF1EA', r: '10px',
+            coverLine: '把职业、关系和自我消耗，放回个人模式里重新理解。',
+            dataTitle: '先看职业与关系里的稳定模式',
+            contentFocus: '重点解释决策方式、关系互动、压力来源和可调整策略。',
+            finalTitle: '理解自己，不是解释过去，是重新选择现在',
+            finalLine: '把报告里的判断，变成现实里可执行的调整。',
+            titleSize: '19.5px', bodySize: '12.7px', lineHeight: '1.7', maxChars: 370, issueMax: 330, issueThreshold: 580,
+        },
+        mature_adult: {
+            badge: '成熟阶段 · 转型理解报告', audience: '成熟阶段专属报告',
+            acc: '#8F5128', acc2: '#6E3E1F', card: '#F3ECE5', soft: '#FAF2EC', r: '10px',
+            coverLine: '把经验、关系和转型需求，整理成下一阶段可使用的自我理解。',
+            dataTitle: '先看经验沉淀后的核心模式',
+            contentFocus: '重点解释长期优势、关系惯性、精力配置和阶段转型。',
+            finalTitle: '人生后半程，重要的是更准确地使用自己',
+            finalLine: '不是推翻过去，而是把已有经验重新组织。',
+            titleSize: '19.5px', bodySize: '12.7px', lineHeight: '1.7', maxChars: 370, issueMax: 330, issueThreshold: 580,
+        },
+    };
+    return { ...base, ...(T[ageTier] || T.adult) };
 }
+
 // 内联样式正文格式化（PDF 无 CSS 类，必须全用 style）
 // 规则：**关键词** → 橙色高亮；*斜体* → 橙色；▸ 开头行 → 单独动作行；正文近白(.92)；行距 2.0
+function escapePDFHTML(v) {
+  return String(v ?? '').replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[m]));
+}
+function splitPDFText(text, maxChars = 340) {
+  const raw = String(text || '').replace(/\r/g, '').trim();
+  if (!raw) return [];
+  const units = raw.split(/\n\n+/).flatMap(p => {
+    const t = p.trim();
+    if (t.length <= maxChars) return [t];
+    const parts = t.split(/(?<=[。！？；])/).map(x => x.trim()).filter(Boolean);
+    return parts.length ? parts : [t];
+  });
+  const out = [];
+  let cur = '';
+  for (const u of units) {
+    if (!cur) { cur = u; continue; }
+    if ((cur + '\n\n' + u).length > maxChars) { out.push(cur); cur = u; }
+    else cur += '\n\n' + u;
+  }
+  if (cur) out.push(cur);
+  return out.length ? out : [raw];
+}
 function fmtPDF(text, th, bf) {
   if (!text) return '';
-  // 先处理 ▸ 动作行（单独成行，橙色标记）
-  const lines0 = text.split('\n');
-  const processedLines = lines0.map(line => {
-    if (/^▸/.test(line.trim())) {
-      const content = line.trim().replace(/^▸\s*/, '');
-      return `<DIV_ACTION>${content}</DIV_ACTION>`;
-    }
-    return line;
-  }).join('\n');
-  // 处理加粗（关键词橙色高亮）和斜体
-  let html = processedLines
-    .replace(/\*\*(.+?)\*\*/g, `<strong style="color:${th.acc};font-weight:700;">$1</strong>`)
-    .replace(/\*(.+?)\*/g, `<em style="color:${th.acc};font-style:normal;">$1</em>`);
-  // 拆段落，去重
-  const rawParas = html.split(/\n\n+/);
-  const seen = new Set();
-  const paras = rawParas.filter(p => { const k=p.trim(); if(!k||seen.has(k)) return false; seen.add(k); return true; });
+  const paras = splitPDFText(text, 900);
   return paras.map((p, i) => {
-    // 动作行单独渲染
-    if (p.includes('<DIV_ACTION>')) {
-      return p.replace(/<DIV_ACTION>(.*?)<\/DIV_ACTION>/gs, (_, c) =>
-        `<div style="display:flex;align-items:flex-start;gap:8px;padding:5px 0;color:${th.text};font-size:13.5px;line-height:1.9;font-family:${bf};">` +
-        `<span style="color:${th.acc};flex-shrink:0;font-weight:700;">▸</span><span>${c}</span></div>`
-      );
-    }
-    const ln = p.replace(/\n/g, '<br>');
-    if (i === 0 && paras.length > 1)
+    let html = escapePDFHTML(p)
+      .replace(/\*\*(.+?)\*\*/g, `<strong style="color:${th.acc};font-weight:800;">$1</strong>`)
+      .replace(/\*(.+?)\*/g, `<em style="color:${th.acc};font-style:normal;">$1</em>`)
+      .replace(/\n/g, '<br>')
+      .replace(/▸\s*(.+?)(<br>|$)/g, `<span style="color:${th.acc};font-weight:800;">▸</span> $1$2`);
+    if (i === 0 && paras.length > 1) {
       return `<div style="border-left:3px solid ${th.acc};background:${th.card};border-radius:0 ${th.r} ${th.r} 0;` +
-             `padding:13px 16px;margin-bottom:12px;font-size:14px;line-height:2.0;font-style:italic;` +
-             `font-family:${bf};color:${th.text};">${ln}</div>`;
-    return `<p style="font-size:13.5px;line-height:2.0;margin-bottom:11px;` +
-           `color:rgba(253,252,248,.92);font-family:${bf};">${ln}</p>`;
+             `padding:12px 15px;margin-bottom:12px;font-size:${th.bodySize};line-height:${th.lineHeight};` +
+             `font-family:${bf};color:${th.text};">${html}</div>`;
+    }
+    return `<p style="font-size:${th.bodySize};line-height:${th.lineHeight};margin:0 0 10px;` +
+           `color:${th.dim};font-family:${bf};">${html}</p>`;
   }).join('');
 }
 async function generateReportPDF(btnEl) {
@@ -1542,7 +1612,7 @@ async function generateReportPDF(btnEl) {
     </div>`;
   }
   function wrap(inner) {
-    return `<div style="width:390px;background:${th.bg};font-family:${bf};color:${th.text};overflow:hidden;display:flex;flex-direction:column;">${inner}</div>`;
+    return `<div style="width:390px;height:554px;background:${th.bg};font-family:${bf};color:${th.text};overflow:hidden;display:flex;flex-direction:column;box-sizing:border-box;">${inner}</div>`;
   }
 
   // ── 封面（Slide 0）──────────────────────────────────────────────────────────
@@ -1564,7 +1634,8 @@ async function generateReportPDF(btnEl) {
         </div>
         <div style="font-family:${th.serif};font-size:36px;font-weight:700;color:${th.text};text-align:center;margin-bottom:7px;line-height:1.2;">${type}</div>
         <div style="width:36px;height:2px;background:${th.acc};border-radius:1px;margin:0 auto 13px;"></div>
-        <div style="font-size:12.5px;color:${th.dim};text-align:center;margin-bottom:16px;line-height:1.7;">${ST.name?`<strong style="color:${th.text};">${ST.name}</strong> · `:''} ${ST.age}岁 · 专属皮纹报告</div>
+        <div style="font-size:12.2px;color:${th.dim};text-align:center;margin-bottom:8px;line-height:1.6;">${ST.name?`<strong style="color:${th.text};">${ST.name}</strong> · `:''} ${ST.age}岁 · ${th.audience}</div>
+        <div style="font-size:10.8px;color:${th.faint};text-align:center;margin:0 26px 14px;line-height:1.62;">${th.coverLine}</div>
         <div style="display:flex;flex-wrap:wrap;gap:7px;justify-content:center;margin-bottom:18px;">
           ${[E?.学习通道?.主通道,E?.行为模式?.结论,E?.ATD?.分区].filter(Boolean).map(t=>
             `<div style="border:1px solid ${th.border};border-radius:20px;padding:4px 12px;font-size:10.5px;color:${th.acc};background:${th.card};">${t}</div>`
@@ -1608,19 +1679,20 @@ async function generateReportPDF(btnEl) {
       ${pHdr('02')}
       <div style="flex:1;padding:18px 24px 14px;display:flex;flex-direction:column;gap:13px;">
         <div style="font-size:10px;letter-spacing:.2em;color:${th.acc};text-transform:uppercase;font-weight:700;">数据总览 · DATA OVERVIEW</div>
+        <div style="font-family:${th.serif};font-size:18px;line-height:1.35;color:${th.text};font-weight:700;margin-top:-5px;">${th.dataTitle}</div>
 
         <!-- 左右脑 -->
         <div style="background:${th.card};border:1px solid ${th.border};border-radius:${th.r};padding:13px 16px;">
           <div style="display:flex;align-items:center;gap:12px;">
-            <div style="font-size:11px;color:rgba(253,252,248,.9);width:44px;text-align:right;flex-shrink:0;line-height:1.7;">左脑<br><strong style="color:${th.acc};font-size:16px;">${bL}%</strong></div>
+            <div style="font-size:11px;color:${th.dim};width:44px;text-align:right;flex-shrink:0;line-height:1.7;">左脑<br><strong style="color:${th.acc};font-size:16px;">${bL}%</strong></div>
             <div style="flex:1;">
-              <div style="height:12px;background:rgba(255,255,255,.08);border-radius:6px;overflow:hidden;display:flex;">
+              <div style="height:12px;background:${th.card};border-radius:6px;overflow:hidden;display:flex;">
                 <div style="width:${bL}%;background:${th.acc};height:100%;border-radius:6px 0 0 6px;"></div>
                 <div style="width:${bR}%;background:${th.acc};height:100%;opacity:.28;border-radius:0 6px 6px 0;"></div>
               </div>
               <div style="text-align:center;font-size:10px;color:${th.faint};margin-top:5px;">${E.左右脑?.结论||''}</div>
             </div>
-            <div style="font-size:11px;color:rgba(253,252,248,.9);width:44px;text-align:left;flex-shrink:0;line-height:1.7;">右脑<br><strong style="color:${th.acc};font-size:16px;opacity:.6;">${bR}%</strong></div>
+            <div style="font-size:11px;color:${th.dim};width:44px;text-align:left;flex-shrink:0;line-height:1.7;">右脑<br><strong style="color:${th.acc};font-size:16px;opacity:.6;">${bR}%</strong></div>
           </div>
         </div>
 
@@ -1632,20 +1704,20 @@ async function generateReportPDF(btnEl) {
             const pct = Math.round(v / mx * 100);
             const above = v >= avg;
             return `<div style="display:grid;grid-template-columns:68px 1fr 32px;align-items:center;gap:10px;">
-              <div style="font-size:11.5px;color:rgba(253,252,248,.9);">${name}</div>
+              <div style="font-size:11.5px;color:${th.dim};">${name}</div>
               <div style="position:relative;height:14px;">
-                <div style="position:absolute;inset:0;background:rgba(255,255,255,.06);border-radius:7px;overflow:hidden;">
+                <div style="position:absolute;inset:0;background:${th.card};border-radius:7px;overflow:hidden;">
                   <div style="width:${pct}%;height:100%;background:${th.acc};opacity:${above ? 1 : 0.28};border-radius:7px;"></div>
                 </div>
-                <div style="position:absolute;left:${avgPct}%;top:-2px;bottom:-2px;width:2px;background:rgba(253,252,248,.32);border-radius:1px;"></div>
+                <div style="position:absolute;left:${avgPct}%;top:-2px;bottom:-2px;width:2px;background:${th.border};border-radius:1px;"></div>
               </div>
-              <div style="font-size:13px;color:${above ? th.acc : 'rgba(253,252,248,.4)'};font-weight:700;text-align:right;">${v}</div>
+              <div style="font-size:13px;color:${above ? th.acc : th.faint};font-weight:700;text-align:right;">${v}</div>
             </div>`;
           }).join('')}
           <!-- 图例 -->
           <div style="display:flex;align-items:center;gap:14px;font-size:9.5px;color:${th.faint};margin-top:2px;flex-wrap:wrap;">
             <div style="display:flex;align-items:center;gap:5px;">
-              <div style="width:2px;height:13px;background:rgba(253,252,248,.32);border-radius:1px;"></div>均值线 ${avg}
+              <div style="width:2px;height:13px;background:${th.border};border-radius:1px;"></div>均值线 ${avg}
             </div>
             <div style="display:flex;align-items:center;gap:5px;">
               <div style="width:16px;height:4px;background:${th.acc};border-radius:2px;"></div>
@@ -1673,8 +1745,8 @@ async function generateReportPDF(btnEl) {
 
   // ── 内容页（必给/issue）────────────────────────────────────────────────────
   function buildContent(sec, n) {
-    const isIssue = sec.type === 'issue', isFound = sec.type === 'foundation';
-    const label = isFound ? '★ 必读 · 天赋地基' : isIssue ? '◉ 专项解读' : '▸ 专项';
+    const isIssue = sec.type === 'issue', isIssuePart = sec.type === 'pdf_issue_part', isFound = sec.type === 'foundation';
+    const label = isFound ? '★ 必读 · 天赋地基' : (isIssue || isIssuePart) ? '◉ 专项解读' : '▸ 专项';
     // 关键词 pill 徽章（从 **加粗** 词提取）
     const kwMatches = ((isIssue ? (sec.why||'')+(sec.how||'')+(sec.future||'') : sec.content||''))
                       .match(/\*\*(.+?)\*\*/g) || [];
@@ -1691,13 +1763,15 @@ async function generateReportPDF(btnEl) {
         .replace(/\n/g, '<br>');
       return `<div style="background:${th.card};border:1px solid ${th.border};border-radius:${th.r};padding:13px 15px;">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:9px;">
-          <div style="width:22px;height:22px;background:${th.acc};color:${th.bg};border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;">${num}</div>
+          <div style="width:22px;height:22px;background:${th.acc};color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;">${num}</div>
           <div style="font-size:10px;font-weight:700;color:${th.acc};letter-spacing:.1em;text-transform:uppercase;">${titleTxt}</div>
         </div>
-        <div style="font-size:13px;color:rgba(253,252,248,.92);line-height:2.0;">${bodyHtml}</div>
+        <div style="font-size:13px;color:${th.dim};line-height:2.0;">${bodyHtml}</div>
       </div>`;
     }
-    const bodyHTML = isIssue
+    const bodyHTML = isIssuePart
+      ? fmtPDF(sec.content || '', th, bf)
+      : isIssue
       ? `<div style="display:flex;flex-direction:column;gap:9px;">
           ${issueCard(1, '为什么会这样', sec.why)}
           ${issueCard(2, '怎么应对', sec.how)}
@@ -1713,9 +1787,10 @@ async function generateReportPDF(btnEl) {
           ${label}
         </div>
         <!-- 标题 -->
-        <div style="font-family:${th.serif};font-size:21px;font-weight:700;color:${th.text};margin-bottom:10px;line-height:1.3;">${sec.title}</div>
+        <div style="font-family:${th.serif};font-size:${th.titleSize};font-weight:700;color:${th.text};margin-bottom:10px;line-height:1.3;">${sec.title}</div>
         <!-- 分隔线 -->
         <div style="width:100%;height:1px;background:${th.border};margin-bottom:12px;"></div>
+        <div style="font-size:10.5px;color:${th.faint};line-height:1.55;margin:-4px 0 10px;">${th.contentFocus}</div>
         ${kwHTML}
         <div style="flex:1;">${bodyHTML}</div>
       </div>
@@ -1741,10 +1816,10 @@ async function generateReportPDF(btnEl) {
                onerror="this.style.opacity='0'">
         </div>
         <!-- 标题 -->
-        <div style="font-family:${th.serif};font-size:24px;font-weight:700;color:${th.text};margin-bottom:8px;line-height:1.3;">${type}，就是你。</div>
+        <div style="font-family:${th.serif};font-size:24px;font-weight:700;color:${th.text};margin-bottom:8px;line-height:1.3;">${th.finalTitle || (type + '，就是你。')}</div>
         <div style="width:36px;height:2px;background:${th.acc};border-radius:1px;margin:0 auto 16px;"></div>
         <!-- 结语 -->
-        <div style="font-size:13px;color:rgba(253,252,248,.82);line-height:1.92;margin-bottom:24px;max-width:300px;">${cfg.finMsg}</div>
+        <div style="font-size:13px;color:${th.dim};line-height:1.86;margin-bottom:24px;max-width:300px;">${cfg.finMsg}<br>${th.finalLine || ''}</div>
         <!-- 数据摘要胶囊 -->
         <div style="display:flex;flex-wrap:wrap;gap:7px;justify-content:center;margin-bottom:22px;">
           ${[type, E?.学习通道?.主通道, E?.行为模式?.结论, traitStr].filter(Boolean)
@@ -1766,11 +1841,30 @@ async function generateReportPDF(btnEl) {
     const PW = 148, PH = 210; // A5 mm
     const pdf = new jsPDF({ unit:'mm', format:[PW,PH] });
 
-    // 组装各页 HTML（有 engineResult 才出数据页）
+    // 组装各页 HTML：长段落先切页，避免整段被压缩到一页导致不可读
+    function expandPDFSections(list) {
+      const out = [];
+      list.forEach(sec => {
+        if (sec.type === 'issue') {
+          const total = [sec.why, sec.how, sec.future, sec.cta].join('').length;
+          if (total <= th.issueThreshold) { out.push(sec); return; }
+          [['为什么会这样', sec.why], ['怎么应对', sec.how], ['未来可期', sec.future], ['继续追问', sec.cta]].forEach(([label, body], idx) => {
+            splitPDFText(body || '', th.issueMax).forEach((chunk, j, arr) => out.push({
+              title: `${sec.title} · ${label}${arr.length > 1 ? ' ' + (j + 1) + '/' + arr.length : ''}`,
+              type: 'pdf_issue_part', content: chunk
+            }));
+          });
+          return;
+        }
+        const chunks = splitPDFText(sec.content || '', th.maxChars);
+        chunks.forEach((chunk, j) => out.push({ ...sec, title: chunks.length > 1 ? `${sec.title} ${j + 1}/${chunks.length}` : sec.title, content: chunk }));
+      });
+      return out;
+    }
     const pages = [buildCover()];
     const dataH = buildData();
     if (dataH) pages.push(dataH);
-    sections.forEach((sec, i) => {
+    expandPDFSections(sections).forEach(sec => {
       pages.push(buildContent(sec, String(pages.length + 1).padStart(2,'0')));
     });
     pages.push(buildFinal(String(pages.length + 1).padStart(2,'0')));
@@ -1785,18 +1879,16 @@ async function generateReportPDF(btnEl) {
       ));
       await new Promise(r => setTimeout(r, 80));
       const canvas = await html2canvas(renderDiv, {
-        backgroundColor: th.bg, scale:2, useCORS:true, logging:false, width:390
+        backgroundColor: th.bg, scale:2.4, useCORS:true, logging:false, width:390, height:554
       });
-      const imgH_mm = (canvas.height / canvas.width) * PW;
-      const yOff = Math.max(0, (PH - Math.min(imgH_mm,PH)) / 2);
-      pdf.addImage(canvas.toDataURL('image/jpeg',0.92),'JPEG', 0,yOff, PW, Math.min(imgH_mm,PH));
+      pdf.addImage(canvas.toDataURL('image/jpeg',0.94),'JPEG', 0, 0, PW, PH);
     }
 
     // 手机浏览器 blob URL 会导致页面跳转，用 <a download> 触发
     const _blob = pdf.output('blob');
     const _url  = URL.createObjectURL(_blob);
     const _a    = document.createElement('a');
-    _a.href = _url; _a.download = 'aipiwen-皮纹报告.pdf';
+    _a.href = _url; _a.download = 'aipiwen-专属解读报告.pdf';
     _a.style.cssText = 'position:fixed;left:-9999px;top:0;visibility:hidden;';
     document.body.appendChild(_a); _a.click();
     setTimeout(() => { document.body.removeChild(_a); URL.revokeObjectURL(_url); }, 5000);
@@ -1942,8 +2034,16 @@ function openDeepChat() {
   const atd     = E.ATD      || {};
 
   // 构建报告摘要，含性格类型关键词 → guest-chat.js 自动注入完整 TRC 知识库
+  const sectionDigest = (RV.sections || []).slice(0, 10).map(sec => {
+    const body = sec.type === 'issue'
+      ? [sec.why, sec.how, sec.future, sec.cta].filter(Boolean).join(' ')
+      : (sec.content || '');
+    return `【${sec.title || '报告板块'}】${String(body).replace(/\s+/g, ' ').slice(0, 420)}`;
+  }).join('\n');
+
   const summary = [
     `【皮纹天赋报告数据·深聊上下文】`,
+    _clientReportId ? `报告ID：${_clientReportId}` : '',
     name  ? `姓名：${name}` : '',
     age   ? `年龄：${age}岁` : '',
     type  ? `性格主类型：${type}${E.叠加特质?.逆向思维R ? '（含逆向思维叠加）' : ''}` : '',
@@ -1953,14 +2053,16 @@ function openDeepChat() {
     fn.总TRC                 ? `TRC总分：${fn.总TRC}，均值：${fn.个人均值}` : '',
     atd.值                   ? `ATD：${atd.值}°（${atd.分区}）` : '',
     (fn.精神 || fn.思维)     ? `五功能区——精神:${fn.精神} 思维:${fn.思维} 体觉:${fn.体觉} 听觉:${fn.听觉} 视觉:${fn.视觉}` : '',
-    `（用户刚看完以上皮纹报告，希望继续追问深入了解天赋特征）`,
+    sectionDigest ? `\n【已生成报告正文摘要】\n${sectionDigest}` : '',
+    `（用户刚看完以上皮纹报告，希望围绕这份报告继续追问，不是重新做泛行为理解。）`,
   ].filter(Boolean).join('\n');
 
   try { sessionStorage.setItem('aipiwen_report_deepchat', summary); } catch(e) {}
 
-  // 18岁及以下用 child 视角，18+ 用 self
+  // 18岁及以下用 child 视角，18+ 用 self；mode=report 让聊天页切换为报告深聊
   const forParam = (age && Number(age) <= 18) ? 'child' : 'self';
-  window.location = `/child-chat.html?for=${forParam}&mode=report`;
+  const ridParam = _clientReportId ? `&reportId=${encodeURIComponent(_clientReportId)}` : '';
+  window.location = `/child-chat.html?for=${forParam}&mode=report${ridParam}`;
 }
 
 // ─── 客户分享弹窗 ─────────────────────────────────────────────────────────

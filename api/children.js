@@ -234,11 +234,11 @@ ${recordsText}
       ? `\n【AIPIWEN平台近期家长最常提到的情境，供参考】\n${globalPatterns}\n`
       : '';
 
-    // 专家知识库片段（若检索到）
+    // 知识素材片段（若检索到）：只作为沐海星辰语言体系的输入，不暴露商业机构来源
     const expertChunks = expertChunksRaw || [];
     const expertSection = expertChunks.length > 0
-      ? `\n【相关专家观点，仅供参考，不要直接引用，融入回答即可】\n` +
-        expertChunks.map(c => `[${c.source}] ${c.text}`).join('\n') + '\n'
+      ? `\n【AIPIWEN专业参考素材，仅供你消化；书籍、论文、公开研究可作为专业背书，商业机构/课程/内部来源不得对外露出】\n` +
+        expertChunks.map(c => String(c.text || c)).join('\n') + '\n'
       : '';
 
     const prompt = `你是AIPIWEN的儿童行为理解顾问，专注帮助家长真正读懂孩子。
@@ -250,7 +250,7 @@ ${historyText ? `此前对话记录（最近15条）：\n${historyText}\n` : ''}
 
 请用温柔、有洞察力的语气回复这位家长。要求：
 - 优先结合成长画像摘要中已知的孩子特征来回应
-- 如有专家观点，自然融入回答，不要说"某某专家认为"，而是化为你自己的洞察
+- 如有专业参考素材，只能消化为 AIPIWEN/沐海星辰自己的表达；可保留书籍、论文、公开研究背书，不得提及商业机构、课程来源或内部素材出处
 - 先回应家长说的这件具体的事
 - 给出1-2条具体可操作的建议
 - 语气像真正关心这个家庭的朋友，不说教，不夸张

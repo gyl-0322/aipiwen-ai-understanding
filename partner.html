@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>沐海星辰 · 采集代理合作</title>
-<meta name="description" content="加入沐海星辰采集代理计划，开展皮纹天赋测评业务。设备+平台+培训全套支持，合同签约保障。">
+<meta name="description" content="沐海星辰采集代理合作计划：采集设备、AIPIWEN 智能解读、培训陪跑与服务支持，帮助你更稳地开展本地测评服务。">
 <script src="/js/brand.js" defer></script>
 <style>
 :root {
@@ -36,9 +36,24 @@ a { color:inherit; text-decoration:none; }
   background:rgba(253,252,248,.92); backdrop-filter:blur(12px);
   border-bottom:1px solid rgba(194,105,42,.1);
 }
+@keyframes logo-spin     { from{transform:rotate(0)} to{transform:rotate(360deg)} }
+@keyframes logo-spin-rev { from{transform:rotate(0)} to{transform:rotate(-360deg)} }
+@keyframes logo-breathe  { 0%,100%{opacity:.82;transform:scale(1)} 50%{opacity:1;transform:scale(1.04)} }
+.logo-ring-outer { transform-origin:18px 18px; animation:logo-spin 22s linear infinite; }
+.logo-petals     { transform-origin:18px 18px; animation:logo-spin-rev 14s linear infinite; }
+.logo-center     { transform-origin:18px 18px; animation:logo-breathe 3.5s ease-in-out infinite; }
 .logo-wrap { display:flex; align-items:center; gap:10px; }
-.logo-text  { font-size:15px; font-weight:700; letter-spacing:.06em; }
-.back-btn   { font-size:14px; color:var(--amber); font-weight:500; }
+.logo-svg { width:32px; height:32px; flex-shrink:0; }
+.wordmark { font-size:15px; font-weight:800; letter-spacing:.14em; text-transform:uppercase; color:var(--ink); line-height:1; }
+.wm-e { color:var(--amber); }
+.brand-seal {
+  display:grid; grid-template-columns:1fr 1fr; grid-template-rows:1fr 1fr;
+  width:42px; height:42px; background:var(--amber); border-radius:5px;
+  padding:5px; position:relative; flex-shrink:0;
+  box-shadow:0 3px 12px rgba(194,105,42,.28),0 1px 4px rgba(194,105,42,.18);
+}
+.brand-seal::after { content:''; position:absolute; inset:4px; border:1.1px solid rgba(255,255,255,.58); border-radius:2px; pointer-events:none; }
+.brand-seal span { font-family:Georgia,'Noto Serif SC','Source Han Serif SC',serif; font-size:12px; font-weight:700; color:#fff; line-height:1; display:flex; align-items:center; justify-content:center; }
 
 /* ── HERO ── */
 .hero {
@@ -58,12 +73,14 @@ a { color:inherit; text-decoration:none; }
 .hero-sub { font-size:14px; color:rgba(250,249,246,.6); line-height:1.7; margin-bottom:28px; }
 .hero-cta {
   display:inline-flex; align-items:center; gap:8px;
-  background:var(--amber); color:#fff;
-  border-radius:var(--r-md); padding:14px 24px;
+  background:transparent; color:rgba(255,255,255,.88);
+  border:2px solid rgba(255,255,255,.35);
+  border-radius:var(--r-md); padding:13px 24px;
   font-size:15px; font-weight:600;
-  border:none; cursor:pointer; transition:opacity .15s;
+  cursor:pointer; transition:background .15s, border-color .15s, color .15s;
 }
-.hero-cta:active { opacity:.85; }
+.hero-cta:hover { border-color:var(--amber); color:var(--amber); }
+.hero-cta:active { background:var(--amber); border-color:var(--amber); color:#fff; }
 
 /* ── SECTION COMMON ── */
 .section { padding:36px 20px 0; }
@@ -91,6 +108,24 @@ a { color:inherit; text-decoration:none; }
 .why-text  { font-size:13px; color:var(--ink-40); line-height:1.6; }
 
 /* ── DEVICE SECTION ── */
+.process-grid {
+  display:grid; grid-template-columns:repeat(4, minmax(0,1fr));
+  margin:16px 0 16px;
+  border:1px solid rgba(0,0,0,.06);
+  border-radius:12px;
+  overflow:hidden;
+  background:#fff;
+}
+.process-step {
+  min-width:0;
+  padding:10px 4px 9px;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  text-align:center;
+  border-right:1px solid #E8E4DE;
+}
+.process-step:last-child { border-right:none; }
+.process-icon { font-size:17px; margin-bottom:5px; line-height:1; }
+.process-text { font-size:10.5px; color:var(--ink-70); line-height:1.35; font-weight:600; }
 .device-section { padding:36px 20px 0; }
 .device-desc { font-size:14px; color:var(--ink-70); line-height:1.7; }
 .device-spec-list { margin-top:14px; display:flex; flex-direction:column; gap:8px; }
@@ -198,12 +233,13 @@ a { color:inherit; text-decoration:none; }
 }
 .sticky-cta-btn {
   width:100%; padding:15px;
-  background:var(--amber); color:#fff;
-  border:none; border-radius:var(--r-md);
+  background:transparent; color:var(--amber);
+  border:2px solid var(--amber); border-radius:var(--r-md);
   font-size:16px; font-weight:700; cursor:pointer;
   display:flex; align-items:center; justify-content:center; gap:8px;
+  transition:background .15s, color .15s;
 }
-.sticky-cta-btn:active { opacity:.88; }
+.sticky-cta-btn:active { background:var(--amber); color:#fff; }
 
 /* ── WECHAT MODAL ── */
 .modal-overlay {
@@ -227,14 +263,14 @@ a { color:inherit; text-decoration:none; }
   background:var(--cream-deep); border-radius:var(--r-md);
   padding:20px; text-align:center; margin-bottom:16px;
 }
-/* 微信二维码图片占位 */
+/* 微信二维码 */
 .wechat-qr {
   width:160px; height:160px; margin:0 auto 12px;
-  background:#e8e4de; border-radius:var(--r-sm);
+  border-radius:var(--r-sm);
   display:flex; align-items:center; justify-content:center;
   overflow:hidden;
 }
-.wechat-qr img { width:100%; height:100%; object-fit:cover; }
+.wechat-qr img { width:100%; height:100%; object-fit:contain; }
 .wechat-qr-placeholder { font-size:12px; color:var(--ink-40); text-align:center; }
 .wechat-id-row {
   display:flex; align-items:center; justify-content:center; gap:8px;
@@ -265,15 +301,22 @@ a { color:inherit; text-decoration:none; }
 <body>
 
 <header class="site-header">
-  <a href="/" class="logo-wrap">
-    <svg width="26" height="26" viewBox="0 0 36 36" fill="none">
-      <circle cx="18" cy="18" r="16" stroke="#C2692A" stroke-width="1.5" opacity=".35"/>
-      <circle cx="18" cy="18" r="5" fill="#C2692A" opacity=".9"/>
-      <path d="M18 4 L18 8 M18 28 L18 32 M4 18 L8 18 M28 18 L32 18" stroke="#C2692A" stroke-width="1.5" stroke-linecap="round" opacity=".5"/>
+  <a href="/" class="logo-wrap" aria-label="AIPIWEN 首页">
+    <svg class="logo-svg" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle class="logo-ring-outer" cx="18" cy="18" r="15.5" stroke="#C2692A" stroke-width=".9" stroke-dasharray="2.5 6" opacity=".30"/>
+      <g class="logo-petals">
+        <ellipse cx="18" cy="12" rx="2.2" ry="6.5" fill="#C2692A" opacity=".75" transform="rotate(0 18 18)"/>
+        <ellipse cx="18" cy="12" rx="2.2" ry="6.5" fill="#C2692A" opacity=".50" transform="rotate(90 18 18)"/>
+        <ellipse cx="18" cy="12" rx="1.4" ry="5.5" fill="#C2692A" opacity=".35" transform="rotate(45 18 18)"/>
+        <ellipse cx="18" cy="12" rx="1.4" ry="5.5" fill="#C2692A" opacity=".35" transform="rotate(135 18 18)"/>
+      </g>
+      <circle class="logo-center" cx="18" cy="18" r="3" fill="#C2692A"/>
     </svg>
-    <span class="logo-text" data-brand-name>沐海星辰</span>
+    <span class="wordmark">AIPIW<span class="wm-e">E</span>N</span>
   </a>
-  <a href="javascript:history.back()" class="back-btn">返回</a>
+  <div class="brand-seal" title="沐海星辰">
+    <span>沐</span><span>海</span><span>星</span><span>辰</span>
+  </div>
 </header>
 
 <!-- HERO -->
@@ -284,8 +327,7 @@ a { color:inherit; text-decoration:none; }
     <em>从这里开始</em>
   </h1>
   <p class="hero-sub">
-    一套采集设备 + 沐海星辰 AI 报告系统 + 专业培训支持。<br>
-    合同签约沐海星辰，我们负责后续服务。
+    你负责连接客户与场景，沐海星辰提供采集设备、AIPIWEN 智能解读、培训陪跑与服务协同。
   </p>
   <button class="hero-cta" onclick="openWechat()">
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.5a19.79 19.79 0 01-3-8.57A2 2 0 012.1 1h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.91 8.37a16 16 0 006 9.5l1.33-1.44a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
@@ -297,28 +339,28 @@ a { color:inherit; text-decoration:none; }
 <div class="section">
   <div class="section-label">为什么选择沐海星辰</div>
   <h2 class="section-title">不只是设备，更是完整的业务支撑</h2>
-  <p class="section-sub">与直接签约魔纹密码相比，加入沐海星辰代理体系，你获得的更多。</p>
+  <p class="section-sub">从行业视角看，真正难的不是买一套采集设备，而是把测评交付、客户理解和后续服务稳定跑起来。沐海星辰做的是这部分陪跑。</p>
 
   <div class="why-grid">
     <div class="why-card">
       <div class="why-icon">🤖</div>
       <div>
-        <div class="why-title">AI 报告平台独家接入</div>
-        <div class="why-text">代理商独享沐海星辰 AIPIWEN 智能解读系统，自动生成专业天赋报告，无需手动分析，效率提升数倍。</div>
+        <div class="why-title">AIPIWEN 让报告更容易交付</div>
+        <div class="why-text">采集后进入 AIPIWEN 智能解读流程，报告内容更结构化、更容易讲给客户听。你把时间留给沟通、复盘和转化。</div>
       </div>
     </div>
     <div class="why-card">
       <div class="why-icon">📋</div>
       <div>
-        <div class="why-title">合同签我们，保障更清晰</div>
-        <div class="why-text">合同主体为沐海星辰，我们负责售后、培训、系统支持，你只需专注采集和客户服务。</div>
+        <div class="why-title">服务支持有人一起扛</div>
+        <div class="why-text">设备使用、报告生成、客户沟通和售后问题，都有沐海星辰协同支持。遇到卡点，不需要你一个人摸索。</div>
       </div>
     </div>
     <div class="why-card">
       <div class="why-icon">🎓</div>
       <div>
-        <div class="why-title">培训 + 运营持续支持</div>
-        <div class="why-text">初级测评解读师培训、数据分析培训，以及沐海星辰运营经验共享，帮你更快跑通本地市场。</div>
+        <div class="why-title">从第一单到跑通市场，陪着走</div>
+        <div class="why-text">提供测评解读培训、数据分析培训和真实运营经验，帮你先跑通第一批客户，再逐步形成自己的本地服务节奏。</div>
       </div>
     </div>
   </div>
@@ -330,30 +372,30 @@ a { color:inherit; text-decoration:none; }
   <h2 class="section-title">皮纹采集终端（手机版）</h2>
   <p class="section-sub" style="margin-bottom:16px">滚动式指纹扫描仪 + 手机 APP，无需电脑，随时随地完成十指采集与掌纹定位，全流程约 10 分钟。</p>
 
-  <!-- 采集流程 mini 步骤（来自官方流程文档）-->
-  <div style="display:flex;gap:0;margin:16px 0 14px;overflow-x:auto;padding-bottom:4px;">
-    <div style="flex:0 0 auto;text-align:center;padding:0 10px;border-right:1px solid #e8e4de;min-width:70px;">
-      <div style="font-size:18px;margin-bottom:4px;">📋</div>
-      <div style="font-size:11px;color:#4A4540;line-height:1.4;">录入信息<br>姓名生日</div>
+  <!-- 采集流程 mini 步骤（自适应两列）-->
+  <div class="process-grid">
+    <div class="process-step">
+      <div class="process-icon">📋</div>
+      <div class="process-text">录入信息<br>姓名生日</div>
     </div>
-    <div style="flex:0 0 auto;text-align:center;padding:0 10px;border-right:1px solid #e8e4de;min-width:70px;">
-      <div style="font-size:18px;margin-bottom:4px;">🖐</div>
-      <div style="font-size:11px;color:#4A4540;line-height:1.4;">十指滚动<br>扫描采集</div>
+    <div class="process-step">
+      <div class="process-icon">🖐</div>
+      <div class="process-text">十指滚动<br>扫描采集</div>
     </div>
-    <div style="flex:0 0 auto;text-align:center;padding:0 10px;border-right:1px solid #e8e4de;min-width:70px;">
-      <div style="font-size:18px;margin-bottom:4px;">📷</div>
-      <div style="font-size:11px;color:#4A4540;line-height:1.4;">手掌 ATD<br>定位拍照</div>
+    <div class="process-step">
+      <div class="process-icon">📷</div>
+      <div class="process-text">手掌 ATD<br>定位拍照</div>
     </div>
-    <div style="flex:0 0 auto;text-align:center;padding:0 10px;min-width:70px;">
-      <div style="font-size:18px;margin-bottom:4px;">📊</div>
-      <div style="font-size:11px;color:#4A4540;line-height:1.4;">AI 生成<br>天赋报告</div>
+    <div class="process-step">
+      <div class="process-icon">📊</div>
+      <div class="process-text">AI 生成<br>天赋报告</div>
     </div>
   </div>
 
   <div class="device-spec-list">
     <div class="device-spec">
       <span class="device-spec-dot">◆</span>
-      <span><strong>手机端操作</strong>，设备通过 USB 连接手机/平板，无需电脑，采集地点灵活</span>
+      <span><strong>手机端操作</strong>，设备通过 USB 连接手机/平板，无需电脑，采集地点灵活，上门测评无障碍</span>
     </div>
     <div class="device-spec">
       <span class="device-spec-dot">◆</span>
@@ -365,11 +407,11 @@ a { color:inherit; text-decoration:none; }
     </div>
     <div class="device-spec">
       <span class="device-spec-dot">◆</span>
-      <span>适用场景：幼儿园、培训机构、亲子课堂、早教中心、家庭上门测评</span>
+      <span>适用场景：幼儿园、托育、家庭教育、亲子咨询、学习能力、教培转型、企业人才与团队协作等需要理解人的服务场景</span>
     </div>
     <div class="device-spec">
       <span class="device-spec-dot">◆</span>
-      <span>设备由魔纹密码科技（北京）正规授权，含官方售后维保</span>
+      <span>采集设备正规授权，含原厂售后维保</span>
     </div>
   </div>
 </div>
@@ -378,7 +420,7 @@ a { color:inherit; text-decoration:none; }
 <div class="pricing-section">
   <div class="section-label">代理方案</div>
   <h2 class="section-title">两套方案，按需选择</h2>
-  <p class="section-sub">定价与魔纹密码官方一致，签约沐海星辰享受更完善的配套服务。</p>
+  <p class="section-sub">两套方案，适配不同阶段的业务节奏——刚起步选份数版，资源充足选年费版。</p>
 
   <div class="plan-tabs">
     <div class="plan-tab active" onclick="switchPlan('a')">方案 A · 份数版</div>
@@ -416,11 +458,11 @@ a { color:inherit; text-decoration:none; }
         </div>
         <div class="plan-row">
           <div class="plan-row-label">报告出具</div>
-          <div class="plan-row-val">自行出具 / 总部出具 20元/份</div>
+          <div class="plan-row-val">自行交付 / 平台协助生成结构化解读（20元/份服务支持）</div>
         </div>
       </div>
       <div class="plan-note">
-        ★ 推荐其他代理加入沐海星辰，奖励4000元（现金或抵扣设备费）
+        ★ 推荐合适伙伴加入沐海星辰，奖励4000元（现金或抵扣设备费）
       </div>
     </div>
   </div>
@@ -454,7 +496,7 @@ a { color:inherit; text-decoration:none; }
         </div>
         <div class="plan-row">
           <div class="plan-row-label">报告出具</div>
-          <div class="plan-row-val">自行出具 / 总部出具 20元/份</div>
+          <div class="plan-row-val">自行交付 / 平台协助生成结构化解读（20元/份服务支持）</div>
         </div>
       </div>
       <div class="plan-note">
@@ -481,14 +523,14 @@ a { color:inherit; text-decoration:none; }
       <div class="step-num">2</div>
       <div>
         <div class="step-title">签约备案</div>
-        <div class="step-desc">确认方案后签订合作合同（合同主体：沐海星辰），缴纳加盟费，开通平台账号。</div>
+        <div class="step-desc">确认方案后完成合作签约与费用支付，沐海星辰为你开通平台账号并安排后续对接。</div>
       </div>
     </div>
     <div class="step">
       <div class="step-num">3</div>
       <div>
         <div class="step-title">设备到位 · 正式运营</div>
-        <div class="step-desc">采集设备发货，完成线上培训，接入 AIPIWEN 系统，即可在本地开展测评业务。</div>
+        <div class="step-desc">采集设备发货，完成线上培训，接入 AIPIWEN 智能解读流程，开始服务第一批客户。</div>
       </div>
     </div>
   </div>
@@ -505,14 +547,14 @@ a { color:inherit; text-decoration:none; }
         我没有教育背景，可以做吗？
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
       </button>
-      <div class="faq-a">完全可以。采集操作简便，无需医学或教育专业背景。我们提供线上培训课程，帮你快速掌握测评解读和客户服务技能，大多数代理2-3天即可上手。</div>
+      <div class="faq-a">可以。采集操作和客户服务都有培训支持，不要求医学或教育专业背景；同时我们会明确服务边界，测评结果用于理解和沟通参考，不做医疗或心理诊断。</div>
     </div>
     <div class="faq-item">
       <button class="faq-q" onclick="toggleFaq(this)">
-        和直接签魔纹有什么区别？
+        和市场上其他同类渠道相比，沐海星辰有什么优势？
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
       </button>
-      <div class="faq-a">签约沐海星辰额外获得：AIPIWEN AI报告平台使用权（智能生成报告，效率大幅提升）、沐海星辰运营经验支持、中文本地化培训。定价与魔纹官方一致，服务更完善。</div>
+      <div class="faq-a">从行业角度看，很多合作只解决设备或授权。沐海星辰更重视交付闭环：采集设备、AIPIWEN 智能解读、培训陪跑、服务话术和运营复盘一起提供。你拿到的不是单点工具，而是一套更容易跑起来的服务流程。</div>
     </div>
     <div class="faq-item">
       <button class="faq-q" onclick="toggleFaq(this)">
@@ -526,14 +568,14 @@ a { color:inherit; text-decoration:none; }
         报告怎么给到客户？
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
       </button>
-      <div class="faq-a">采集完成后，数据进入 AIPIWEN 平台，AI 自动生成报告。你可以选择自行向客户出具，也可以由总部出具（20元/份服务费）。报告可以微信分享或打印，客户端也可扫码在线查看。</div>
+      <div class="faq-a">采集完成后，数据进入 AIPIWEN 智能解读流程，生成结构化报告。你可以自行交付，也可以选择平台协助生成解读内容（20元/份服务支持）。报告可微信分享或打印，客户端也可扫码在线查看。</div>
     </div>
     <div class="faq-item">
       <button class="faq-q" onclick="toggleFaq(this)">
-        我有资源，想做更大规模的业务，怎么合作？
+        我有幼儿园 / 培训机构等大规模资源，能有定制合作吗？
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
       </button>
-      <div class="faq-a">沐海星辰正在研发自己的皮纹采集平台，未来将向有意向的大规模合作伙伴开放更深层次的合作机会——包括区域独家、机构定制、数据共建等。如果你有幼儿园、学校、培训集团等规模化资源，欢迎微信联系我们详谈，我们会优先记录并在新系统上线时第一时间接洽。</div>
+      <div class="faq-a">可以深聊。对有规模化资源的合作伙伴（幼儿园集团、培训连锁、亲子/家庭教育机构、企业人才服务等），沐海星辰可以提供专属支持方案，包括批量采集安排、专属对接服务、报告交付流程设计等。欢迎微信联系我们，说明你的资源情况，我们一起评估适合的合作方式。</div>
     </div>
   </div>
 </div>
@@ -552,11 +594,10 @@ a { color:inherit; text-decoration:none; }
     <div class="modal-title">添加沐海星辰微信</div>
     <div class="modal-sub">扫码或搜索微信号，告知你在哪个城市、想了解哪个方案，我们尽快回复。</div>
     <div class="modal-wechat-box">
-      <!-- ★ 微信二维码占位：将 src 替换为实际二维码图片 -->
       <div class="wechat-qr" id="wechat-qr-wrap">
-        <div class="wechat-qr-placeholder">
-          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#C2692A" stroke-width="1.5" style="margin-bottom:8px"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3M17 17v4M21 14v7"/></svg>
-          <div style="font-size:11px;color:#8C8580;margin-top:4px">微信二维码<br>（待替换）</div>
+        <img src="/assets/wechat-qr.png" alt="扫码添加沐海星辰微信" onerror="this.style.display='none';document.getElementById('qr-fallback').style.display='block'">
+        <div id="qr-fallback" style="display:none;font-size:11px;color:#8C8580;text-align:center">
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#C2692A" stroke-width="1.5" style="margin-bottom:6px"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3M17 17v4M21 14v7"/></svg><br>微信二维码加载中
         </div>
       </div>
       <div class="wechat-id-row">
