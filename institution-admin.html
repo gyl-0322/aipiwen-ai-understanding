@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>AIPIWEN 服务商后台</title><style>
+:root {
+  --cream:#FDFCF8; --cream-deep:#F5F3EE; --ink:#1A1714; --ink-70:#4A4540;
+  --ink-40:#8C8580; --ink-20:#C8C3BC; --ink-10:#EAE7E2; --amber:#C2692A;
+  --amber-soft:#F5EDE4; --amber-glow:rgba(194,105,42,.10); --dark:#1A1714; --ok:#3A7D5E;
+  --r-sm:10px; --r-md:16px; --r-lg:24px;
+  --font-serif:Georgia,'Noto Serif SC','Source Han Serif SC',serif;
+  --font-sans:-apple-system,'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif;
+}
+* { box-sizing:border-box; }
+body { margin:0; font-family:var(--font-sans); background:var(--cream); color:var(--ink); -webkit-font-smoothing:antialiased; }
+main { max-width:560px; margin:0 auto; padding:0 0 56px; }
+@keyframes logo-spin { from{transform:rotate(0)} to{transform:rotate(360deg)} }
+@keyframes logo-spin-rev { from{transform:rotate(0)} to{transform:rotate(-360deg)} }
+@keyframes logo-breathe { 0%,100%{opacity:.82;transform:scale(1)} 50%{opacity:1;transform:scale(1.04)} }
+.logo-ring-outer { transform-origin:18px 18px; animation:logo-spin 22s linear infinite; }
+.logo-petals { transform-origin:18px 18px; animation:logo-spin-rev 14s linear infinite; }
+.logo-center { transform-origin:18px 18px; animation:logo-breathe 3.5s ease-in-out infinite; }
+.topbar { position:sticky; top:0; z-index:10; display:flex; align-items:center; justify-content:space-between; gap:16px; padding:16px 22px 14px; background:rgba(253,252,248,.94); backdrop-filter:blur(12px); border-bottom:1px solid var(--ink-10); }
+.logo-lockup { display:flex; align-items:center; gap:11px; }
+.logo-svg { width:36px; height:36px; flex:0 0 auto; }
+.wordmark { font-size:16px; font-weight:800; letter-spacing:.16em; color:var(--ink); line-height:1; }
+.wordmark .wm-e { color:var(--amber); }
+.env-pill { border:1px solid rgba(194,105,42,.22); border-radius:999px; padding:6px 10px; color:var(--amber); background:rgba(194,105,42,.05); font-size:12px; white-space:nowrap; }
+.hero { margin:0; padding:32px 28px 26px; color:var(--ink); background:linear-gradient(180deg,var(--cream) 0%,var(--cream-deep) 100%); border-bottom:1px solid var(--ink-10); border-radius:0; }
+.demo-alert { margin-bottom:18px; padding:11px 14px; border:1px solid rgba(194,105,42,.28); border-radius:var(--r-md); background:rgba(194,105,42,.09); color:#8F461A; font-size:13px; font-weight:800; line-height:1.55; }
+.eyebrow { display:inline-block; color:var(--amber); font-size:11px; font-weight:700; letter-spacing:.14em; margin-bottom:14px; }
+h1 { margin:0; font-family:var(--font-serif); font-size:34px; line-height:1.22; font-weight:400; letter-spacing:0; }
+h1 em { color:var(--amber); font-style:italic; }
+.sub { margin-top:14px; color:var(--ink-70); font-size:15px; line-height:1.82; max-width:430px; }
+.identity-box { margin-top:20px; background:linear-gradient(180deg,#fff 0%,#FFF8F1 100%); border:1px solid rgba(194,105,42,.24); border-radius:var(--r-md); padding:17px; color:var(--ink-70); line-height:1.7; font-size:13.5px; box-shadow:0 10px 28px rgba(68,43,24,.07); }
+.identity-box strong { display:block; color:var(--ink); margin:3px 0 7px; font-size:17px; font-weight:800; }
+.stack { display:grid; gap:18px; padding:20px 20px 28px; }
+.card { background:#fff; border:1px solid rgba(0,0,0,.065); border-radius:var(--r-md); padding:18px; box-shadow:0 10px 28px rgba(68,43,24,.055); }
+h2 { margin:0 0 10px; font-size:18px; line-height:1.35; font-weight:900; }
+.card-label { color:var(--amber); font-size:11px; font-weight:700; letter-spacing:.14em; margin-bottom:8px; }
+.muted { color:var(--ink-70); line-height:1.72; font-size:14px; }
+.fine { color:var(--ink-40); font-size:12.5px; line-height:1.7; }
+.overview-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; margin-top:12px; }
+.metric { min-height:96px; padding:14px; border:1px solid rgba(194,105,42,.12); border-radius:var(--r-md); background:linear-gradient(180deg,#fff 0%,var(--cream-deep) 100%); }
+.metric b { display:block; font-family:var(--font-serif); color:var(--amber); font-size:35px; font-weight:800; line-height:1; margin-bottom:9px; }
+.metric span { color:var(--ink-70); font-size:13px; line-height:1.45; }
+code { display:inline-block; max-width:100%; word-break:break-all; color:var(--amber); background:var(--amber-soft); border-radius:var(--r-sm); padding:3px 7px; font-family:ui-monospace,SFMono-Regular,Menlo,monospace; }
+.qr-row { display:grid; grid-template-columns:116px 1fr; gap:14px; align-items:center; margin-top:12px; }
+.qr-box { width:116px; height:116px; border:1px solid rgba(194,105,42,.18); border-radius:16px; background:#fff; padding:8px; display:flex; align-items:center; justify-content:center; box-shadow:0 8px 20px rgba(68,43,24,.055); }
+.qr-box canvas,.qr-box img { width:100px!important; height:100px!important; display:block; }
+.qr-fallback { font-size:12px; line-height:1.5; color:var(--ink-40); text-align:center; }
+.copy-row { display:grid; grid-template-columns:1fr auto; gap:10px; align-items:center; margin:0 0 8px; }
+.copy-row code { display:block; padding:11px 12px; line-height:1.45; border:1px solid rgba(194,105,42,.14); }
+button { border:1px solid var(--amber); color:#fff; background:var(--amber); border-radius:999px; padding:10px 17px; font-weight:800; cursor:pointer; white-space:nowrap; box-shadow:0 6px 16px rgba(194,105,42,.18); }
+button:active { transform:translateY(1px); }
+input { width:100%; border:1px solid var(--ink-10); background:#fff; border-radius:12px; padding:12px 13px; margin:7px 0; font-size:15px; }
+input:focus { outline:none; border-color:rgba(194,105,42,.45); box-shadow:0 0 0 3px rgba(194,105,42,.08); }
+.table-wrap { border:1px solid var(--ink-10); border-radius:var(--r-md); overflow:auto; background:#fff; margin-top:12px; }
+table { width:100%; min-width:480px; border-collapse:separate; border-spacing:0; font-size:13px; }
+th,td { text-align:left; padding:12px 10px; border-bottom:1px solid var(--ink-10); vertical-align:top; }
+th { color:var(--ink-40); font-size:12px; font-weight:800; background:var(--cream-deep); white-space:nowrap; }
+tr:last-child td { border-bottom:none; }
+.status-pill { display:inline-block; border-radius:999px; padding:3px 8px; font-size:12px; background:var(--amber-soft); color:var(--amber); font-weight:800; } .tag-row { display:flex; flex-wrap:wrap; gap:7px; margin:8px 0 10px; } .soft-tag { display:inline-flex; align-items:center; border-radius:999px; padding:4px 9px; color:#8F461A; background:rgba(194,105,42,.09); border:1px solid rgba(194,105,42,.18); font-size:12px; font-weight:800; }
+.rule-list,.boundary-list,.test-list { margin:11px 0 0; padding:0; list-style:none; display:grid; gap:8px; }
+.rule-list li,.test-list li { padding:10px 12px; border:1px solid var(--ink-10); border-radius:12px; background:var(--cream-deep); color:var(--ink-70); line-height:1.55; font-size:13px; }
+.boundary-list li { padding:12px 13px; border:1px solid rgba(194,105,42,.22); border-radius:12px; background:rgba(194,105,42,.07); color:#5B321A; line-height:1.65; font-size:13px; }
+.toast { position:fixed; left:50%; bottom:26px; transform:translateX(-50%) translateY(20px); opacity:0; pointer-events:none; background:var(--ink); color:#fff; border-radius:999px; padding:10px 16px; font-size:13px; transition:.2s ease; z-index:20; }
+.toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+@media (max-width:420px) { .topbar { padding:13px 16px; } .env-pill { font-size:11px; padding:5px 8px; } .hero { padding:28px 20px 24px; } h1 { font-size:31px; } .stack { padding:16px; gap:16px; } .card { padding:16px; } .qr-row { grid-template-columns:96px 1fr; gap:12px; } .qr-box { width:96px; height:96px; padding:7px; } .qr-box canvas,.qr-box img { width:82px!important; height:82px!important; } .copy-row { grid-template-columns:1fr; } table { min-width:560px; } }
+@media (max-width:360px) { .overview-grid { grid-template-columns:1fr; } }
+</style></head>
+<body><main><div class="topbar"><div class="logo-lockup"><svg class="logo-svg" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle class="logo-ring-outer" cx="18" cy="18" r="15.5" stroke="#C2692A" stroke-width=".9" stroke-dasharray="2.5 6" opacity=".30"/>
+          <g class="logo-petals">
+            <ellipse cx="18" cy="12" rx="2.2" ry="6.5" fill="#C2692A" opacity=".75" transform="rotate(0 18 18)"/>
+            <ellipse cx="18" cy="12" rx="2.2" ry="6.5" fill="#C2692A" opacity=".50" transform="rotate(90 18 18)"/>
+            <ellipse cx="18" cy="12" rx="1.4" ry="5.5" fill="#C2692A" opacity=".35" transform="rotate(45 18 18)"/>
+            <ellipse cx="18" cy="12" rx="1.4" ry="5.5" fill="#C2692A" opacity=".35" transform="rotate(135 18 18)"/>
+          </g>
+          <circle class="logo-center" cx="18" cy="18" r="3" fill="#C2692A"/>
+        </svg><div class="wordmark">AIPIW<span class="wm-e">E</span>N</div></div><div class="env-pill">Phase 1 · 本地验收</div></div><header class="hero"><div class="demo-alert">本地演示环境 · Phase 1 · 模拟订单/模拟佣金，不代表真实结算</div><div class="eyebrow">二级服务商</div><h1>服务商<em>后台</em></h1><div class="sub">用于演示本服务商自己的 C 端推广、归因用户、账号名额、模拟订单与模拟佣金。</div><div class="identity-box" id="identity">加载中...</div></header><section class="stack"><div class="card"><div class="card-label">服务商推广入口</div><h2>本服务商 C端推广链接</h2><div id="referral" class="muted">加载中...</div></div><div class="card"><div class="card-label">数据概览</div><h2>本服务商业务数据</h2><div class="overview-grid" id="overview"></div></div><div class="card"><div class="card-label">模拟订单</div><h2>本服务商模拟订单</h2><div class="tag-row"><span class="soft-tag">模拟数据</span><span class="soft-tag">非真实支付</span></div><div class="fine">用于本地演示服务商 C 端转化，非真实支付订单。</div><div class="table-wrap"><table><thead><tr><th>订单</th><th>产品</th><th>金额</th><th>状态</th></tr></thead><tbody id="orders"></tbody></table></div></div><div class="card"><div class="card-label">模拟佣金</div><h2>模拟佣金</h2><div class="tag-row"><span class="soft-tag">模拟数据</span><span class="soft-tag">非真实结算</span></div><ul class="rule-list"><li>本服务商直推 C 端用户：20%</li><li>本服务商 C 端佣金只归本服务商，不再上返一级服务商。</li></ul><div class="table-wrap"><table><thead><tr><th>佣金记录</th><th>订单</th><th>类型</th><th>金额</th><th>状态</th></tr></thead><tbody id="commissions"></tbody></table></div></div><div class="card"><div class="card-label">账号名额</div><h2>账号名额</h2><div class="table-wrap"><table><thead><tr><th>账号名额</th><th>类型</th><th>绑定用户</th><th>状态</th><th>额度</th><th>到期时间</th></tr></thead><tbody id="seats"></tbody></table></div></div><div class="card"><div class="card-label">权限边界</div><h2>哪些能看，哪些不能看</h2><div class="tag-row"><span class="soft-tag">权限边界</span></div><ul class="boundary-list"><li>二级服务商只能查看本服务商客户与统计数据；不能查看其他服务商数据，也不能创建下级服务商。</li></ul></div><div class="card"><div class="card-label">权限测试摘要</div><h2>Phase 1 权限验收</h2><ul class="test-list">
+          <li>未登录访问后台 API → 401</li>
+          <li>C端用户访问平台初始化 API → 403</li>
+          <li>一级服务商访问二级服务商客户报告正文 → 403</li>
+          <li>一级服务商访问二级服务商客户会话 → 403</li>
+          <li>一级服务商访问二级服务商客户档案 → 403</li>
+          <li>二级服务商访问其他服务商数据 → 403</li>
+          <li>二级服务商创建下级服务商 → 403</li>
+          <li>已锁定归因用户再次扫码 → 不覆盖</li>
+          <li>平台管理员修正归因 → 有 audit 记录</li>
+        </ul></div></section><div id="toast" class="toast" aria-live="polite"></div></main>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script>
+
+    async function api(action, options) {
+      const res = await fetch('/api/channel?action=' + action, {
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        ...(options || {}),
+      });
+      return res.json();
+    }
+    const seatTypeLabel = { staff:'员工账号', experience:'体验账号', gift:'赠送账号', customer:'客户账号' };
+    const statusLabel = { active:'启用', inactive:'停用', disabled:'停用', revoked:'已撤销', mock_pending:'模拟待支付', mock_paid:'模拟已支付', mock_cancelled:'模拟已取消', pending:'待人工确认', confirmed:'已确认', cancelled:'已取消' };
+    const productLabel = { c_report:'C端报告/解读服务', institution_first_year:'二级服务商首年服务费', institution_renewal:'二级服务商续费' };
+    const commissionTypeLabel = { c_user_direct:'C端推广佣金', institution_first_year:'二级服务商首年服务费佣金', institution_renewal:'二级服务商续费佣金' };
+    function esc(v) { return String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+    function money(fen) { return '¥' + ((Number(fen) || 0) / 100).toFixed(2); }
+    function date(v) { return v ? new Date(v).toLocaleDateString('zh-CN') : '-'; }
+    function sum(items, key) { return (items || []).reduce((n, item) => n + (Number(item && item[key]) || 0), 0); }
+    function rows(items, render, colspan) { return (items || []).map(render).join('') || '<tr><td colspan="' + (colspan || 5) + '" class="muted">暂无数据</td></tr>'; }
+    function primaryReferral(referrals) { return (referrals || [])[0] || null; }
+    function referralUrl(referral) { return referral ? location.origin + referral.link : ''; }
+    function showToast(text) {
+      const toast = document.getElementById('toast');
+      toast.textContent = text;
+      toast.classList.add('show');
+      clearTimeout(window.__toastTimer);
+      window.__toastTimer = setTimeout(() => toast.classList.remove('show'), 1600);
+    }
+    async function copyText(text) {
+      if (!text) return;
+      try { await navigator.clipboard.writeText(text); showToast('链接已复制'); }
+      catch { showToast('请手动复制链接'); }
+    }
+    function renderReferral(referral, description) {
+      if (!referral) return '<div class="muted">暂无推广链接</div>';
+      const url = referralUrl(referral);
+      return '<div class="qr-row"><div class="qr-box" id="primary-qr"><div class="qr-fallback">二维码生成中</div></div><div><div class="copy-row"><code>' + esc(url) + '</code><button type="button" onclick="copyText(\'' + esc(url) + '\')">复制</button></div><div class="fine">' + description + '<br>客户现场扫码进入，比转发链接更直观。</div></div></div>';
+    }
+    function renderQr(text) {
+      const el = document.getElementById('primary-qr');
+      if (!el || !text) return;
+      el.innerHTML = '';
+      if (typeof QRCode === 'undefined') {
+        el.innerHTML = '<div class="qr-fallback">二维码库未加载<br>可复制链接使用</div>';
+        return;
+      }
+      new QRCode(el, { text, width:100, height:100, colorDark:'#1A1714', colorLight:'#FFFFFF', correctLevel:QRCode.CorrectLevel.M });
+    }
+
+    function institutionDemoData() {
+      return {
+        ok: true,
+        tenant: { id:'inst_001', brandName:'测试服务商', name:'测试服务商' },
+        referrals: [{ code:'inst_001_c', link:'/?tid=inst_001&ref=inst_001_c' }],
+        attributionUserCount: 1,
+        orders: [{ orderId:'order_inst_c', productType:'c_report', amountFen:10000, status:'mock_paid' }],
+        commissions: [{ commissionId:'comm_order_inst_c', orderId:'order_inst_c', commissionType:'c_user_direct', commissionAmountFen:2000, status:'pending' }],
+        seats: []
+      };
+    }
+    function displayOrderId(order, index) { return order?.orderId === 'order_inst_c' ? '模拟订单-001' : '模拟订单-' + String(index + 1).padStart(3, '0'); }
+    function displayCommissionId(record, index) { return record?.commissionId === 'comm_order_inst_c' ? '模拟佣金-001' : '模拟佣金-' + String(index + 1).padStart(3, '0'); }
+    function displayOrderRef(orderId) { return orderId === 'order_inst_c' ? '模拟订单-001' : esc(orderId || '-'); }
+
+    async function load() {
+      let data = await api('dashboard&tenantId=inst_001');
+      if (!data.ok) data = institutionDemoData();
+      data.tenant = { ...(data.tenant || {}), id:'inst_001', brandName:'测试服务商', name:'测试服务商' };
+      if (!Array.isArray(data.referrals) || !data.referrals.some(r => r.code === 'inst_001_c')) {
+        data.referrals = [{ code:'inst_001_c', link:'/?tid=inst_001&ref=inst_001_c' }];
+      }
+      const t = data.tenant || {};
+      const brand = '测试服务商';
+      document.getElementById('identity').innerHTML = '<div>当前身份</div><strong>' + esc(brand) + ' · 二级服务商</strong><div>品牌名称：' + esc(brand) + '</div><div>可服务本服务商客户，可推广 C端用户，可查看本服务商统计与模拟佣金。</div>';
+      const referral = { code:'inst_001_c', link:'/?tid=inst_001&ref=inst_001_c' };
+      document.getElementById('referral').innerHTML = renderReferral(referral, '用户通过此链接进入并登录后，将首次锁定归因到本服务商。');
+      renderQr(referralUrl(referral));
+      document.getElementById('overview').innerHTML = '<div class="metric"><b>' + (data.attributionUserCount || 0) + '</b><span>本服务商归因用户数</span></div><div class="metric"><b>' + ((data.orders || []).length) + '</b><span>模拟订单数</span></div><div class="metric"><b>' + money(sum(data.commissions, 'commissionAmountFen')) + '</b><span>模拟佣金金额</span></div><div class="metric"><b>' + ((data.seats || []).length) + '</b><span>账号名额数量</span></div>';
+      document.getElementById('orders').innerHTML = rows(data.orders, (r, index) => '<tr><td>' + esc(displayOrderId(r, index)) + '</td><td>' + esc(productLabel[r.productType] || r.productType) + '</td><td>' + money(r.amountFen) + '</td><td><span class="status-pill">' + esc(statusLabel[r.status] || r.status) + '</span></td></tr>', 4);
+      document.getElementById('commissions').innerHTML = rows(data.commissions, (r, index) => '<tr><td>' + esc(displayCommissionId(r, index)) + '</td><td>' + displayOrderRef(r.orderId) + '</td><td>' + esc(commissionTypeLabel[r.commissionType] || r.commissionType) + '</td><td>' + money(r.commissionAmountFen) + '</td><td><span class="status-pill">' + esc(statusLabel[r.status] || r.status) + '</span></td></tr>', 5);
+      document.getElementById('seats').innerHTML = rows(data.seats, r => '<tr><td>' + esc(r.seatId) + '</td><td>' + esc(seatTypeLabel[r.seatType] || r.seatType) + '</td><td>' + esc(r.assignedOpenid || '-') + '</td><td><span class="status-pill">' + esc(statusLabel[r.status] || r.status) + '</span></td><td>' + esc(r.quotaLimit ? JSON.stringify(r.quotaLimit) : '-') + '</td><td>' + date(r.expiresAt) + '</td></tr>', 6);
+    }
+    load();
+  </script></body></html>

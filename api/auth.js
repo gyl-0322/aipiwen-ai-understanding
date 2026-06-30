@@ -19,7 +19,8 @@
 const crypto = require('crypto');
 const { redisSet, redisGet, makeSessionToken, getSessionToken, parseSessionToken, registerUser,
         createInviteToken, creditReferral, ensureUserTenant,
-        getQuotaStatus, getTenantBrand, getOpenid } = require('./_lib');
+        getQuotaStatus, getTenantBrand, getOpenid,
+        applyReferralAttribution } = require('./_lib');
 
 const APPID        = process.env.WECHAT_OPEN_APPID || 'wxcd1f11f34b4cf731';
 const SECRET       = process.env.WECHAT_OPEN_SECRET || '';
@@ -226,11 +227,12 @@ module.exports = async function handler(req, res) {
 
   // ── 1. 生成微信授权链接 ──────────────────────────────────────────────────
   if (action === 'login_url') {
-    // tid：来源租户 ID（B端链接进来时携带；默认 consumer）
-    // 编入 state：{c: csrf, t: tenantId}，base64url 编码（URL 安全、无 =）
+    // tid：页面展示/品牌上下文；ref：商业归因码。两者不能混用。
+    // 编入 state：{c: csrf, t: tenantId, r: referralCode}，base64url 编码（URL 安全、无 =）
     const csrf = crypto.randomBytes(8).toString('hex');
     const tid  = (req.query.tid || 'consumer').replace(/[^a-z0-9_-]/gi, '').slice(0, 64);
-    const state = Buffer.from(JSON.stringify({ c: csrf, t: tid }))
+    const ref  = (req.query.ref || '').replace(/[^a-z0-9_-]/gi, '').slice(0, 80);
+    const state = Buffer.from(JSON.stringify({ c: csrf, t: tid, r: ref }))
       .toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
     const url = `https://open.weixin.qq.com/connect/qrconnect`
       + `?appid=${APPID}`
@@ -244,14 +246,16 @@ module.exports = async function handler(req, res) {
   // ── 2. 微信回调：用 code 换 access_token，获取用户信息 ───────────────────
   if (action === 'callback' && code) {
     try {
-      // 解析 state，提取来源租户 tid（兼容旧格式纯 hex state）
+      // 解析 state，提取展示租户 tid 与商业归因 ref（兼容旧格式纯 hex state）
       let sourceTenantId = 'consumer';
+      let referralCode = '';
       try {
         const stateRaw = req.query.state || '';
         const padded = stateRaw.replace(/-/g, '+').replace(/_/g, '/');
         const decoded = Buffer.from(padded, 'base64').toString();
         const parsed  = JSON.parse(decoded);
         if (parsed.t && /^[a-z0-9_-]+$/i.test(parsed.t)) sourceTenantId = parsed.t;
+        if (parsed.r && /^[a-z0-9_-]+$/i.test(parsed.r)) referralCode = parsed.r;
       } catch {} // 旧格式或空 state：保持 consumer
 
       const tokenRes  = await fetch(
@@ -288,6 +292,9 @@ module.exports = async function handler(req, res) {
         if (!user.sourceTenantId) user.sourceTenantId = sourceTenantId;
       }
       await redisSet(userKey, user);
+      if (referralCode) {
+        applyReferralAttribution(openid, referralCode).catch(() => {});
+      }
       // 把 openid 写入全局用户索引，供定时任务遍历
       registerUser(openid).catch(() => {}); // 非阻塞
       ensureUserTenant(openid).catch(() => {}); // 里程碑1：补充 role/tenantId（幂等，TENANT_ENABLED=false 时无操作）

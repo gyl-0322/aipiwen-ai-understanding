@@ -345,16 +345,38 @@ const TENANT_ENABLED          = process.env.TENANT_ENABLED === 'true';
 const PLATFORM_ADMIN_OPENIDS  = (process.env.PLATFORM_ADMIN_OPENIDS || '').split(',').filter(Boolean);
 
 // ─── 租户等级常量 ─────────────────────────────────────────────────────────────
-const TENANT_LEVEL = { CONSUMER: 0, AGENT: 1, SCHOOL: 2 };
+const TENANT_LEVEL = { CONSUMER: 0, AGENT: 1, SCHOOL: 2, CHANNEL_PARTNER: 1, INSTITUTION: 2 };
 
 // ─── 角色常量 ─────────────────────────────────────────────────────────────────
 const ROLES = {
   PLATFORM_ADMIN : 'platform_admin', // 平台超管
   AGENT          : 'agent',          // 代理（L1）
   SCHOOL         : 'school',         // 幼儿园（L2）
+  CHANNEL_PARTNER: 'channel_partner',// 渠道服务商（L1，兼容 agent）
+  INSTITUTION    : 'institution',    // 合作机构（L2，兼容 school）
   CONSULTANT     : 'consultant',     // 顾问
   CONSUMER       : 'consumer',       // C 端用户（默认）
 };
+
+const TENANT_TYPES = {
+  CONSUMER        : 'consumer',
+  AGENT           : 'agent',
+  SCHOOL          : 'school',
+  CHANNEL_PARTNER : 'channel_partner',
+  INSTITUTION     : 'institution',
+};
+
+const SEAT_TYPES = ['staff', 'experience', 'gift', 'customer'];
+const ORDER_STATUS = ['mock_pending', 'mock_paid', 'mock_cancelled'];
+const COMMISSION_STATUS = ['pending', 'confirmed', 'cancelled'];
+
+function isChannelRole(role) {
+  return role === ROLES.AGENT || role === ROLES.CHANNEL_PARTNER;
+}
+
+function isInstitutionRole(role) {
+  return role === ROLES.SCHOOL || role === ROLES.INSTITUTION;
+}
 
 // ─── 租户 CRUD ────────────────────────────────────────────────────────────────
 
@@ -381,6 +403,32 @@ async function saveTenant(tenant) {
   return tenant;
 }
 
+function buildReferralLink(refCode, tenantId) {
+  const params = new URLSearchParams();
+  if (tenantId) params.set('tid', tenantId);
+  if (refCode) params.set('ref', refCode);
+  return `/?${params.toString()}`;
+}
+
+function normalizeTenantForChannel(raw) {
+  const tenant = { ...(raw || {}) };
+  if (tenant.level === TENANT_LEVEL.AGENT && !tenant.tenantType) tenant.tenantType = TENANT_TYPES.AGENT;
+  if (tenant.level === TENANT_LEVEL.SCHOOL && !tenant.tenantType) tenant.tenantType = TENANT_TYPES.SCHOOL;
+  if (tenant.tenantType === TENANT_TYPES.CHANNEL_PARTNER) tenant.level = TENANT_LEVEL.CHANNEL_PARTNER;
+  if (tenant.tenantType === TENANT_TYPES.INSTITUTION) tenant.level = TENANT_LEVEL.INSTITUTION;
+  tenant.brand = tenant.brand || {
+    name: tenant.brandName || tenant.name || 'AIPIWEN',
+    logoUrl: tenant.logo || '',
+    primaryColor: tenant.themeColor || '#C2692A',
+    accentColor: '#FDE8D6',
+  };
+  return tenant;
+}
+
+async function saveChannelTenant(rawTenant) {
+  return saveTenant(normalizeTenantForChannel(rawTenant));
+}
+
 /** 列出某父级下的直属子租户 */
 async function listSubTenants(parentId) {
   const all = await redisGet('tenants:all') || [];
@@ -390,6 +438,333 @@ async function listSubTenants(parentId) {
     if (t && t.parentId === parentId && t.status !== 'disabled') results.push(t);
   }
   return results;
+}
+
+async function getTenantTreeIds(rootTenantId) {
+  const ids = [rootTenantId];
+  const direct = await listSubTenants(rootTenantId);
+  for (const t of direct) ids.push(t.id);
+  return ids;
+}
+
+async function createReferral({ code, tenantId, beneficiaryTenantId, referralType = 'c_user', createdBy = 'system' }) {
+  const cleanCode = String(code || '').replace(/[^a-z0-9_-]/gi, '').slice(0, 80);
+  if (!cleanCode) throw new Error('referral code required');
+  const tenant = await getTenant(beneficiaryTenantId || tenantId);
+  if (!tenant) throw new Error('beneficiary tenant not found');
+  const now = new Date().toISOString();
+  const referral = {
+    code: cleanCode,
+    tenantId: tenantId || tenant.id,
+    beneficiaryTenantId: beneficiaryTenantId || tenant.id,
+    referralType,
+    link: buildReferralLink(cleanCode, tenantId || tenant.id),
+    status: 'active',
+    createdBy,
+    createdAt: now,
+  };
+  await redisSet(`referral:${cleanCode}`, referral);
+  const idxKey = `referrals:tenant:${referral.beneficiaryTenantId}`;
+  const list = await redisGet(idxKey).catch(() => []) || [];
+  if (!list.includes(cleanCode)) {
+    list.push(cleanCode);
+    await redisSet(idxKey, list);
+  }
+  return referral;
+}
+
+async function getReferral(code) {
+  if (!code) return null;
+  const cleanCode = String(code).replace(/[^a-z0-9_-]/gi, '').slice(0, 80);
+  const referral = await redisGet(`referral:${cleanCode}`).catch(() => null);
+  return referral?.status === 'active' ? referral : null;
+}
+
+async function getAttribution(openid) {
+  if (!openid) return null;
+  return redisGet(`attribution:user:${openid}`).catch(() => null);
+}
+
+async function recordAttributionTouch(openid, referral) {
+  if (!openid || !referral) return null;
+  const now = new Date().toISOString();
+  const existing = await getAttribution(openid);
+  if (existing?.locked) {
+    existing.lastTouch = { ref: referral.code, tenantId: referral.beneficiaryTenantId, at: now };
+    await redisSet(`attribution:user:${openid}`, existing);
+    return { attribution: existing, locked: true, changed: false };
+  }
+  const record = {
+    attributionId: `attr_${openid}`,
+    openid,
+    ref: referral.code,
+    sourceTenantId: referral.tenantId,
+    beneficiaryTenantId: referral.beneficiaryTenantId,
+    referralType: referral.referralType || 'c_user',
+    locked: true,
+    firstTouchAt: now,
+    lockedAt: now,
+    lastTouch: { ref: referral.code, tenantId: referral.beneficiaryTenantId, at: now },
+  };
+  await redisSet(`attribution:user:${openid}`, record);
+  const idxKey = `attribution:index:${record.beneficiaryTenantId}`;
+  const list = await redisGet(idxKey).catch(() => []) || [];
+  if (!list.includes(openid)) {
+    list.push(openid);
+    await redisSet(idxKey, list);
+  }
+  return { attribution: record, locked: true, changed: true };
+}
+
+async function applyReferralAttribution(openid, refCode) {
+  const referral = await getReferral(refCode);
+  if (!referral) return { ok: false, reason: 'invalid_ref' };
+  const result = await recordAttributionTouch(openid, referral);
+  return { ok: true, referral, ...result };
+}
+
+async function correctAttribution(openid, newAttribution, operator, reason) {
+  if (!openid || !newAttribution?.beneficiaryTenantId) throw new Error('invalid attribution correction');
+  const old = await getAttribution(openid);
+  const now = new Date().toISOString();
+  const updated = {
+    ...(old || { attributionId: `attr_${openid}`, openid }),
+    ...newAttribution,
+    locked: true,
+    correctedAt: now,
+    correctedBy: operator,
+  };
+  await redisSet(`attribution:user:${openid}`, updated);
+  if (old?.beneficiaryTenantId && old.beneficiaryTenantId !== updated.beneficiaryTenantId) {
+    const oldKey = `attribution:index:${old.beneficiaryTenantId}`;
+    const oldList = await redisGet(oldKey).catch(() => []) || [];
+    await redisSet(oldKey, oldList.filter(id => id !== openid));
+  }
+  const auditKey = `attribution:audit:${openid}`;
+  const audit = await redisGet(auditKey).catch(() => []) || [];
+  audit.push({
+    old_attribution: old || null,
+    new_attribution: updated,
+    operator,
+    reason: reason || '',
+    timestamp: now,
+  });
+  await redisSet(auditKey, audit.slice(-50));
+  const idxKey = `attribution:index:${updated.beneficiaryTenantId}`;
+  const list = await redisGet(idxKey).catch(() => []) || [];
+  if (!list.includes(openid)) {
+    list.push(openid);
+    await redisSet(idxKey, list);
+  }
+  return updated;
+}
+
+async function initXinyuTenant(createdBy = 'local') {
+  const tenant = normalizeTenantForChannel({
+    id: 'xinyu',
+    tenantType: TENANT_TYPES.CHANNEL_PARTNER,
+    level: TENANT_LEVEL.CHANNEL_PARTNER,
+    parentId: null,
+    canInvite: true,
+    brandName: '鑫域文化',
+    name: '鑫域文化',
+    logo: '/assets/xinyu-logo.png',
+    themeColor: '#123B5D',
+    referralCode: 'xinyu_c',
+    status: 'active',
+    createdAt: new Date().toISOString(),
+    createdBy,
+  });
+  await saveChannelTenant(tenant);
+  const referral = await createReferral({
+    code: 'xinyu_c',
+    tenantId: tenant.id,
+    beneficiaryTenantId: tenant.id,
+    referralType: 'c_user',
+    createdBy,
+  });
+  tenant.referralLink = referral.link;
+  await saveChannelTenant(tenant);
+  return tenant;
+}
+
+async function createInstitutionTenant(parentTenantId, input = {}, createdBy = 'system') {
+  const parent = await getTenant(parentTenantId);
+  if (!parent || ![TENANT_LEVEL.AGENT, TENANT_LEVEL.CHANNEL_PARTNER].includes(parent.level)) {
+    throw new Error('only channel partner can create institution');
+  }
+  const id = String(input.id || `inst_${crypto.randomBytes(3).toString('hex')}`).replace(/[^a-z0-9_-]/gi, '').slice(0, 64);
+  const tenant = normalizeTenantForChannel({
+    id,
+    tenantType: TENANT_TYPES.INSTITUTION,
+    level: TENANT_LEVEL.INSTITUTION,
+    parentId: parentTenantId,
+    canInvite: false,
+    brandName: input.brandName || input.name || '合作机构',
+    name: input.name || input.brandName || '合作机构',
+    logo: input.logo || '',
+    themeColor: input.themeColor || '#C2692A',
+    referralCode: input.referralCode || `${id}_c`,
+    status: 'active',
+    createdAt: new Date().toISOString(),
+    createdBy,
+  });
+  await saveChannelTenant(tenant);
+  const referral = await createReferral({
+    code: tenant.referralCode,
+    tenantId: tenant.id,
+    beneficiaryTenantId: tenant.id,
+    referralType: 'c_user',
+    createdBy,
+  });
+  tenant.referralLink = referral.link;
+  await saveChannelTenant(tenant);
+  return tenant;
+}
+
+async function createSeat(input = {}) {
+  if (!SEAT_TYPES.includes(input.seatType)) throw new Error('invalid seatType');
+  const now = new Date().toISOString();
+  const seat = {
+    seatId: input.seatId || `seat_${crypto.randomBytes(5).toString('hex')}`,
+    ownerTenantId: input.ownerTenantId,
+    assignedOpenid: input.assignedOpenid || '',
+    seatType: input.seatType,
+    status: input.status || 'active',
+    quotaLimit: input.quotaLimit || { chat: 0, report: 0 },
+    expiresAt: input.expiresAt || null,
+    createdAt: now,
+  };
+  if (!seat.ownerTenantId) throw new Error('ownerTenantId required');
+  await redisSet(`seat:${seat.seatId}`, seat);
+  const key = `seats:${seat.ownerTenantId}`;
+  const list = await redisGet(key).catch(() => []) || [];
+  const next = list.filter(id => id !== seat.seatId).concat(seat.seatId);
+  await redisSet(key, next);
+  return seat;
+}
+
+async function listSeats(ownerTenantId) {
+  const ids = await redisGet(`seats:${ownerTenantId}`).catch(() => []) || [];
+  const seats = [];
+  for (const id of ids) {
+    const seat = await redisGet(`seat:${id}`).catch(() => null);
+    if (seat) seats.push(seat);
+  }
+  return seats;
+}
+
+function calcCommission(order, attribution, tenant) {
+  if (!order || order.status !== 'mock_paid') return null;
+  const now = new Date().toISOString();
+  let beneficiaryTenantId = null;
+  let rate = 0;
+  let commissionType = '';
+  if (order.productType === 'institution_first_year') {
+    beneficiaryTenantId = tenant?.parentId || attribution?.beneficiaryTenantId;
+    rate = 0.4;
+    commissionType = 'institution_first_year';
+  } else if (order.productType === 'institution_renewal') {
+    beneficiaryTenantId = tenant?.parentId || attribution?.beneficiaryTenantId;
+    rate = 0.3;
+    commissionType = 'institution_renewal';
+  } else {
+    beneficiaryTenantId = attribution?.beneficiaryTenantId || order.payerTenantId;
+    rate = 0.2;
+    commissionType = 'c_user_direct';
+  }
+  if (!beneficiaryTenantId) return null;
+  return {
+    commissionId: `comm_${order.orderId}`,
+    orderId: order.orderId,
+    beneficiaryTenantId,
+    commissionType,
+    baseAmountFen: order.amountFen,
+    rate,
+    commissionAmountFen: Math.round(order.amountFen * rate),
+    status: 'pending',
+    createdAt: now,
+  };
+}
+
+async function createMockOrder(input = {}) {
+  const now = new Date().toISOString();
+  const attribution = input.attributionId
+    ? await redisGet(`attribution:user:${input.payerOpenid}`).catch(() => null)
+    : await getAttribution(input.payerOpenid);
+  const tenant = input.payerTenantId ? await getTenant(input.payerTenantId) : null;
+  const order = {
+    orderId: input.orderId || `mock_${crypto.randomBytes(5).toString('hex')}`,
+    payerOpenid: input.payerOpenid,
+    payerTenantId: input.payerTenantId || attribution?.beneficiaryTenantId || 'consumer',
+    productType: input.productType || 'c_report',
+    amountFen: Number(input.amountFen || 0),
+    attributionId: attribution?.attributionId || input.attributionId || '',
+    status: ORDER_STATUS.includes(input.status) ? input.status : 'mock_pending',
+    createdAt: now,
+  };
+  await redisSet(`mock_order:${order.orderId}`, order);
+  const orderIdxTenant = order.payerTenantId || 'consumer';
+  const orderListKey = `mock_orders:${orderIdxTenant}`;
+  const orderList = await redisGet(orderListKey).catch(() => []) || [];
+  if (!orderList.includes(order.orderId)) {
+    orderList.push(order.orderId);
+    await redisSet(orderListKey, orderList);
+  }
+  let commission = null;
+  if (order.status === 'mock_paid') {
+    commission = calcCommission(order, attribution, tenant);
+    if (commission) {
+      await redisSet(`commission_record:${commission.commissionId}`, commission);
+      const cKey = `commission_records:${commission.beneficiaryTenantId}`;
+      const cList = await redisGet(cKey).catch(() => []) || [];
+      if (!cList.includes(commission.commissionId)) {
+        cList.push(commission.commissionId);
+        await redisSet(cKey, cList);
+      }
+    }
+  }
+  return { order, commission };
+}
+
+async function listMockOrders(tenantId) {
+  const ids = await redisGet(`mock_orders:${tenantId}`).catch(() => []) || [];
+  const orders = [];
+  for (const id of ids) {
+    const order = await redisGet(`mock_order:${id}`).catch(() => null);
+    if (order) orders.push(order);
+  }
+  return orders;
+}
+
+async function listCommissionRecords(tenantId) {
+  const ids = await redisGet(`commission_records:${tenantId}`).catch(() => []) || [];
+  const records = [];
+  for (const id of ids) {
+    const record = await redisGet(`commission_record:${id}`).catch(() => null);
+    if (record) records.push(record);
+  }
+  return records;
+}
+
+async function canAccessTenant(ctx, tenantId) {
+  if (!ctx || !ctx.openid) return false;
+  if (ctx.role === ROLES.PLATFORM_ADMIN) return true;
+  if (ctx.tenantId === tenantId) return true;
+  if (isChannelRole(ctx.role)) {
+    const target = await getTenant(tenantId);
+    return !!target && target.parentId === ctx.tenantId;
+  }
+  return false;
+}
+
+async function canReadCustomerPrivateData(ctx, ownerOpenid, ownerTenantId) {
+  if (!ctx || !ctx.openid) return { ok: false, status: 401 };
+  if (ctx.role === ROLES.PLATFORM_ADMIN) return { ok: true };
+  if (ctx.role === ROLES.CONSUMER) return { ok: ctx.openid === ownerOpenid, status: ctx.openid === ownerOpenid ? 200 : 403 };
+  if (isInstitutionRole(ctx.role)) return { ok: ctx.tenantId === ownerTenantId, status: ctx.tenantId === ownerTenantId ? 200 : 403 };
+  if (isChannelRole(ctx.role)) return { ok: false, status: 403 };
+  return { ok: false, status: 403 };
 }
 
 // ─── 用户租户上下文 ───────────────────────────────────────────────────────────
@@ -713,8 +1088,15 @@ module.exports = {
   // Claude API (DashScope)
   callClaude, MODEL_FREE, MODEL_DEEP, trackApiSpend,
   // 里程碑 1：多租户
-  TENANT_ENABLED, TENANT_LEVEL, ROLES,
-  getTenant, saveTenant, listSubTenants,
+  TENANT_ENABLED, TENANT_LEVEL, ROLES, TENANT_TYPES,
+  SEAT_TYPES, ORDER_STATUS, COMMISSION_STATUS,
+  isChannelRole, isInstitutionRole,
+  getTenant, saveTenant, saveChannelTenant, listSubTenants, getTenantTreeIds,
+  buildReferralLink, createReferral, getReferral,
+  getAttribution, applyReferralAttribution, correctAttribution,
+  initXinyuTenant, createInstitutionTenant,
+  createSeat, listSeats, createMockOrder, listMockOrders, listCommissionRecords,
+  canAccessTenant, canReadCustomerPrivateData,
   getTenantContext, requireRole, ensureUserTenant, getTenantBrand,
   // 里程碑 2：软付费墙 + 升级钩子 + 防滥用
   PAYMENT_ENABLED, checkAndConsumeQuota, getQuotaStatus, getUserTier,
