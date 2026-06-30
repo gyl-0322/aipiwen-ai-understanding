@@ -697,8 +697,21 @@ async function handleReportStore(req, res) {
     const id = crypto.randomBytes(4).toString('hex');
     const ageNum = age ? Number(age) || null : null;
     const nameStr = name ? String(name).slice(0, 40) : null;
+    const ownerOpenid = getOpenid(req) || null;
+    const ownerUser = ownerOpenid ? await redisGet(`user:${ownerOpenid}`).catch(() => null) : null;
+    const ownerTenantId = ownerUser?.tenantId || ownerUser?.sourceTenantId || null;
     // 完整报告：TTL 1年（原30天）
-    await redisSet(`report:${id}`, { sections, engineResult, fingers: fingers || [], name: nameStr, age: ageNum, createdAt: Date.now(), ip }, 365 * 86400);
+    await redisSet(`report:${id}`, {
+      sections,
+      engineResult,
+      fingers: fingers || [],
+      name: nameStr,
+      age: ageNum,
+      ownerOpenid,
+      ownerTenantId,
+      createdAt: Date.now(),
+      ip,
+    }, 365 * 86400);
     // 案例库索引：只存摘要（不含完整 sections，节省空间）
     pushCaseIndex({
       id,
@@ -812,10 +825,10 @@ module.exports = async function handler(req, res) {
     { role: 'user',   content: userMessage },
   ];
 
-  // ── DashScope 报告生成（qwen-plus 单次调用，无 fallback）──────────────
-  // ⚠️ 不使用 qwen-vl-max：视觉模型对文字报告过慢，会超 Vercel 60s 限制 → 504
-  // qwen-plus 文字生成；厚报告输出较长，依赖前端最多3个问题控制时长
-  // 不设 fallback：55s 仍超时说明 DashScope 本身过载，turbo 质量不够用于完整报告
+  // ── DashScope 报告生成 ───────────────────────────────────────────────
+  // 主模型保留 qwen-plus；但必须在 Vercel 60s 前留出兜底时间。
+  // 线上高峰期 qwen-plus 偶发接近 55s，前端会收到 HTML/504，用户只看到生成失败。
+  // 因此主调用提前超时，失败后用 qwen-turbo 生成可交付版本，优先保证报告能出来。
   let raw = null;
 
   // 把错误详情写入 Redis，方便 admin 面板诊断（key=lastErr:genrpt，TTL 1天）
@@ -832,20 +845,35 @@ module.exports = async function handler(req, res) {
   }
 
   // qwen-plus 主力（文字报告，无图片，完整报告需要更高输出预算）
-  // timeoutMs=55s：贴近 Vercel 60s 上限；maxTokens=3800 支撑最多3个问题的厚报告
-  // 不设 fallback：55s 内 qwen-plus 仍超时说明 DashScope 本身过载，turbo 质量不够用
+  // timeoutMs=38s：为 fallback 和 JSON 响应留出空间，避免 Vercel 60s 硬超时。
   try {
     const { text } = await callClaude({
       model:     MODEL_FREE,       // qwen-plus
       messages,
       maxTokens: 3800,
-      timeoutMs: 55000,
+      timeoutMs: 38000,
     });
     raw = text;
   } catch (err1) {
-    const d = await logErr('primary_fail', err1);
-    const code = err1?.status ? `DS${err1.status}` : (err1?.name || 'ERR');
-    return res.status(200).json({ ok:false, error:`AI 请求失败 [${code}]，请重试` });
+    await logErr('primary_fail', err1);
+    try {
+      const { text } = await callClaude({
+        model:     'qwen-turbo',
+        messages,
+        maxTokens: 3000,
+        timeoutMs: 16000,
+      });
+      raw = text;
+      await redisSet('lastErr:genrpt', {
+        label: 'primary_fallback_used',
+        msg: err1?.message || String(err1),
+        ts: new Date().toISOString(),
+      }, 86400).catch(() => {});
+    } catch (err2) {
+      await logErr('fallback_fail', err2);
+      const code = err2?.status ? `DS${err2.status}` : (err2?.name || 'ERR');
+      return res.status(200).json({ ok:false, error:`AI 繁忙，请稍后重试 [${code}]` });
+    }
   }
 
   if (!raw) {
