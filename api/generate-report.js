@@ -386,6 +386,13 @@ function getAgeTier(age) {
   return 'mature_adult';              // 40+ 成熟·转型期
 }
 
+function normalizeAtdValue(raw) {
+  if (raw === null || raw === undefined || raw === '') return null;
+  const n = Number(String(raw).replace(/[^\d.]/g, ''));
+  if (!Number.isFinite(n) || n < 10) return null;
+  return Math.round(n);
+}
+
 // ── 必给模块（按人生阶段定制） ────────────
 // 模块1「天赋底色」全龄通用；模块2 随阶段换主题；模块3 随阶段侧重
 const REQUIRED_BY_STAGE = {
@@ -427,6 +434,16 @@ const REPORT_STAGE_STYLE = {
 - 直接对"你"说话，尊重经验，不装年轻，不贩卖二次成长焦虑。
 - 场景必须落在转型、带教、成年/青春期子女、婚姻新阶段、精力节奏、价值重定位。
 - 必给模块要讲清：不是推翻过去，而是重新组织经验，把价值继续用出来。`,
+};
+
+const ISSUE_STAGE_GUIDE = {
+  preschool: '可选问题必须写给家长看，场景落在入园、吃饭睡觉、情绪哭闹、规则建立、手足/隔代养育；不要写学习竞争、职业规划或成人关系。',
+  school: '可选问题必须落在小学真实场景：作业、课堂、老师、同伴、兴趣班、亲子冲突和学习习惯；不要写职业选择或成人婚恋。',
+  junior_teen: '可选问题必须落在初中真实场景：青春期边界、自驱力、手机冲突、同伴关系、偏科、考试压力；语气要让家长和孩子都能接受。',
+  senior_teen: '可选问题必须落在高中真实场景：选科、专业方向、升学压力、学习效率、志愿分歧和父母放手；不要制造升学焦虑。',
+  young_adult: '可选问题必须落在大学/初入职真实场景：考研就业、专业适配、行业选择、团队角色、恋爱/父母边界和自我认同。',
+  adult: '可选问题必须落在25-40岁真实场景：职业瓶颈、创业/打工、团队角色、婚姻沟通、育儿、原生家庭和精力分配；成熟务实，不写成学生口吻。',
+  mature_adult: '可选问题必须落在40岁以上真实场景：二次转型、经验传承、带教、成年/青春期子女、婚姻新阶段、照护父母和价值重定位；尊重经验，不贩卖焦虑。',
 };
 
 const REPORT_DEPTH_CONTRACT = `【完整专属报告的厚度契约】
@@ -524,6 +541,7 @@ function buildUserMessage(engineResult, age, name, requiredModules, selectedIssu
   const behav    = engineResult['行为模式'] || {};
   const brain    = engineResult['左右脑'] || {};
   const atd      = engineResult['ATD'] || {};
+  const atdValue = normalizeAtdValue(atd['值']);
   const extra    = engineResult['叠加特质'] || {};
   const avg      = fp['个人均值'] || 0;
 
@@ -556,8 +574,9 @@ function buildUserMessage(engineResult, age, name, requiredModules, selectedIssu
 
   // ⚠️ 同源一致：可选问题里的职业/能力类只能延伸必给模块2的结论，不得重新判断高低
   // 用 dedupedIssues（已去掉与必给重复项），避免 AI 收到冗余格式指令
+  const issueStageGuide = ISSUE_STAGE_GUIDE[tier] || ISSUE_STAGE_GUIDE.adult;
   const issueFormatGuide = dedupedIssues.length > 0
-    ? `\n【问题模块格式（每个 issue 严格四段式）】\n` + dedupedIssues.map(issue => {
+    ? `\n【问题模块格式（每个 issue 严格四段式）】\n年龄段约束：${issueStageGuide}\n每个可选问题都必须围绕该年龄段的真实场景展开，不允许套用其他年龄段的问题逻辑。\n` + dedupedIssues.map(issue => {
         if (兴趣班板块Names.has(issue)) {
           // 职业/能力类延伸问题：必须在必给模块2结论基础上展开，禁止重新判断高低
           return `===issue:${issue}===
@@ -576,7 +595,7 @@ function buildUserMessage(engineResult, age, name, requiredModules, selectedIssu
 学习通道：${chan['主通道']}（占比 ${Object.entries(chan['占比']||{}).map(([k,v])=>`${k}${v}%`).join(' / ')}）
 行为模式：${behav['结论']}（精神${behav['精神']} vs 思维${behav['思维']}，差值${behav['delta%']}%）
 左右脑：${brain['结论']}（左脑${brain['左脑']} / 右脑${brain['右脑']}，左脑占${brain['左脑占比']}%）
-ATD：${atd['值'] || '未知'}（${atd['分区'] || '未测'}）
+ATD：${atdValue || '未知'}（${atdValue ? (atd['分区'] || '未测') : '未测'}）
 叠加特质：M型=${extra['M型']?'是':'否'}  逆向思维R=${extra['逆向思维R']?'是('+extra['R手指']?.join(',')+')':'否'}
 个人TRC均值：${avg}
 

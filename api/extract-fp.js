@@ -73,7 +73,7 @@ const EXTRACT_PROMPT = `你是皮纹科学数据提取专家。图片是一份 T
     "comm_plan":       {"sym": "（沟通管理/计划判断 的纹型）", "trc": （整数）},
     "create_lead":     {"sym": "（创造领导/目标憧憬 的纹型）", "trc": （整数）}
   },
-  "atd": （ATD或反应速度数值，小数，图中无则null）,
+  "atd": （ATD角度整数，通常是二三十到七八十之间的角度值；图中无ATD角度则null。不要把反应速度、比率、0.xx小数当成ATD）,
   "name": "（姓名，图中无则null）",
   "birthday": "（被测者【出生日期/生日】，格式 YYYY-MM-DD，图中无则null；若只有出生年份则填 YYYY-01-01。⚠️ 严禁将【测评日期/检测日期/报告日期】误填为此字段，只读出生信息）"
 }
@@ -445,19 +445,25 @@ module.exports = async function handler(req, res) {
     }
   }
 
-  const atd     = (parsed.atd !== null && parsed.atd !== undefined)
-                  ? parseFloat(String(parsed.atd)) : null;
+  const atdRaw  = (parsed.atd !== null && parsed.atd !== undefined)
+                  ? Number(String(parsed.atd).replace(/[^\d.]/g, '')) : null;
+  const atd     = Number.isFinite(atdRaw) && atdRaw >= 10
+                  ? Math.round(atdRaw) : null;
   const name    = parsed.name  ? String(parsed.name).trim()  : null;
 
-  // 年龄：优先从生日年份动态计算（当前年份 - 出生年份），不让用户手算
+  // 年龄：优先从完整生日动态计算整数周岁，不让用户手算
+  function calcAgeFromBirthday(bdStr) {
+    const bd = new Date(String(bdStr));
+    if (isNaN(bd.getTime())) return null;
+    const now = new Date();
+    let a = now.getFullYear() - bd.getFullYear();
+    const md = now.getMonth() - bd.getMonth();
+    if (md < 0 || (md === 0 && now.getDate() < bd.getDate())) a--;
+    return a > 0 ? a : null;
+  }
   let age = null;
   if (parsed.birthday) {
-    const yearMatch = String(parsed.birthday).match(/\d{4}/);
-    const birthYear = yearMatch ? Number(yearMatch[0]) : null;
-    const currentYear = new Date().getFullYear();
-    if (birthYear && birthYear > 1900 && birthYear <= currentYear) {
-      age = currentYear - birthYear;
-    }
+    age = calcAgeFromBirthday(parsed.birthday);
   } else if (parsed.age) {
     // 兼容旧格式：报告只有年龄字段无生日
     age = parseInt(String(parsed.age), 10) || null;

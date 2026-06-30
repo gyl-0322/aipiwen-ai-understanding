@@ -443,14 +443,14 @@ button, a, .must-item, .fp-option-card, .back-btn, .issue-chip {
         <div class="if-label">出生日期 <span style="color:#aaa;font-size:11px">（自动算年龄）</span></div>
         <input class="if-input" id="conf-birthday" type="date" placeholder="YYYY-MM-DD" style="font-size:13px">
       </div>
-      <div class="info-field">
-        <div class="if-label">年龄（岁）</div>
-        <input class="if-input" id="conf-age" type="number" placeholder="岁" min="1" max="99">
-      </div>
-      <div class="info-field">
-        <div class="if-label">ATD</div>
-        <input class="if-input" id="conf-atd" type="number" placeholder="角度" step="0.5" min="20" max="80">
-      </div>
+        <div class="info-field">
+          <div class="if-label">年龄（岁）</div>
+          <input class="if-input" id="conf-age" type="number" placeholder="自动计算" min="1" max="99" readonly>
+        </div>
+        <div class="info-field">
+          <div class="if-label">ATD角度</div>
+          <input class="if-input" id="conf-atd" type="number" placeholder="图中无则留空" step="1" min="10" max="120">
+        </div>
       <div class="info-field">
         <div class="if-label">姓名（选填）</div>
         <input class="if-input" id="conf-name" type="text" placeholder="小明">
@@ -648,23 +648,42 @@ const ISSUE_POOL = {
       '亲子冲突的根源与化解',
     ]},
   ],
-  // 13–18 岁·家长/本人视角（必给已含：学科/职业潜能 · 成长引导）
-  seg_13_18: [
+  // 13–15 岁·初中阶段（家长/本人双视角）
+  seg_13_15: [
     { group: '学习升学', items: [
+      '初中偏科/学习方法怎么调',
+      '学习动机/自驱力不足的根子',
+      '作业拖延和手机冲突怎么谈',
+      '初中阶段要不要提前看选科方向',
+    ]},
+    { group: '青春期沟通', items: [
+      '青春期顶嘴/沉默怎么接',
+      '亲子怎么不吵架（沟通）',
+      '同伴关系敏感怎么引导',
+      '早恋/交友怎么看怎么谈',
+    ]},
+    { group: '情绪压力', items: [
+      '考试焦虑/抗压怎么练',
+      '自信心不足、怕失败怎么办',
+    ]},
+  ],
+  // 16–18 岁·高中阶段（家长/本人双视角）
+  seg_16_18: [
+    { group: '选科升学', items: [
       '文理/选科，天赋更偏哪边',
-      '偏科/学习方法怎么调',
       '学习动机/自驱力不足的根子',
       '升学决策：冲名校还是选适合专业',
+      '专业方向要怎么初步判断',
     ]},
-    { group: '情绪心理', items: [
+    { group: '压力承载', items: [
       '青春期情绪与压力怎么接',
       '考试焦虑/抗压怎么练',
       '手机沉迷/拖延怎么破',
     ]},
-    { group: '关系相处', items: [
-      '亲子怎么不吵架（沟通）',
-      '早恋/交友怎么看怎么谈',
-      '他和父母的"三观差"怎么相处',
+    { group: '亲子关系', items: [
+      '父母怎么放手又不失控',
+      '志愿/未来选择有分歧怎么谈',
+      '他和父母的“三观差”怎么相处',
     ]},
   ],
   // 18–25 岁·本人视角（必给已含：职业优势 · 自我成长）
@@ -730,7 +749,8 @@ function getIssueSegment(age) {
   const n = Number(age) || 0;
   if (n <= 6)  return 'seg_0_6';
   if (n <= 12) return 'seg_7_12';
-  if (n <= 18) return 'seg_13_18';
+  if (n <= 15) return 'seg_13_15';
+  if (n <= 18) return 'seg_16_18';
   if (n <= 25) return 'seg_18_25';
   if (n <= 40) return 'seg_25_40';
   return 'seg_40plus';
@@ -906,7 +926,7 @@ qs('#s1-extract-btn').addEventListener('click', async () => {
     }
 
     ST.fingers  = data.fingers;
-    ST.atd      = data.atd;
+    ST.atd      = normalizeAtd(data.atd);
     ST.age      = data.age;
     ST.name     = data.name;
     ST.birthday = data.birthday || null;  // YYYY-MM-DD，供确认页展示/修正
@@ -931,10 +951,17 @@ function calcAgeFromBirthday(bdStr) {
   return a > 0 ? a : null;
 }
 
+function normalizeAtd(raw) {
+  if (raw === null || raw === undefined || raw === '') return null;
+  const n = Number(String(raw).replace(/[^\d.]/g, ''));
+  if (!Number.isFinite(n) || n < 10) return null;
+  return Math.round(n);
+}
+
 function buildConfirmScreen() {
   qs('#conf-birthday').value = ST.birthday || '';
-  qs('#conf-age').value  = ST.age  || '';
-  qs('#conf-atd').value  = ST.atd  || '';
+  qs('#conf-age').value  = ST.birthday ? (calcAgeFromBirthday(ST.birthday) || '') : (ST.age || '');
+  qs('#conf-atd').value  = normalizeAtd(ST.atd) || '';
   qs('#conf-name').value = ST.name || '';
 
   // 生日改动 → 自动重算年龄
@@ -993,7 +1020,7 @@ qs('#s2-confirm-btn').addEventListener('click', () => {
   // 如果用户填了生日，以生日重算年龄（最终真值）
   const ageFromBd = bdVal ? calcAgeFromBirthday(bdVal) : null;
   const age  = ageFromBd !== null ? ageFromBd : (parseInt(qs('#conf-age').value) || null);
-  const atd  = parseFloat(qs('#conf-atd').value) || null;
+  const atd  = normalizeAtd(qs('#conf-atd').value);
   const name = qs('#conf-name').value.trim() || null;
 
   if (!age) {
