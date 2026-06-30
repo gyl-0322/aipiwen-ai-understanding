@@ -417,6 +417,7 @@ function setAge(btn, age) {
   _subjectAge = age;
   document.querySelectorAll('.age-chip').forEach(b => b.classList.remove('selected'));
   btn.classList.add('selected');
+  renderExampleChips(getExampleChips(_for, age));
   updateSubmitBtn();
 }
 
@@ -508,28 +509,74 @@ document.getElementById('form-sub').textContent      = CTX.sub;
       ['结婚10年以上','结婚10年以上'],
     ]);
   } else {
-    ageRow.style.display = 'none';
+    ageLabel.textContent = '合作处于哪个阶段？（必选）';
+    renderChips([
+      ['刚开始','合作初期'],
+      ['磨合中','合作磨合期'],
+      ['稳定运营','稳定运营期'],
+      ['转型/扩张','转型扩张期'],
+    ]);
   }
 })();
 document.getElementById('form-label').textContent    = CTX.label;
 document.getElementById('behavior-input').placeholder = CTX.placeholder;
 document.getElementById('cta-text').textContent      = CTX.ctaText;
 
-// render chips
-const chipsEl = document.getElementById('example-chips');
-CTX.chips.forEach(txt => {
-  const d = document.createElement('div');
-  d.className = 'example-chip'; d.textContent = txt;
-  d.onclick = () => fillExample(txt, d);
-  chipsEl.appendChild(d);
-});
-
 // ── Form state ───────────────────────────────────────────────
 const selectedChips = new Set();
 
+const EXAMPLE_CHIP_POOLS = {
+  child: {
+    '幼儿3-6岁': ['一说“不可以”就哭闹打滚', '不肯睡觉，总要人陪', '入园分离焦虑很严重', '二胎后突然爱发脾气', '吃饭穿衣总要对着干', '特别黏人，离开妈妈就崩溃'],
+    '小学7-12岁': ['一催作业就崩溃发脾气', '写作业拖拉磨蹭到很晚', '上课坐不住，老师总反馈', '一考试就紧张怕错', '跟同学起冲突不会处理', '兴趣班很多但坚持不下来'],
+    '初中13-15岁': ['突然变得沉默，回家就关门', '手机停不下来，越管越对抗', '学习动力下降，说学了也没用', '一说就顶嘴，亲子关系很紧张', '很在意同学评价，情绪起伏大', '偏科严重，不知道怎么帮'],
+    '高中16-18岁': ['压力很大但什么都不说', '对选科/专业方向很迷茫', '成绩波动大，一考不好就崩', '和父母一谈未来就吵', '觉得自己不如别人', '住校后越来越疏远'],
+    '大学+': ['专业不喜欢，不知道要不要换方向', '考研还是就业一直纠结', '和父母期待冲突很大', '拖延严重，越重要越逃避', '不知道自己适合什么工作', '人际关系很累，不会拒绝'],
+    '职场成人': ['孩子已经工作但很迷茫', '成年子女不愿沟通未来', '工作压力大，回家情绪很差', '亲子边界不知道怎么拿捏', '催婚催工作一说就翻脸', '想支持他但总说不到一起'],
+  },
+  self: {
+    '学生或刚毕业阶段': ['不知道自己到底适合什么方向', '明明想努力，却总是拖延', '一比较就觉得自己不行', '和父母期待拉扯很累', '第一份工作不知道怎么选', '害怕选错路，迟迟不敢决定'],
+    '职场打拼阶段': ['工作很努力但总卡在瓶颈', '和上司/同事沟通很消耗', '想跳槽但不知道是不是逃避', '总把工作表现等同于自我价值', '压力一大就拖延或摆烂', '不知道自己适合带人还是做专家'],
+    '成家育儿阶段': ['工作、伴侣、孩子之间精力不够用', '总觉得自己被家庭角色吞掉了', '一边爱孩子一边容易失控', '伴侣不理解我的累', '想成长但没有自己的时间', '总在照顾别人，很少看见自己'],
+    '人生中场阶段': ['突然觉得现在的生活没意义', '职业和关系都进入瓶颈', '想重新开始但不知道从哪里动', '对过去的选择有很多不甘', '精力下降，价值感也跟着下降', '不知道后半程还能怎么活'],
+  },
+  partner: {
+    '恋爱阶段': ['忽冷忽热，让我没有安全感', '一有冲突就冷处理', '不愿公开表达承诺', '很黏人又很敏感', '价值观不同还要不要继续', '我不知道TA是真爱还是习惯'],
+    '新婚或结婚3年内': ['生活习惯差异越来越明显', '对方原生家庭介入很多', '婚后才发现TA完全不是我想的样子', '家务和钱的问题总吵', '亲密感下降，不知道怎么谈', '遇到矛盾就各自防御'],
+    '结婚3到10年': ['沟通越来越像处理事务', '有孩子后彼此都很累', 'TA总说累但不说哪里累', '很多委屈攒着一爆就很大', '我感觉自己不被看见', '我们之间还剩什么'],
+    '结婚10年以上': ['关系靠惯性维持，很少真正交流', 'TA好像永远就是那样了', '孩子大了以后两个人反而陌生', '长期积累的问题不知道怎么开口', '想重新靠近但很别扭', '照顾父母/孩子让关系更紧绷'],
+  },
+  business: {
+    '合作初期': ['谈得很好，一到执行就拖', '对方承诺很多但落地很慢', '资源和分工边界说不清', '关键决策总要反复确认', '我不知道这个人靠不靠谱', '合作前要先看哪些行为信号'],
+    '合作磨合期': ['分歧时很容易上升到个人', '对方总想控制细节', '说好分工却总互相越界', '遇到压力就回避决策', '反馈意见说不进去', '我不知道该强推还是放慢'],
+    '稳定运营期': ['团队进入瓶颈但没人愿意先动', '对方守成，不愿意冒险', '我想提速，对方总担心风险', '利润/责任分配开始有暗流', '很多事靠默契但效率下降', '老问题反复出现，合作很耗'],
+    '转型扩张期': ['扩张时对方突然变保守', '新机会来了但意见很难统一', '对方只盯风险不看机会', '权责和利益需要重新谈', '团队变大后沟通失真', '我担心合作关系撑不过下一阶段'],
+  },
+};
+
+function getExampleChips(context, stage) {
+  const pool = EXAMPLE_CHIP_POOLS[context] || {};
+  return pool[stage] || CTX.chips;
+}
+
+function renderExampleChips(items) {
+  selectedChips.clear();
+  const chipsEl = document.getElementById('example-chips');
+  chipsEl.innerHTML = '';
+  items.forEach(txt => {
+    const d = document.createElement('div');
+    d.className = 'example-chip';
+    d.textContent = txt;
+    d.onclick = () => fillExample(txt, d);
+    chipsEl.appendChild(d);
+  });
+}
+
+renderExampleChips(CTX.chips);
+
 function updateSubmitBtn() {
   const hasText = document.getElementById('behavior-input').value.trim().length >= 4;
-  const needsAge = _for === 'child' || _for === 'self' || _for === 'partner';
+  const needsAge = _for === 'child' || _for === 'self' || _for === 'partner' || _for === 'business';
   const hasAge = _subjectAge !== null;
   document.getElementById('submit-btn').disabled = !hasText || (needsAge && !hasAge);
 }

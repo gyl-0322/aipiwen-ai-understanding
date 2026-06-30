@@ -352,6 +352,38 @@ module.exports = async function handler(req, res) {
     ? `\n${RELATION_STAGE_CONTEXT[relationStage]}\n`
     : '';
 
+  // ── 合作伙伴场景：合作阶段分层 ──────────────────────────────────────────────
+  function getBusinessStage(age) {
+    if (!age) return null;
+    const s = String(age);
+    if (s.includes('初期') || s.includes('刚开始')) return 'early';
+    if (s.includes('磨合')) return 'running_in';
+    if (s.includes('稳定')) return 'stable';
+    if (s.includes('转型') || s.includes('扩张')) return 'growth';
+    return null;
+  }
+  const BUSINESS_STAGE_CONTEXT = {
+    early: `【合作阶段：合作初期】
+聚焦：识别对方是否靠谱、承诺与执行是否一致、资源边界和分工边界是否清楚、合作前的行为信号。
+语气：清醒、务实，不劝合作也不劝放弃，帮用户看清真实风险点和可验证动作。`,
+
+    running_in: `【合作阶段：合作磨合期】
+聚焦：分工越界、反馈说不进去、控制与信任、压力下的决策方式、分歧如何不升级成人身对抗。
+语气：既懂商业效率，也懂人的防御机制，重点找合作杠杆点。`,
+
+    stable: `【合作阶段：稳定运营期】
+聚焦：老问题反复、守成与冒险的节奏差、利润和责任暗流、默契下降、团队瓶颈。
+语气：不把对方简单说成保守或拖后腿，而是解释其行为背后的安全感和风险逻辑。`,
+
+    growth: `【合作阶段：转型/扩张期】
+聚焦：扩张压力、权责利益重谈、新机会与风险判断差异、团队变大后的沟通失真。
+语气：战略感更强，帮助用户区分价值观冲突、能力边界和阶段压力。`,
+  };
+  const businessStage = context === 'business' ? getBusinessStage(subjectAge) : null;
+  const businessStageNote = businessStage && BUSINESS_STAGE_CONTEXT[businessStage]
+    ? `\n${BUSINESS_STAGE_CONTEXT[businessStage]}\n`
+    : '';
+
   // 全局高频模式（仅亲子场景使用）
   const globalPatterns = context === 'child'
     ? await getGlobalPatterns().catch(() => null)
@@ -721,7 +753,7 @@ ${trcContent}
 ${NO_FILLER}`,
 
     business: `你是AIPIWEN的合伙关系理解顾问。你的核心信念：合伙人难以理解的行为，几乎都有一套在他自己眼中完全合理的内在逻辑——理解这个逻辑，才能找到真正的合作杠杆点，而不是陷入无效博弈。
-${memSection}
+${businessStageNote}${memSection}
 行为解读链路（内化于心，不要逐条列出）：
 行为表象 → 这个行为背后的核心驱动力（控制感？规避风险？争取认可？保住已有成果？）→ 他/她过往的哪些经历让这个驱动力如此强烈 → 这个行为在他自己的逻辑里是"理性的自我保护"还是"对某种恐惧的回应" → 真正的分歧点在哪里、合作的杠杆点在哪里
 ${FIVE_STEPS}
