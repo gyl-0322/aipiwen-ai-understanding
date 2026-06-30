@@ -106,12 +106,19 @@ ${contextSections}
 
   let reply = null;
   try {
-    const { text } = await callClaude({ model: MODEL_FREE, messages, maxTokens: 600 });
+    const { text } = await callClaude({ model: MODEL_FREE, messages, maxTokens: 600, timeoutMs: 18000 });
     reply = text;
     if (!reply) return res.status(500).json({ error: 'AI 返回空内容' });
   } catch(err) {
-    console.error('[synthesize] Claude error:', err.message);
-    return res.status(500).json({ error: 'AI 网络请求失败：' + err.message });
+    console.error('[synthesize] primary error:', err.message);
+    try {
+      const { text } = await callClaude({ model: 'qwen-turbo', messages, maxTokens: 520, timeoutMs: 10000 });
+      reply = text;
+      if (!reply) return res.status(503).json({ error: 'AI 服务繁忙，请稍后重试' });
+    } catch (err2) {
+      console.error('[synthesize] fallback error:', err2.message);
+      return res.status(503).json({ error: 'AI 服务繁忙，请稍后重试' });
+    }
   }
 
   // 解析 AI 输出的各部分
