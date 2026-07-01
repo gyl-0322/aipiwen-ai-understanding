@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI 行为理解和心理诊断的区别｜AIPIWEN 的非诊断边界</title>
+<meta name="description" content="AI 行为理解关注日常行为、需求线索和沟通方式，心理诊断则需要专业资质和临床流程。AIPIWEN 只做辅助理解，不做诊断或治疗。">
+<link rel="canonical" href="https://www.aipiwen.cn/ai-behavior-understanding-vs-psychological-diagnosis">
+<meta name="robots" content="index,follow">
+<meta property="og:type" content="website">
+<meta property="og:title" content="AI 行为理解和心理诊断的区别｜AIPIWEN 的非诊断边界">
+<meta property="og:description" content="AI 行为理解关注日常行为、需求线索和沟通方式，心理诊断则需要专业资质和临床流程。AIPIWEN 只做辅助理解，不做诊断或治疗。">
+<meta property="og:url" content="https://www.aipiwen.cn/ai-behavior-understanding-vs-psychological-diagnosis">
+<meta property="og:image" content="https://www.aipiwen.cn/share/aipiwen-practitioner-card.jpg">
+<style>
+:root {
+  --cream:#FDFCF8; --ink:#1A1714; --ink-70:#4A4540; --ink-40:#8C8580; --ink-10:#EAE7E2;
+  --amber:#C2692A; --amber-soft:#F5EDE4; --font-serif:Georgia,"Noto Serif SC","Source Han Serif SC",serif;
+  --font-sans:-apple-system,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif; --r-md:16px; --r-lg:24px;
+}
+* { box-sizing:border-box; margin:0; padding:0; }
+body { font-family:var(--font-sans); background:var(--cream); color:var(--ink); -webkit-font-smoothing:antialiased; }
+a { color:var(--amber); text-decoration:none; }
+a:hover { text-decoration:underline; }
+.topbar { position:sticky; top:0; z-index:10; display:flex; align-items:center; justify-content:space-between; padding:16px 20px; background:rgba(253,252,248,.96); border-bottom:1px solid var(--ink-10); }
+.topbar a { font-size:13px; color:var(--ink-40); }
+.topbar-logo { font-size:14px; font-weight:700; letter-spacing:.12em; }
+.page { max-width:760px; margin:0 auto; padding:32px 20px 72px; }
+.hero, .section { background:#fff; border:1px solid var(--ink-10); border-radius:24px; }
+.hero { padding:32px 24px; margin-bottom:24px; }
+.section { padding:24px 22px; margin-bottom:18px; }
+.eyebrow { font-size:11px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:var(--amber); margin-bottom:14px; }
+h1 { font-family:var(--font-serif); font-size:clamp(30px,5vw,42px); line-height:1.2; margin-bottom:16px; }
+h2 { font-family:var(--font-serif); font-size:24px; margin-bottom:14px; }
+h3 { font-size:17px; margin:18px 0 8px; }
+p, li, td, th { font-size:15px; line-height:1.9; color:var(--ink-70); }
+p { margin-bottom:12px; }
+ol, ul { padding-left:20px; margin-bottom:12px; }
+li { margin-bottom:6px; }
+.notice { background:var(--amber-soft); border-left:3px solid var(--amber); border-radius:0 var(--r-md) var(--r-md) 0; padding:14px 16px; color:var(--ink); }
+table { width:100%; border-collapse:collapse; margin-top:8px; }
+th, td { border:1px solid var(--ink-10); padding:12px 10px; text-align:left; vertical-align:top; }
+th { background:var(--amber-soft); color:var(--ink); }
+.faq-list { display:grid; gap:14px; }
+.faq-item, .cta-link, .related-links a { border:1px solid var(--ink-10); border-radius:var(--r-md); background:var(--cream); }
+.faq-item { padding:18px; }
+.faq-item h3 { margin:0 0 8px; }
+.faq-item p { margin:0; }
+.cta-list, .related-links { display:grid; gap:10px; }
+.cta-link, .related-links a { display:block; padding:14px 16px; color:var(--ink); }
+.cta-link strong, .related-links a strong { display:block; color:var(--amber); margin-bottom:3px; }
+.site-footer { padding-top:8px; text-align:center; font-size:12px; color:var(--ink-40); }
+.site-footer nav { display:flex; justify-content:center; gap:14px; flex-wrap:wrap; margin-bottom:10px; }
+</style>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebPage",
+      "name": "AI 行为理解和心理诊断有什么区别？",
+      "url": "https://www.aipiwen.cn/ai-behavior-understanding-vs-psychological-diagnosis",
+      "description": "AI 行为理解关注日常行为、需求线索和沟通方式，心理诊断则需要专业资质和临床流程。AIPIWEN 只做辅助理解，不做诊断或治疗。"
+    },
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "AI 可以判断孩子有没有心理问题吗？",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "不应该只依靠 AI 判断。涉及心理或医学问题时，应由专业人员评估，AI 更适合做前期理解和信息整理辅助。"
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "AIPIWEN 能帮助我做什么？",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "AIPIWEN 可以帮助整理真实行为、理解可能的需求线索、梳理沟通方向，并结合已有报告形成更可用的解释。"
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "AIPIWEN 的建议安全吗？",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "AIPIWEN 强调非诊断、非标签、非治疗，只提供辅助理解和沟通参考，不提供心理诊断或医学建议。"
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "学校或机构可以使用 AIPIWEN 吗？",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "可以用于成长观察和沟通辅助，但不能用于诊断、给孩子下结论，或替代专业心理和医学支持。"
+          }
+        }
+      ]
+    }
+  ]
+}
+</script>
+</head>
+<body>
+<header class="topbar">
+  <a href="/">← 返回首页</a>
+  <div class="topbar-logo">AIPIWEN</div>
+</header>
+
+<main class="page">
+  <section class="hero">
+    <div class="eyebrow">非诊断边界</div>
+    <h1>AI 行为理解和心理诊断有什么区别？</h1>
+    <p>AI 行为理解更关注日常行为、需求线索和沟通方式，而不是判断孩子“有没有问题”。</p>
+    <p>AIPIWEN 只做辅助理解，不做心理诊断，不做治疗，不提供医学判断，也不替代专业心理或医学服务。</p>
+    <div class="notice">本页讨论心理诊断，是为了说明 AIPIWEN 不提供这类服务。</div>
+  </section>
+
+  <section class="section">
+    <h2>什么是 AI 行为理解</h2>
+    <p>AI 行为理解关注的是日常生活里能被观察到的行为，例如：</p>
+    <ol>
+      <li>孩子为什么拖拉</li>
+      <li>为什么一写作业就发火</li>
+      <li>为什么总顶嘴或不愿沟通</li>
+      <li>家长为什么越讲道理越没用</li>
+    </ol>
+    <p>AIPIWEN 的目标不是判断孩子“有没有心理问题”，而是帮助家长和从业者更清楚地看见行为背后可能的需求、压力、表达方式和沟通线索。</p>
+  </section>
+
+  <section class="section">
+    <h2>什么是心理诊断</h2>
+    <p>心理诊断通常需要专业资质、评估工具、临床访谈、持续观察和明确的伦理责任。</p>
+    <p>它属于专业心理或医学场景，不应该由普通 AI 工具替代。</p>
+  </section>
+
+  <section class="section">
+    <h2>两者的核心区别</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>维度</th>
+          <th>AI 行为理解</th>
+          <th>心理诊断</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>目标</td>
+          <td>理解行为和沟通</td>
+          <td>判断是否符合诊断标准</td>
+        </tr>
+        <tr>
+          <td>场景</td>
+          <td>家庭、教育、咨询前准备</td>
+          <td>专业心理或医学场景</td>
+        </tr>
+        <tr>
+          <td>输出</td>
+          <td>需求线索、沟通参考</td>
+          <td>诊断意见或专业判断</td>
+        </tr>
+        <tr>
+          <td>责任主体</td>
+          <td>用户结合实际判断</td>
+          <td>专业人员负责</td>
+        </tr>
+        <tr>
+          <td>AIPIWEN 是否提供</td>
+          <td>提供辅助理解</td>
+          <td>不提供</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="section">
+    <h2>AIPIWEN 的安全边界</h2>
+    <p>AIPIWEN 明确不提供：</p>
+    <ol>
+      <li>心理诊断</li>
+      <li>医学判断</li>
+      <li>治疗</li>
+      <li>疾病识别</li>
+      <li>危机干预</li>
+    </ol>
+    <p>AIPIWEN 提供的是：</p>
+    <ol>
+      <li>行为观察整理</li>
+      <li>需求线索分析</li>
+      <li>沟通参考</li>
+      <li>报告解读辅助</li>
+    </ol>
+  </section>
+
+  <section class="section">
+    <h2>什么情况应该寻求专业帮助</h2>
+    <ol>
+      <li>持续自伤表达</li>
+      <li>严重攻击行为</li>
+      <li>长期失眠或饮食异常</li>
+      <li>持续情绪低落</li>
+      <li>明显功能受损</li>
+      <li>家庭无法保证安全</li>
+    </ol>
+    <p>遇到这些情况，应尽快联系专业心理、医疗或危机支持资源。</p>
+  </section>
+
+  <section class="section">
+    <h2>学校和机构如何安全使用</h2>
+    <p>学校和机构可以把 AIPIWEN 用作成长观察辅助、家校沟通参考和表达整理支持。</p>
+    <p>但 AIPIWEN 不能被用作：</p>
+    <ol>
+      <li>心理诊断工具</li>
+      <li>给孩子定性评价的依据</li>
+      <li>取代专业心理服务的工具</li>
+    </ol>
+  </section>
+
+  <section class="section">
+    <h2>常见问题</h2>
+    <div class="faq-list">
+      <article class="faq-item">
+        <h3>Q1：AI 可以判断孩子有没有心理问题吗？</h3>
+        <p>不应该只依靠 AI 判断。涉及心理或医学问题时，应由专业人员评估，AI 更适合做前期理解和信息整理辅助。</p>
+      </article>
+      <article class="faq-item">
+        <h3>Q2：AIPIWEN 能帮助我做什么？</h3>
+        <p>AIPIWEN 可以帮助整理真实行为、理解可能的需求线索、梳理沟通方向，并结合已有报告形成更可用的解释。</p>
+      </article>
+      <article class="faq-item">
+        <h3>Q3：AIPIWEN 的建议安全吗？</h3>
+        <p>AIPIWEN 强调非诊断、非标签、非治疗，只提供辅助理解和沟通参考，不提供心理诊断或医学建议。</p>
+      </article>
+      <article class="faq-item">
+        <h3>Q4：学校或机构可以使用 AIPIWEN 吗？</h3>
+        <p>可以用于成长观察和沟通辅助，但不能用于诊断、给孩子下结论，或替代专业心理和医学支持。</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2>下一步入口</h2>
+    <div class="cta-list">
+      <a class="cta-link" href="/chat"><strong>从一个真实行为开始理解</strong>进入行为理解入口。</a>
+      <a class="cta-link" href="/report-upload"><strong>了解已有报告如何解读</strong>查看报告解读入口。</a>
+      <a class="cta-link" href="/what-aipiwen-is-not"><strong>查看 AIPIWEN 的使用边界</strong>继续阅读边界说明。</a>
+      <a class="cta-link" href="/practitioner"><strong>了解从业者使用方式</strong>查看从业者页面。</a>
+      <a class="cta-link" href="/faq#contact-support"><strong>添加客服或企业微信咨询</strong>通过 FAQ 页底部说明获取咨询方式。</a>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2>相关页面</h2>
+    <div class="related-links">
+      <a href="/what-aipiwen-is-not"><strong>AIPIWEN 不是什么</strong>查看边界与不适用场景。</a>
+      <a href="/faq"><strong>AIPIWEN FAQ</strong>查看官方常见问题。</a>
+      <a href="/what-is-aipiwen"><strong>AIPIWEN 是什么</strong>查看产品定位。</a>
+      <a href="/aipiwen-vs-dermatoglyphics-test"><strong>AIPIWEN 和普通皮纹测评有什么不同</strong>查看报告使用差异。</a>
+    </div>
+  </section>
+
+  <footer class="site-footer">
+    <nav>
+      <a href="/what-is-aipiwen">AIPIWEN 是什么</a>
+      <a href="/what-aipiwen-is-not">AIPIWEN 不是什么</a>
+      <a href="/faq">AIPIWEN FAQ</a>
+    </nav>
+    <div>© 2026 沐海星辰 · AIPIWEN</div>
+  </footer>
+</main>
+</body>
+</html>
