@@ -964,6 +964,155 @@ function buildPromptPayloadDryRun({
   };
 }
 
+function buildHumanReviewQueueDryRun({
+  riskLevel,
+  confidence,
+  outputDecision,
+  allowedOutputType,
+  blockedReasons,
+  clarificationQuestions,
+  fallbackMessage,
+  humanReview,
+  safetyNotes,
+  parseResult,
+  promptPlan,
+  promptRequestDryRun,
+  promptPayloadDryRun,
+  ctx,
+}) {
+  const sensitive = parseResult.detectedSensitiveHints || [];
+  const blockedCodes = blockedReasons.map(reason => reason.code);
+  const isMinor = sensitive.includes('minor') || parseResult.detectedSubjectHints.includes('child') || parseResult.detectedSubjectHints.includes('student');
+  const hasProfessionalRisk = sensitive.some(hint => (
+    ['diagnosis', 'medical', 'psychological', 'brain_science_claim', 'hypnosis', 'therapy', 'trauma'].includes(hint)
+  )) || blockedCodes.includes('professional_domain_request') || blockedCodes.includes('medical_or_psychological_diagnosis');
+  const hasRelationshipRisk = sensitive.includes('relationship_judgment') || blockedCodes.some(code => code.includes('relationship'));
+  const hasEnterpriseSchoolRisk = sensitive.includes('enterprise_screening') || sensitive.includes('school_sorting')
+    || blockedCodes.includes('enterprise_or_team_context') || blockedCodes.includes('school_context')
+    || blockedCodes.includes('sorting_or_screening_from_text') || blockedCodes.includes('screening_or_elimination');
+  const hasGuaranteeRisk = sensitive.includes('career_or_education_guarantee') || sensitive.includes('destiny_or_mysticism')
+    || blockedCodes.includes('guarantee_request') || blockedCodes.includes('guarantee_or_determinism');
+  const hasConsentRisk = blockedCodes.includes('third_party_without_confirmed_consent') || (!ctx.consentConfirmed && needsConsent(ctx));
+  const insufficient = confidence === 'insufficient' || outputDecision === 'clarification_only' || clarificationQuestions.length > 0;
+  const shouldCreateTicket = riskLevel === 'R2' || riskLevel === 'R3' || hasProfessionalRisk || hasRelationshipRisk
+    || hasEnterpriseSchoolRisk || hasGuaranteeRisk || humanReview.required || (confidence === 'insufficient' && hasConsentRisk);
+
+  let ticketType = 'none';
+  if (hasProfessionalRisk) ticketType = 'medical_psychological_review';
+  else if (hasEnterpriseSchoolRisk) ticketType = 'enterprise_school_review';
+  else if (hasRelationshipRisk) ticketType = 'relationship_review';
+  else if (riskLevel === 'R3') ticketType = 'blocked_case_review';
+  else if (hasGuaranteeRisk) ticketType = riskLevel === 'R3' ? 'blocked_case_review' : 'safety_review';
+  else if (riskLevel === 'R2') ticketType = 'fallback_review';
+  else if (isMinor && (riskLevel === 'R1' || promptPlan.requiresSafetyRewrite)) ticketType = 'child_review';
+  else if (confidence === 'insufficient' || (confidence === 'low' && clarificationQuestions.length)) ticketType = 'clarification_review';
+
+  let priority = 'none';
+  if (ticketType !== 'none') priority = 'low';
+  if (riskLevel === 'R2' || hasRelationshipRisk || hasGuaranteeRisk) priority = 'medium';
+  if (riskLevel === 'R3' || hasProfessionalRisk || hasEnterpriseSchoolRisk) priority = 'high';
+  if (riskLevel === 'R3' && hasProfessionalRisk && isMinor) priority = 'urgent';
+
+  const reviewReasons = [];
+  if (riskLevel === 'R3') reviewReasons.push('high_risk_r3');
+  if (riskLevel === 'R2') reviewReasons.push('medium_high_risk_r2');
+  if (isMinor) reviewReasons.push('minor_involved');
+  if (hasProfessionalRisk) reviewReasons.push('medical_or_psychological', 'diagnosis_request');
+  if (hasRelationshipRisk) reviewReasons.push('relationship_decision');
+  if (hasEnterpriseSchoolRisk) reviewReasons.push('enterprise_or_school_screening');
+  if (hasConsentRisk) reviewReasons.push('consent_unclear');
+  if (insufficient) reviewReasons.push('insufficient_information');
+  if (promptPlan.requiresSafetyRewrite) reviewReasons.push('safety_rewrite_required');
+  if (!promptPayloadDryRun.canSendToModel) reviewReasons.push('model_call_blocked');
+
+  const reviewerInstructions = [
+    '不要做医学/心理诊断',
+    '不要做关系去留判断',
+    '不要给招聘/筛选/淘汰建议',
+    '不要用于学生分层/淘汰/定岗',
+    '不要给升学/职业保证',
+    '不要做命定化判断',
+    '不要标签化孩子',
+    '不要归因父母责任',
+    '必要时建议专业支持或人工解读',
+  ];
+
+  let status = 'not_required';
+  if (ticketType === 'clarification_review') status = 'clarification_needed_dry_run';
+  else if (shouldCreateTicket && riskLevel === 'R3') status = 'blocked_dry_run';
+  else if (shouldCreateTicket) status = 'queued_dry_run';
+
+  const userVisibleMessage = (() => {
+    if (status === 'not_required') return '当前可按 P0 快速读懂流程继续，输出仍会保持安全边界。';
+    if (status === 'clarification_needed_dry_run') return '当前信息还不够完整，建议先补充你希望解决的问题，再继续解读。';
+    if (riskLevel === 'R3') return '这个场景不适合自动给出结论，建议转为人工解读或寻求相关专业支持。';
+    return '这个问题涉及较敏感的判断，建议由人工顾问进一步确认后再解读。';
+  })();
+
+  return {
+    enabled: true,
+    dryRunOnly: true,
+    shouldCreateTicket,
+    ticketType: shouldCreateTicket || ticketType === 'clarification_review' ? ticketType : 'none',
+    priority: shouldCreateTicket || ticketType === 'clarification_review' ? priority : 'none',
+    reviewReasons: unique(reviewReasons),
+    riskSummary: {
+      riskLevel,
+      confidence,
+      outputDecision,
+      allowedOutputType,
+      detectedSensitiveHints: sensitive,
+      blockedReasons,
+      canSendToModel: promptPayloadDryRun.canSendToModel,
+    },
+    reviewerInstructions,
+    userVisibleMessage,
+    privacyPolicy: {
+      noFullReportTextInTicket: true,
+      noPromptFullTextInTicket: true,
+      noRawDebugInTicket: true,
+      redactChildInfo: true,
+      redactContactInfo: true,
+      redactMedicalDetails: true,
+      keepOnlyStructuredSignals: true,
+    },
+    allowedReviewerFields: [
+      'riskLevel',
+      'confidence',
+      'outputDecision',
+      'parseResult.detectedSubjectHints',
+      'parseResult.detectedIntentHints',
+      'parseResult.detectedSensitiveHints',
+      'blockedReasons',
+      'safetyNotes',
+      'promptPlan.mode',
+      'promptRequestDryRun.requestType',
+      'promptPayloadDryRun.payloadType',
+    ],
+    omittedReviewerFields: ['full_report_text', 'prompt_pack_full_text', 'api_keys', 'raw_debug', 'raw_risk_terms', 'contact_info', 'medical_details', 'child_identifiable_info'],
+    suggestedSLA: {
+      responseWindow: priority === 'urgent' ? 'same_day' : (priority === 'high' ? '24_hours' : (priority === 'medium' ? '48_hours' : 'best_effort')),
+      reason: priority === 'none' ? '未触发人工复核。' : '按风险等级、未成年人/专业边界和使用场景确定处理窗口。',
+    },
+    routing: {
+      queue: ticketType === 'none' ? 'none' : 'report_upload_p0_human_review',
+      assigneeRole: hasProfessionalRisk ? 'senior_safety_reviewer' : (isMinor ? 'child_safety_reviewer' : 'report_review_operator'),
+      requiresSeniorReviewer: priority === 'high' || priority === 'urgent' || hasProfessionalRisk || hasEnterpriseSchoolRisk,
+    },
+    status,
+    meta: {
+      generatedAt: new Date().toISOString(),
+      version: 'P0.6',
+      source: 'human_review_queue_dry_run',
+      noDatabaseWrite: true,
+      noModelCall: true,
+      noRawTextIncluded: true,
+      safetyNoteCount: safetyNotes.length,
+      fallbackAvailable: !!fallbackMessage,
+    },
+  };
+}
+
 function buildResponse(payload) {
   const ctx = normalizePayload(payload);
   const stage = 'p0_rules_decision';
@@ -1015,6 +1164,22 @@ function buildResponse(payload) {
     safetyNotes: SAFETY_NOTES,
     ctx,
   });
+  const humanReviewQueueDryRun = buildHumanReviewQueueDryRun({
+    riskLevel: risk.riskLevel,
+    confidence,
+    outputDecision,
+    allowedOutputType: allowedOutputType(outputDecision),
+    blockedReasons,
+    clarificationQuestions,
+    fallbackMessage,
+    humanReview,
+    safetyNotes: SAFETY_NOTES,
+    parseResult: ctx.parseResult,
+    promptPlan,
+    promptRequestDryRun,
+    promptPayloadDryRun,
+    ctx,
+  });
   const response = {
     ok: true,
     stage,
@@ -1031,6 +1196,7 @@ function buildResponse(payload) {
     promptPlan,
     promptRequestDryRun,
     promptPayloadDryRun,
+    humanReviewQueueDryRun,
     safetyNotes: SAFETY_NOTES,
   };
 
