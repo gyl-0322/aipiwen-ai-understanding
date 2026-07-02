@@ -597,6 +597,181 @@ function buildPromptPlan({ riskLevel, confidence, outputDecision, allowedOutputT
   };
 }
 
+function buildPromptRequestDryRun({
+  promptPlan,
+  parseResult,
+  riskLevel,
+  confidence,
+  outputDecision,
+  allowedOutputType,
+  blockedReasons,
+  clarificationQuestions,
+  humanReview,
+  safetyNotes,
+  ctx,
+}) {
+  const sensitive = parseResult.detectedSensitiveHints || [];
+  const isMinor = sensitive.includes('minor') || parseResult.detectedSubjectHints.includes('child') || parseResult.detectedSubjectHints.includes('student');
+  const hasProfessionalRisk = sensitive.some(hint => (
+    ['diagnosis', 'medical', 'psychological', 'brain_science_claim', 'hypnosis', 'therapy', 'trauma'].includes(hint)
+  ));
+  const hasBlockedUse = sensitive.some(hint => (
+    ['relationship_judgment', 'enterprise_screening', 'school_sorting', 'career_or_education_guarantee', 'destiny_or_mysticism'].includes(hint)
+  ));
+  const modelCallAllowed = promptPlan.allowed
+    && (promptPlan.mode === 'quick_reading' || promptPlan.mode === 'safe_quick_reading')
+    && !['R2', 'R3'].includes(riskLevel)
+    && !hasProfessionalRisk
+    && !hasBlockedUse;
+  let requestType = 'none';
+
+  if (modelCallAllowed && promptPlan.mode === 'safe_quick_reading') requestType = 'safe_quick_reading_request';
+  else if (modelCallAllowed && promptPlan.mode === 'quick_reading') requestType = 'quick_reading_request';
+  else if (promptPlan.mode === 'clarification') requestType = 'clarification_request';
+  else if (promptPlan.mode === 'fallback') requestType = 'fallback_request';
+  else if (promptPlan.mode === 'human_review') requestType = 'human_review_request';
+  else if (promptPlan.mode === 'blocked') requestType = 'blocked_request';
+
+  const blocked = !modelCallAllowed;
+  const safetyGuards = unique([
+    'risk_assessment_before_generation',
+    'confidence_check_before_generation',
+    'no_r2_r3_quick_reading_generation',
+    'no_medical_or_psychological_diagnosis',
+    'no_relationship_decision',
+    'no_hiring_or_school_sorting',
+    'no_education_or_career_guarantee',
+    'no_child_labeling',
+    'no_parent_blame',
+    'human_review_for_high_risk',
+    ...(isMinor ? ['minor_requires_extra_redaction', 'minor_human_review_condition'] : []),
+  ]);
+  const expectedOutputContracts = {
+    quick_reading_request: {
+      report_overview: 'string',
+      user_main_question: 'string',
+      reference_points: 'array',
+      environment_observation_points: 'array',
+      no_direct_conclusion_points: 'array',
+      communication_or_observation_suggestions: 'array',
+      human_review_suggestion: 'string',
+    },
+    safe_quick_reading_request: {
+      report_overview: 'string',
+      user_main_question: 'string',
+      reference_points: 'array',
+      environment_observation_points: 'array',
+      no_direct_conclusion_points: 'array',
+      communication_or_observation_suggestions: 'array',
+      human_review_suggestion: 'string',
+      safety_rewrite_required: true,
+      forbidden_outputs: ['child_labeling', 'parent_blame', 'diagnosis', 'deterministic_conclusion'],
+    },
+    clarification_request: {
+      questions: 'array',
+      reason: 'string',
+      next_step: 'string',
+    },
+    fallback_request: {
+      safe_explanation: 'string',
+      unsupported_reason: 'string',
+      safer_next_step: 'string',
+      human_review_suggestion: 'string',
+    },
+    human_review_request: {
+      reason: 'string',
+      risk_summary: 'array',
+      suggested_manual_review_path: 'string',
+    },
+    blocked_request: {
+      reason: 'string',
+      risk_summary: 'array',
+      suggested_manual_review_path: 'string',
+    },
+    none: {
+      reason: 'string',
+      next_step: 'string',
+    },
+  };
+
+  return {
+    enabled: true,
+    requestType,
+    targetPromptTypes: unique(promptPlan.promptChain),
+    blocked,
+    blockedReason: blocked
+      ? promptPlan.reason
+      : '当前路径仅允许未来模型生成 P0 快速读懂请求，且必须使用脱敏/节选输入。',
+    modelCallAllowed,
+    inputContract: {
+      reportTextPolicy: 'redacted_or_excerpt_only',
+      maxReportExcerptChars: 1200,
+      allowedStructuredInputs: [
+        'parseResult',
+        'riskLevel',
+        'confidence',
+        'outputDecision',
+        'allowedOutputType',
+        'blockedReasons',
+        'clarificationQuestions',
+        'safetyNotes',
+        'userIdentity',
+        'userIntent',
+        'reportType',
+        'reportSubject',
+        'subjectAge',
+        'subjectRelation',
+        'consentConfirmed',
+      ],
+      requiredFields: ['parseResult', 'riskLevel', 'confidence', 'outputDecision', 'promptPlan'],
+      forbiddenFields: ['reportText', 'rawText', 'promptFullText', 'apiKey', 'environmentVariables', 'contactInfo', 'realName', 'medicalRecord'],
+      structuredInputPreview: {
+        reportTextLength: parseResult.reportTextLength,
+        readableStatus: parseResult.readableStatus,
+        detectedSubjectHints: parseResult.detectedSubjectHints,
+        detectedIntentHints: parseResult.detectedIntentHints,
+        detectedSensitiveHints: parseResult.detectedSensitiveHints,
+        userIdentity: ctx.userIdentity,
+        userIntent: ctx.userIntent,
+        reportType: ctx.reportType,
+        reportSubject: ctx.reportSubject,
+        subjectAge: ctx.subjectAge,
+        subjectRelation: ctx.subjectRelation,
+        consentConfirmed: ctx.consentConfirmed,
+      },
+    },
+    redactionPolicy: {
+      noFullReportTextInApiResponse: true,
+      noPromptFullTextInApiResponse: true,
+      noRawRiskTermsInProduction: true,
+      redactNames: true,
+      redactContactInfo: true,
+      redactMedicalDetails: true,
+      redactChildIdentifiableInfo: true,
+      debugDisabledByDefault: true,
+    },
+    safetyGuards,
+    expectedOutputContract: expectedOutputContracts[requestType],
+    humanReviewGate: {
+      required: !!humanReview.required || riskLevel === 'R3' || hasProfessionalRisk,
+      reason: humanReview.reason || (isMinor ? '未成年人场景建议条件触发人工复核。' : ''),
+      route: humanReview.required || riskLevel === 'R3' || hasProfessionalRisk
+        ? 'required_human_review'
+        : (humanReview.recommended || isMinor ? 'conditional_human_review' : 'not_required'),
+    },
+    dryRunOnly: true,
+    meta: {
+      riskLevel,
+      confidence,
+      outputDecision,
+      allowedOutputType,
+      blockedReasonCodes: blockedReasons.map(reason => reason.code),
+      clarificationQuestionCount: clarificationQuestions.length,
+      safetyNoteCount: safetyNotes.length,
+    },
+  };
+}
+
 function buildResponse(payload) {
   const ctx = normalizePayload(payload);
   const stage = 'p0_rules_decision';
@@ -617,6 +792,21 @@ function buildResponse(payload) {
     parseResult: ctx.parseResult,
     humanReview,
   });
+  const promptRequestDryRun = buildPromptRequestDryRun({
+    promptPlan,
+    parseResult: ctx.parseResult,
+    riskLevel: risk.riskLevel,
+    confidence,
+    outputDecision,
+    allowedOutputType: allowedOutputType(outputDecision),
+    blockedReasons,
+    clarificationQuestions,
+    quickReading,
+    fallbackMessage,
+    humanReview,
+    safetyNotes: SAFETY_NOTES,
+    ctx,
+  });
   const response = {
     ok: true,
     stage,
@@ -631,6 +821,7 @@ function buildResponse(payload) {
     fallbackMessage,
     humanReview,
     promptPlan,
+    promptRequestDryRun,
     safetyNotes: SAFETY_NOTES,
   };
 
