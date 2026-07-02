@@ -19,6 +19,29 @@ const SAFETY_NOTES = [
 
 const RISK_RANK = { R0: 0, R1: 1, R2: 2, R3: 3 };
 
+const BASE_PROMPT_CHAIN = [
+  'report_parse_prompt',
+  'user_identity_intent_prompt',
+  'risk_assessment_prompt',
+  'confidence_assessment_prompt',
+  'output_decision_prompt',
+];
+
+const ALWAYS_BLOCKED_PROMPTS = [
+  'full_personal_report_prompt',
+  'parent_child_formal_joint_report_prompt',
+  'intimate_relationship_joint_report_prompt',
+  'partner_joint_report_prompt',
+  'team_profile_prompt',
+  'class_profile_prompt',
+  'enterprise_profile_prompt',
+  'hiring_screening_prompt',
+  'medical_diagnosis_prompt',
+  'psychological_diagnosis_prompt',
+  'education_guarantee_prompt',
+  'career_guarantee_prompt',
+];
+
 const HINT_RULES = {
   subject: [
     ['child', ['孩子', '儿童', '未成年', '小孩', 'child', 'minor']],
@@ -481,6 +504,99 @@ function buildHumanReview(riskLevel, outputDecision, blockedReasons) {
   };
 }
 
+function buildPromptPlan({ riskLevel, confidence, outputDecision, allowedOutputType, parseResult, humanReview }) {
+  const sensitive = parseResult.detectedSensitiveHints || [];
+  const hasProfessionalRisk = sensitive.some(hint => (
+    ['diagnosis', 'medical', 'psychological', 'brain_science_claim', 'hypnosis', 'therapy', 'trauma'].includes(hint)
+  ));
+  const hasRelationshipRisk = sensitive.includes('relationship_judgment');
+  const hasScreeningRisk = sensitive.includes('enterprise_screening') || sensitive.includes('school_sorting');
+  const hasGuaranteeRisk = sensitive.includes('career_or_education_guarantee') || sensitive.includes('destiny_or_mysticism');
+  const isMinor = sensitive.includes('minor') || parseResult.detectedSubjectHints.includes('child') || parseResult.detectedSubjectHints.includes('student');
+  const blockedPromptTypes = [...ALWAYS_BLOCKED_PROMPTS];
+  let mode = 'clarification';
+  let allowed = false;
+  let promptChain = [...BASE_PROMPT_CHAIN];
+  let reason = '需要先澄清信息，不能直接进入生成类 Prompt。';
+  let requiresHumanReview = !!humanReview.recommended;
+  let requiresSafetyRewrite = false;
+  let nextStep = 'ask_clarification_questions';
+
+  if (riskLevel === 'R3' || hasProfessionalRisk || hasScreeningRisk) {
+    mode = humanReview.required || hasProfessionalRisk ? 'human_review' : 'blocked';
+    allowed = false;
+    promptChain = ['human_review_prompt'];
+    reason = '命中 R3 或专业/筛选风险，只能转人工或阻断生成。';
+    requiresHumanReview = true;
+    requiresSafetyRewrite = false;
+    nextStep = humanReview.required ? 'route_to_human_review' : 'block_generation';
+  } else if (riskLevel === 'R2' || hasRelationshipRisk || hasGuaranteeRisk) {
+    mode = 'fallback';
+    allowed = false;
+    promptChain = ['fallback_output_prompt'];
+    if (humanReview.recommended) promptChain.push('human_review_prompt');
+    reason = '命中 R2 或关系/保证类风险，只能降级输出，不进入 quick_reading_prompt。';
+    requiresHumanReview = !!humanReview.recommended;
+    requiresSafetyRewrite = false;
+    nextStep = humanReview.recommended ? 'route_to_human_review' : 'show_fallback_message';
+  } else if (confidence === 'insufficient') {
+    mode = humanReview.recommended ? 'human_review' : 'clarification';
+    allowed = false;
+    promptChain = [humanReview.recommended ? 'human_review_prompt' : 'clarification_prompt'];
+    reason = '资料不足或授权/目的不明确，不允许进入生成类 Prompt。';
+    requiresHumanReview = !!humanReview.recommended;
+    requiresSafetyRewrite = false;
+    nextStep = humanReview.recommended ? 'route_to_human_review' : 'ask_clarification_questions';
+  } else if ((riskLevel === 'R0' || riskLevel === 'R1') && confidence === 'low') {
+    mode = 'clarification';
+    allowed = false;
+    promptChain = ['clarification_prompt'];
+    reason = '低置信度优先追问，必要时再降级输出。';
+    requiresHumanReview = false;
+    requiresSafetyRewrite = riskLevel === 'R1' || isMinor;
+    nextStep = 'ask_clarification_questions';
+  } else if (riskLevel === 'R1' && (confidence === 'high' || confidence === 'medium')) {
+    mode = 'safe_quick_reading';
+    allowed = true;
+    promptChain = [...BASE_PROMPT_CHAIN, 'quick_reading_prompt', 'safety_rewrite_prompt'];
+    reason = 'R1 且资料可用，可 dry-run 快速读懂 Prompt，但必须安全改写。';
+    requiresHumanReview = false;
+    requiresSafetyRewrite = true;
+    nextStep = 'run_quick_reading_prompt_dry_run';
+  } else if (riskLevel === 'R0' && (confidence === 'high' || confidence === 'medium')) {
+    mode = 'quick_reading';
+    allowed = true;
+    promptChain = [...BASE_PROMPT_CHAIN, 'quick_reading_prompt'];
+    if (isMinor) {
+      promptChain.push('safety_rewrite_prompt');
+      requiresSafetyRewrite = true;
+      mode = 'safe_quick_reading';
+      reason = '低风险未成年人场景可 dry-run 快速读懂，但必须安全改写。';
+    } else {
+      reason = 'R0 且资料可用，可 dry-run 快速读懂 Prompt。';
+      requiresSafetyRewrite = false;
+    }
+    requiresHumanReview = false;
+    nextStep = 'run_quick_reading_prompt_dry_run';
+  }
+
+  if (requiresSafetyRewrite && !promptChain.includes('safety_rewrite_prompt') && allowed) {
+    promptChain.push('safety_rewrite_prompt');
+  }
+
+  return {
+    mode,
+    allowed,
+    promptChain: unique(promptChain),
+    blockedPromptTypes: unique(blockedPromptTypes),
+    reason,
+    requiresHumanReview,
+    requiresSafetyRewrite,
+    nextStep,
+    allowedOutputType,
+  };
+}
+
 function buildResponse(payload) {
   const ctx = normalizePayload(payload);
   const stage = 'p0_rules_decision';
@@ -493,6 +609,14 @@ function buildResponse(payload) {
   const quickReading = buildQuickReading(ctx, outputDecision);
   const fallbackMessage = buildFallback(outputDecision, risk.riskLevel, confidence, blockedReasons);
   const humanReview = buildHumanReview(risk.riskLevel, outputDecision, blockedReasons);
+  const promptPlan = buildPromptPlan({
+    riskLevel: risk.riskLevel,
+    confidence,
+    outputDecision,
+    allowedOutputType: allowedOutputType(outputDecision),
+    parseResult: ctx.parseResult,
+    humanReview,
+  });
   const response = {
     ok: true,
     stage,
@@ -506,6 +630,7 @@ function buildResponse(payload) {
     quickReading,
     fallbackMessage,
     humanReview,
+    promptPlan,
     safetyNotes: SAFETY_NOTES,
   };
 
