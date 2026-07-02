@@ -772,6 +772,198 @@ function buildPromptRequestDryRun({
   };
 }
 
+function buildRedactedExcerpt(reportText, riskLevel, canSendToModel) {
+  if (!canSendToModel) return ['R2', 'R3'].includes(riskLevel) ? 'omitted_due_to_risk' : 'omitted_until_clarified';
+  const source = text(reportText)
+    .replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi, '[redacted_email]')
+    .replace(/1[3-9]\d{9}/g, '[redacted_phone]')
+    .replace(/\d{6,}/g, '[redacted_number]');
+  if (source.length <= 12) return 'omitted_due_to_short_text';
+  const maxChars = Math.min(300, Math.max(12, source.length - 8));
+  return `${source.slice(0, maxChars)}...[redacted_excerpt]`;
+}
+
+function outputContractForPayload(payloadType) {
+  const quickReadingContract = {
+    report_overview: 'string',
+    user_main_question: 'string',
+    reference_points: 'array',
+    environment_observation_points: 'array',
+    no_direct_conclusion_points: 'array',
+    communication_or_observation_suggestions: 'array',
+    human_review_suggestion: 'string',
+    forbidden_outputs: ['diagnosis', 'deterministic_conclusion', 'relationship_decision', 'career_or_education_guarantee'],
+  };
+  const contracts = {
+    quick_reading_payload: quickReadingContract,
+    safe_quick_reading_payload: {
+      ...quickReadingContract,
+      safety_rewrite_required: true,
+      forbidden_outputs: [...quickReadingContract.forbidden_outputs, 'child_labeling', 'parent_blame', 'anxiety_triggering_language'],
+    },
+    clarification_payload: {
+      questions: 'array',
+      reason: 'string',
+      next_step: 'string',
+    },
+    fallback_payload: {
+      safe_explanation: 'string',
+      unsupported_reason: 'string',
+      safer_next_step: 'string',
+      human_review_suggestion: 'string',
+    },
+    human_review_payload: {
+      reason: 'string',
+      risk_summary: 'array',
+      suggested_manual_review_path: 'string',
+    },
+    blocked_payload: {
+      reason: 'string',
+      risk_summary: 'array',
+      suggested_manual_review_path: 'string',
+    },
+    none: {
+      reason: 'string',
+      next_step: 'string',
+    },
+  };
+  return contracts[payloadType] || contracts.none;
+}
+
+function buildPromptPayloadDryRun({
+  promptPlan,
+  promptRequestDryRun,
+  parseResult,
+  riskLevel,
+  confidence,
+  outputDecision,
+  allowedOutputType,
+  blockedReasons,
+  clarificationQuestions,
+  quickReading,
+  fallbackMessage,
+  humanReview,
+  safetyNotes,
+  ctx,
+}) {
+  const payloadTypeMap = {
+    quick_reading_request: 'quick_reading_payload',
+    safe_quick_reading_request: 'safe_quick_reading_payload',
+    clarification_request: 'clarification_payload',
+    fallback_request: 'fallback_payload',
+    human_review_request: 'human_review_payload',
+    blocked_request: 'blocked_payload',
+    none: 'none',
+  };
+  const payloadType = payloadTypeMap[promptRequestDryRun.requestType] || 'none';
+  const canSendToModel = !!promptRequestDryRun.modelCallAllowed
+    && ['quick_reading_payload', 'safe_quick_reading_payload'].includes(payloadType)
+    && !['R2', 'R3'].includes(riskLevel);
+  const blocked = !canSendToModel;
+  const reportTextExcerpt = buildRedactedExcerpt(ctx.reportText, riskLevel, canSendToModel);
+  const safetyInstructions = [
+    '不要输出医学/心理诊断',
+    '不要输出脑科学强结论',
+    '不要输出关系去留判断',
+    '不要输出招聘/筛选/淘汰建议',
+    '不要输出学生分层建议',
+    '不要输出升学/职业保证',
+    '不要标签化孩子',
+    '不要归因父母责任',
+    '不要制造焦虑',
+    '只输出 P0 允许结构',
+  ];
+  const outputContract = outputContractForPayload(payloadType);
+
+  return {
+    enabled: true,
+    dryRunOnly: true,
+    payloadType,
+    canSendToModel,
+    targetPromptTypes: unique(promptRequestDryRun.targetPromptTypes || []),
+    blocked,
+    blockedReason: blocked
+      ? promptRequestDryRun.blockedReason
+      : '当前 payload 仅为未来模型调用前的脱敏草稿，可用于 P0 快速读懂 dry-run。',
+    payload: {
+      promptPurpose: canSendToModel ? 'generate_p0_quick_reading' : 'prepare_safe_non_generation_path',
+      promptType: payloadType,
+      userContext: {
+        userIdentity: ctx.userIdentity,
+        userIntent: ctx.userIntent,
+        subjectAge: ctx.subjectAge,
+        subjectRelation: ctx.subjectRelation,
+        consentConfirmed: ctx.consentConfirmed,
+      },
+      reportContext: {
+        reportTextExcerpt,
+        reportTextLength: parseResult.reportTextLength,
+        readableStatus: parseResult.readableStatus,
+        reportType: ctx.reportType,
+        reportSubject: ctx.reportSubject,
+        excerptPolicy: canSendToModel ? 'redacted_excerpt_max_300_chars' : reportTextExcerpt,
+      },
+      parsedSignals: {
+        detectedSubjectHints: parseResult.detectedSubjectHints,
+        detectedIntentHints: parseResult.detectedIntentHints,
+        detectedSensitiveHints: parseResult.detectedSensitiveHints,
+        textQualityHints: parseResult.textQualityHints,
+      },
+      riskContext: {
+        riskLevel,
+        blockedReasonCodes: blockedReasons.map(reason => reason.code),
+        blockedReasonCount: blockedReasons.length,
+      },
+      confidenceContext: {
+        confidence,
+        readableStatus: parseResult.readableStatus,
+      },
+      outputDecisionContext: {
+        outputDecision,
+        allowedOutputType,
+        promptPlanMode: promptPlan.mode,
+        promptRequestType: promptRequestDryRun.requestType,
+      },
+      safetyBoundary: {
+        safetyNotes,
+        safetyInstructions,
+        omittedFields: ['full_report_text', 'prompt_pack_full_text', 'api_keys', 'raw_risk_terms', 'contact_info', 'medical_details', 'child_identifiable_info'],
+      },
+      requestedOutputShape: outputContract,
+      nonModelOutputsAvailable: {
+        clarificationQuestionCount: clarificationQuestions.length,
+        hasFallbackMessage: !!fallbackMessage,
+        hasQuickReadingDraft: !!quickReading,
+      },
+    },
+    redactionApplied: {
+      fullReportTextOmitted: true,
+      promptFullTextOmitted: true,
+      namesRedacted: true,
+      contactInfoRedacted: true,
+      medicalDetailsRedacted: true,
+      childIdentifiableInfoRedacted: true,
+      highRiskTermsNotEchoed: true,
+    },
+    omittedFields: ['full_report_text', 'prompt_pack_full_text', 'api_keys', 'raw_risk_terms', 'contact_info', 'medical_details', 'child_identifiable_info'],
+    safetyInstructions,
+    outputContract,
+    humanReviewGate: {
+      required: !!humanReview.required || !!promptRequestDryRun.humanReviewGate.required,
+      reason: humanReview.reason || promptRequestDryRun.humanReviewGate.reason,
+      route: promptRequestDryRun.humanReviewGate.route,
+    },
+    meta: {
+      generatedAt: new Date().toISOString(),
+      version: 'P0.5',
+      source: 'prompt_payload_dry_run',
+      noModelCall: true,
+      canSendToModel,
+      dryRunOnly: true,
+    },
+  };
+}
+
 function buildResponse(payload) {
   const ctx = normalizePayload(payload);
   const stage = 'p0_rules_decision';
@@ -807,6 +999,22 @@ function buildResponse(payload) {
     safetyNotes: SAFETY_NOTES,
     ctx,
   });
+  const promptPayloadDryRun = buildPromptPayloadDryRun({
+    promptPlan,
+    promptRequestDryRun,
+    parseResult: ctx.parseResult,
+    riskLevel: risk.riskLevel,
+    confidence,
+    outputDecision,
+    allowedOutputType: allowedOutputType(outputDecision),
+    blockedReasons,
+    clarificationQuestions,
+    quickReading,
+    fallbackMessage,
+    humanReview,
+    safetyNotes: SAFETY_NOTES,
+    ctx,
+  });
   const response = {
     ok: true,
     stage,
@@ -822,6 +1030,7 @@ function buildResponse(payload) {
     humanReview,
     promptPlan,
     promptRequestDryRun,
+    promptPayloadDryRun,
     safetyNotes: SAFETY_NOTES,
   };
 
