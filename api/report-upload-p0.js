@@ -19,6 +19,48 @@ const SAFETY_NOTES = [
 
 const RISK_RANK = { R0: 0, R1: 1, R2: 2, R3: 3 };
 
+const HINT_RULES = {
+  subject: [
+    ['child', ['孩子', '儿童', '未成年', '小孩', 'child', 'minor']],
+    ['student', ['学生', '学校', '班级', 'student']],
+    ['partner', ['伴侣', '亲密', '婚姻', '分手', '离婚', 'partner', 'relationship']],
+    ['candidate', ['候选人', '录用', '招聘', 'candidate']],
+    ['team', ['团队', '员工', 'team']],
+    ['class', ['班级', '学生分层', '分班', 'class']],
+    ['enterprise', ['企业', '公司', '管理者', 'enterprise']],
+    ['self', ['我', '自己', '本人', '个人', 'self']],
+  ],
+  intent: [
+    ['diagnosis', ['诊断', '是不是有', '是不是患', '有没有病']],
+    ['medical_or_psychological', ['心理疾病', '精神问题', '抑郁', '焦虑', '多动症', '自闭症', '治疗']],
+    ['relationship_decision', ['适不适合继续', '要不要分手', '该不该离婚', '合不合适', '是否适合在一起']],
+    ['hiring_screening', ['是否适合录用', '应该淘汰', '招聘筛选', '筛选候选人']],
+    ['school_grouping', ['分层管理', '重点培养', '分班', '学生分层']],
+    ['learning_or_career_direction', ['学习偏好', '职业方向', '升学路线', '适合走哪条']],
+    ['parent_child_communication', ['亲子沟通', '家长', '父母', '孩子行为']],
+    ['understand_child_behavior', ['写作业拖拉', '孩子行为', '容易生气', '不想给孩子贴标签']],
+    ['quick_reading', ['快速读懂', '哪些地方可以参考', '不要直接下结论']],
+  ],
+  sensitive: [
+    ['minor', ['孩子', '儿童', '未成年', '学生', 'child', 'minor']],
+    ['diagnosis', ['诊断', '是不是有', '是不是患']],
+    ['medical', ['医学', '疾病', '脑病', '治疗']],
+    ['psychological', ['心理疾病', '精神问题', '抑郁', '焦虑症', '多动症', '自闭症']],
+    ['brain_science_claim', ['脑科学证明', '脑功能', '脑病']],
+    ['hypnosis', ['催眠', '催眠治疗']],
+    ['therapy', ['疗愈', '治疗']],
+    ['trauma', ['创伤']],
+    ['relationship_judgment', ['适不适合继续', '要不要分手', '该不该离婚', '是否适合在一起']],
+    ['parent_blame', ['父母导致', '父母害了孩子']],
+    ['child_labeling', ['孩子就是', '这个孩子天生', '问题孩子']],
+    ['destiny_or_mysticism', ['命运', '命中注定', '天生适合', '未来一定', '天赋决定']],
+    ['career_or_education_guarantee', ['保证升学', '保证成功', '升学路线', '未来一定']],
+    ['enterprise_screening', ['是否适合录用', '应该淘汰', '招聘筛选']],
+    ['school_sorting', ['学生分层', '分层管理', '分班', '重点培养']],
+    ['privacy_or_consent_unclear', ['未经同意', '没授权', '他人报告']],
+  ],
+};
+
 const TEXT_RULES = [
   {
     level: 'R3',
@@ -137,6 +179,51 @@ function includesAny(haystack, values) {
   return values.some(value => low.includes(lower(value)));
 }
 
+function unique(values) {
+  return [...new Set(values)];
+}
+
+function detectHints(value, rules) {
+  const found = [];
+  for (const [hint, terms] of rules) {
+    if (includesAny(value, terms)) found.push(hint);
+  }
+  return unique(found);
+}
+
+function parseReportText(reportText) {
+  const content = text(reportText);
+  const reportTextLength = content.length;
+  let readableStatus = 'empty';
+  if (reportTextLength > 0 && reportTextLength < 12) readableStatus = 'too_short';
+  else if (reportTextLength >= 12 && reportTextLength < 120) readableStatus = 'partial';
+  else if (reportTextLength >= 120 && reportTextLength < 800) readableStatus = 'readable';
+  else if (reportTextLength >= 800) readableStatus = 'long';
+
+  const detectedSubjectHints = detectHints(content, HINT_RULES.subject);
+  const detectedIntentHints = detectHints(content, HINT_RULES.intent);
+  const detectedSensitiveHints = detectHints(content, HINT_RULES.sensitive);
+  const textQualityHints = [];
+  const questionCount = (content.match(/[?？]/g) || []).length;
+  const hasReportTerms = includesAny(content, ['报告', '测评', '指标', '表达方式', '学习偏好', '决策习惯', '沟通特点', 'TRC', 'ATD']);
+  const hasDecisionRequest = includesAny(content, ['判断', '是否', '能不能', '要不要', '该不该', '适不适合']);
+
+  if (hasReportTerms) textQualityHints.push('has_report_like_content');
+  if (questionCount > 0 || hasDecisionRequest) textQualityHints.push('mostly_question');
+  if (readableStatus === 'empty' || readableStatus === 'too_short') textQualityHints.push('missing_report_content');
+  if (detectedSensitiveHints.length) textQualityHints.push('contains_high_risk_request');
+  if (hasDecisionRequest) textQualityHints.push('contains_decision_request');
+
+  return {
+    readableStatus,
+    reportTextLength,
+    detectedSubjectHints: detectedSubjectHints.length ? detectedSubjectHints : ['unknown'],
+    detectedIntentHints: detectedIntentHints.length ? detectedIntentHints : ['unknown'],
+    detectedSensitiveHints: unique(detectedSensitiveHints),
+    textQualityHints: unique(textQualityHints),
+  };
+}
+
 function pushRisk(risks, level, code, reason) {
   risks.push({ level, code, reason });
 }
@@ -154,6 +241,7 @@ function normalizePayload(payload) {
   const reportSubject = text(payload.reportSubject ?? payload.subjectType);
   const subjectAge = numberOrNull(payload.subjectAge);
   const consentConfirmed = bool(payload.consentConfirmed);
+  const parseResult = parseReportText(reportText);
   return {
     reportText,
     reportType: text(payload.reportType || 'unknown') || 'unknown',
@@ -164,13 +252,16 @@ function normalizePayload(payload) {
     subjectRelation: text(payload.subjectRelation || payload.relationshipContext || 'unknown') || 'unknown',
     consentConfirmed,
     debugMode: payload.debugMode === true,
+    parseResult,
   };
 }
 
 function assessReadability(ctx) {
-  if (!ctx.reportText) return 'unreadable';
-  if (ctx.reportText.length >= 800) return 'complete';
-  if (ctx.reportText.length >= 20) return 'partial';
+  if (ctx.parseResult.readableStatus === 'empty') return 'unreadable';
+  if (ctx.parseResult.readableStatus === 'too_short') return 'unknown';
+  if (ctx.parseResult.readableStatus === 'partial') return 'partial';
+  if (ctx.parseResult.readableStatus === 'readable') return 'partial';
+  if (ctx.parseResult.readableStatus === 'long') return 'complete';
   return 'unknown';
 }
 
@@ -199,8 +290,9 @@ function assessContextRisks(ctx) {
   const relation = lower(ctx.subjectRelation);
   const type = lower(ctx.reportType);
   const isMinor = ctx.subjectAge !== null && ctx.subjectAge < 18;
+  const parse = ctx.parseResult;
 
-  if (isMinor || includesAny(`${subject} ${relation} ${type}`, ['孩子', '儿童', '未成年', '学生', 'child', 'minor', 'student'])) {
+  if (isMinor || includesAny(`${subject} ${relation} ${type}`, ['孩子', '儿童', '未成年', '学生', 'child', 'minor', 'student']) || parse.detectedSensitiveHints.includes('minor')) {
     pushRisk(risks, 'R1', 'minor_data', '涉及未成年人时默认至少 R1。');
   }
 
@@ -222,12 +314,27 @@ function assessContextRisks(ctx) {
     pushRisk(risks, 'R2', 'relationship_or_partner_context', 'P0 不开放正式关系或合伙人判断。');
   }
 
-  if (includesAny(intent, ['诊断', '心理', '医学', '疾病', '脑科学', '催眠', '疗愈', '症状'])) {
+  if (includesAny(intent, ['诊断', '心理', '医学', '疾病', '脑科学', '催眠', '疗愈', '症状'])
+    || parse.detectedSensitiveHints.some(hint => ['diagnosis', 'medical', 'psychological', 'brain_science_claim', 'hypnosis', 'therapy', 'trauma'].includes(hint))) {
     pushRisk(risks, 'R3', 'professional_domain_request', '医学、心理、脑科学强结论、催眠或疗愈请求必须阻断普通报告。');
   }
 
-  if (includesAny(intent, ['保证', '一定', '预测', '升学', '录取', '职业命定', 'guarantee'])) {
+  if (includesAny(intent, ['保证', '一定', '预测', '升学', '录取', '职业命定', 'guarantee'])
+    || parse.detectedSensitiveHints.includes('career_or_education_guarantee')
+    || parse.detectedSensitiveHints.includes('destiny_or_mysticism')) {
     pushRisk(risks, 'R3', 'guarantee_request', 'P0 禁止升学、职业或未来结果保证。');
+  }
+
+  if (parse.detectedSensitiveHints.includes('relationship_judgment')) {
+    pushRisk(risks, 'R2', 'relationship_decision_from_text', '文本中包含关系去留判断，P0 必须降级。');
+  }
+
+  if (parse.detectedSensitiveHints.includes('enterprise_screening') || parse.detectedSensitiveHints.includes('school_sorting')) {
+    pushRisk(risks, 'R3', 'sorting_or_screening_from_text', '文本中包含筛选、淘汰、分层或录用用途，必须阻断普通报告。');
+  }
+
+  if (parse.detectedSensitiveHints.includes('child_labeling') || parse.detectedSensitiveHints.includes('parent_blame')) {
+    pushRisk(risks, 'R2', 'labeling_or_blame_from_text', '文本中包含孩子标签化或父母责任归因，必须降级。');
   }
 
   return risks;
@@ -253,7 +360,9 @@ function assessConfidence(ctx, readability, riskLevel) {
   if (riskLevel === 'R3' || readability === 'unreadable') return 'insufficient';
   if (!ctx.consentConfirmed && needsConsent(ctx)) return 'insufficient';
   if (riskLevel === 'R2') return 'low';
+  if (ctx.parseResult.readableStatus === 'too_short') return 'low';
   if (readability === 'unknown' || ctx.userIntent === 'unknown' || ctx.userIdentity === 'unknown') return 'low';
+  if (ctx.parseResult.readableStatus === 'readable' && riskLevel === 'R0' && ctx.userIntent !== 'unknown') return 'high';
   if (readability === 'complete' && riskLevel === 'R0') return 'high';
   if (readability === 'complete' && riskLevel === 'R1') return 'high';
   if (readability === 'partial') return 'medium';
@@ -387,6 +496,7 @@ function buildResponse(payload) {
   const response = {
     ok: true,
     stage,
+    parseResult: ctx.parseResult,
     riskLevel: risk.riskLevel,
     confidence,
     outputDecision,
