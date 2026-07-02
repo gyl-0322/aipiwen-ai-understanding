@@ -41,13 +41,13 @@ const TEXT_RULES = [
   {
     level: 'R3',
     code: 'guarantee_or_determinism',
-    terms: ['保证考上', '一定考上', '一定成功', '预测命运', '前世', '改命', '天命', '命中注定'],
+    terms: ['保证考上', '保证成功', '一定考上', '一定成功', '预测命运', '前世', '改命', '天命', '命中注定', 'education_guarantee'],
     reason: 'P0 禁止升学/职业保证、命定化和玄学化表达。',
   },
   {
     level: 'R2',
     code: 'relationship_decision',
-    terms: ['该不该离婚', '能不能结婚', '适不适合结婚', '合不合适', '分手', '离婚吗'],
+    terms: ['该不该离婚', '能不能结婚', '适不适合结婚', '合不合适', '分手', '离婚吗', 'relationship_decision'],
     reason: '关系去留判断必须降级或转人工。',
   },
   {
@@ -77,7 +77,7 @@ const TEXT_RULES = [
   {
     level: 'R1',
     code: 'mild_relationship_or_career_context',
-    terms: ['沟通冲突', '职业方向', '学习方式', '自我理解', '快速读懂'],
+    terms: ['沟通冲突', '职业方向', '学习方式', '自我理解'],
     reason: '轻度关系、职业或自我理解问题可安全改写后输出。',
   },
 ];
@@ -123,6 +123,7 @@ function lower(value) {
 }
 
 function numberOrNull(value) {
+  if (value === null || value === undefined || value === '') return null;
   const n = Number(value);
   return Number.isFinite(n) ? n : null;
 }
@@ -169,7 +170,7 @@ function normalizePayload(payload) {
 function assessReadability(ctx) {
   if (!ctx.reportText) return 'unreadable';
   if (ctx.reportText.length >= 800) return 'complete';
-  if (ctx.reportText.length >= 120) return 'partial';
+  if (ctx.reportText.length >= 20) return 'partial';
   return 'unknown';
 }
 
@@ -217,7 +218,7 @@ function assessContextRisks(ctx) {
     pushRisk(risks, includesAny(intent, ['招聘', '录用', '淘汰', '筛选', '定岗']) ? 'R3' : 'R2', 'enterprise_or_team_context', '企业/团队场景不得用于筛选、淘汰、定岗或排序。');
   }
 
-  if (includesAny(`${intent} ${subject} ${relation} ${type}`, ['关系', '伴侣', '亲密', '婚姻', '合不合', '合伙人', '合作'])) {
+  if (includesAny(`${intent} ${subject} ${relation} ${type}`, ['关系', '伴侣', '亲密', '婚姻', '合不合', '合伙人', '合作', 'relationship', 'partner'])) {
     pushRisk(risks, 'R2', 'relationship_or_partner_context', 'P0 不开放正式关系或合伙人判断。');
   }
 
@@ -225,7 +226,7 @@ function assessContextRisks(ctx) {
     pushRisk(risks, 'R3', 'professional_domain_request', '医学、心理、脑科学强结论、催眠或疗愈请求必须阻断普通报告。');
   }
 
-  if (includesAny(intent, ['保证', '一定', '预测', '升学', '录取', '职业命定'])) {
+  if (includesAny(intent, ['保证', '一定', '预测', '升学', '录取', '职业命定', 'guarantee'])) {
     pushRisk(risks, 'R3', 'guarantee_request', 'P0 禁止升学、职业或未来结果保证。');
   }
 
