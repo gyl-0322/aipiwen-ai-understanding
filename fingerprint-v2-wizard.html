@@ -3,16 +3,16 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>AI皮纹天赋速测 · 向导版</title>
-<meta name="description" content="免费皮纹天赋速测，约10分钟，AI 解读十指纹路对应的先天认知方式与天赋特质。">
+<title>AI 天赋底色速测 · 向导版</title>
+<meta name="description" content="免费天赋底色速测，约10分钟，AI 解读十指纹路对应的先天认知方式与天赋特质。">
 <meta property="og:type" content="website">
-<meta property="og:title" content="AI 皮纹天赋速测 · AIPIWEN">
-<meta property="og:description" content="免费皮纹天赋速测，约10分钟，AI 解读十指纹路对应的先天认知方式与天赋特质。">
+<meta property="og:title" content="AI 天赋底色速测 · AIPIWEN">
+<meta property="og:description" content="免费天赋底色速测，约10分钟，AI 解读十指纹路对应的先天认知方式与天赋特质。">
 <meta property="og:image" content="https://www.aipiwen.cn/share/aipiwen-practitioner-card.jpg">
 <meta property="og:url" content="https://www.aipiwen.cn/fingerprint-v2-wizard.html">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="AI 皮纹天赋速测 · AIPIWEN">
-<meta name="twitter:description" content="免费皮纹天赋速测，约10分钟，AI 解读十指纹路对应的先天认知方式与天赋特质。">
+<meta name="twitter:title" content="AI 天赋底色速测 · AIPIWEN">
+<meta name="twitter:description" content="免费天赋底色速测，约10分钟，AI 解读十指纹路对应的先天认知方式与天赋特质。">
 <meta name="twitter:image" content="https://www.aipiwen.cn/share/aipiwen-practitioner-card.jpg">
 <script src="https://cdn.bootcdn.net/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdn.bootcdn.net/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -1015,12 +1015,13 @@ body {
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
       返回
     </a>
-    <h1>AI 皮纹天<em>赋</em>速测</h1>
+    <h1>AI 天赋底色速测</h1>
     <p>指尖携带的遗传密码 · 揭示与生俱来的天赋图谱</p>
   </div>
 
   <!-- PROGRESS — 7 dots -->
   <div class="progress-wrap">
+    <p style="font-size:11px;color:var(--ink-40);line-height:1.55;margin-bottom:10px;text-align:center;">本工具不做诊断，不预测未来，不给孩子贴标签；结果仅作为理解自己、孩子和沟通方式的参考。</p>
     <div class="progress-labels">
       <span id="stepLabel">第 1 步 · 共 7 步</span>
       <span id="stepName">反箕纹</span>
@@ -2188,7 +2189,7 @@ function generateReport(result) {
   <p style="font-size:12px;color:var(--ink-30);line-height:1.7;margin:0 0 8px;">${source}</p>
   <p style="font-size:11px;color:var(--ink-20);margin:0;">指纹先天形成（胎儿第13-19周）· 皮纹遗传度 h²高达0.94 · 终生不变<br>——《指纹的奥秘》《指纹无谎言》刘持平 / 《世界指纹史》[德]海因德尔</p>
 </div>
-<div class="report-section" style="border-bottom:none;"><p style="font-size:11px;color:var(--ink-20);text-align:center;">— 本报告由 AI 皮纹天赋速测生成 —<br>皮纹学仅供参考，不作为正式评估依据<br>${new Date().toLocaleString('zh-CN')}</p></div>
+<div class="report-section" style="border-bottom:none;"><p style="font-size:11px;color:var(--ink-20);text-align:center;">— 本报告由 AI 天赋底色速测生成 —<br>皮纹学仅供参考，不作为正式评估依据<br>${new Date().toLocaleString('zh-CN')}</p></div>
 `;
 }
 
@@ -2242,7 +2243,7 @@ function showResult() {
   addStep();
 }
 
-// ── 皮纹速测会话日志 ─────────────────────────────────────────────────────────
+// ── 天赋底色速测会话日志 ─────────────────────────────────────────────────────
 function _logFingerprintSession(result) {
   try {
     const sessionId = 'fp_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
@@ -2253,7 +2254,7 @@ function _logFingerprintSession(result) {
     const lCount  = d.luFingers?.size  || 0;
     const rlCount = d.rlFingers?.size  || 0;
     const xCount  = (d.xFingers?.size  || 0) + (d.xnFingers?.size || 0);
-    const summary = `皮纹速测 | 年龄:${age} | 斗:${wCount} 箕:${lCount} 反箕:${rlCount} 弧:${xCount} | 结果:${result.mainType}`;
+    const summary = `天赋底色速测 | 年龄:${age} | 斗:${wCount} 箕:${lCount} 反箕:${rlCount} 弧:${xCount} | 结果:${result.mainType}`;
     const detail  = `类型:${result.mainType} | 标签:${result.tagline} | key:${result.key}`;
     fetch('/api/log-session', {
       method: 'POST',
