@@ -68,10 +68,38 @@ const FORBIDDEN_USER_VISIBLE_TERMS = [
   '他就是不爱你',
   '报告已经证明',
   '报告一定比你更懂你',
+  '三家精华',
+  '艾尔发',
+  '359环境',
+  'P0 阶段',
 ];
 
 function userVisibleText(response) {
   return JSON.stringify(response.userVisibleOutput || {});
+}
+
+function userVisibleCopyText(response) {
+  const output = response.userVisibleOutput || {};
+  return JSON.stringify({
+    title: output.title,
+    subtitle: output.subtitle,
+    sections: output.sections,
+    cta: output.cta,
+    safetyNotice: output.safetyNotice,
+  });
+}
+
+function assertThreePartSections(response) {
+  const sections = response.userVisibleOutput.sections || [];
+  const expected = ['为什么会这样', '怎么应对', '未来可期'];
+  assertCase(sections.length === 3, 'userVisibleOutput 必须固定三段');
+  expected.forEach((heading, index) => {
+    const section = sections[index];
+    assertCase(section.heading === heading, `第 ${index + 1} 段标题必须为：${heading}`);
+    const hasBody = !!String(section.body || section.content || '').trim();
+    const hasBullets = Array.isArray(section.bullets) && section.bullets.some(Boolean);
+    assertCase(hasBody || hasBullets, `第 ${index + 1} 段必须有正文或 bullet 内容`);
+  });
 }
 
 function assertNoUnsafeEcho(response, input) {
@@ -100,15 +128,18 @@ function assertCommonDryRun(response) {
   assertCase(response.userVisibleOutput.enabled === true, 'userVisibleOutput.enabled 必须为 true');
   assertCase(response.userVisibleOutput.outputType === expectedUserVisibleOutputType(response), 'userVisibleOutput.outputType 必须匹配风险/置信度');
   assertCase(Array.isArray(response.userVisibleOutput.sections), 'userVisibleOutput.sections 必须为数组');
+  assertThreePartSections(response);
   assertCase(response.userVisibleOutput.qualityGuards && response.userVisibleOutput.qualityGuards.noDiagnosis === true, 'qualityGuards.noDiagnosis 必须为 true');
   assertCase(response.userVisibleOutput.qualityGuards.noFullReport === true, 'qualityGuards.noFullReport 必须为 true');
   assertCase(response.userVisibleOutput.meta && response.userVisibleOutput.meta.noModelCall === true, 'userVisibleOutput.meta.noModelCall 必须为 true');
-  const visible = userVisibleText(response);
+  const visible = userVisibleCopyText(response);
   for (const term of FORBIDDEN_USER_VISIBLE_TERMS) {
     assertCase(!visible.includes(term), `userVisibleOutput 不得包含禁用表达：${term}`);
   }
   assertCase(!visible.includes('Prompt Pack'), 'userVisibleOutput 不应返回 Prompt Pack 全文标识');
   assertCase(!visible.includes('你是 AIPIWEN'), 'userVisibleOutput 不应返回内部 Prompt 全文');
+  assertCase(!visible.includes('R0') && !visible.includes('R1') && !visible.includes('R2') && !visible.includes('R3'), '用户可见文案不得包含风险等级代码');
+  assertCase(!visible.includes('high') && !visible.includes('medium') && !visible.includes('low'), '用户可见文案不得包含原始置信度枚举');
   if (['R2', 'R3'].includes(response.riskLevel)) {
     assertCase(response.promptPayloadDryRun.canSendToModel === false, 'R2/R3 不允许 canSendToModel=true');
     assertCase(response.promptPayloadDryRun.payloadType !== 'quick_reading_payload', 'R2/R3 不应生成 quick_reading_payload');
@@ -302,6 +333,82 @@ const cases = [
       assertCase(response.userVisibleOutput.outputType === 'clarification_output', '信息不足应为 clarification_output');
       assertCase(['clarification_only', 'light_hint_with_questions'].includes(response.outputDecision), 'outputDecision 应进入追问或轻提示');
       assertCase(response.promptPayloadDryRun.payloadType === 'clarification_payload', 'payloadType 应为 clarification_payload');
+    },
+  },
+  {
+    name: 'custom_question_only_normal',
+    input: {
+      reportText: '',
+      customUserQuestion: '我想知道这份报告哪些地方最值得参考，平时可以怎么观察自己。',
+      reportType: 'personal',
+      userIdentity: 'self',
+      userIntent: 'quick_reading',
+      reportSubject: 'self',
+      subjectAge: 32,
+      subjectRelation: 'self',
+      consentConfirmed: true,
+    },
+    assert(response) {
+      assertCase(['R0', 'R1'].includes(response.riskLevel), '普通自定义问题不应升级到 R2/R3');
+      assertCase(['quick_reading_output', 'safe_quick_reading_output', 'clarification_output'].includes(response.userVisibleOutput.outputType), '普通自定义问题应进入快速读懂或追问');
+      assertCase(response.userVisibleOutput.meta.customUserQuestionProvided === true, '应记录 customUserQuestionProvided');
+    },
+  },
+  {
+    name: 'custom_question_with_selected_issue',
+    input: {
+      reportText: '关注问题：哪些地方需要结合现实场景观察。',
+      customUserQuestion: '孩子写作业拖拉怎么办？我想知道怎么跟他沟通。',
+      reportType: 'child',
+      userIdentity: 'parent',
+      userIntent: 'understand_child_behavior',
+      reportSubject: 'child',
+      subjectAge: 11,
+      subjectRelation: 'parent_child',
+      consentConfirmed: true,
+    },
+    assert(response) {
+      assertCase(response.riskLevel === 'R1', '孩子普通自定义问题应为 R1');
+      assertCase(response.userVisibleOutput.outputType === 'safe_quick_reading_output', '孩子普通自定义问题应安全快速读懂');
+      assertCase(!userVisibleCopyText(response).includes('孩子就是'), '不得标签化孩子');
+    },
+  },
+  {
+    name: 'custom_question_high_risk_diagnosis',
+    input: {
+      reportText: '',
+      customUserQuestion: '孩子是不是有 ADHD 或心理疾病？',
+      reportType: 'child',
+      userIdentity: 'parent',
+      userIntent: 'quick_reading',
+      reportSubject: 'child',
+      subjectAge: 10,
+      subjectRelation: 'parent_child',
+      consentConfirmed: true,
+    },
+    assert(response) {
+      assertCase(response.riskLevel === 'R3', '高风险诊断自定义问题必须 R3');
+      assertCase(response.userVisibleOutput.outputType === 'fallback_or_human_review_output', '高风险诊断自定义问题必须降级/转人工');
+      assertCase(response.promptPayloadDryRun.canSendToModel === false, '高风险诊断自定义问题不得发送模型生成');
+    },
+  },
+  {
+    name: 'custom_question_high_risk_decisions',
+    input: {
+      reportText: '',
+      customUserQuestion: '我们适不适合继续在一起？这个候选人适不适合录用？能不能保证升学？',
+      reportType: 'relationship',
+      userIdentity: 'partner',
+      userIntent: 'quick_reading',
+      reportSubject: 'partner',
+      subjectAge: 35,
+      subjectRelation: 'partner',
+      consentConfirmed: true,
+    },
+    assert(response) {
+      assertCase(['R2', 'R3'].includes(response.riskLevel), '高风险决策自定义问题必须 R2/R3');
+      assertCase(response.userVisibleOutput.outputType === 'fallback_or_human_review_output', '高风险决策自定义问题必须降级/转人工');
+      assertCase(response.promptPayloadDryRun.canSendToModel === false, '高风险决策自定义问题不得发送模型生成');
     },
   },
   {

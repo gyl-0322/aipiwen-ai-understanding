@@ -501,8 +501,8 @@ button, a, .must-item, .fp-option-card, .back-btn, .issue-chip {
     </div>
   </div>
   <div class="s3-body">
-    <div class="s2-section-label">P0 快速读懂</div>
-    <div class="p0-note">本入口只做上传报告 P0：快速读懂、必要追问、安全降级或转人工建议。不会生成完整长报告。</div>
+    <div class="s2-section-label">报告快速读懂</div>
+    <div class="p0-note">本入口只做快速读懂、必要追问、安全降级或转人工建议。不会生成完整长报告。</div>
     <div class="p0-form">
       <div class="p0-field">
         <div class="p0-label">你是谁</div>
@@ -539,8 +539,8 @@ button, a, .must-item, .fp-option-card, .back-btn, .issue-chip {
         </select>
       </div>
       <div class="p0-field">
-        <div class="p0-label">补充你最关心的问题（选填）</div>
-        <textarea id="p0-report-text" class="p0-textarea" placeholder="例如：我想先快速读懂这份报告，看看哪些地方可以作为理解自己的线索。"></textarea>
+        <div class="p0-label">报告文字或背景补充（选填）</div>
+        <textarea id="p0-report-text" class="p0-textarea" placeholder="例如：这份报告里你已经看到的关键文字、指标，或现实背景。"></textarea>
       </div>
       <label class="p0-check">
         <input type="checkbox" id="p0-consent" checked>
@@ -549,10 +549,14 @@ button, a, .must-item, .fp-option-card, .back-btn, .issue-chip {
     </div>
     <div class="s2-section-label" style="margin-top:20px;">关注问题（可选，最多 4 个）</div>
     <div class="issue-grid" id="issue-grid"></div>
+    <div class="p0-field" style="margin-top:14px;">
+      <div class="p0-label">还有其他想问的，也可以直接写</div>
+      <textarea id="p0-custom-question" class="p0-textarea" placeholder="比如：孩子写作业拖拉怎么办？我想知道怎么跟他沟通？这份报告哪些地方最值得参考？"></textarea>
+    </div>
     <div id="gen-status"></div>
   </div>
   <div class="s3-btn-wrap">
-    <button class="gen-btn" id="gen-btn">生成 P0 快速读懂 →</button>
+    <button class="gen-btn" id="gen-btn">生成快速读懂 →</button>
   </div>
 </div>
 
@@ -1184,16 +1188,18 @@ function p0BuildReportText() {
   const manual = qs('#p0-report-text').value.trim();
   const issueText = ST.selectedIssues.length ? `关注问题：${ST.selectedIssues.join('、')}。` : '';
   const engineText = ST.engineResult
-    ? `已识别皮纹总表线索：年龄 ${ST.age || '未知'}，ATD ${ST.atd || '未知'}，主类型 ${ST.engineResult.主性格类型 || '待确认'}。这些信息只作为理解线索，不作为结论。`
-    : `已上传报告资料，等待结合用户目的做 P0 快速读懂。`;
+    ? `已识别报告总表线索：年龄 ${ST.age || '未知'}，整体倾向 ${ST.engineResult.主性格类型 || '待确认'}。这些信息只作为理解线索，不作为结论。`
+    : `已上传报告资料，等待结合用户目的做快速读懂。`;
   return [manual, issueText, engineText].filter(Boolean).join('\n');
 }
 
 function p0BuildPayload() {
   const reportSubject = qs('#p0-report-subject').value;
   const userIntent = qs('#p0-user-intent').value;
+  const customUserQuestion = qs('#p0-custom-question').value.trim();
   return {
     reportText: p0BuildReportText(),
+    customUserQuestion,
     reportType: p0ReportType(reportSubject, userIntent),
     userIdentity: qs('#p0-user-identity').value,
     userIntent,
@@ -1212,8 +1218,46 @@ function p0AppendText(parent, tag, cls, text) {
   return node;
 }
 
+function p0SectionHasContent(section) {
+  return !!((section?.body || section?.content || '').trim() || (Array.isArray(section?.bullets) && section.bullets.some(Boolean)));
+}
+
+function p0DefaultSection(heading) {
+  const defaults = {
+    '为什么会这样': {
+      body: '目前可以先把它当作一个需要结合具体场景观察的理解线索，而不是对人的固定结论。',
+      bullets: ['先观察它是否在具体场景中反复出现', '如果不贴近现实，可以作为校正线索'],
+    },
+    '怎么应对': {
+      body: '先从一个小场景开始，不急着下判断。',
+      bullets: ['把问题拆成第一个可执行动作', '换一种更具体、更低压力的提问方式'],
+    },
+    '未来可期': {
+      body: '这不是定论，而是一个可以被观察、校正和发展的方向。',
+      bullets: ['后续继续观察变化', '重要问题建议结合现实反馈和人工解读'],
+    },
+  };
+  return { heading, ...(defaults[heading] || defaults['为什么会这样']) };
+}
+
+function p0NormalizeSections(sections) {
+  const source = Array.isArray(sections) ? sections : [];
+  const titles = ['为什么会这样', '怎么应对', '未来可期'];
+  return titles.map((heading, index) => {
+    const match = source.find(section => [section.heading, section.title, section.id, section.sectionType].filter(Boolean).join(' ').includes(heading))
+      || source[index]
+      || {};
+    const normalized = {
+      heading,
+      body: (match.body || match.content || '').trim(),
+      bullets: Array.isArray(match.bullets) ? match.bullets.filter(Boolean) : [],
+    };
+    return p0SectionHasContent(normalized) ? normalized : p0DefaultSection(heading);
+  });
+}
+
 function p0RenderSections(parent, sections) {
-  (sections || []).forEach(section => {
+  p0NormalizeSections(sections).forEach(section => {
     const wrap = el('div', 'p0-section');
     p0AppendText(wrap, 'h3', '', section.heading || section.title || '理解点');
     p0AppendText(wrap, 'p', '', section.body || section.content || '');
@@ -1286,7 +1330,7 @@ qs('#gen-btn').addEventListener('click', async () => {
 
   btn.disabled = true;
   btn.textContent = '正在判断…';
-  qs('#gen-status').textContent = '正在解析资料、判断风险和置信度…';
+  qs('#gen-status').textContent = '正在解析资料，并确认适合怎样安全解读…';
 
   try {
     const res = await fetch('/api/report-upload-p0', {
@@ -1300,14 +1344,14 @@ qs('#gen-btn').addEventListener('click', async () => {
     try {
       data = JSON.parse(rawText);
     } catch(e) {
-      qs('#gen-status').textContent = `❌ P0 接口返回异常（${res.status}），请稍后重试`;
+	      qs('#gen-status').textContent = `❌ 解读服务返回异常（${res.status}），请稍后重试`;
       btn.disabled = false;
       btn.textContent = '重新判断';
       return;
     }
 
     if (!data.ok) {
-      qs('#gen-status').textContent = '❌ ' + (data.error || 'P0 判断失败，请重试');
+	      qs('#gen-status').textContent = '❌ ' + (data.error || '解读判断失败，请重试');
       btn.disabled = false;
       btn.textContent = '重新判断';
       return;
@@ -1321,7 +1365,7 @@ qs('#gen-btn').addEventListener('click', async () => {
     btn.textContent = '重新判断';
   } finally {
     btn.disabled = false;
-    btn.textContent = '生成 P0 快速读懂 →';
+    btn.textContent = '生成快速读懂 →';
   }
 });
 
@@ -1480,6 +1524,17 @@ function buildReportFlipBook(sections) {
   }
 
   // ── Content slides ──────────────────────────────────────────────────
+  function safeIssuePart(body, part) {
+    const text = String(body || '').trim();
+    if (text) return text;
+    const fallback = {
+      why: '目前资料还不足以直接判断这一点，可以先观察它是否在具体场景中反复出现。这只是理解线索，不是对人的定论。',
+      how: '先从一个低风险的小动作开始：把任务拆成第一步，观察卡住的位置，再换一种更具体的提问方式。',
+      future: '这不是定论，而是一个可以被校正和发展的方向。后续可以继续观察现实反馈，必要时再做人工解读。',
+    };
+    return fallback[part] || fallback.why;
+  }
+
   sections.forEach((sec, i) => {
     const slide = el('div', 'rv-slide');
     slide.dataset.title = sec.title;
@@ -1495,15 +1550,15 @@ function buildReportFlipBook(sections) {
         <div class="fp-parts">
           <div class="fp-part">
             <div class="fp-badge"><div class="fp-badge-n">1</div><div class="fp-badge-t">为什么会这样</div></div>
-            <div class="fp-text">${formatContent(sec.why||'')}</div>
+            <div class="fp-text">${formatContent(safeIssuePart(sec.why, 'why'))}</div>
           </div>
           <div class="fp-part">
             <div class="fp-badge"><div class="fp-badge-n">2</div><div class="fp-badge-t">怎么应对</div></div>
-            <div class="fp-text">${formatContent(sec.how||'')}</div>
+            <div class="fp-text">${formatContent(safeIssuePart(sec.how, 'how'))}</div>
           </div>
           <div class="fp-part">
             <div class="fp-badge"><div class="fp-badge-n">3</div><div class="fp-badge-t">未来可期</div></div>
-            <div class="fp-text">${formatContent(sec.future||'')}</div>
+            <div class="fp-text">${formatContent(safeIssuePart(sec.future, 'future'))}</div>
           </div>
           <button class="fp-cta-btn" onclick="window.location='/child-chat.html'">
             <span>💬 ${sec.cta || '还想深聊？继续问我'}</span>
@@ -1858,10 +1913,15 @@ async function generateReportPDF(btnEl) {
       ${kws.map(k => `<span style="border:1px solid ${th.border};border-radius:20px;padding:4px 11px;font-size:11px;color:${th.acc};background:${th.card};">${k}</span>`).join('')}
     </div>` : '';
     // issue 卡片体（近白正文 + 橙色关键词）
-    function issueCard(num, titleTxt, body) {
-      if (!body) return '';
-      const bodyHtml = body
-        .replace(/\*\*(.+?)\*\*/g, `<strong style="color:${th.acc};font-weight:700;">$1</strong>`)
+	    function pdfIssueFallback(titleTxt) {
+	      if (titleTxt === '怎么应对') return '先从一个低风险的小动作开始：把任务拆成第一步，观察卡住的位置，再换一种更具体的提问方式。';
+	      if (titleTxt === '未来可期') return '这不是定论，而是一个可以被校正和发展的方向。后续可以继续观察现实反馈，必要时再做人工解读。';
+	      return '目前资料还不足以直接判断这一点，可以先观察它是否在具体场景中反复出现。这只是理解线索，不是对人的定论。';
+	    }
+	    function issueCard(num, titleTxt, body) {
+	      const safeBody = String(body || '').trim() || pdfIssueFallback(titleTxt);
+	      const bodyHtml = safeBody
+	        .replace(/\*\*(.+?)\*\*/g, `<strong style="color:${th.acc};font-weight:700;">$1</strong>`)
         .replace(/▸\s*(.+)/g, `<div style="display:flex;align-items:flex-start;gap:7px;padding:4px 0;"><span style="color:${th.acc};font-weight:700;flex-shrink:0;">▸</span><span>$1</span></div>`)
         .replace(/\n/g, '<br>');
       return `<div style="background:${th.card};border:1px solid ${th.border};border-radius:${th.r};padding:13px 15px;">
