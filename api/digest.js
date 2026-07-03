@@ -220,7 +220,7 @@ ${samplesText}
   }
 
   // ── Action 4: 全域会话分析 → 更新 global:patterns ────────────────────────
-  // 读取近7天所有 convlog 会话（含天赋底色速测、报告解读、行为分析）
+  // 读取近7天所有 convlog 会话（含皮纹速测、报告解读、行为分析）
   // AI 提炼跨页面高频模式，写入 global:patterns，自动注入全域对话
   if (action === 'analyze_convs') {
     const index = await redisGet('convlog:index') || [];
@@ -247,7 +247,7 @@ ${samplesText}
 
     const CTX_NAMES = {
       child: '亲子行为', self: '自我解读', partner: '伴侣解读',
-      business: '合伙解读', fingerprint: '天赋底色速测', report: '报告解读',
+      business: '合伙解读', fingerprint: '皮纹速测', report: '报告解读',
     };
 
     // 组装分析文本
@@ -268,7 +268,7 @@ ${sections}
 2. ...
 
 # 各模块用户特征
-- 天赋底色速测：[1句话]
+- 皮纹速测：[1句话]
 - 行为分析：[1句话]
 - 报告解读：[1句话]
 

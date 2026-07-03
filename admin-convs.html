@@ -205,7 +205,7 @@
   <div id="panel-convs" class="active">
     <div class="filters" id="filter-bar">
       <button class="filter-btn active" onclick="filterCtx('all',this)">全部</button>
-      <button class="filter-btn" onclick="filterCtx('fingerprint',this)">天赋底色速测</button>
+      <button class="filter-btn" onclick="filterCtx('fingerprint',this)">皮纹速测</button>
       <button class="filter-btn" onclick="filterCtx('child',this)">亲子行为</button>
       <button class="filter-btn" onclick="filterCtx('report',this)">报告解读</button>
       <button class="filter-btn" onclick="filterCtx('self',this)">自我</button>
@@ -329,7 +329,7 @@ function renderList(sessions) {
     list.innerHTML = '<div class="empty">还没有对话记录</div>';
     return;
   }
-  const CTX = { child:'亲子行为', self:'自我解读', partner:'伴侣解读', business:'合伙解读', fingerprint:'天赋底色速测', report:'报告解读' };
+  const CTX = { child:'亲子行为', self:'自我解读', partner:'伴侣解读', business:'合伙解读', fingerprint:'皮纹速测', report:'报告解读' };
   list.innerHTML = sessions.map(s => `
     <div class="session-card" onclick="openSession('${s.sessionId}','${s.context}','${esc(s.timeStr)}')">
       <div class="sess-head">
@@ -344,7 +344,7 @@ function renderList(sessions) {
 
 async function openSession(sid, ctx, timeStr) {
   document.getElementById('conv-modal').style.display = 'block';
-  const CTX = { child:'亲子行为', self:'自我解读', partner:'伴侣解读', business:'合伙解读', fingerprint:'天赋底色速测', report:'报告解读' };
+  const CTX = { child:'亲子行为', self:'自我解读', partner:'伴侣解读', business:'合伙解读', fingerprint:'皮纹速测', report:'报告解读' };
   const badge = document.getElementById('modal-badge');
   badge.textContent = CTX[ctx] || ctx;
   badge.className = `ctx-badge ${ctx}`;

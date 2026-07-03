@@ -4,10 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
 <title>AIPIWEN · 专属报告</title>
-<meta name="description" content="查看你的专属天赋底色报告，AI 解读基础倾向与成长参考。">
+<meta name="description" content="查看你的专属皮纹天赋报告，AI 精确解读先天认知方式与成长天赋。">
 <meta property="og:type" content="website">
 <meta property="og:title" content="AIPIWEN · 专属报告">
-<meta property="og:description" content="查看你的专属天赋底色报告，AI 解读基础倾向与成长参考。">
+<meta property="og:description" content="查看你的专属皮纹天赋报告，AI 精确解读先天认知方式与成长天赋。">
 <meta property="og:image" content="https://www.aipiwen.cn/share/aipiwen-practitioner-card.jpg">
 <meta property="og:url" content="https://www.aipiwen.cn/report-viewer">
 <meta name="twitter:card" content="summary_large_image">
@@ -373,14 +373,14 @@ html,body{height:100%;overflow:hidden;background:#060810;
 <!-- ── SHARE MODAL ── -->
 <div id="smodal">
   <div class="fp-card" id="poster-card">
-    <div class="fpc-brand">AIPIWEN · 天赋底色</div>
+    <div class="fpc-brand">AIPIWEN · 皮纹天赋</div>
     <div class="fpc-fp"><img id="poster-fp" src="" alt="" width="150" height="150"></div>
     <div class="fpc-type" id="poster-type"></div>
     <div class="fpc-hook" id="poster-hook"></div>
     <div class="fpc-tags" id="poster-tags"></div>
     <div class="fpc-hr"></div>
     <div class="fpc-foot">
-      天赋底色仅作理解参考，不诊断、不预测、不贴标签<br>
+      皮纹遗传度 <b>h²高达0.94</b> · 胎儿第13—19周形成 · 终生不变<br>
       aipiwen.cn
     </div>
   </div>
@@ -465,7 +465,7 @@ function init() {
   const tagsEl = document.getElementById('cover-tags');
   R.tags.forEach(t => { const d=document.createElement('div'); d.className='tag'; d.textContent=t; tagsEl.appendChild(d); });
   document.getElementById('cover-meta').innerHTML =
-    `报告编号 <b>${R.reportId}</b><br>生成日期 <b>${R.date}</b><br>天赋底色速测 × AI 专属报告`;
+    `报告编号 <b>${R.reportId}</b><br>生成日期 <b>${R.date}</b><br>皮纹速测 × AI 专属报告`;
 
   // Content slides
   document.getElementById('deco-fp1').src = fpSrc;
@@ -598,7 +598,7 @@ async function generateReportPDF(btnEl, slideSelector) {
       pdf.addImage(canvas.toDataURL('image/jpeg', 0.88), 'JPEG',
                    0, yOff, PW, Math.min(imgH_mm, PH));
     }
-    pdf.save('aipiwen-天赋底色报告.pdf');
+    pdf.save('aipiwen-皮纹报告.pdf');
   } catch(e) {
     alert('PDF生成失败，请稍后重试。\n' + e.message);
   } finally {
