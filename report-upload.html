@@ -142,6 +142,35 @@ html,body{height:100%;overflow:hidden;background:#060810;
   font-family:inherit;}
 .gen-btn:disabled{opacity:.5;cursor:default;}
 #gen-status{font-size:12.5px;color:var(--dim);text-align:center;margin-top:10px;}
+.p0-form{display:flex;flex-direction:column;gap:10px;margin-top:8px;}
+.p0-field{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:11px 12px;}
+.p0-label{font-size:10px;color:var(--faint);letter-spacing:.08em;text-transform:uppercase;margin-bottom:7px;}
+.p0-select,.p0-textarea{width:100%;background:rgba(255,255,255,.06);border:1px solid var(--border);
+  border-radius:10px;color:var(--text);font-size:13px;font-family:inherit;outline:none;padding:9px 10px;}
+.p0-select option{background:#1a1d24;color:var(--text);}
+.p0-textarea{min-height:84px;resize:vertical;line-height:1.7;}
+.p0-check{display:flex;gap:9px;align-items:flex-start;color:var(--dim);font-size:12.5px;line-height:1.6;}
+.p0-check input{margin-top:3px;accent-color:var(--amber);}
+.p0-note{font-size:11.5px;color:var(--faint);line-height:1.7;margin-top:4px;}
+.p0-result{padding:22px 18px 34px;color:var(--text);}
+.p0-result-top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px;}
+.p0-result-kicker{font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--amber);font-weight:700;}
+.p0-badges{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin:14px 0 18px;}
+.p0-badge{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:10px 11px;}
+.p0-badge-label{font-size:10px;color:var(--faint);margin-bottom:5px;}
+.p0-badge-value{font-size:12.5px;color:var(--text);line-height:1.45;}
+.p0-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px 15px;margin-top:12px;}
+.p0-title{font-family:Georgia,'Noto Serif SC',serif;font-size:23px;line-height:1.35;margin-bottom:8px;}
+.p0-subtitle{font-size:13px;color:var(--dim);line-height:1.75;margin-bottom:14px;}
+.p0-section{border-top:1px solid var(--border);padding-top:13px;margin-top:13px;}
+.p0-section h3{font-size:13px;color:var(--amber);margin-bottom:7px;}
+.p0-section p{font-size:13px;color:var(--dim);line-height:1.8;}
+.p0-section ul{margin:8px 0 0 18px;color:var(--dim);font-size:13px;line-height:1.8;}
+.p0-cta{margin-top:14px;border:1px solid rgba(194,105,42,.25);background:rgba(194,105,42,.08);
+  border-radius:14px;padding:12px 13px;color:var(--amber);font-size:13px;line-height:1.7;}
+.p0-safety{margin-top:12px;color:var(--faint);font-size:11.5px;line-height:1.7;}
+.p0-back{height:32px;border:1px solid var(--border);background:rgba(255,255,255,.06);
+  color:var(--dim);border-radius:9px;padding:0 11px;font-family:inherit;font-size:12px;}
 
 /* ─── SCREEN 4: REPORT (flip-book) ─── */
 #s4{padding:0;background:var(--th-bg,var(--bg));}
@@ -460,7 +489,7 @@ button, a, .must-item, .fp-option-card, .back-btn, .issue-chip {
   </div>
 </div>
 
-<!-- ── SCREEN 3: 选择问题 ── -->
+<!-- ── SCREEN 3: P0 上传报告解读 ── -->
 <div class="screen" id="s3">
   <div class="topbar">
     <button class="back-btn" id="s3-back">← 返回</button>
@@ -472,14 +501,58 @@ button, a, .must-item, .fp-option-card, .back-btn, .issue-chip {
     </div>
   </div>
   <div class="s3-body">
-    <div class="s2-section-label">必给模块（自动包含）</div>
-    <div class="must-list" id="must-list"></div>
-    <div class="s2-section-label" style="margin-top:20px;">选择你最想了解的问题（最多 4 个、至少 1 个）</div>
+    <div class="s2-section-label">P0 快速读懂</div>
+    <div class="p0-note">本入口只做上传报告 P0：快速读懂、必要追问、安全降级或转人工建议。不会生成完整长报告。</div>
+    <div class="p0-form">
+      <div class="p0-field">
+        <div class="p0-label">你是谁</div>
+        <select id="p0-user-identity" class="p0-select">
+          <option value="self">本人</option>
+          <option value="parent">家长 / 监护人</option>
+          <option value="teacher">老师 / 教育从业者</option>
+          <option value="consultant">解读师 / 咨询顾问</option>
+          <option value="partner">伴侣 / 关系当事人</option>
+          <option value="manager">管理者 / 组织负责人</option>
+        </select>
+      </div>
+      <div class="p0-field">
+        <div class="p0-label">报告对象</div>
+        <select id="p0-report-subject" class="p0-select">
+          <option value="self">本人</option>
+          <option value="child">孩子</option>
+          <option value="student">学生</option>
+          <option value="partner">伴侣 / 关系对象</option>
+          <option value="candidate">候选人 / 员工</option>
+        </select>
+      </div>
+      <div class="p0-field">
+        <div class="p0-label">这次最想解决什么</div>
+        <select id="p0-user-intent" class="p0-select">
+          <option value="quick_reading">快速读懂报告</option>
+          <option value="understand_child_behavior">理解孩子行为</option>
+          <option value="career_learning">学习 / 职业轻量建议</option>
+          <option value="diagnosis">心理或医学判断诉求（会转人工）</option>
+          <option value="relationship_decision">关系重大判断（会降级）</option>
+          <option value="hiring_screening">企业人事筛选用途（会阻断）</option>
+          <option value="student_grouping">学校学生分组用途（会阻断）</option>
+          <option value="education_guarantee">升学结果承诺诉求（会阻断）</option>
+        </select>
+      </div>
+      <div class="p0-field">
+        <div class="p0-label">补充你最关心的问题（选填）</div>
+        <textarea id="p0-report-text" class="p0-textarea" placeholder="例如：我想先快速读懂这份报告，看看哪些地方可以作为理解自己的线索。"></textarea>
+      </div>
+      <label class="p0-check">
+        <input type="checkbox" id="p0-consent" checked>
+        <span>我确认已获得报告对象本人或监护人授权。本入口只作为理解线索，不作为诊断、预测、筛选或重大决定依据。</span>
+      </label>
+    </div>
+    <div class="s2-section-label" style="margin-top:20px;">关注问题（可选，最多 4 个）</div>
     <div class="issue-grid" id="issue-grid"></div>
     <div id="gen-status"></div>
   </div>
   <div class="s3-btn-wrap">
-    <button class="gen-btn" id="gen-btn">生成专属报告 →</button>
+    <button class="gen-btn" id="gen-btn">生成 P0 快速读懂 →</button>
   </div>
 </div>
 
@@ -721,6 +794,24 @@ const ISSUE_POOL = {
     ]},
   ],
 };
+
+const P0_ISSUE_GROUPS = [
+  { group: '快速理解', items: [
+    '我想先看懂这份报告大概在讲什么',
+    '哪些地方可以作为理解自己的线索',
+    '哪些地方需要结合现实场景观察',
+  ]},
+  { group: '孩子与学习', items: [
+    '孩子最近写作业拖拉，想先理解行为背后的需要',
+    '想知道学习方式和沟通节奏可以怎么观察',
+    '希望得到不贴标签的家长沟通建议',
+  ]},
+  { group: '轻量行动', items: [
+    '我想先得到 1-2 个可以尝试的小动作',
+    '我想知道哪些结论现在不适合直接下',
+    '如果资料不足，希望先告诉我该补充什么',
+  ]},
+];
 
 function getIssueSegment(age) {
   const n = Number(age) || 0;
@@ -1004,18 +1095,10 @@ function buildIssuesScreen() {
   ST.requiredMods = REQUIRED_BY_STAGE[tier] || REQUIRED_BY_STAGE.adult;
   ST.selectedIssues = [];
 
-  // must-list
-  const mustList = qs('#must-list');
-  mustList.innerHTML = '';
-  ST.requiredMods.forEach(m => {
-    const item = el('div', 'must-item', m);
-    mustList.appendChild(item);
-  });
-
   // issue chips — 按主题分组渲染（来源：知识库 00i 规则5）
   const grid = qs('#issue-grid');
   grid.innerHTML = '';
-  const groups = ISSUE_POOL[getIssueSegment(ST.age)] || ISSUE_POOL.seg_7_12;
+  const groups = P0_ISSUE_GROUPS;
 
   function addChip(issue, container) {
     const chip = el('div', 'issue-chip', issue);
@@ -1048,78 +1131,197 @@ function buildIssuesScreen() {
 
 qs('#s3-back').addEventListener('click', () => goScreen('s2'));
 
+function p0CompletenessLabel(parseResult) {
+  const status = parseResult?.readableStatus || 'unknown';
+  const map = {
+    complete: '资料较完整',
+    partial: '资料基本可读',
+    sparse: '资料偏少',
+    empty: '资料不足',
+    unknown: '需要补充',
+  };
+  return map[status] || map.unknown;
+}
+
+function p0RiskLabel(level) {
+  return {
+    R0: '低风险：可快速读懂',
+    R1: '轻敏感：安全话术解读',
+    R2: '中高风险：安全降级',
+    R3: '高风险：转人工/专业支持',
+  }[level] || '需先判断';
+}
+
+function p0ConfidenceLabel(confidence) {
+  return {
+    high: '高：可生成快速读懂',
+    medium: '中：可生成但保留边界',
+    low: '低：先给方向或追问',
+    insufficient: '不足：需要补充信息',
+  }[confidence] || '需要补充';
+}
+
+function p0SubjectRelation(subject) {
+  return {
+    self: 'self',
+    child: 'parent_child',
+    student: 'teacher_student',
+    partner: 'partner',
+    candidate: 'candidate',
+  }[subject] || 'unknown';
+}
+
+function p0ReportType(subject, intent) {
+  if (intent === 'relationship_decision') return 'relationship';
+  if (intent === 'hiring_screening') return 'enterprise';
+  if (intent === 'student_grouping') return 'school';
+  if (subject === 'child') return 'child';
+  if (subject === 'student') return 'school';
+  return 'personal';
+}
+
+function p0BuildReportText() {
+  const manual = qs('#p0-report-text').value.trim();
+  const issueText = ST.selectedIssues.length ? `关注问题：${ST.selectedIssues.join('、')}。` : '';
+  const engineText = ST.engineResult
+    ? `已识别皮纹总表线索：年龄 ${ST.age || '未知'}，ATD ${ST.atd || '未知'}，主类型 ${ST.engineResult.主性格类型 || '待确认'}。这些信息只作为理解线索，不作为结论。`
+    : `已上传报告资料，等待结合用户目的做 P0 快速读懂。`;
+  return [manual, issueText, engineText].filter(Boolean).join('\n');
+}
+
+function p0BuildPayload() {
+  const reportSubject = qs('#p0-report-subject').value;
+  const userIntent = qs('#p0-user-intent').value;
+  return {
+    reportText: p0BuildReportText(),
+    reportType: p0ReportType(reportSubject, userIntent),
+    userIdentity: qs('#p0-user-identity').value,
+    userIntent,
+    reportSubject,
+    subjectAge: ST.age || null,
+    subjectRelation: p0SubjectRelation(reportSubject),
+    consentConfirmed: qs('#p0-consent').checked,
+    debugMode: false,
+  };
+}
+
+function p0AppendText(parent, tag, cls, text) {
+  const node = el(tag, cls);
+  node.textContent = text || '';
+  parent.appendChild(node);
+  return node;
+}
+
+function p0RenderSections(parent, sections) {
+  (sections || []).forEach(section => {
+    const wrap = el('div', 'p0-section');
+    p0AppendText(wrap, 'h3', '', section.heading || section.title || '理解点');
+    p0AppendText(wrap, 'p', '', section.body || section.content || '');
+    if (Array.isArray(section.bullets) && section.bullets.length) {
+      const ul = document.createElement('ul');
+      section.bullets.forEach(item => p0AppendText(ul, 'li', '', item));
+      wrap.appendChild(ul);
+    }
+    parent.appendChild(wrap);
+  });
+}
+
+function p0RenderResult(data) {
+  const output = data.userVisibleOutput || {};
+  const track = qs('#rv-track');
+  track.style.transform = 'translateX(0)';
+  track.innerHTML = '';
+  qs('#rv-topbar').style.display = 'none';
+  qs('#rv-botnav').style.display = 'none';
+  qs('#rv-drawer').style.display = 'none';
+
+  const slide = el('div', 'rv-slide');
+  const root = el('div', 'p0-result');
+  const top = el('div', 'p0-result-top');
+  p0AppendText(top, 'div', 'p0-result-kicker', 'REPORT UPLOAD P0');
+  const back = el('button', 'p0-back', '← 修改问题');
+  back.addEventListener('click', () => goScreen('s3'));
+  top.appendChild(back);
+  root.appendChild(top);
+
+  const badges = el('div', 'p0-badges');
+  [
+    ['资料完整度', p0CompletenessLabel(data.parseResult)],
+    ['风险判断', p0RiskLabel(data.riskLevel)],
+    ['置信度', p0ConfidenceLabel(data.confidence)],
+  ].forEach(([label, value]) => {
+    const badge = el('div', 'p0-badge');
+    p0AppendText(badge, 'div', 'p0-badge-label', label);
+    p0AppendText(badge, 'div', 'p0-badge-value', value);
+    badges.appendChild(badge);
+  });
+  root.appendChild(badges);
+
+  const card = el('div', 'p0-card');
+  p0AppendText(card, 'div', 'p0-title', output.title || '先安全读懂这份报告');
+  p0AppendText(card, 'div', 'p0-subtitle', output.subtitle || '这份内容只作为理解线索，不作为结论。');
+  p0RenderSections(card, output.sections || []);
+
+  if (output.cta && (output.cta.label || output.cta.message)) {
+    const cta = el('div', 'p0-cta');
+    p0AppendText(cta, 'strong', '', output.cta.label || '');
+    p0AppendText(cta, 'div', '', output.cta.message || '');
+    card.appendChild(cta);
+  }
+  if (Array.isArray(output.safetyNotice) && output.safetyNotice.length) {
+    const safety = el('div', 'p0-safety');
+    safety.textContent = output.safetyNotice.join(' ');
+    card.appendChild(safety);
+  }
+
+  root.appendChild(card);
+  slide.appendChild(root);
+  track.appendChild(slide);
+  RV = { cur: 0, total: 1, slides: [slide] };
+  goScreen('s4');
+}
+
 qs('#gen-btn').addEventListener('click', async () => {
   const btn = qs('#gen-btn');
 
-  // 校验：至少选 1 个问题（00i 规则：至少 1，丰俭由人不强制选满）
-  if (ST.selectedIssues.length === 0) {
-    qs('#gen-status').textContent = '请至少选 1 个你最想了解的问题';
-    setTimeout(() => qs('#gen-status').textContent = '', 2500);
-    return;
-  }
-
   btn.disabled = true;
-  btn.textContent = '正在生成…';
-  qs('#gen-status').textContent = 'AI 正在为你生成专属报告，约需 20-40 秒…';
+  btn.textContent = '正在判断…';
+  qs('#gen-status').textContent = '正在解析资料、判断风险和置信度…';
 
   try {
-    const _genVip = localStorage.getItem('aipiwen_vip') || '';
-    const _genVipHdr = _genVip ? { 'x-vip-token': _genVip } : {};
-    const res = await fetch('/api/generate-report', {
+    const res = await fetch('/api/report-upload-p0', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', ..._genVipHdr },
-      body: JSON.stringify({
-        engineResult: ST.engineResult,
-        fingers: ST.fingers,        // 十大能力 RULE-F04 计算用
-        age: ST.age,
-        name: ST.name,
-        selectedIssues: ST.selectedIssues,
-        refToken: _refToken,   // 邀请来源 token（服务端积分，去重安全）
-      }),
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(p0BuildPayload()),
     });
 
-    // 先拿文本，再尝试 JSON 解析，避免 Vercel 超时返回 HTML 时 json() 抛出被误判为网络错误
     const rawText = await res.text();
     let data;
     try {
       data = JSON.parse(rawText);
     } catch(e) {
-      // Vercel 函数超时或服务端崩溃返回了 HTML，不是 JSON
-      qs('#gen-status').textContent = `❌ 服务器超时（${res.status}），请稍等几秒再试`;
+      qs('#gen-status').textContent = `❌ P0 接口返回异常（${res.status}），请稍后重试`;
       btn.disabled = false;
-      btn.textContent = '重新生成';
+      btn.textContent = '重新判断';
       return;
     }
 
     if (!data.ok) {
-      if (data.soft) {
-        getMyInviteToken().then(tok => {
-          const inviteUrl = tok ? `https://aipiwen.cn?ref=${tok}` : 'https://aipiwen.cn';
-          qs('#gen-status').innerHTML = `今天的报告生成次数已用完。<br>明天继续使用，或 <a href="${inviteUrl}" style="color:#C2692A">邀请朋友体验</a>（每邀请1人+1次）。`;
-        }).catch(() => {
-          qs('#gen-status').innerHTML = '今天的报告生成次数已用完。<br>明天继续使用，或邀请朋友体验获得更多次数。';
-        });
-      } else {
-        qs('#gen-status').textContent = '❌ ' + (data.error || '生成失败，请重试');
-      }
+      qs('#gen-status').textContent = '❌ ' + (data.error || 'P0 判断失败，请重试');
       btn.disabled = false;
-      btn.textContent = '重新生成';
+      btn.textContent = '重新判断';
       return;
     }
 
-    buildReportFlipBook(data.sections);
-    goScreen('s4');
-    _saveReportForClient(data.sections); // 后台存档，生成客户分享链接
+    p0RenderResult(data);
   } catch(err) {
-    // 区分网络错误和渲染错误（fetch 失败 vs buildReportFlipBook 抛出）
-    const isNetErr = err.name === 'AbortError' || (err.name === 'TypeError' && err.message.includes('fetch'));
-    const msg = isNetErr
-      ? `❌ 网络连接失败，请检查网络后重试`
-      : `❌ 报告渲染出错，请重试（${err.name}: ${err.message?.slice(0,60)}）`;
-    qs('#gen-status').textContent = msg;
-    console.error('[gen-report] catch:', err.name, err.message, err.stack?.slice(0, 300));
+    qs('#gen-status').textContent = '❌ 网络连接失败，请检查网络后重试';
+    console.error('[report-upload-p0] catch:', err.name, err.message, err.stack?.slice(0, 300));
     btn.disabled = false;
-    btn.textContent = '重新生成';
+    btn.textContent = '重新判断';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '生成 P0 快速读懂 →';
   }
 });
 
