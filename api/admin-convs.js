@@ -189,7 +189,7 @@ const CONTEXT_LABELS = {
   self:        '自我解读',
   partner:     '伴侣解读',
   business:    '合伙解读',
-  fingerprint: '皮纹速测',
+  fingerprint: '天赋底色速测',
   report:      '报告解读',
 };
 
