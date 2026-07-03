@@ -43,6 +43,37 @@ function responseText(response) {
   return JSON.stringify(response);
 }
 
+const FORBIDDEN_USER_VISIBLE_TERMS = [
+  '你就是',
+  '这个孩子就是',
+  '这个人一定',
+  '天生适合',
+  '天生不适合',
+  '未来一定',
+  '父母导致',
+  '这是心理问题',
+  '这是精神问题',
+  '可以诊断为',
+  '适合录用',
+  '不适合录用',
+  '应该分班',
+  '应该淘汰',
+  '保证升学',
+  '保证成功',
+  '命中注定',
+  '这是脑科学证明',
+  '问题孩子',
+  '风险学生',
+  '你们不合适',
+  '他就是不爱你',
+  '报告已经证明',
+  '报告一定比你更懂你',
+];
+
+function userVisibleText(response) {
+  return JSON.stringify(response.userVisibleOutput || {});
+}
+
 function assertNoUnsafeEcho(response, input) {
   const serialized = responseText(response);
   const reportText = input.reportText || '';
@@ -53,13 +84,36 @@ function assertNoUnsafeEcho(response, input) {
   assertCase(!serialized.includes('你是 AIPIWEN'), '不应返回内部 Prompt 全文');
 }
 
+function expectedUserVisibleOutputType(response) {
+  if (['R2', 'R3'].includes(response.riskLevel)) return 'fallback_or_human_review_output';
+  if (['low', 'insufficient'].includes(response.confidence)) return 'clarification_output';
+  if (response.riskLevel === 'R1' && ['medium', 'high'].includes(response.confidence)) return 'safe_quick_reading_output';
+  if (response.riskLevel === 'R0' && ['medium', 'high'].includes(response.confidence)) return 'quick_reading_output';
+  return 'clarification_output';
+}
+
 function assertCommonDryRun(response) {
   assertCase(response.promptRequestDryRun && response.promptRequestDryRun.dryRunOnly === true, 'promptRequestDryRun.dryRunOnly 必须为 true');
   assertCase(response.promptPayloadDryRun && response.promptPayloadDryRun.dryRunOnly === true, 'promptPayloadDryRun.dryRunOnly 必须为 true');
   assertCase(response.humanReviewQueueDryRun && response.humanReviewQueueDryRun.dryRunOnly === true, 'humanReviewQueueDryRun.dryRunOnly 必须为 true');
+  assertCase(response.userVisibleOutput && response.userVisibleOutput.dryRunOnly === true, 'userVisibleOutput.dryRunOnly 必须为 true');
+  assertCase(response.userVisibleOutput.enabled === true, 'userVisibleOutput.enabled 必须为 true');
+  assertCase(response.userVisibleOutput.outputType === expectedUserVisibleOutputType(response), 'userVisibleOutput.outputType 必须匹配风险/置信度');
+  assertCase(Array.isArray(response.userVisibleOutput.sections), 'userVisibleOutput.sections 必须为数组');
+  assertCase(response.userVisibleOutput.qualityGuards && response.userVisibleOutput.qualityGuards.noDiagnosis === true, 'qualityGuards.noDiagnosis 必须为 true');
+  assertCase(response.userVisibleOutput.qualityGuards.noFullReport === true, 'qualityGuards.noFullReport 必须为 true');
+  assertCase(response.userVisibleOutput.meta && response.userVisibleOutput.meta.noModelCall === true, 'userVisibleOutput.meta.noModelCall 必须为 true');
+  const visible = userVisibleText(response);
+  for (const term of FORBIDDEN_USER_VISIBLE_TERMS) {
+    assertCase(!visible.includes(term), `userVisibleOutput 不得包含禁用表达：${term}`);
+  }
+  assertCase(!visible.includes('Prompt Pack'), 'userVisibleOutput 不应返回 Prompt Pack 全文标识');
+  assertCase(!visible.includes('你是 AIPIWEN'), 'userVisibleOutput 不应返回内部 Prompt 全文');
   if (['R2', 'R3'].includes(response.riskLevel)) {
     assertCase(response.promptPayloadDryRun.canSendToModel === false, 'R2/R3 不允许 canSendToModel=true');
     assertCase(response.promptPayloadDryRun.payloadType !== 'quick_reading_payload', 'R2/R3 不应生成 quick_reading_payload');
+    assertCase(response.userVisibleOutput.outputType === 'fallback_or_human_review_output', 'R2/R3 用户可见输出必须为 fallback_or_human_review_output');
+    assertCase(!['quick_reading_output', 'safe_quick_reading_output'].includes(response.userVisibleOutput.outputType), 'R2/R3 不得出现 quick reading 用户可见类型');
   }
   if (response.riskLevel === 'R3') {
     assertCase(response.humanReviewQueueDryRun.shouldCreateTicket === true, 'R3 必须 shouldCreateTicket=true');
@@ -82,6 +136,7 @@ const cases = [
     assert(response) {
       assertCase(response.riskLevel === 'R0', 'riskLevel 应为 R0');
       assertCase(['medium', 'high'].includes(response.confidence), 'confidence 应为 medium/high');
+      assertCase(response.userVisibleOutput.outputType === 'quick_reading_output', 'R0 普通样本应为 quick_reading_output');
       assertCase(response.promptPayloadDryRun.canSendToModel === true, '应允许 dry-run 生成 quick reading payload');
       assertCase(response.humanReviewQueueDryRun.shouldCreateTicket === false, '普通个人报告不应创建工单');
     },
@@ -101,6 +156,9 @@ const cases = [
     assert(response) {
       assertCase(response.riskLevel === 'R1', 'riskLevel 应为 R1');
       assertCase(response.promptPlan.mode === 'safe_quick_reading', 'promptPlan.mode 应为 safe_quick_reading');
+      assertCase(response.userVisibleOutput.outputType === 'safe_quick_reading_output', 'R1 孩子样本应为 safe_quick_reading_output');
+      assertCase(!userVisibleText(response).includes('孩子就是'), '未成年人样本不得标签化孩子');
+      assertCase(!userVisibleText(response).includes('父母导致'), '未成年人样本不得归因父母');
       assertCase(response.promptPayloadDryRun.canSendToModel === true, 'R1 安全快速读懂应允许 dry-run payload');
       assertCase(response.promptPayloadDryRun.safetyInstructions.includes('不要标签化孩子'), '需包含不要标签化孩子');
       assertCase(response.promptPayloadDryRun.safetyInstructions.includes('不要归因父母责任'), '需包含不要归因父母责任');
@@ -139,6 +197,10 @@ const cases = [
     },
     assert(response) {
       assertCase(['R2', 'R3'].includes(response.riskLevel), '关系去留应为 R2/R3');
+      assertCase(response.userVisibleOutput.outputType === 'fallback_or_human_review_output', '关系去留应为 fallback_or_human_review_output');
+      assertCase(!userVisibleText(response).includes('是否适合继续'), '关系去留不得出现是否适合继续');
+      assertCase(!userVisibleText(response).includes('应该分手'), '关系去留不得出现应该分手');
+      assertCase(!userVisibleText(response).includes('你们不合适'), '关系去留不得出现关系定论');
       assertCase(response.promptPayloadDryRun.canSendToModel === false, '关系去留不得生成模型 payload');
       assertCase(response.humanReviewQueueDryRun.ticketType === 'relationship_review', 'ticketType 应为 relationship_review');
     },
@@ -157,6 +219,9 @@ const cases = [
     },
     assert(response) {
       assertCase(response.riskLevel === 'R3', '招聘筛选应为 R3');
+      assertCase(response.userVisibleOutput.outputType === 'fallback_or_human_review_output', '招聘筛选应为 fallback_or_human_review_output');
+      assertCase(!userVisibleText(response).includes('适合录用'), '企业样本不得出现录用建议');
+      assertCase(!userVisibleText(response).includes('淘汰'), '企业样本不得出现淘汰建议');
       assertCase(response.promptPayloadDryRun.canSendToModel === false, '招聘筛选不得发送模型生成');
       assertCase(response.humanReviewQueueDryRun.ticketType === 'enterprise_school_review', 'ticketType 应为 enterprise_school_review');
     },
@@ -175,6 +240,9 @@ const cases = [
     },
     assert(response) {
       assertCase(response.riskLevel === 'R3', '学校分层应为 R3');
+      assertCase(response.userVisibleOutput.outputType === 'fallback_or_human_review_output', '学校分层应为 fallback_or_human_review_output');
+      assertCase(!userVisibleText(response).includes('分班'), '学校样本不得出现分班建议');
+      assertCase(!userVisibleText(response).includes('筛选建议'), '学校样本不得出现筛选建议');
       assertCase(response.promptPayloadDryRun.canSendToModel === false, '学校分层不得发送模型生成');
       assertCase(response.humanReviewQueueDryRun.ticketType === 'enterprise_school_review', 'ticketType 应为 enterprise_school_review');
     },
@@ -193,6 +261,9 @@ const cases = [
     },
     assert(response) {
       assertCase(['R2', 'R3'].includes(response.riskLevel), '升学保证应为 R2/R3');
+      assertCase(response.userVisibleOutput.outputType === 'fallback_or_human_review_output', '升学保证应为 fallback_or_human_review_output');
+      assertCase(!userVisibleText(response).includes('保证成功'), '升学保证样本不得出现保证成功');
+      assertCase(!userVisibleText(response).includes('保证升学'), '升学保证样本不得出现保证升学');
       assertCase(response.promptPayloadDryRun.canSendToModel === false, '升学保证不得发送模型生成');
       assertCase(response.promptPayloadDryRun.safetyInstructions.includes('不要输出升学/职业保证'), '需包含不要输出升学/职业保证');
     },
@@ -228,6 +299,7 @@ const cases = [
     },
     assert(response) {
       assertCase(['low', 'insufficient'].includes(response.confidence), 'confidence 应为 low/insufficient');
+      assertCase(response.userVisibleOutput.outputType === 'clarification_output', '信息不足应为 clarification_output');
       assertCase(['clarification_only', 'light_hint_with_questions'].includes(response.outputDecision), 'outputDecision 应进入追问或轻提示');
       assertCase(response.promptPayloadDryRun.payloadType === 'clarification_payload', 'payloadType 应为 clarification_payload');
     },
@@ -281,6 +353,7 @@ const cases = [
     },
     assert(response, input) {
       assertCase(['R2', 'R3'].includes(response.riskLevel), '隐私保护样本应为 R2/R3');
+      assertCase(response.userVisibleOutput.outputType === 'fallback_or_human_review_output', '隐私保护样本应为 fallback_or_human_review_output');
       assertCase(response.promptPayloadDryRun.payload.reportContext.reportTextExcerpt === 'omitted_due_to_risk', 'R2/R3 reportTextExcerpt 应为 omitted_due_to_risk');
       assertCase(!JSON.stringify(response.humanReviewQueueDryRun).includes(input.reportText), 'humanReviewQueueDryRun 不得包含完整 reportText');
     },
