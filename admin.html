@@ -227,7 +227,7 @@
   <!-- Growth Dashboard -->
   <div class="section-title">增长漏斗 &amp; 类型表现</div>
   <div id="growth-panel-wrap">
-    <div class="no-growth">暂无追踪数据<br><small>用户完成皮纹测评后，转化漏斗数据将出现在这里</small></div>
+    <div class="no-growth">暂无追踪数据<br><small>用户完成天赋底色速测后，转化漏斗数据将出现在这里</small></div>
   </div>
 
   <!-- Analytics & Retention Dashboard -->
@@ -549,7 +549,7 @@ async function renderGrowthDashboard() {
     : '⚠️ 无法连接服务器';
 
   if (totalPageOpen === 0) {
-    wrap.innerHTML = `<div class="no-growth">${kvStatus}<br>暂无追踪数据<br><small>用户完成皮纹测评后，漏斗数据将出现在这里</small></div>`;
+    wrap.innerHTML = `<div class="no-growth">${kvStatus}<br>暂无追踪数据<br><small>用户完成天赋底色速测后，漏斗数据将出现在这里</small></div>`;
     return;
   }
 

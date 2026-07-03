@@ -662,7 +662,7 @@ if (_mode === 'report') {
   // 等页面渲染完毕后触发，避免 submitBehavior 找不到 DOM
   window.addEventListener('DOMContentLoaded', () => {
     const ta = document.getElementById('behavior-input');
-    if (ta) ta.value = '我刚看完了我的皮纹报告，想继续深入了解我的天赋特征';
+    if (ta) ta.value = '我刚看完了我的天赋底色报告，想继续深入了解我的基础倾向';
     // 隐藏年龄选择行（年龄已在报告摘要里）
     const ageRow = document.getElementById('age-row');
     if (ageRow) ageRow.style.display = 'none';
