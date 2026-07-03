@@ -2,7 +2,9 @@
 
 版本：P0.7
 状态：本地自动化 dry-run 测试矩阵
-适用范围：`api/report-upload-p0.js`
+适用范围：`lib/report-upload-p0-dryrun.js`
+
+当前为非部署 dry-run 模块，不是生产 API route；后续进入真实 P0 API 时，再决定是否合并到现有 API 或调整部署方案。
 
 ## 1. P0.7 目标
 
@@ -27,12 +29,12 @@ P0.7 的目标是把 P0.1-P0.6 期间的手工样本验证固化为本地自动�
 scripts/test-report-upload-p0.js
 ```
 
-脚本使用 Node.js 标准库，不引入新依赖，不启动长期服务，直接模拟 req/res 调用 `api/report-upload-p0.js` 导出的 handler。
+脚本使用 Node.js 标准库，不引入新依赖，不启动长期服务，直接模拟 req/res 调用 `lib/report-upload-p0-dryrun.js` 导出的 handler。
 
 ## 3. 如何运行
 
 ```bash
-node --check api/report-upload-p0.js
+node --check lib/report-upload-p0-dryrun.js
 node --check scripts/test-report-upload-p0.js
 node scripts/test-report-upload-p0.js
 ```
@@ -109,4 +111,3 @@ node scripts/test-report-upload-p0.js
 - 不代表生产验收全部完成。
 
 后续进入真实上传或真实 AI dry-run 前，应继续扩展样本矩阵，加入更多正向样本、高风险负向样本、授权缺失样本、文件异常样本和 Prompt 失败降级样本。
-

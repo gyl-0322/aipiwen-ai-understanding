@@ -1,13 +1,14 @@
 # AIPIWEN Report Upload P0 API 草稿审阅意见
 
 版本：V0.1  
-审阅对象：`api/report-upload-p0.js`  
+审阅对象：`lib/report-upload-p0-dryrun.js`  
+当前为非部署 dry-run 模块，不是生产 API route；后续进入真实 P0 API 时，再决定是否合并到现有 API 或调整部署方案。  
 审阅结论：建议暂时保留，但必须等 V1.0 规则冻结包完成后再决定是否继续改造和提交。  
 处理建议分类：B. 可保留，但必须等 V1.0 规则冻结包完成后再改。
 
 ## 1. 文件定位
 
-`api/report-upload-p0.js` 是一个未跟踪的上传报告 P0 API 草稿，文件头部明确标注为“上传报告 P0 决策 API（rules/mock 版）”。
+`lib/report-upload-p0-dryrun.js` 是一个未跟踪的上传报告 P0 API 草稿，文件头部明确标注为“上传报告 P0 决策 API（rules/mock 版）”。
 
 它不是 Report OS 文档，不是 V1.0 规则冻结包，也不是完整报告生成系统。它更像是把 P0 决策规则提前写成了一个最小后端接口草稿。
 
@@ -233,7 +234,7 @@
 
 ## 12. 最终处理建议
 
-`api/report-upload-p0.js` 下一步建议：保留，但等 V1.0 规则冻结包完成后再处理。
+`lib/report-upload-p0-dryrun.js` 下一步建议：保留，但等 V1.0 规则冻结包完成后再处理。
 
 不建议现在删除。  
 不建议现在 commit。  
@@ -242,4 +243,3 @@
 不建议把它和 docs 审阅意见混入同一个提交。  
 
 如果下一轮要继续推进，建议先完成 V1.0 P0 运行规则冻结包，再开一个明确的代码阶段任务，对该 API 草稿做“是否采用、如何改造、如何测试”的工程审查。
-

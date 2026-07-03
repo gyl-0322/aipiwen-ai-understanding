@@ -1,5 +1,5 @@
 const { Readable } = require('stream');
-const handler = require('../api/report-upload-p0.js');
+const handler = require('../lib/report-upload-p0-dryrun.js');
 
 function mockReq(body) {
   const req = Readable.from([JSON.stringify(body)]);

@@ -14,7 +14,7 @@ V1.0 是上传报告 P0 的运行规则冻结文件。它的目标是把 Report 
 
 后续代码阶段必须以本文件为最高优先级依据。当本文件与 P0 实施方案、API 草稿或早期工程设想不一致时，以本文件为准。
 
-`AIPIWEN_ReportUpload_P0_实施方案.md` 只能作为代码实施参考，不能高于本文件。`api/report-upload-p0.js` 只能作为 mock/rules 草稿参考，不能高于本文件。
+`AIPIWEN_ReportUpload_P0_实施方案.md` 只能作为代码实施参考，不能高于本文件。`lib/report-upload-p0-dryrun.js` 只能作为 mock/rules dry-run 模块参考，不能高于本文件；当前不是生产 API route，后续进入真实 P0 API 时再决定是否合并到现有 API 或调整部署方案。
 
 本文件不定义页面设计、不写代码、不做商业包装、不扩大产品能力。
 
@@ -33,7 +33,7 @@ Report OS V0.1-V0.9 已完成第一阶段报告底座建设，并已在真实产
 | P0 实施方案 | 未跟踪草稿 | 保留为后续代码实施参考，不全文纳入 V1.0 |
 | P0 实施方案审阅意见 | 已新增草稿 | 作为取舍依据 |
 | API 草稿审阅意见 | 已新增草稿 | 作为代码阶段前置条件依据 |
-| `api/report-upload-p0.js` | 未跟踪 mock/rules 草稿 | V1.0 后再决定是否采用或改造 |
+| `lib/report-upload-p0-dryrun.js` | 非部署 mock/rules dry-run 模块 | V1.0 后再决定是否采用、合并到现有 API 或调整部署方案 |
 | Schema 目录 | 已确认 | 真实目录为 `docs/aipiwen_report_system/08_schema_结构化规则/` |
 | Prompt Pack | 已完成 | 后续按拆分 Prompt 调用，不使用单一大 Prompt |
 | Test Cases | 已完成 | P0 上线前必须跑正向、反向和风险矩阵 |
@@ -485,7 +485,7 @@ P0 上线前必须跑以下测试：
 
 ## 18. API 草稿进入代码阶段前的前置条件
 
-`api/report-upload-p0.js` 后续可以保留为参考，但必须等 V1.0 后再改。
+`lib/report-upload-p0-dryrun.js` 后续可以保留为参考，但必须等 V1.0 后再改。
 
 进入代码阶段前必须补齐：
 
@@ -534,7 +534,7 @@ Obsidian 是长期知识矿山，不在 P0 前全量接入。
 1. 完成 V1.0 规则冻结包。
 2. 审阅并决定是否提交 P0 实施方案和两个审阅意见。
 3. 冻结 Schema / Prompt / Test Case 对齐清单。
-4. 再进入 `api/report-upload-p0.js` 代码阶段。
+4. 再进入 `lib/report-upload-p0-dryrun.js` 代码阶段。
 5. 本地测试。
 6. 样本验收。
 7. 人工复核。
@@ -554,4 +554,3 @@ Report OS V1.0 P0 的核心不是“生成更完整报告”，而是让系统�
 P0 可以做快速读懂和轻量建议，但必须把风险、置信度、用户目的、授权和输出边界放在生成之前。
 
 后续任何代码改造，如果绕过本文件定义的判断链路，直接从上传内容进入完整报告生成，都应视为不符合 Report OS V1.0 P0。
-

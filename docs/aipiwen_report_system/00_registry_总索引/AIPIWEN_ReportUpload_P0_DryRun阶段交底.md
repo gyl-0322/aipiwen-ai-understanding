@@ -29,10 +29,11 @@ Report Upload P0 已完成规则冻结、mock API、文本解析、Prompt 编排
 
 ## 3. 当前 API 定位
 
-`api/report-upload-p0.js` 当前是：
+`lib/report-upload-p0-dryrun.js` 当前是：
 
 - JSON-only。
 - rules / mock / dry-run。
+- 非部署 dry-run 模块，不是生产 API route。
 - 不接真实 AI。
 - 不接 OpenAI / Claude / Gemini 或任何模型 API。
 - 不接真实上传。
@@ -41,7 +42,7 @@ Report Upload P0 已完成规则冻结、mock API、文本解析、Prompt 编排
 - 不接 Obsidian。
 - 不代表生产服务。
 
-它的作用是验证 Report OS V1.0 P0 的最小运行规则，不是最终上传报告接口。后续生产化必须重新补齐鉴权、CORS、限流、真实解析、日志脱敏、人工复核后台和完整测试矩阵。
+它的作用是验证 Report OS V1.0 P0 的最小运行规则，不是最终上传报告接口。后续进入真实 P0 API 时，再决定是否合并到现有 API 或调整部署方案；生产化必须重新补齐鉴权、CORS、限流、真实解析、日志脱敏、人工复核后台和完整测试矩阵。
 
 ## 4. 当前 dry-run 链路
 
@@ -165,7 +166,7 @@ R2 / R3 不进入 quick reading 生成路径。涉及医学、心理、关系去
 push / PR 前必须检查：
 
 - `git status --short` 干净，或只包含明确要提交的文件。
-- `node --check api/report-upload-p0.js` 通过。
+- `node --check lib/report-upload-p0-dryrun.js` 通过。
 - 样本测试通过。
 - 无页面改动。
 - 无 deploy。
@@ -190,4 +191,3 @@ push / PR 前必须检查：
 - 不要在未完成鉴权、限流、CORS 前上线。
 - 不要在日志、debug、payload、工单中保存或返回原文全文。
 - 不要输出医学/心理诊断、脑科学强结论、招聘筛选、学生分层、升学/职业保证或关系去留判断。
-

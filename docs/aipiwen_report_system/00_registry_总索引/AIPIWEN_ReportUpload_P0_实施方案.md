@@ -588,7 +588,8 @@ P0 代码改造必须可快速回滚。
 
 最小回滚命令思路：
 
-- 本地阶段：`git restore report-upload.html api/report-upload-p0.js`
+- 本地阶段：`git restore report-upload.html lib/report-upload-p0-dryrun.js`
+  - `lib/report-upload-p0-dryrun.js` 当前为非部署 dry-run 模块，不是生产 API route；后续进入真实 P0 API 时，再决定是否合并到现有 API 或调整部署方案。
 - 已 commit 阶段：`git revert <P0_COMMIT_HASH>`
 
 注意：实际回滚前必须先查看 `git status`，避免误伤用户未提交改动。
@@ -646,4 +647,3 @@ P0 代码改造必须可快速回滚。
 - push
 - deploy
 - commit
-
