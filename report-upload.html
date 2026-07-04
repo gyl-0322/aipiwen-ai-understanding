@@ -1788,8 +1788,43 @@ async function generateReportPDF(btnEl) {
     });
     pages.push(buildFinal(String(pages.length + 1).padStart(2,'0')));
 
+    let hasPdfPage = false;
+    const addPdfPage = () => {
+      if (hasPdfPage) pdf.addPage([PW,PH], 'portrait');
+      hasPdfPage = true;
+    };
+
+    function addCanvasToPdfPages(canvas) {
+      const pagePxH = Math.floor(canvas.width * PH / PW);
+      if (canvas.height <= pagePxH) {
+        addPdfPage();
+        const imgH_mm = (canvas.height / canvas.width) * PW;
+        const yOff = Math.max(0, (PH - imgH_mm) / 2);
+        pdf.addImage(canvas.toDataURL('image/jpeg',0.92),'JPEG', 0,yOff, PW, imgH_mm);
+        return;
+      }
+
+      let y = 0;
+      const continuationTopPad = Math.round(canvas.width * 10 / PW);
+      while (y < canvas.height) {
+        const topPad = y === 0 ? 0 : continuationTopPad;
+        const sliceH = Math.min(pagePxH - topPad, canvas.height - y);
+        const slice = document.createElement('canvas');
+        slice.width = canvas.width;
+        slice.height = topPad + sliceH;
+        const ctx = slice.getContext('2d');
+        ctx.fillStyle = th.bg;
+        ctx.fillRect(0, 0, slice.width, slice.height);
+        ctx.drawImage(canvas, 0, y, canvas.width, sliceH, 0, topPad, canvas.width, sliceH);
+
+        addPdfPage();
+        const imgH_mm = (sliceH / canvas.width) * PW;
+        pdf.addImage(slice.toDataURL('image/jpeg',0.92),'JPEG', 0,0, PW, imgH_mm);
+        y += sliceH;
+      }
+    }
+
     for (let i = 0; i < pages.length; i++) {
-      if (i > 0) pdf.addPage([PW,PH],'portrait');
       renderDiv.innerHTML = pages[i];
       // 等待图片加载完再截图
       await Promise.all([...renderDiv.querySelectorAll('img')].map(img =>
@@ -1800,9 +1835,7 @@ async function generateReportPDF(btnEl) {
       const canvas = await html2canvas(renderDiv, {
         backgroundColor: th.bg, scale:2, useCORS:true, logging:false, width:390
       });
-      const imgH_mm = (canvas.height / canvas.width) * PW;
-      const yOff = Math.max(0, (PH - Math.min(imgH_mm,PH)) / 2);
-      pdf.addImage(canvas.toDataURL('image/jpeg',0.92),'JPEG', 0,yOff, PW, Math.min(imgH_mm,PH));
+      addCanvasToPdfPages(canvas);
     }
 
     // 手机浏览器 blob URL 会导致页面跳转，用 <a download> 触发
