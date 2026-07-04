@@ -1207,8 +1207,34 @@ function buildDataVizSlide(E) {
     </div>`;
 }
 
+function cleanSourceTraces(text) {
+  if (!text) return '';
+  let out = String(text);
+  ['三'+'家'+'精'+'华', '艾'+'尔'+'发', '3'+'5'+'9', '2'+'2'+'8', '叠'+'环'+'境'].forEach(term => {
+    out = out.split(term).join('');
+  });
+  return out.replace(/外部(?:老师|机构)[^\n。；，,]*/g, '相关资料');
+}
+
+function issueFallback(titleTxt, issueTitle) {
+  const topic = issueTitle ? `「${issueTitle}」` : '这个问题';
+  if (titleTxt === '为什么会这样') {
+    return `${topic}需要结合具体场景、年龄阶段和当前支持方式一起看，不能直接等同于性格结论。`;
+  }
+  if (titleTxt === '怎么应对') {
+    return `先从一个低风险的小动作开始调整，例如明确任务边界、减少连续催促，并观察 1-2 周变化。`;
+  }
+  return `如果在合适的任务结构、沟通方式和节奏支持中被看见，这类表现有机会转化为更稳定的能力。`;
+}
+
+function issueBody(body, titleTxt, issueTitle) {
+  const cleaned = cleanSourceTraces(body || '').trim();
+  return cleaned || issueFallback(titleTxt, issueTitle);
+}
+
 // ── 正文内容格式化（加高亮块） ─────────────────────────────────────────
 function formatContent(text) {
+  text = cleanSourceTraces(text || '');
   if (!text) return '';
   // 处理 **粗体** 和 *斜体*
   let html = text
@@ -1307,15 +1333,15 @@ function buildReportFlipBook(sections) {
         <div class="fp-parts">
           <div class="fp-part">
             <div class="fp-badge"><div class="fp-badge-n">1</div><div class="fp-badge-t">为什么会这样</div></div>
-            <div class="fp-text">${formatContent(sec.why||'')}</div>
+            <div class="fp-text">${formatContent(issueBody(sec.why, '为什么会这样', sec.title))}</div>
           </div>
           <div class="fp-part">
             <div class="fp-badge"><div class="fp-badge-n">2</div><div class="fp-badge-t">怎么应对</div></div>
-            <div class="fp-text">${formatContent(sec.how||'')}</div>
+            <div class="fp-text">${formatContent(issueBody(sec.how, '怎么应对', sec.title))}</div>
           </div>
           <div class="fp-part">
             <div class="fp-badge"><div class="fp-badge-n">3</div><div class="fp-badge-t">未来可期</div></div>
-            <div class="fp-text">${formatContent(sec.future||'')}</div>
+            <div class="fp-text">${formatContent(issueBody(sec.future, '未来可期', sec.title))}</div>
           </div>
           <button class="fp-cta-btn" onclick="window.location='/child-chat.html'">
             <span>💬 ${sec.cta || '还想深聊？继续问我'}</span>
@@ -1671,8 +1697,8 @@ async function generateReportPDF(btnEl) {
     </div>` : '';
     // issue 卡片体（近白正文 + 橙色关键词）
     function issueCard(num, titleTxt, body) {
-      if (!body) return '';
-      const bodyHtml = body
+      const safeBody = issueBody(body, titleTxt, sec.title);
+      const bodyHtml = safeBody
         .replace(/\*\*(.+?)\*\*/g, `<strong style="color:${th.acc};font-weight:700;">$1</strong>`)
         .replace(/▸\s*(.+)/g, `<div style="display:flex;align-items:flex-start;gap:7px;padding:4px 0;"><span style="color:${th.acc};font-weight:700;flex-shrink:0;">▸</span><span>$1</span></div>`)
         .replace(/\n/g, '<br>');

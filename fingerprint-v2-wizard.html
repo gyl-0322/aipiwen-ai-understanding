@@ -1535,9 +1535,9 @@ body {
 
     <!-- Lead magnet -->
     <div class="lead-box">
-      <h3>还有问题？直接问顾问</h3>
-      <div class="lead-sub">选兴趣班、设计学习环境、如何和孩子沟通——顾问结合你的天赋类型给出具体建议。</div>
-      <a class="kfid-btn" href="javascript:void(0)" onclick="wecomeClick(event)">💬 点击联系企业微信顾问</a>
+      <h3>还有问题？直接问天赋指导师</h3>
+      <div class="lead-sub">选兴趣班、设计学习环境、如何和孩子沟通——天赋指导师结合你的天赋类型给出具体建议。</div>
+      <a class="kfid-btn" href="https://work.weixin.qq.com/kfid/kfc6ce446e6e057c683" target="_blank" rel="noopener" onclick="wecomeClick(event, this.href)">💬 点击联系天赋指导师</a>
     </div>
 
     <div class="result-actions">
@@ -2499,20 +2499,27 @@ function showToast(msg, duration) {
   el._t = setTimeout(() => el.classList.remove('show'), duration || 2800);
 }
 
-// ── 企微点击：先复制天赋类型到剪贴板，再跳转 ──────────────────────
-// 微信内置浏览器用 weixin:// 深链接直接打开客服，省去"要打开微信吗"中间弹窗
+// ── 联系点击：先复制天赋类型到剪贴板，再跳转 ──────────────────────
 const WECOM_KFID = 'kfc6ce446e6e057c683';
-function wecomeClick(e) {
+function wecomeClick(e, href) {
   if (e) e.preventDefault();
   const r = window._currentResult || {};
-  if (window.GT) GT.track('wecom_click', { type: r.key || '' });
+  if (window.GT) window.GT.track('wecom_click', { type: r.key || '' });
   const msg = `您好！我刚完成AIPIWEN天赋底色测评，我的天赋类型是【${r.mainType || ''}】（${r.tagline || ''}），想了解孩子的成长方案。`;
   try {
-    navigator.clipboard.writeText(msg).then(() => {
-      showToast('✓ 已复制天赋结果，到企微直接粘贴给顾问即可');
-    }).catch(() => {});
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(msg).then(() => {
+        showToast('✓ 已复制天赋结果，可直接粘贴给天赋指导师');
+      }).catch(() => {});
+    }
   } catch (e) {}
-  window.open('https://work.weixin.qq.com/kfid/' + WECOM_KFID, '_blank');
+  const url = href || ('https://work.weixin.qq.com/kfid/' + WECOM_KFID);
+  try {
+    const opened = window.open(url, '_blank', 'noopener');
+    if (!opened) window.location.href = url;
+  } catch (err) {
+    window.location.href = url;
+  }
 }
 </script>
 <script src="js/growth-tracker.js"></script>
