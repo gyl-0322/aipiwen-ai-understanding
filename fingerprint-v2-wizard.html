@@ -3,16 +3,16 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>AI皮纹天赋速测 · 向导版</title>
-<meta name="description" content="免费皮纹天赋速测，约10分钟，AI 解读十指纹路对应的先天认知方式与天赋特质。">
+<title>AI天赋底色速测 · 向导版</title>
+<meta name="description" content="免费天赋底色速测，约10分钟，AI 解读十指纹路对应的先天认知方式与天赋特质。">
 <meta property="og:type" content="website">
-<meta property="og:title" content="AI 皮纹天赋速测 · AIPIWEN">
-<meta property="og:description" content="免费皮纹天赋速测，约10分钟，AI 解读十指纹路对应的先天认知方式与天赋特质。">
+<meta property="og:title" content="AI 天赋底色速测 · AIPIWEN">
+<meta property="og:description" content="免费天赋底色速测，约10分钟，AI 解读十指纹路对应的先天认知方式与天赋特质。">
 <meta property="og:image" content="https://www.aipiwen.cn/share/aipiwen-practitioner-card.jpg">
 <meta property="og:url" content="https://www.aipiwen.cn/fingerprint-v2-wizard.html">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="AI 皮纹天赋速测 · AIPIWEN">
-<meta name="twitter:description" content="免费皮纹天赋速测，约10分钟，AI 解读十指纹路对应的先天认知方式与天赋特质。">
+<meta name="twitter:title" content="AI 天赋底色速测 · AIPIWEN">
+<meta name="twitter:description" content="免费天赋底色速测，约10分钟，AI 解读十指纹路对应的先天认知方式与天赋特质。">
 <meta name="twitter:image" content="https://www.aipiwen.cn/share/aipiwen-practitioner-card.jpg">
 <script src="https://cdn.bootcdn.net/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdn.bootcdn.net/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -1501,7 +1501,7 @@ body {
     <!-- 返回按钮 -->
     <button class="btn-back" onclick="goBack('s7')" style="margin-bottom:8px;">← 返回</button>
     <div class="result-reveal">
-      <div class="result-label">AI 皮纹天赋分析</div>
+      <div class="result-label">AI 天赋底色分析</div>
       <div class="result-type" id="resultType">认知型 W</div>
       <div class="result-tagline" id="resultTagline">主见权威 · 好奇心强 · 探索型</div>
       <div id="upgradeHint" style="display:none;margin-top:8px;padding:8px 12px;background:rgba(255,180,0,.12);border-left:3px solid #f0a500;border-radius:6px;font-size:12px;color:#a07000;line-height:1.5;"></div>
@@ -1561,7 +1561,7 @@ body {
     <div class="fp-card-header">
       <div>
         <div class="fp-card-brand-name">AIPIWEN</div>
-        <div class="fp-card-brand-sub">皮纹天赋分析</div>
+        <div class="fp-card-brand-sub">天赋底色分析</div>
       </div>
       <div class="fp-card-report">
         <div class="fp-card-report-label">测评报告</div>
@@ -2188,7 +2188,7 @@ function generateReport(result) {
   <p style="font-size:12px;color:var(--ink-30);line-height:1.7;margin:0 0 8px;">${source}</p>
   <p style="font-size:11px;color:var(--ink-20);margin:0;">指纹先天形成（胎儿第13-19周）· 皮纹遗传度 h²高达0.94 · 终生不变<br>——《指纹的奥秘》《指纹无谎言》刘持平 / 《世界指纹史》[德]海因德尔</p>
 </div>
-<div class="report-section" style="border-bottom:none;"><p style="font-size:11px;color:var(--ink-20);text-align:center;">— 本报告由 AI 皮纹天赋速测生成 —<br>皮纹学仅供参考，不作为正式评估依据<br>${new Date().toLocaleString('zh-CN')}</p></div>
+<div class="report-section" style="border-bottom:none;"><p style="font-size:11px;color:var(--ink-20);text-align:center;">— 本报告由 AI 天赋底色速测生成 —<br>皮纹学仅供参考，不作为正式评估依据<br>${new Date().toLocaleString('zh-CN')}</p></div>
 `;
 }
 
@@ -2506,7 +2506,7 @@ function wecomeClick(e) {
   if (e) e.preventDefault();
   const r = window._currentResult || {};
   if (window.GT) GT.track('wecom_click', { type: r.key || '' });
-  const msg = `您好！我刚完成AIPIWEN皮纹天赋测评，我的天赋类型是【${r.mainType || ''}】（${r.tagline || ''}），想了解孩子的成长方案。`;
+  const msg = `您好！我刚完成AIPIWEN天赋底色测评，我的天赋类型是【${r.mainType || ''}】（${r.tagline || ''}），想了解孩子的成长方案。`;
   try {
     navigator.clipboard.writeText(msg).then(() => {
       showToast('✓ 已复制天赋结果，到企微直接粘贴给顾问即可');

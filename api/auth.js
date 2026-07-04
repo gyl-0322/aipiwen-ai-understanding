@@ -109,7 +109,7 @@ async function handleWechat(req, res) {
         if (msg.msgtype === 'event' && msg.event?.event_type === 'enter_session') {
           await wxSendMsg(at, msg.external_userid, openKfId,
             `你好 👋\n\n` +
-            `我是AIPIWEN皮纹天赋顾问助手，很高兴见到你！\n\n` +
+            `我是AIPIWEN天赋底色顾问助手，很高兴见到你！\n\n` +
             `如果你刚完成了皮纹速测，可以把你的天赋类型告诉我；顾问会在工作时间（9:00–21:00）联系你，帮你了解孩子的成长方案。\n\n` +
             `也可以直接告诉我你最想解答的问题 😊`
           );
@@ -120,15 +120,15 @@ async function handleWechat(req, res) {
         const text = (msg.text?.content) || '';
         if (!text.trim()) continue;
 
-        // ── 皮纹天赋测评用户（来自速测结果页"联系顾问"按钮）──────────────
-        if (text.includes('AIPIWEN皮纹天赋测评') || text.includes('皮纹天赋')) {
+        // ── 天赋底色测评用户（来自速测结果页"联系顾问"按钮）──────────────
+        if (text.includes('AIPIWEN天赋底色测评') || text.includes('天赋底色')) {
           const typeMatch    = text.match(/天赋类型是【(.+?)】/);
           const taglineMatch = text.match(/】（(.+?)）/);
           const typeName = typeMatch    ? typeMatch[1]    : '';
           const tagline  = taglineMatch ? taglineMatch[1] : '';
           const typeGreet = typeName
             ? `收到！你孩子的速测天赋类型是【${typeName}】${tagline ? `——${tagline}` : ''}。\n\n`
-            : '收到你的皮纹天赋速测结果！\n\n';
+            : '收到你的天赋底色速测结果！\n\n';
           await wxSendMsg(at, fromUser, openKfId,
             `你好 👋\n\n${typeGreet}` +
             `速测只能看到类型轮廓。完整的10指TRC报告还包括：\n` +
@@ -168,7 +168,7 @@ async function handleWechat(req, res) {
         // ── 默认回复 ──────────────────────────────────────────────────────
         await wxSendMsg(at, fromUser, openKfId,
           `你好 👋\n\n` +
-          `我是AIPIWEN皮纹天赋顾问助手。\n\n` +
+          `我是AIPIWEN天赋底色顾问助手。\n\n` +
           `如果你刚完成了皮纹速测，顾问会尽快联系你了解孩子情况（工作时间 9:00–21:00，通常30分钟内回复）。\n\n` +
           `你也可以直接告诉我孩子的年龄和你最关心的成长问题，顾问看到后会第一时间回复你 😊`
         );
