@@ -74,6 +74,22 @@
       "dest": "/admin-convs.html"
     },
     {
+      "src": "/admin-console-demo.html",
+      "dest": "/admin-console-demo.html"
+    },
+    {
+      "src": "/admin-console-demo",
+      "dest": "/admin-console-demo.html"
+    },
+    {
+      "src": "/partner-console-demo.html",
+      "dest": "/partner-console-demo.html"
+    },
+    {
+      "src": "/partner-console-demo",
+      "dest": "/partner-console-demo.html"
+    },
+    {
       "src": "/homepage.html",
       "dest": "/homepage.html"
     },
