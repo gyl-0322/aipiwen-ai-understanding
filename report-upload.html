@@ -135,6 +135,12 @@ html,body{height:100%;overflow:hidden;background:#060810;
   font-size:13px;color:var(--dim);cursor:pointer;transition:all .2s;user-select:none;}
 .issue-chip.selected{border-color:var(--amber);color:var(--amber);
   background:rgba(194,105,42,.1);}
+.issue-note-wrap{margin-top:18px;}
+.issue-note{width:100%;min-height:92px;resize:vertical;background:rgba(255,255,255,.05);
+  border:1px solid var(--border);border-radius:14px;padding:12px 14px;color:var(--text);
+  font:inherit;font-size:13px;line-height:1.7;outline:none;}
+.issue-note:focus{border-color:rgba(194,105,42,.55);box-shadow:0 0 0 3px rgba(194,105,42,.09);}
+.issue-note::placeholder{color:var(--faint);}
 .s3-btn-wrap{flex-shrink:0;width:100%;padding:12px 20px 24px;
   background:linear-gradient(transparent,rgba(14,17,24,.98) 28%);}
 .gen-btn{width:100%;height:52px;background:var(--amber);color:var(--bg);
@@ -476,6 +482,10 @@ button, a, .must-item, .fp-option-card, .back-btn, .issue-chip {
     <div class="must-list" id="must-list"></div>
     <div class="s2-section-label" style="margin-top:20px;">选择你最想了解的问题（最多 4 个、至少 1 个）</div>
     <div class="issue-grid" id="issue-grid"></div>
+    <div class="issue-note-wrap">
+      <div class="s2-section-label">补充描述 / 重点说明（选填）</div>
+      <textarea class="issue-note" id="issue-note" maxlength="300" placeholder="还有什么想让我重点看？可以补充孩子/本人当前状态、具体困扰或希望重点解读的问题。"></textarea>
+    </div>
     <div id="gen-status"></div>
   </div>
   <div class="s3-btn-wrap">
@@ -1065,6 +1075,10 @@ qs('#gen-btn').addEventListener('click', async () => {
   try {
     const _genVip = localStorage.getItem('aipiwen_vip') || '';
     const _genVipHdr = _genVip ? { 'x-vip-token': _genVip } : {};
+    const issueNote = (qs('#issue-note')?.value || '').trim();
+    const selectedIssuesForRequest = issueNote
+      ? [...ST.selectedIssues, `补充说明：${issueNote}`]
+      : ST.selectedIssues;
     const res = await fetch('/api/generate-report', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', ..._genVipHdr },
@@ -1073,7 +1087,7 @@ qs('#gen-btn').addEventListener('click', async () => {
         fingers: ST.fingers,        // 十大能力 RULE-F04 计算用
         age: ST.age,
         name: ST.name,
-        selectedIssues: ST.selectedIssues,
+        selectedIssues: selectedIssuesForRequest,
         refToken: _refToken,   // 邀请来源 token（服务端积分，去重安全）
       }),
     });
