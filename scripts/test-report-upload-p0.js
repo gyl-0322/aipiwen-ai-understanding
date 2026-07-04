@@ -1,6 +1,8 @@
 const { Readable } = require('stream');
 const handler = require('../lib/report-upload-p0-dryrun.js');
 
+process.env.PENGKAIPING_V01_P0_ENABLED = 'false';
+
 function mockReq(body) {
   const req = Readable.from([JSON.stringify(body)]);
   req.method = 'POST';
@@ -132,6 +134,11 @@ function assertCommonDryRun(response) {
   assertCase(response.userVisibleOutput.qualityGuards && response.userVisibleOutput.qualityGuards.noDiagnosis === true, 'qualityGuards.noDiagnosis 必须为 true');
   assertCase(response.userVisibleOutput.qualityGuards.noFullReport === true, 'qualityGuards.noFullReport 必须为 true');
   assertCase(response.userVisibleOutput.meta && response.userVisibleOutput.meta.noModelCall === true, 'userVisibleOutput.meta.noModelCall 必须为 true');
+  assertCase(response.imageInput && response.imageInput.received === false, '无图片输入时 imageInput.received 必须为 false');
+  assertCase(response.imageDryRun && response.imageDryRun.received === false, '无图片输入时 imageDryRun.received 必须为 false');
+  assertCase(response.imageDryRun.actualRecognitionCalled === false, 'dry-run 不得调用真实图片识别');
+  assertCase(response.imageDryRun.recognitionStatus === 'no_image_input', '无图片输入时 recognitionStatus 必须为 no_image_input');
+  assertCase(!response.pengkaipingV01, 'feature flag 默认关闭时不得返回 pengkaipingV01 扩展');
   const visible = userVisibleCopyText(response);
   for (const term of FORBIDDEN_USER_VISIBLE_TERMS) {
     assertCase(!visible.includes(term), `userVisibleOutput 不得包含禁用表达：${term}`);

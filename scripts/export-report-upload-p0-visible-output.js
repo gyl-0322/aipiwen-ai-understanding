@@ -185,6 +185,41 @@ const samples = [
   },
 ];
 
+if (process.env.PENGKAIPING_V01_P0_ENABLED === 'true') {
+  samples.push(
+    {
+      name: 'pengkaiping_v01_r06_encouragement_preview',
+      reviewFocus: '彭凯平 v01 R06 鼓励与优势发展灰度预览；仅本地 dry-run，检查不改变基础安全输出。',
+      input: {
+        reportText: '孩子在手工和表达任务中愿意尝试，但遇到难题会退缩，家长希望更好地鼓励孩子。',
+        reportType: 'child',
+        userIdentity: 'parent',
+        userIntent: 'understand_child_behavior',
+        reportSubject: 'child',
+        subjectAge: 10,
+        subjectRelation: 'parent_child',
+        consentConfirmed: true,
+        pengkaipingExpressionId: 'R06',
+      },
+    },
+    {
+      name: 'pengkaiping_v01_r31_human_review_preview',
+      reviewFocus: '彭凯平 v01 R31 老人带娃冲突沟通必须人工复核，不得自动写入 userVisibleOutput。',
+      input: {
+        reportText: '家里老人带娃方式和父母不一致，孩子作息和电子产品规则不稳定。',
+        reportType: 'child',
+        userIdentity: 'parent',
+        userIntent: 'understand_child_behavior',
+        reportSubject: 'child',
+        subjectAge: 7,
+        subjectRelation: 'parent_child',
+        consentConfirmed: true,
+        pengkaipingExpressionId: 'R31',
+      },
+    }
+  );
+}
+
 function mockReq(body) {
   const req = Readable.from([JSON.stringify(body)]);
   req.method = 'POST';

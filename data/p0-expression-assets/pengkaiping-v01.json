@@ -1,0 +1,253 @@
+[
+  {
+    "expression_id": "R06",
+    "sample_id": "P0-01",
+    "theme": "鼓励与优势发展",
+    "module": "儿童优势与自信",
+    "userVisibleOutput": "从当前线索看，孩子在某些任务中愿意尝试、愿意展示或能够持续投入，这可能是其优势和信心感的一条观察线索。家长可以留意：孩子在哪些场景中更愿意主动开始，在哪些反馈后更愿意继续。\n\n在回应孩子时，建议多描述具体行为和努力过程，例如“你刚才愿意再试一次”或“你把步骤讲清楚了”。这种具体鼓励比笼统表扬更容易帮助孩子看见自己已经能做到的部分。",
+    "parentInterpretation": "这段话不是说孩子已经形成稳定优势，而是提醒家长从日常小表现中观察孩子的信心来源。孩子愿意尝试的场景，往往可以成为后续支持成长的入口。",
+    "parentActionSuggestion": "记录孩子最近 3 次愿意主动尝试的场景。；鼓励时尽量说具体行为，不只说“真棒”。；在孩子退缩时，先帮他拆成更小的一步。；避免把鼓励变成要求孩子持续优秀。",
+    "riskLevel": "low",
+    "p0Ready": true,
+    "needsHumanReview": false,
+    "source": "/Users/gyl0322gmail.com/AI-CEO-System/expert_courses/05_p0_report_samples/pengkaiping_v01/sample_reports/P0_Sample_01_Encouragement_Strengths.md",
+    "allowedFields": [
+      "safe_quick_reading_output.child_behavior_understanding",
+      "safe_quick_reading_output.parent_child_communication"
+    ],
+    "blockedFields": [
+      "Do_not_use_frontend",
+      "Obsidian_only"
+    ],
+    "boundaryNotes": "仅作为理解线索和家长支持建议，不作为确定结论；不承诺效果；不扩大到其他专家课程。",
+    "suggestedAgeRange": "6-15 岁",
+    "suggestedUseCase": "孩子行为理解 / 亲子沟通建议",
+    "fallbackText": "如命中风险词或上下文不足，降级为人工复核说明。"
+  },
+  {
+    "expression_id": "R04",
+    "sample_id": "P0-02",
+    "theme": "学习动力与意义感",
+    "module": "学习动力与意义感",
+    "userVisibleOutput": "如果孩子对学习的投入感不稳定，可以先把它理解为一个需要观察的状态，而不是直接判断为“不努力”。家长可以观察孩子在哪些内容上更容易开始，哪些任务更容易拖延或回避。\n\n从 AIPIWEN 的报告表达看，学习动力更适合从兴趣、胜任感和目标清晰度三个方向寻找线索。家长可以先帮助孩子找到一个更容易开始的小任务，再逐步增加难度。",
+    "parentInterpretation": "这段话不是替孩子找借口，而是避免过早给孩子贴上“没动力”的标签。先观察启动条件，通常比直接催促更容易找到支持点。",
+    "parentActionSuggestion": "问孩子“哪一部分最难开始”，而不是只问“为什么不学”。；把任务拆成 10-15 分钟可以完成的小段。；先确认一个当天可以完成的小目标。；观察孩子完成后是否更愿意继续。",
+    "riskLevel": "low",
+    "p0Ready": true,
+    "needsHumanReview": false,
+    "source": "/Users/gyl0322gmail.com/AI-CEO-System/expert_courses/05_p0_report_samples/pengkaiping_v01/sample_reports/P0_Sample_02_Learning_Meaning.md",
+    "allowedFields": [
+      "safe_quick_reading_output.child_behavior_understanding",
+      "quick_reading_output.communication_or_observation_suggestions"
+    ],
+    "blockedFields": [
+      "Do_not_use_frontend",
+      "Obsidian_only"
+    ],
+    "boundaryNotes": "仅作为理解线索和家长支持建议，不作为确定结论；不承诺效果；不扩大到其他专家课程。",
+    "suggestedAgeRange": "8-16 岁",
+    "suggestedUseCase": "孩子行为理解 / 学习动力建议",
+    "fallbackText": "如命中风险词或上下文不足，降级为人工复核说明。"
+  },
+  {
+    "expression_id": "R05",
+    "sample_id": "P0-03",
+    "theme": "自主学习与自驱力",
+    "module": "自主学习与自驱力",
+    "userVisibleOutput": "孩子的主动性通常不是一次要求就能形成的能力，更适合作为逐步观察和支持的方向。家长可以留意孩子在哪些任务中愿意自己安排步骤，在哪些任务中更依赖提醒。\n\n在日常支持中，可以尝试给孩子有限选择，例如先做哪一项、用什么顺序完成、完成后如何检查。让孩子参与安排过程，可能比单纯催促更能帮助他形成自我负责的体验。",
+    "parentInterpretation": "这段话强调的是“参与感”和“小范围选择”，不是把所有决定都交给孩子。自驱力需要在可承受的责任中慢慢练习。",
+    "parentActionSuggestion": "每天选择一个任务让孩子自己安排顺序。；用“你准备先做哪一步”替代“赶紧去做”。；任务结束后一起复盘哪里顺利、哪里卡住。；选择范围不要太大，避免孩子反而无从开始。",
+    "riskLevel": "low",
+    "p0Ready": true,
+    "needsHumanReview": false,
+    "source": "/Users/gyl0322gmail.com/AI-CEO-System/expert_courses/05_p0_report_samples/pengkaiping_v01/sample_reports/P0_Sample_03_Self_Directed_Learning.md",
+    "allowedFields": [
+      "safe_quick_reading_output.child_behavior_understanding",
+      "safe_quick_reading_output.parent_child_communication"
+    ],
+    "blockedFields": [
+      "Do_not_use_frontend",
+      "Obsidian_only"
+    ],
+    "boundaryNotes": "仅作为理解线索和家长支持建议，不作为确定结论；不承诺效果；不扩大到其他专家课程。",
+    "suggestedAgeRange": "9-16 岁",
+    "suggestedUseCase": "孩子行为理解 / 亲子沟通建议",
+    "fallbackText": "如命中风险词或上下文不足，降级为人工复核说明。"
+  },
+  {
+    "expression_id": "R07",
+    "sample_id": "P0-04",
+    "theme": "亲子聊天与倾听",
+    "module": "亲子沟通",
+    "userVisibleOutput": "当孩子愿意表达时，家长可以先尽量听完整，再回应其中的感受和具体事情。孩子有时并不是马上需要建议，而是需要确认“我说的话被听见了”。\n\n如果家长能先复述孩子表达的重点，再讨论下一步，可能更容易减少对抗感，也更容易让孩子继续表达真实想法。",
+    "parentInterpretation": "这段话不是要求家长无条件同意孩子，而是建议在给建议前先建立理解。被听见之后，孩子通常更容易进入规则和行动层面的讨论。",
+    "parentActionSuggestion": "孩子说话时先不急着纠正。；用一句话复述：“你是觉得……对吗？”；先回应感受，再讨论规则和选择。；如果情绪很强，可以约定稍后再谈。",
+    "riskLevel": "low",
+    "p0Ready": true,
+    "needsHumanReview": false,
+    "source": "/Users/gyl0322gmail.com/AI-CEO-System/expert_courses/05_p0_report_samples/pengkaiping_v01/sample_reports/P0_Sample_04_Parent_Child_Listening.md",
+    "allowedFields": [
+      "safe_quick_reading_output.parent_child_communication"
+    ],
+    "blockedFields": [
+      "Do_not_use_frontend",
+      "Obsidian_only"
+    ],
+    "boundaryNotes": "仅作为理解线索和家长支持建议，不作为确定结论；不承诺效果；不扩大到其他专家课程。",
+    "suggestedAgeRange": "6-16 岁",
+    "suggestedUseCase": "亲子沟通建议",
+    "fallbackText": "如命中风险词或上下文不足，降级为人工复核说明。"
+  },
+  {
+    "expression_id": "R10",
+    "sample_id": "P0-05",
+    "theme": "共情式沟通",
+    "module": "亲子沟通",
+    "userVisibleOutput": "遇到分歧时，家长可以先确认孩子当下的感受，再讨论规则和下一步。先理解不等于放任，而是帮助双方从情绪对抗回到具体问题。\n\n例如可以先说：“我听到你现在很不愿意停下来，我们先看看你最在意的是什么。”然后再把话题带回时间、规则或需要完成的事情。",
+    "parentInterpretation": "这段话的重点是降低沟通阻力。理解孩子的感受，不代表取消边界，而是让边界更容易被孩子听见。",
+    "parentActionSuggestion": "冲突中先说感受，再说要求。；避免用“你怎么总是……”开头。；把规则说成具体行为，例如“现在先收起平板”。；情绪强时先暂停，再回到问题。",
+    "riskLevel": "low",
+    "p0Ready": true,
+    "needsHumanReview": false,
+    "source": "/Users/gyl0322gmail.com/AI-CEO-System/expert_courses/05_p0_report_samples/pengkaiping_v01/sample_reports/P0_Sample_05_Empathic_Communication.md",
+    "allowedFields": [
+      "safe_quick_reading_output.parent_child_communication",
+      "quick_reading_output.communication_or_observation_suggestions"
+    ],
+    "blockedFields": [
+      "Do_not_use_frontend",
+      "Obsidian_only"
+    ],
+    "boundaryNotes": "仅作为理解线索和家长支持建议，不作为确定结论；不承诺效果；不扩大到其他专家课程。",
+    "suggestedAgeRange": "6-16 岁",
+    "suggestedUseCase": "亲子沟通建议",
+    "fallbackText": "如命中风险词或上下文不足，降级为人工复核说明。"
+  },
+  {
+    "expression_id": "R15",
+    "sample_id": "P0-06",
+    "theme": "正向纠正与边界",
+    "module": "亲子尊重与鼓励",
+    "userVisibleOutput": "当需要纠正孩子行为时，建议把重点放在具体行为和可调整步骤上，避免把问题上升为对孩子本人的评价。孩子更容易理解“这件事哪里需要调整”，而不是承受“我这个人不好”的感受。\n\n家长可以尝试先说明看到的行为，再说明边界和下一步。例如：“刚才你把东西摔在地上了，这会影响别人。我们先一起把它放回去，再说你刚才为什么生气。”",
+    "parentInterpretation": "这段话不是说不能纠正孩子，而是建议纠正行为时保留尊重。清晰边界和温和表达可以同时存在。",
+    "parentActionSuggestion": "先描述行为，不评价人格。；说清楚边界对应的原因。；给一个可以马上执行的下一步。；事后再复盘情绪和替代做法。",
+    "riskLevel": "low",
+    "p0Ready": true,
+    "needsHumanReview": false,
+    "source": "/Users/gyl0322gmail.com/AI-CEO-System/expert_courses/05_p0_report_samples/pengkaiping_v01/sample_reports/P0_Sample_06_Correction_Boundaries.md",
+    "allowedFields": [
+      "safe_quick_reading_output.parent_child_communication",
+      "safe_quick_reading_output.environment_adjustment"
+    ],
+    "blockedFields": [
+      "Do_not_use_frontend",
+      "Obsidian_only"
+    ],
+    "boundaryNotes": "仅作为理解线索和家长支持建议，不作为确定结论；不承诺效果；不扩大到其他专家课程。",
+    "suggestedAgeRange": "5-15 岁",
+    "suggestedUseCase": "亲子沟通建议 / 环境调整",
+    "fallbackText": "如命中风险词或上下文不足，降级为人工复核说明。"
+  },
+  {
+    "expression_id": "R16",
+    "sample_id": "P0-07",
+    "theme": "家庭积极氛围",
+    "module": "家庭氛围",
+    "userVisibleOutput": "稳定、可预期、少指责的家庭互动，可能有助于孩子更愿意表达和尝试。家长可以观察家中哪些时刻更容易产生合作，例如饭后聊天、一起收拾、睡前交流或完成任务后的反馈。\n\n如果某些互动方式已经有效，建议先把它们保留下来，再逐步调整冲突较多的场景。这样比一次性改变所有家庭习惯更容易坚持。",
+    "parentInterpretation": "这段话不是把孩子状态归因给家庭，而是提醒家长从环境中寻找可以优化的支持点。家庭氛围是理解线索，不是责任判断。",
+    "parentActionSuggestion": "找出一天中最容易平和沟通的时间。；保留已经有效的互动方式。；冲突多的场景先改一个小动作。；避免把家庭氛围问题归咎于某个人。",
+    "riskLevel": "low",
+    "p0Ready": true,
+    "needsHumanReview": false,
+    "source": "/Users/gyl0322gmail.com/AI-CEO-System/expert_courses/05_p0_report_samples/pengkaiping_v01/sample_reports/P0_Sample_07_Family_Atmosphere.md",
+    "allowedFields": [
+      "quick_reading_output.environment_observation_points",
+      "safe_quick_reading_output.environment_adjustment"
+    ],
+    "blockedFields": [
+      "Do_not_use_frontend",
+      "Obsidian_only"
+    ],
+    "boundaryNotes": "仅作为理解线索和家长支持建议，不作为确定结论；不承诺效果；不扩大到其他专家课程。",
+    "suggestedAgeRange": "5-16 岁",
+    "suggestedUseCase": "环境观察 / 环境调整",
+    "fallbackText": "如命中风险词或上下文不足，降级为人工复核说明。"
+  },
+  {
+    "expression_id": "R19",
+    "sample_id": "P0-08",
+    "theme": "规则意识与边界",
+    "module": "规则意识",
+    "userVisibleOutput": "规则对孩子更有帮助的前提，是清楚、稳定、可理解。家长可以把规则说得更具体，并提前说明原因和后果，减少临时情绪化处理。\n\n如果孩子经常和规则发生冲突，建议先检查规则是否太多、太模糊，或每次执行不一致。对孩子来说，稳定的边界比临时的批评更容易理解。",
+    "parentInterpretation": "这段话不是强调更严格，而是强调更清楚、更稳定。规则的目的不是控制孩子，而是帮助孩子理解生活中的边界和责任。",
+    "parentActionSuggestion": "一次只调整 1-2 条核心规则。；用孩子听得懂的话说明规则原因。；提前约定后果，避免临时发火。；家庭成员尽量保持一致执行。",
+    "riskLevel": "low",
+    "p0Ready": true,
+    "needsHumanReview": false,
+    "source": "/Users/gyl0322gmail.com/AI-CEO-System/expert_courses/05_p0_report_samples/pengkaiping_v01/sample_reports/P0_Sample_08_Rules_Boundaries.md",
+    "allowedFields": [
+      "safe_quick_reading_output.environment_adjustment",
+      "quick_reading_output.communication_or_observation_suggestions"
+    ],
+    "blockedFields": [
+      "Do_not_use_frontend",
+      "Obsidian_only"
+    ],
+    "boundaryNotes": "仅作为理解线索和家长支持建议，不作为确定结论；不承诺效果；不扩大到其他专家课程。",
+    "suggestedAgeRange": "5-14 岁",
+    "suggestedUseCase": "环境调整 / 亲子沟通建议",
+    "fallbackText": "如命中风险词或上下文不足，降级为人工复核说明。"
+  },
+  {
+    "expression_id": "R20",
+    "sample_id": "P0-09",
+    "theme": "阅读习惯与学习方式",
+    "module": "阅读习惯",
+    "userVisibleOutput": "阅读习惯可以作为观察孩子学习方式的一条线索。家长可以留意孩子更喜欢故事、图像、知识类还是互动式内容，再用更合适的材料降低开始阅读的门槛。\n\n如果孩子暂时不喜欢阅读，不建议直接判断为不爱学习。可以先从孩子愿意停留的主题、愿意听的内容或愿意讨论的问题开始，逐步建立阅读和表达之间的连接。",
+    "parentInterpretation": "这段话强调的是找到入口，而不是要求孩子马上大量阅读。阅读习惯可以慢慢建立，关键是先让孩子有开始和持续的体验。",
+    "parentActionSuggestion": "观察孩子最愿意停留的内容类型。；从短内容或共同阅读开始。；读完后少考问，多聊孩子的想法。；不把阅读和惩罚、比较绑定。",
+    "riskLevel": "low",
+    "p0Ready": true,
+    "needsHumanReview": false,
+    "source": "/Users/gyl0322gmail.com/AI-CEO-System/expert_courses/05_p0_report_samples/pengkaiping_v01/sample_reports/P0_Sample_09_Reading_Habits.md",
+    "allowedFields": [
+      "quick_reading_output.reference_points",
+      "quick_reading_output.communication_or_observation_suggestions"
+    ],
+    "blockedFields": [
+      "Do_not_use_frontend",
+      "Obsidian_only"
+    ],
+    "boundaryNotes": "仅作为理解线索和家长支持建议，不作为确定结论；不承诺效果；不扩大到其他专家课程。",
+    "suggestedAgeRange": "5-15 岁",
+    "suggestedUseCase": "参考点 / 学习动力建议",
+    "fallbackText": "如命中风险词或上下文不足，降级为人工复核说明。"
+  },
+  {
+    "expression_id": "R31",
+    "sample_id": "P0-10",
+    "theme": "老人带娃冲突沟通",
+    "module": "老人带娃冲突沟通",
+    "userVisibleOutput": "当家庭成员在养育方式上不一致时，可以先把分歧聚焦到具体情境和孩子需要，而不是评价谁对谁错。对孩子来说，稳定、一致的回应通常比成人之间反复争论更容易理解。\n\n家长可以尝试和照护者先约定少量共同底线，例如安全、作息、电子产品或情绪回应方式。其他差异可以逐步沟通，不必一次解决全部问题。",
+    "parentInterpretation": "这段话不是要求家长和老人立刻达成完全一致，而是建议先找到最影响孩子稳定感的部分。先形成少量共识，通常比争论整体教育理念更可行。",
+    "parentActionSuggestion": "先列出最需要统一的 1-2 个具体场景。；用“孩子需要更稳定的回应”替代“你这样带不对”。；先达成安全和作息底线。；如果冲突持续影响孩子，可以转入人工解读。",
+    "riskLevel": "low_to_medium",
+    "p0Ready": true,
+    "needsHumanReview": true,
+    "source": "/Users/gyl0322gmail.com/AI-CEO-System/expert_courses/05_p0_report_samples/pengkaiping_v01/sample_reports/P0_Sample_10_Grandparent_Care_Conflict.md",
+    "allowedFields": [
+      "safe_quick_reading_output.environment_adjustment",
+      "safe_quick_reading_output.parent_child_communication",
+      "fallback_or_human_review_output.safe_explanation"
+    ],
+    "blockedFields": [
+      "Do_not_use_frontend",
+      "Obsidian_only",
+      "auto_insert_without_human_review"
+    ],
+    "boundaryNotes": "仅作为理解线索和家长支持建议，不作为确定结论；不承诺效果；不扩大到其他专家课程。",
+    "suggestedAgeRange": "3-12 岁",
+    "suggestedUseCase": "环境调整 / 亲子沟通建议 / 人工解读兜底",
+    "fallbackText": "这部分内容更适合由人工结合家庭具体情况解读。当前报告仅提供观察方向，不作为确定判断。"
+  }
+]
