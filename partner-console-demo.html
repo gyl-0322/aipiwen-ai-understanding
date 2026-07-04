@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AIPIWEN 代理解读工作台 · Demo</title>
+<style>
+:root{
+  --cream:#FDFCF8;--cream-deep:#F5F3EE;--ink:#1A1714;--ink-70:#4A4540;
+  --ink-40:#8C8580;--line:#EAE7E2;--amber:#C2692A;--amber-dark:#A0541F;
+  --amber-soft:#F5EDE4;--green:#3A7D5E;--red:#C94E3A;--blue:#526A86;
+  --shadow:0 18px 45px rgba(26,23,20,.08),0 2px 8px rgba(26,23,20,.05);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;background:var(--cream-deep);color:var(--ink);min-height:100vh}
+.shell{max-width:1440px;margin:0 auto;padding:22px}
+.top{background:var(--cream);border:1px solid var(--line);border-radius:24px;padding:22px;box-shadow:var(--shadow);display:grid;grid-template-columns:1fr auto;gap:16px;align-items:center}
+.eyebrow{font-size:12px;letter-spacing:.16em;color:var(--amber);font-weight:900;margin-bottom:8px}
+h1{font-family:Georgia,"Noto Serif SC",serif;font-size:31px;font-weight:400;line-height:1.25;margin-bottom:8px}
+.sub{color:var(--ink-70);font-size:14px;line-height:1.7;max-width:760px}
+.role-switch{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.role-switch button{border:1.5px solid var(--line);background:#fff;border-radius:999px;padding:10px 13px;font-weight:800;color:var(--ink-70);cursor:pointer}
+.role-switch button.active{background:var(--amber);border-color:var(--amber);color:#fff}
+.notice{margin-top:14px;border:1px solid rgba(194,105,42,.28);background:var(--amber-soft);border-radius:14px;padding:12px 14px;color:var(--amber-dark);font-size:13px;font-weight:800}
+.grid{display:grid;grid-template-columns:230px minmax(0,1fr) 380px;gap:18px;margin-top:18px}
+.panel{background:var(--cream);border:1px solid var(--line);border-radius:20px;box-shadow:var(--shadow)}
+.side{padding:18px}
+.nav-title{font-size:12px;color:var(--ink-40);letter-spacing:.12em;font-weight:900;margin:4px 0 12px}
+.nav button{width:100%;border:0;background:transparent;text-align:left;padding:12px 13px;border-radius:12px;color:var(--ink-70);font-size:14px;font-weight:800;cursor:pointer}
+.nav button.active,.nav button:hover{background:var(--amber-soft);color:var(--amber-dark)}
+.main{padding:20px}
+.section-title{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;gap:10px}
+.section-title h2{font-size:18px}
+.tag{font-size:12px;padding:5px 10px;border-radius:999px;background:var(--amber-soft);color:var(--amber-dark);font-weight:900;white-space:nowrap}
+.customer-list{display:grid;gap:10px;margin-bottom:18px}
+.customer{border:1px solid var(--line);background:#fff;border-radius:16px;padding:14px;display:grid;grid-template-columns:1fr auto;gap:10px;cursor:pointer}
+.customer.active{border-color:rgba(194,105,42,.45);box-shadow:0 0 0 3px rgba(194,105,42,.08)}
+.customer h3{font-size:15px;margin-bottom:5px}
+.meta{font-size:12px;color:var(--ink-40);line-height:1.6}
+.risk{font-size:12px;font-weight:900;border-radius:999px;padding:5px 9px;align-self:start}
+.low{color:var(--green);background:#EDF7F1}.mid{color:#8A5A00;background:#FFF5D8}.high{color:var(--red);background:#FFF1EE}
+.report{border:1px solid var(--line);background:#fff;border-radius:16px;padding:18px;margin-bottom:14px}
+.report h3{font-size:17px;margin-bottom:10px}
+.report p{font-size:14px;color:var(--ink-70);line-height:1.8;margin-bottom:10px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.chip{background:#FBF8F3;border:1px solid var(--line);border-radius:999px;padding:7px 10px;font-size:12px;color:var(--ink-70);font-weight:700}
+.right{padding:18px;display:flex;flex-direction:column;gap:14px}
+.box{border:1px solid var(--line);background:#fff;border-radius:16px;padding:16px}
+.box h3{font-size:15px;margin-bottom:10px}
+.script{border-left:4px solid var(--amber);padding:10px 12px;background:#FFF8F2;border-radius:10px;font-size:13px;line-height:1.65;margin-bottom:10px}
+.locked{border-left-color:var(--red);background:#FFF5F2;color:#7A2B1F}
+.caution{border-left-color:#D69E2E;background:#FFF9E9}
+.record{display:grid;gap:10px}
+textarea{width:100%;min-height:92px;border:1.5px solid var(--line);border-radius:14px;padding:12px;background:#fff;font:inherit;color:var(--ink);resize:vertical}
+.btn{border:0;background:var(--amber);color:#fff;border-radius:14px;padding:12px 14px;font-weight:900;cursor:pointer}
+.btn.secondary{background:#fff;color:var(--amber-dark);border:1.5px solid rgba(194,105,42,.35)}
+.small{font-size:12px;color:var(--ink-40);line-height:1.7}
+.hidden{display:none!important}
+.footer{margin-top:18px;color:var(--ink-40);font-size:12px;text-align:center}
+@media(max-width:1120px){.grid{grid-template-columns:1fr}.top{grid-template-columns:1fr}.role-switch{justify-content:flex-start}}
+</style>
+</head>
+<body>
+<div class="shell">
+  <header class="top">
+    <div>
+      <div class="eyebrow">LOCAL DEMO · FAKE DATA ONLY</div>
+      <h1>AIPIWEN 代理解读工作台 V0.1</h1>
+      <p class="sub">给授权代理 / 采集中心使用的报告交付辅助系统。本页只演示权限边界：谁能看客户、谁能看 P1、谁能看到 P2、何时需要总部复核。</p>
+      <div class="notice">本提示仅用于辅助解读，不代表诊断或治疗建议。</div>
+    </div>
+    <div class="role-switch" id="roleSwitch">
+      <button data-role="super_admin">super_admin</button>
+      <button data-role="agent_basic" class="active">agent_basic</button>
+      <button data-role="agent_pro">agent_pro</button>
+      <button data-role="agent_center_manager">center_manager</button>
+    </div>
+  </header>
+
+  <div class="grid">
+    <aside class="panel side">
+      <div class="nav-title">工作台</div>
+      <div class="nav">
+        <button class="active">我的客户</button>
+        <button>待解读报告</button>
+        <button>已完成交付</button>
+        <button>需要总部复核</button>
+        <button>我的学习/培训</button>
+        <button>使用规范</button>
+      </div>
+      <div class="box" style="margin-top:16px">
+        <h3>当前权限</h3>
+        <p class="small" id="roleDesc"></p>
+      </div>
+    </aside>
+
+    <main class="panel main">
+      <div class="section-title">
+        <h2>客户列表</h2>
+        <span class="tag" id="scopeTag">仅自己名下客户</span>
+      </div>
+      <div class="customer-list" id="customerList"></div>
+
+      <div class="section-title">
+        <h2>当前客户报告摘要</h2>
+        <span class="tag">客户可见内容</span>
+      </div>
+      <section class="report" id="reportBox"></section>
+
+      <div class="section-title">
+        <h2>本次解读记录</h2>
+        <span class="tag">本地假数据</span>
+      </div>
+      <div class="report record">
+        <textarea placeholder="记录本次解读重点、客户反馈、是否需要总部支持。此 demo 不保存数据。"></textarea>
+        <button class="btn">标记为已完成交付</button>
+        <button class="btn secondary">提交总部复核</button>
+      </div>
+    </main>
+
+    <aside class="panel right">
+      <div class="box">
+        <h3>系统推荐 P1 话术</h3>
+        <div id="p1Box"></div>
+      </div>
+      <div class="box">
+        <h3>P2 高风险内容</h3>
+        <div id="p2Box"></div>
+      </div>
+      <div class="box">
+        <h3>不要这样说</h3>
+        <div id="dontSayBox"></div>
+      </div>
+      <p class="small">客户前台不能看到 P1/P2、风险标签、内部备注、代理培训内容或“不要这样说”。</p>
+    </aside>
+  </div>
+  <div class="footer">AIPIWEN Partner Interpretation Console V0.1 · Local Demo</div>
+</div>
+
+<script>
+const customers = [
+  {id:'c1',name:'王女士 · 小学亲子',owner:'agent_a',center:'center_xinyu',risk:'low',type:'儿童天赋底色报告',focus:'孩子写作业拖拉、容易崩溃。',visible:'孩子不是故意对抗，更多是在压力、节奏和掌控感失衡时，用行为表达求助。建议先减少指责，改成具体任务拆分和陪伴式启动。'},
+  {id:'c2',name:'李先生 · 成人职业',owner:'agent_a',center:'center_xinyu',risk:'mid',type:'成人职业发展报告',focus:'职业瓶颈、转型焦虑。',visible:'当前困扰更像能力和环境错配。报告建议先识别优势使用场景，再判断是岗位调整、节奏调整，还是需要补足协作方式。'},
+  {id:'c3',name:'陈女士 · 老人带娃冲突',owner:'agent_b',center:'center_xinyu',risk:'high',type:'家庭沟通报告',focus:'老人带娃方式冲突严重。',visible:'这个问题不适合直接判断谁对谁错。建议先把冲突收窄到具体场景，明确孩子、父母和老人各自最需要被看见的部分。'},
+  {id:'c4',name:'赵女士 · 其他中心客户',owner:'agent_c',center:'center_other',risk:'low',type:'亲密关系沟通报告',focus:'伴侣沉默、沟通困难。',visible:'沉默不一定是不在乎，也可能是压力下的自我保护。建议先建立安全表达空间。'}
+];
+
+const roleConfig = {
+  super_admin:{label:'Emma 超级管理员：可看全部客户、全部 P1/P2、复核和质检。',scope:'全平台客户与全部素材',canMedium:true,canP2:true,canAll:true},
+  agent_basic:{label:'基础代理：只看自己名下客户，只能看低风险 P1。',scope:'仅自己名下客户',canMedium:false,canP2:false,canAll:false},
+  agent_pro:{label:'进阶代理：看自己名下客户，可看低风险和部分中风险话术。',scope:'仅自己名下客户',canMedium:true,canP2:false,canAll:false},
+  agent_center_manager:{label:'采集中心负责人：看本中心客户，可看低风险和部分中风险话术。',scope:'本中心客户',canMedium:true,canP2:false,canAll:false,center:true}
+};
+
+let role = 'agent_basic';
+let selected = null;
+
+function visibleCustomers(){
+  if(roleConfig[role].canAll) return customers;
+  if(roleConfig[role].center) return customers.filter(c => c.center === 'center_xinyu');
+  return customers.filter(c => c.owner === 'agent_a');
+}
+
+function riskClass(risk){ return risk === 'low' ? 'low' : risk === 'mid' ? 'mid' : 'high'; }
+function riskText(risk){ return risk === 'low' ? '低风险' : risk === 'mid' ? '中风险' : '需总部复核'; }
+
+function render(){
+  document.querySelectorAll('#roleSwitch button').forEach(btn => btn.classList.toggle('active', btn.dataset.role === role));
+  document.getElementById('roleDesc').textContent = roleConfig[role].label;
+  document.getElementById('scopeTag').textContent = roleConfig[role].scope;
+
+  const list = visibleCustomers();
+  if(!selected || !list.find(c => c.id === selected.id)) selected = list[0];
+  document.getElementById('customerList').innerHTML = list.map(c => `
+    <div class="customer ${selected && selected.id === c.id ? 'active' : ''}" onclick="selectCustomer('${c.id}')">
+      <div><h3>${c.name}</h3><div class="meta">${c.type}<br>${c.focus}</div></div>
+      <div class="risk ${riskClass(c.risk)}">${riskText(c.risk)}</div>
+    </div>
+  `).join('');
+
+  renderReport();
+  renderScripts();
+}
+
+function selectCustomer(id){
+  selected = customers.find(c => c.id === id);
+  render();
+}
+
+function renderReport(){
+  if(!selected){
+    document.getElementById('reportBox').innerHTML = '<p>当前没有可查看客户。</p>';
+    return;
+  }
+  document.getElementById('reportBox').innerHTML = `
+    <h3>${selected.name}</h3>
+    <p><strong>报告类型：</strong>${selected.type}</p>
+    <p><strong>家长/客户关注点：</strong>${selected.focus}</p>
+    <p><strong>客户可见报告摘要：</strong>${selected.visible}</p>
+    <div class="chips">
+      <span class="chip">本次解读重点</span>
+      <span class="chip">行动建议</span>
+      <span class="chip">${role === 'super_admin' ? '完整风险可见' : '风险信息已过滤'}</span>
+    </div>
+  `;
+}
+
+function renderScripts(){
+  const p1 = [];
+  p1.push('<div class="script">低风险：先复述客户最头疼的具体行为，再解释行为背后的需求，最后给一个今天能做的小动作。</div>');
+  if(selected && selected.risk === 'mid'){
+    if(roleConfig[role].canMedium) p1.push('<div class="script caution">中风险 · 谨慎使用：不要判断客户是否失败，先把问题收窄到压力来源、资源和下一步支持。</div>');
+    else p1.push('<div class="script locked">中风险内容当前不可见。请联系上级或总部复核。</div>');
+  }
+  if(selected && selected.risk === 'high'){
+    p1.push('<div class="script locked">当前案例涉及高风险表达。代理端不展示完整话术，建议总部复核。</div>');
+  }
+  document.getElementById('p1Box').innerHTML = p1.join('');
+
+  if(roleConfig[role].canP2){
+    document.getElementById('p2Box').innerHTML = '<div class="script locked">P2 完整素材：原生家庭、创伤、疗愈、老人带娃冲突、家庭矛盾等仅 Emma 可见。使用前必须做风险判断。</div>';
+  } else {
+    document.getElementById('p2Box').innerHTML = '<div class="script locked">建议总部复核。P2 高风险内容不向代理展示。</div>';
+  }
+
+  document.getElementById('dontSayBox').innerHTML = `
+    <div class="script">不要说：孩子就是有问题。</div>
+    <div class="script">不要说：这个类型以后一定会怎样。</div>
+    <div class="script">不要承诺：照做就一定改善。</div>
+  `;
+}
+
+document.querySelectorAll('#roleSwitch button').forEach(btn => {
+  btn.addEventListener('click', () => { role = btn.dataset.role; selected = null; render(); });
+});
+render();
+</script>
+</body>
+</html>

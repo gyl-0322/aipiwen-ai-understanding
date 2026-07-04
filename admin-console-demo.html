@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AIPIWEN 超级管理员控制台 · Demo</title>
+<style>
+:root{
+  --cream:#FDFCF8;--cream-deep:#F5F3EE;--ink:#1A1714;--ink-70:#4A4540;
+  --ink-40:#8C8580;--line:#EAE7E2;--amber:#C2692A;--amber-dark:#A0541F;
+  --amber-soft:#F5EDE4;--green:#3A7D5E;--red:#C94E3A;--blue:#526A86;
+  --shadow:0 18px 45px rgba(26,23,20,.08),0 2px 8px rgba(26,23,20,.05);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;background:var(--cream-deep);color:var(--ink);min-height:100vh}
+.shell{max-width:1440px;margin:0 auto;padding:24px}
+.top{background:linear-gradient(135deg,#1A1714,#2A2119);color:var(--cream);border-radius:24px;padding:26px 30px;box-shadow:var(--shadow);display:grid;grid-template-columns:1fr auto;gap:20px;align-items:center}
+.eyebrow{font-size:12px;letter-spacing:.16em;color:var(--amber);font-weight:800;margin-bottom:10px}
+h1{font-family:Georgia,"Noto Serif SC",serif;font-size:34px;font-weight:400;line-height:1.25;margin-bottom:10px}
+.sub{color:#C8C3BC;font-size:14px;line-height:1.7;max-width:760px}
+.badge{display:inline-flex;align-items:center;gap:8px;border:1px solid rgba(194,105,42,.45);border-radius:999px;color:#F5D8C2;background:rgba(194,105,42,.12);padding:9px 14px;font-size:13px;font-weight:700;white-space:nowrap}
+.grid{display:grid;grid-template-columns:230px minmax(0,1fr) 360px;gap:18px;margin-top:18px}
+.panel{background:var(--cream);border:1px solid var(--line);border-radius:20px;box-shadow:var(--shadow)}
+.side{padding:18px}
+.nav-title{font-size:12px;color:var(--ink-40);letter-spacing:.12em;font-weight:800;margin:4px 0 12px}
+.nav button{width:100%;border:0;background:transparent;text-align:left;padding:12px 13px;border-radius:12px;color:var(--ink-70);font-size:14px;font-weight:700;cursor:pointer}
+.nav button.active,.nav button:hover{background:var(--amber-soft);color:var(--amber-dark)}
+.main{padding:20px}
+.section-title{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.section-title h2{font-size:18px}
+.tag{font-size:12px;padding:5px 10px;border-radius:999px;background:var(--amber-soft);color:var(--amber-dark);font-weight:800}
+.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}
+.card{border:1px solid var(--line);background:#fff;border-radius:16px;padding:16px}
+.num{font-size:28px;font-weight:900;color:var(--amber);margin-bottom:4px}
+.label{font-size:12px;color:var(--ink-40);font-weight:700}
+table{width:100%;border-collapse:collapse;background:#fff;border:1px solid var(--line);border-radius:16px;overflow:hidden}
+th,td{text-align:left;padding:13px 14px;border-bottom:1px solid #F0EDE8;font-size:13px;vertical-align:top}
+th{background:#FBF8F3;color:var(--ink-40);font-size:12px;letter-spacing:.06em}
+tr:last-child td{border-bottom:0}
+.risk-low{color:var(--green);font-weight:800}.risk-mid{color:#B7791F;font-weight:800}.risk-high{color:var(--red);font-weight:800}
+.right{padding:18px;display:flex;flex-direction:column;gap:14px}
+.box{border:1px solid var(--line);background:#fff;border-radius:16px;padding:16px}
+.box h3{font-size:15px;margin-bottom:10px}
+.script{border-left:4px solid var(--amber);padding:10px 12px;background:#FFF8F2;border-radius:10px;font-size:13px;line-height:1.65;margin-bottom:10px}
+.p2{border-color:var(--red);background:#FFF5F2}
+.small{font-size:12px;color:var(--ink-40);line-height:1.7}
+.warn{background:#FFF8E8;border:1px solid #EBCB8A;color:#7A4D00;border-radius:12px;padding:12px;font-size:13px;line-height:1.6}
+.footer{margin-top:18px;color:var(--ink-40);font-size:12px;text-align:center}
+@media(max-width:1100px){.grid{grid-template-columns:1fr}.cards{grid-template-columns:repeat(2,1fr)}.top{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="shell">
+  <header class="top">
+    <div>
+      <div class="eyebrow">LOCAL DEMO · SUPER ADMIN ONLY</div>
+      <h1>AIPIWEN 超级管理员控制台</h1>
+      <p class="sub">Emma 可查看全部代理、采集中心、客户、报告、P1/P2 话术、风险提示、复核记录和交付记录。本页仅为本地假数据预览，不接真实登录、不接数据库、不读取真实客户报告。</p>
+    </div>
+    <div class="badge">当前视角：super_admin · Emma</div>
+  </header>
+
+  <div class="grid">
+    <aside class="panel side">
+      <div class="nav-title">管理导航</div>
+      <div class="nav">
+        <button class="active">全部客户</button>
+        <button>全部代理</button>
+        <button>采集中心</button>
+        <button>全部报告</button>
+        <button>P1 话术库</button>
+        <button>P2 高风险素材</button>
+        <button>总部复核</button>
+        <button>质检记录</button>
+      </div>
+    </aside>
+
+    <main class="panel main">
+      <div class="section-title">
+        <h2>全平台概览</h2>
+        <span class="tag">假数据 · 仅预览</span>
+      </div>
+      <div class="cards">
+        <div class="card"><div class="num">128</div><div class="label">全部客户</div></div>
+        <div class="card"><div class="num">12</div><div class="label">授权代理</div></div>
+        <div class="card"><div class="num">4</div><div class="label">采集中心</div></div>
+        <div class="card"><div class="num">7</div><div class="label">待总部复核</div></div>
+      </div>
+
+      <div class="section-title">
+        <h2>客户与复核队列</h2>
+        <span class="tag">Emma 可见全部</span>
+      </div>
+      <table>
+        <thead><tr><th>客户</th><th>来源</th><th>报告</th><th>风险</th><th>处理建议</th></tr></thead>
+        <tbody>
+          <tr><td>王女士 · 亲子</td><td>鑫域文化</td><td>儿童天赋底色报告</td><td class="risk-low">低风险</td><td>代理可使用低风险 P1 话术</td></tr>
+          <tr><td>李先生 · 成人</td><td>测试采集中心</td><td>成人职业发展报告</td><td class="risk-mid">中风险</td><td>agent_pro 可看简化提示，标注谨慎使用</td></tr>
+          <tr><td>陈女士 · 家庭冲突</td><td>测试采集中心</td><td>亲子沟通报告</td><td class="risk-high">高风险</td><td>代理不可见 P2，需总部复核</td></tr>
+        </tbody>
+      </table>
+
+      <div class="section-title" style="margin-top:22px">
+        <h2>代理质检摘要</h2>
+        <span class="tag">可追踪误用</span>
+      </div>
+      <table>
+        <thead><tr><th>对象</th><th>权限</th><th>本周交付</th><th>误用提醒</th><th>状态</th></tr></thead>
+        <tbody>
+          <tr><td>鑫域文化</td><td>agent_center_manager</td><td>16</td><td>0</td><td class="risk-low">正常</td></tr>
+          <tr><td>测试代理 A</td><td>agent_basic</td><td>5</td><td>1</td><td class="risk-mid">需复训</td></tr>
+        </tbody>
+      </table>
+    </main>
+
+    <aside class="panel right">
+      <div class="box">
+        <h3>P1 话术库 · Emma 完整可见</h3>
+        <div class="script">低风险：先帮客户看见行为背后的需求，再给出一个当天能做的小动作。</div>
+        <div class="script">中风险：涉及家庭压力时，不判断谁对谁错，先收窄到一个具体场景。</div>
+      </div>
+      <div class="box">
+        <h3>P2 高风险素材 · 仅 super_admin 可见</h3>
+        <div class="script p2">原生家庭、创伤、疗愈、老人带娃冲突、亲子冲突高风险表达等内容仅 Emma 可见。代理端只显示“建议总部复核”。</div>
+      </div>
+      <div class="warn">边界：本系统用于辅助报告交付和话术质检，不用于诊断、治疗或承诺改善结果。</div>
+      <p class="small">本页不接真实账号、不读取真实客户、不写入数据库。</p>
+    </aside>
+  </div>
+  <div class="footer">AIPIWEN Partner Interpretation Console V0.1 · Local Demo</div>
+</div>
+</body>
+</html>
