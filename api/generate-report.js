@@ -714,6 +714,16 @@ function coreModuleFallback(title, engineResult) {
   ]).join('\n\n');
 }
 
+function issueFallback(issueTitle) {
+  const subject = issueTitle || '这个问题';
+  return {
+    why: `这个问题不能只看表面行为，需要放回当前年龄阶段、TRC容量、ATD反应节奏、左右脑处理风格和五个功能区一起来看。很多时候，外在表现只是结果，背后真正影响的是启动方式、承压方式、信息输入方式和沟通环境是否匹配。`,
+    how: `先从一个低风险、能马上执行的小动作开始：把要求说得更具体，把任务拆成更小一步，把反馈放近一点，并连续观察1-2周变化。处理「${subject}」时，不急着评价对错，先确认当下最卡的是理解、节奏、情绪、身体状态，还是沟通方式。`,
+    future: `这个问题背后通常也藏着一部分优势：谨慎、敏感、反应快、有主见、想做好，或对环境很有觉察。只要方法对了，它不一定是阻碍，也可能慢慢转化成更稳定的自我管理、学习适应和关系沟通能力。`,
+    cta: '想继续深聊这个问题，可以把具体场景告诉我。'
+  };
+}
+
 function normalizeSections(sections, requiredModules, selectedIssues, engineResult) {
   const byTitle = new Map();
   for (const sec of sections) {
@@ -731,10 +741,26 @@ function normalizeSections(sections, requiredModules, selectedIssues, engineResu
     };
   });
 
+  const includedIssues = new Set();
   for (const sec of sections) {
     if (!sec?.title || requiredModules.includes(sec.title)) continue;
     if (sec.type !== 'issue') continue;
-    normalized.push(sec);
+    const fallback = issueFallback(sec.title);
+    normalized.push({
+      ...sec,
+      type: 'issue',
+      why: (sec.why || '').trim() || fallback.why,
+      how: (sec.how || '').trim() || fallback.how,
+      future: (sec.future || '').trim() || fallback.future,
+      cta: (sec.cta || '').trim() || fallback.cta,
+    });
+    includedIssues.add(sec.title);
+  }
+
+  for (const title of selectedIssues) {
+    if (!title || requiredModules.includes(title) || includedIssues.has(title)) continue;
+    normalized.push({ title, type: 'issue', ...issueFallback(title) });
+    includedIssues.add(title);
   }
 
   return normalized;
