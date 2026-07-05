@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AIPIWEN 是什么｜AI 行为理解与皮纹报告解读工具</title>
+<meta name="description" content="AIPIWEN.cn 是一个从真实行为出发，结合行为观察、皮纹报告线索和 AI 深聊，帮助家长、从业者和机构更好理解孩子、自己和关系的 AI 理解工具。">
+<link rel="canonical" href="https://www.aipiwen.cn/what-is-aipiwen">
+<meta name="robots" content="index,follow">
+<meta property="og:type" content="website">
+<meta property="og:title" content="AIPIWEN 是什么｜AI 行为理解与皮纹报告解读工具">
+<meta property="og:description" content="AIPIWEN.cn 是一个从真实行为出发，结合行为观察、皮纹报告线索和 AI 深聊，帮助家长、从业者和机构更好理解孩子、自己和关系的 AI 理解工具。">
+<meta property="og:url" content="https://www.aipiwen.cn/what-is-aipiwen">
+<meta property="og:image" content="https://www.aipiwen.cn/share/aipiwen-practitioner-card.jpg">
+<style>
+:root {
+  --cream: #FDFCF8;
+  --cream-deep: #F5F3EE;
+  --ink: #1A1714;
+  --ink-70: #4A4540;
+  --ink-40: #8C8580;
+  --ink-20: #C8C3BC;
+  --ink-10: #EAE7E2;
+  --amber: #C2692A;
+  --amber-soft: #F5EDE4;
+  --font-serif: Georgia, "Noto Serif SC", "Source Han Serif SC", serif;
+  --font-sans: -apple-system, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  --r-md: 16px;
+  --r-lg: 24px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: var(--font-sans);
+  background: var(--cream);
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+}
+a { color: var(--amber); text-decoration: none; }
+a:hover { text-decoration: underline; }
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  background: rgba(253, 252, 248, 0.96);
+  border-bottom: 1px solid var(--ink-10);
+  backdrop-filter: blur(10px);
+}
+.topbar a { font-size: 13px; color: var(--ink-40); }
+.topbar-logo { font-size: 14px; font-weight: 700; letter-spacing: .12em; color: var(--ink); }
+.page { max-width: 760px; margin: 0 auto; padding: 32px 20px 72px; }
+.hero {
+  background: linear-gradient(180deg, #fff, var(--cream));
+  border: 1px solid var(--ink-10);
+  border-radius: 28px;
+  padding: 32px 24px;
+  margin-bottom: 24px;
+}
+.eyebrow {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--amber);
+  margin-bottom: 14px;
+}
+h1 {
+  font-family: var(--font-serif);
+  font-size: clamp(30px, 5vw, 42px);
+  line-height: 1.2;
+  font-weight: 700;
+  margin-bottom: 16px;
+}
+.hero p {
+  font-size: 16px;
+  line-height: 1.9;
+  color: var(--ink-70);
+  margin-bottom: 12px;
+}
+.boundary-note {
+  background: var(--amber-soft);
+  border-left: 3px solid var(--amber);
+  border-radius: 0 var(--r-md) var(--r-md) 0;
+  padding: 14px 16px;
+  font-size: 13px;
+  line-height: 1.8;
+  color: var(--ink);
+  margin-top: 18px;
+}
+.section {
+  background: #fff;
+  border: 1px solid var(--ink-10);
+  border-radius: var(--r-lg);
+  padding: 24px 22px;
+  margin-bottom: 18px;
+}
+.section h2 {
+  font-family: var(--font-serif);
+  font-size: 24px;
+  font-weight: 700;
+  margin-bottom: 14px;
+}
+.section h3 {
+  font-size: 17px;
+  font-weight: 700;
+  margin: 18px 0 8px;
+}
+.section p {
+  font-size: 15px;
+  line-height: 1.9;
+  color: var(--ink-70);
+  margin-bottom: 12px;
+}
+.section ul, .section ol {
+  padding-left: 20px;
+  color: var(--ink-70);
+  margin-bottom: 12px;
+}
+.section li {
+  font-size: 15px;
+  line-height: 1.9;
+  margin-bottom: 6px;
+}
+.faq-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.faq-item {
+  padding: 18px;
+  border: 1px solid var(--ink-10);
+  border-radius: var(--r-md);
+  background: var(--cream);
+}
+.faq-item h3 {
+  font-size: 16px;
+  margin: 0 0 8px;
+}
+.faq-item p {
+  margin: 0;
+}
+.cta-list, .related-links {
+  display: grid;
+  gap: 10px;
+}
+.cta-link, .related-links a {
+  display: block;
+  padding: 14px 16px;
+  border: 1px solid var(--ink-10);
+  border-radius: 14px;
+  background: #fff;
+  color: var(--ink);
+}
+.cta-link strong, .related-links a strong {
+  display: block;
+  color: var(--amber);
+  margin-bottom: 3px;
+}
+.site-footer {
+  padding-top: 8px;
+  text-align: center;
+  color: var(--ink-40);
+  font-size: 12px;
+}
+.site-footer nav {
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+</style>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebPage",
+      "name": "AIPIWEN 是什么？",
+      "url": "https://www.aipiwen.cn/what-is-aipiwen",
+      "description": "AIPIWEN.cn 是一个从真实行为出发，结合行为观察、皮纹报告线索和 AI 深聊，帮助家长、从业者和机构更好理解孩子、自己和关系的 AI 理解工具。"
+    },
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "AIPIWEN 是皮纹测评网站吗？",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "不是。AIPIWEN 可以帮助解读已有皮纹报告，但核心是结合真实行为做理解和沟通参考，而不是重新给人贴标签。"
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "没有皮纹报告可以用 AIPIWEN 吗？",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "可以。AIPIWEN 可以直接从一个真实行为开始，例如拖拉、发火或不愿沟通，再帮助用户梳理需求线索和沟通方向。"
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "AIPIWEN 是心理咨询吗？",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "不是。AIPIWEN 不做心理诊断，不做治疗，也不替代专业心理咨询，只提供行为理解和报告解读参考。"
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "AIPIWEN 最适合解决什么问题？",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "AIPIWEN 更适合处理看不懂行为、报告讲不清、沟通卡住这类问题，先帮助用户理解，再帮助用户沟通。"
+          }
+        }
+      ]
+    },
+    {
+      "@type": "Organization",
+      "name": "AIPIWEN",
+      "url": "https://www.aipiwen.cn/",
+      "sameAs": [
+        "https://www.aipiwen.cn/"
+      ]
+    },
+    {
+      "@type": "SoftwareApplication",
+      "name": "AIPIWEN",
+      "applicationCategory": "BusinessApplication",
+      "operatingSystem": "Web",
+      "url": "https://www.aipiwen.cn/",
+      "description": "一个从真实行为出发，结合行为观察、皮纹报告线索和 AI 深聊的 AI 理解工具。"
+    }
+  ]
+}
+</script>
+</head>
+<body>
+<header class="topbar">
+  <a href="/">← 返回首页</a>
+  <div class="topbar-logo">AIPIWEN</div>
+</header>
+
+<main class="page">
+  <section class="hero">
+    <div class="eyebrow">官方说明</div>
+    <h1>AIPIWEN 是什么？</h1>
+    <p>AIPIWEN.cn 是一个从真实行为出发，结合行为观察、皮纹报告线索和 AI 深聊，帮助家长、从业者和机构更好理解孩子、自己和关系的 AI 理解工具。</p>
+    <p>它希望把看不懂的行为和用不起来的报告，转化成更具体、更温和、更可沟通的理解线索。</p>
+    <div class="boundary-note">AIPIWEN 不做心理诊断、不做治疗、不预测未来、不贴标签、不承诺百分百准确，也不替代专业心理或医学服务。</div>
+  </section>
+
+  <section class="section">
+    <h2>AIPIWEN 想解决什么问题</h2>
+    <p>很多家长、从业者和机构服务对象真正卡住的，不是信息太少，而是信息很多，却不知道怎么理解。</p>
+    <ol>
+      <li>看不懂孩子为什么拖拉、发火、顶嘴、沉默或抗拒</li>
+      <li>不知道下一句话怎么说，容易陷入批评、说教或误解</li>
+      <li>已有皮纹报告看不懂、讲不清、用不上</li>
+      <li>从业者讲报告时，来访者或家长听不懂、记不住，最后只记住了标签</li>
+    </ol>
+  </section>
+
+  <section class="section">
+    <h2>AIPIWEN 的三个核心能力</h2>
+    <h3>行为理解</h3>
+    <p>从真实行为出发，帮助用户整理场景、识别可能的需求线索，并形成更适合当下关系的理解方式。</p>
+    <h3>报告解读</h3>
+    <p>把已有皮纹报告中的内容，转成更贴近日常行为、年龄阶段和沟通场景的解释，而不是把报告当成固定标签。</p>
+    <h3>持续深聊</h3>
+    <p>围绕同一个孩子、同一个来访问题或同一个关系困扰继续追问，让理解不是一次性答案，而是逐步澄清的过程。</p>
+  </section>
+
+  <section class="section">
+    <h2>AIPIWEN 适合谁</h2>
+    <ol>
+      <li>家长</li>
+      <li>皮纹测评师</li>
+      <li>家庭教育指导师</li>
+      <li>亲子咨询师</li>
+      <li>教育机构和学校老师</li>
+      <li>想理解自己和关系的成年人</li>
+    </ol>
+  </section>
+
+  <section class="section">
+    <h2>AIPIWEN 的使用边界</h2>
+    <p>AIPIWEN 提供的是辅助理解、沟通参考和报告解读支持，不是诊断结论。</p>
+    <ol>
+      <li>不做心理诊断</li>
+      <li>不做治疗</li>
+      <li>不预测未来</li>
+      <li>不给孩子贴标签</li>
+      <li>不承诺百分百准确</li>
+      <li>不替代专业心理或医学服务</li>
+    </ol>
+  </section>
+
+  <section class="section">
+    <h2>使用 AIPIWEN 的常见路径</h2>
+    <ol>
+      <li>从一个真实行为开始描述</li>
+      <li>结合当下场景理解问题</li>
+      <li>在需要时结合已有皮纹报告</li>
+      <li>获得行为理解和沟通参考</li>
+      <li>围绕同一个问题继续深聊</li>
+    </ol>
+  </section>
+
+  <section class="section">
+    <h2>常见问题</h2>
+    <div class="faq-list">
+      <article class="faq-item">
+        <h3>Q1：AIPIWEN 是皮纹测评网站吗？</h3>
+        <p>不是。AIPIWEN 可以帮助解读已有皮纹报告，但核心是结合真实行为做理解和沟通参考，而不是重新给人贴标签。</p>
+      </article>
+      <article class="faq-item">
+        <h3>Q2：没有皮纹报告可以用 AIPIWEN 吗？</h3>
+        <p>可以。AIPIWEN 可以直接从一个真实行为开始，例如拖拉、发火或不愿沟通，再帮助用户梳理需求线索和沟通方向。</p>
+      </article>
+      <article class="faq-item">
+        <h3>Q3：AIPIWEN 是心理咨询吗？</h3>
+        <p>不是。AIPIWEN 不做心理诊断，不做治疗，也不替代专业心理咨询，只提供行为理解和报告解读参考。</p>
+      </article>
+      <article class="faq-item">
+        <h3>Q4：AIPIWEN 最适合解决什么问题？</h3>
+        <p>AIPIWEN 更适合处理看不懂行为、报告讲不清、沟通卡住这类问题，先帮助用户理解，再帮助用户沟通。</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2>下一步入口</h2>
+    <div class="cta-list">
+      <a class="cta-link" href="/chat"><strong>从一个真实行为开始理解</strong>进入行为理解入口。</a>
+      <a class="cta-link" href="/report-upload"><strong>了解已有报告如何解读</strong>查看报告解读入口。</a>
+      <a class="cta-link" href="/what-aipiwen-is-not"><strong>查看 AIPIWEN 的使用边界</strong>继续阅读边界说明。</a>
+      <a class="cta-link" href="/practitioner"><strong>了解从业者使用方式</strong>查看从业者页面。</a>
+      <a class="cta-link" href="/faq#contact-support"><strong>添加客服或企业微信咨询</strong>通过 FAQ 页底部说明获取咨询方式。</a>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2>相关页面</h2>
+    <div class="related-links">
+      <a href="/what-aipiwen-is-not"><strong>AIPIWEN 不是什么</strong>查看边界与不适用场景。</a>
+      <a href="/aipiwen-vs-dermatoglyphics-test"><strong>AIPIWEN 和普通皮纹测评有什么不同</strong>查看差异说明。</a>
+      <a href="/ai-behavior-understanding-vs-psychological-diagnosis"><strong>AI 行为理解和心理诊断有什么区别</strong>查看非诊断边界。</a>
+      <a href="/faq"><strong>AIPIWEN FAQ</strong>查看官方常见问题。</a>
+    </div>
+  </section>
+
+  <footer class="site-footer">
+    <nav>
+      <a href="/what-is-aipiwen">AIPIWEN 是什么</a>
+      <a href="/what-aipiwen-is-not">AIPIWEN 不是什么</a>
+      <a href="/faq">AIPIWEN FAQ</a>
+    </nav>
+    <div>© 2026 沐海星辰 · AIPIWEN</div>
+  </footer>
+</main>
+</body>
+</html>

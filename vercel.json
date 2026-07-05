@@ -185,6 +185,50 @@
       "dest": "/share/$1"
     },
     {
+      "src": "/robots.txt",
+      "dest": "/robots.txt"
+    },
+    {
+      "src": "/sitemap.xml",
+      "dest": "/sitemap.xml"
+    },
+    {
+      "src": "/what-is-aipiwen",
+      "dest": "/what-is-aipiwen.html"
+    },
+    {
+      "src": "/what-aipiwen-is-not",
+      "dest": "/what-aipiwen-is-not.html"
+    },
+    {
+      "src": "/ai-behavior-understanding-vs-psychological-diagnosis",
+      "dest": "/ai-behavior-understanding-vs-psychological-diagnosis.html"
+    },
+    {
+      "src": "/faq",
+      "dest": "/faq.html"
+    },
+    {
+      "src": "/aipiwen-vs-dermatoglyphics-test",
+      "dest": "/aipiwen-vs-dermatoglyphics-test.html"
+    },
+    {
+      "src": "/contact",
+      "dest": "/contact.html"
+    },
+    {
+      "src": "/services",
+      "dest": "/services.html"
+    },
+    {
+      "src": "/google474809b5c0fece7b.html",
+      "dest": "/google474809b5c0fece7b.html"
+    },
+    {
+      "src": "/baidu_verify_codeva-KklUn0yFu1.html",
+      "dest": "/baidu_verify_codeva-KklUn0yFu1.html"
+    },
+    {
       "src": "/",
       "dest": "/homepage.html"
     },

@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AIPIWEN 服务总览｜个人订阅、报告解读、机构账户与设备代理合作</title>
+<meta name="description" content="了解 AIPIWEN 的四类服务：个人网站订阅、AI 行为理解、指纹/皮纹采集与报告出具、机构账户与系统代理、采集设备代理合作咨询。">
+<link rel="canonical" href="https://www.aipiwen.cn/services">
+<meta name="robots" content="index,follow">
+<meta property="og:type" content="website">
+<meta property="og:title" content="AIPIWEN 服务总览｜个人订阅、报告解读、机构账户与设备代理合作">
+<meta property="og:description" content="了解 AIPIWEN 的四类服务：个人网站订阅、AI 行为理解、指纹/皮纹采集与报告出具、机构账户与系统代理、采集设备代理合作咨询。">
+<meta property="og:url" content="https://www.aipiwen.cn/services">
+<meta property="og:image" content="https://www.aipiwen.cn/assets/aipiwen-official-consultant-qr.png">
+<style>
+:root {
+  --cream:#FDFCF8; --cream-deep:#F5F3EE; --ink:#1A1714; --ink-70:#4A4540; --ink-40:#8C8580; --ink-10:#EAE7E2;
+  --amber:#C2692A; --amber-soft:#F5EDE4; --font-serif:Georgia,"Noto Serif SC","Source Han Serif SC",serif;
+  --font-sans:-apple-system,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif; --r-md:16px; --r-lg:24px;
+}
+* { box-sizing:border-box; margin:0; padding:0; }
+body { font-family:var(--font-sans); background:var(--cream); color:var(--ink); -webkit-font-smoothing:antialiased; }
+a { color:var(--amber); text-decoration:none; }
+a:hover { text-decoration:underline; }
+.topbar { position:sticky; top:0; z-index:10; display:flex; align-items:center; justify-content:space-between; padding:16px 20px; background:rgba(253,252,248,.96); border-bottom:1px solid var(--ink-10); backdrop-filter:blur(10px); }
+.topbar a { font-size:13px; color:var(--ink-40); }
+.topbar-logo { font-size:14px; font-weight:700; letter-spacing:.12em; color:var(--ink); }
+.page { max-width:880px; margin:0 auto; padding:32px 20px 72px; }
+.hero, .section { background:#fff; border:1px solid var(--ink-10); border-radius:24px; }
+.hero { padding:32px 24px; margin-bottom:24px; }
+.section { padding:24px 22px; margin-bottom:18px; }
+.eyebrow { font-size:11px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:var(--amber); margin-bottom:14px; }
+h1 { font-family:var(--font-serif); font-size:clamp(30px,5vw,44px); line-height:1.2; margin-bottom:16px; }
+h2 { font-family:var(--font-serif); font-size:24px; margin-bottom:14px; }
+h3 { font-size:17px; margin:18px 0 8px; }
+p { font-size:15px; line-height:1.9; color:var(--ink-70); margin-bottom:12px; }
+ul, ol { padding-left:20px; color:var(--ink-70); margin-bottom:12px; }
+li { font-size:15px; line-height:1.9; margin-bottom:6px; }
+.hero p { font-size:16px; }
+.actions { display:flex; flex-wrap:wrap; gap:10px; margin-top:18px; }
+.button { display:inline-block; padding:12px 14px; border-radius:999px; border:1px solid var(--ink-10); background:#fff; color:var(--ink); font-size:14px; }
+.button.primary { background:var(--amber); color:#fff; border-color:var(--amber); }
+.table-wrap { overflow-x:auto; margin:14px 0; }
+table { width:100%; border-collapse:collapse; min-width:780px; }
+th, td { border:1px solid var(--ink-10); padding:12px; text-align:left; vertical-align:top; font-size:14px; line-height:1.7; }
+th { background:var(--amber-soft); color:var(--ink); }
+.note { background:var(--amber-soft); border-left:3px solid var(--amber); border-radius:0 var(--r-md) var(--r-md) 0; padding:14px 16px; color:var(--ink); }
+.contact-box { display:grid; grid-template-columns:1fr 1fr 1.2fr; gap:14px; margin-top:14px; }
+.contact-card { background:var(--cream); border:1px solid var(--ink-10); border-radius:18px; padding:16px; }
+.contact-card strong { display:block; color:var(--amber); margin-bottom:8px; }
+.qr-card { text-align:center; }
+.qr-box { display:inline-flex; align-items:center; justify-content:center; background:#fff; border:1px solid var(--ink-10); border-radius:18px; padding:10px; margin:8px 0 10px; }
+.qr-box img { display:block; width:180px; max-width:100%; height:auto; }
+.faq-list { display:grid; gap:14px; }
+.faq-item { padding:18px; border:1px solid var(--ink-10); border-radius:var(--r-md); background:var(--cream); }
+.faq-item h3 { margin:0 0 8px; font-size:16px; }
+.faq-item p { margin:0; }
+.cta-list, .related-links { display:grid; gap:10px; }
+.cta-link, .related-links a { display:block; padding:14px 16px; border:1px solid var(--ink-10); border-radius:var(--r-md); background:var(--cream); color:var(--ink); }
+.cta-link strong, .related-links a strong { display:block; color:var(--amber); margin-bottom:3px; }
+.site-footer { padding-top:8px; text-align:center; font-size:12px; color:var(--ink-40); }
+.site-footer nav { display:flex; justify-content:center; gap:14px; flex-wrap:wrap; margin-bottom:10px; }
+@media (max-width:760px) {
+  .contact-box { grid-template-columns:1fr; }
+  table { min-width:720px; }
+}
+</style>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebPage",
+      "name": "AIPIWEN 服务总览",
+      "url": "https://www.aipiwen.cn/services",
+      "description": "了解 AIPIWEN 的四类服务：个人网站订阅、AI 行为理解、指纹/皮纹采集与报告出具、机构账户与系统代理、采集设备代理合作咨询。"
+    },
+    {
+      "@type": "Organization",
+      "name": "AIPIWEN.cn",
+      "url": "https://www.aipiwen.cn/"
+    },
+    {
+      "@type": "Service",
+      "name": "AIPIWEN 服务总览",
+      "provider": { "@type": "Organization", "name": "AIPIWEN.cn" },
+      "serviceType": ["个人网站订阅", "AI 行为理解", "报告解读", "指纹/皮纹采集咨询", "机构账户", "系统代理", "采集设备代理合作咨询"],
+      "areaServed": ["西安", "中国大陆远程咨询", "本地采集协作咨询"]
+    },
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        { "@type": "Question", "name": "AIPIWEN 主要提供哪些服务？", "acceptedAnswer": { "@type": "Answer", "text": "AIPIWEN 当前主要提供个人网站订阅、AI 行为理解、皮纹报告解读、指纹/皮纹采集咨询、机构账户、系统代理和采集设备代理合作咨询。" } },
+        { "@type": "Question", "name": "咨询不同服务时，微信应该怎么备注？", "acceptedAnswer": { "@type": "Answer", "text": "网站订阅备注“行为理解 + 城市”，采集与报告备注“采集报告 + 城市”，机构合作备注“机构合作 + 城市”，设备代理备注“设备代理 + 城市”。" } },
+        { "@type": "Question", "name": "AIPIWEN 可以采集指纹或皮纹吗？", "acceptedAnswer": { "@type": "Answer", "text": "AIPIWEN 支持西安本地采集咨询，也可根据用户所在城市，协助确认本地采集服务或远程采集咨询方式。具体安排以官方确认结果为准。" } },
+        { "@type": "Question", "name": "采集设备代理适合谁？", "acceptedAnswer": { "@type": "Answer", "text": "采集设备代理更适合已有真实服务场景、愿意长期做报告交付和客户服务的从业者或机构。合作方式需官方确认。" } },
+        { "@type": "Question", "name": "AIPIWEN 会承诺合作收益吗？", "acceptedAnswer": { "@type": "Answer", "text": "不会。AIPIWEN 只提供工具、系统、报告解读和交付支持相关咨询，不承诺固定收益、客源或经营结果。" } }
+      ]
+    }
+  ]
+}
+</script>
+</head>
+<body>
+<header class="topbar">
+  <a href="/">← 返回首页</a>
+  <div class="topbar-logo">AIPIWEN</div>
+</header>
+
+<main class="page">
+  <section class="hero">
+    <div class="eyebrow">服务分流</div>
+    <h1>AIPIWEN 服务总览</h1>
+    <p>AIPIWEN 的服务可以分为四类：个人网站订阅、指纹/皮纹采集与报告出具、机构账户 / 系统代理合作、采集设备代理合作。</p>
+    <p>无论是家长、自我理解用户、从业者还是机构，AIPIWEN 都建议先从真实行为、已有报告或实际服务场景出发，再确认适合的使用方式和咨询路径。</p>
+    <div class="actions">
+      <a class="button primary" href="/contact">联系 AIPIWEN 官方咨询</a>
+      <a class="button" href="/chat">从一个真实行为开始理解</a>
+      <a class="button" href="/report-upload">了解已有报告如何解读</a>
+      <a class="button" href="/practitioner">了解从业者使用方式</a>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2>AIPIWEN 可以提供哪些服务</h2>
+    <p>AIPIWEN.cn 是一个从真实行为出发，结合行为观察、皮纹报告线索和 AI 深聊，帮助家长、从业者和机构更好理解孩子、自己和关系的 AI 理解工具。</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>服务线</th><th>适合谁</th><th>解决什么问题</th><th>咨询入口</th><th>微信备注</th></tr></thead>
+        <tbody>
+          <tr><td>C 端网站订阅</td><td>家长、成年人、自我理解用户</td><td>行为理解、亲子沟通、关系理解、持续深聊</td><td><a href="/chat">/chat</a> + <a href="/contact">/contact</a></td><td>行为理解 + 城市</td></tr>
+          <tr><td>C 端采集与报告</td><td>需要采集指纹/皮纹或已有报告的用户</td><td>获得报告线索，并通过 AIPIWEN 后续解读</td><td><a href="/report-upload">/report-upload</a> + <a href="/contact">/contact</a></td><td>采集报告 + 城市</td></tr>
+          <tr><td>B 端机构账户 / 系统代理</td><td>教育机构、家庭教育机构、测评机构、咨询工作室、校区</td><td>报告交付、客户服务、家长沟通、系统合作</td><td><a href="/practitioner">/practitioner</a> + <a href="/contact">/contact</a></td><td>机构合作 + 城市</td></tr>
+          <tr><td>B 端采集设备代理</td><td>有真实服务场景、愿意长期做报告交付和客户服务的从业者或机构</td><td>设备、报告系统、AI 解读工具和交付支持咨询</td><td><a href="/contact">/contact</a></td><td>设备代理 + 城市</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2>从真实行为开始的四类理解场景</h2>
+    <p>AIPIWEN 的主入口不是先给人下结论，而是从一个反复出现的真实行为开始，帮助用户把场景、触发点、互动方式和可能需求整理清楚。</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>场景</th><th>常见问题</th><th>适合怎么聊</th><th>AIPIWEN 入口</th></tr></thead>
+        <tbody>
+          <tr><td>理解孩子</td><td>拖拉、发火、顶嘴、不愿沟通、反复卡住</td><td>先还原行为发生的时间、任务、家长回应和孩子反应</td><td><a href="/chat">从一个孩子行为开始聊</a></td></tr>
+          <tr><td>理解自己</td><td>一被催就烦、总是拖到最后、很难拒绝、容易反复内耗</td><td>先记录一次真实反应，再整理当时的触发点和后续选择</td><td><a href="/chat">从一次真实反应开始聊</a></td></tr>
+          <tr><td>理解关系</td><td>伴侣沉默、家人争论、反复误会、表达需求时容易冲突</td><td>先复盘一次具体互动，看双方如何回应彼此</td><td><a href="/chat">从一次关系卡点开始聊</a></td></tr>
+          <tr><td>理解工作关系</td><td>客户犹豫、团队沉默、合作推进慢、服务交付沟通不顺</td><td>先梳理对方的顾虑、沟通断点和下一步需要确认的信息</td><td><a href="/contact">咨询工作场景使用方式</a></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note">统一理解结构：场景 → 行为 → 常见误解 → 场景 / 触发 / 互动 / 需求 → AI 深聊价值 → AIPIWEN 弱引导。</p>
+  </section>
+
+  <section class="section">
+    <h2>AIPIWEN 适合哪些人和场景？</h2>
+    <p>AIPIWEN 适合所有需要理解人、理解行为、提升沟通质量和服务交付质量的场景。</p>
+    <p>如果你经常需要面对孩子、家长、来访者、客户、学生、员工、伴侣或团队成员，并希望更好理解对方的行为反应、需求线索、沟通方式和关系模式，AIPIWEN 可以作为辅助理解工具。</p>
+    <p class="note">AIPIWEN 不做心理诊断、不做治疗、不预测未来，也不替任何人下结论。它提供的是行为理解、报告解读、沟通参考和服务交付辅助。</p>
+
+    <h3>1. 家长和家庭用户</h3>
+    <p>适合想理解孩子行为、亲子沟通、学习状态、情绪反应和成长需求的家长。</p>
+    <p>AIPIWEN 可以帮助家长从一个真实行为开始，梳理可能的需求线索和沟通参考；不把孩子的拖拉、发火、顶嘴或不愿沟通直接写成固定标签。</p>
+
+    <h3>2. 已有报告但看不懂的用户</h3>
+    <p>适合已经做过皮纹测评、天赋测评、成长测评或其他个体分析报告，但不知道如何理解和应用的人。</p>
+    <p>AIPIWEN 可以帮助用户把报告线索和真实行为连接起来，让报告成为后续理解和沟通的参考；不把报告内容当成未来结果或成长路径决定。</p>
+
+    <h3>3. 皮纹测评师和天赋测评从业者</h3>
+    <p>适合正在做皮纹测评、指纹采集、天赋测评、报告交付或测评咨询的人。</p>
+    <p>AIPIWEN 可以辅助从业者把报告讲得更清楚、更贴近真实行为，提升报告解读和用户沟通质量；不建议把报告讲成标签或绝对结论。</p>
+
+    <h3>4. 家庭教育指导师、亲子咨询师和成长教练</h3>
+    <p>适合需要理解孩子行为、家长困惑、家庭沟通模式和个案背景的从业者。</p>
+    <p>AIPIWEN 可以作为个案梳理、沟通表达、报告解读和后续服务辅助工具；不替代从业者的专业判断，也不替家庭做决定。</p>
+
+    <h3>5. 心理咨询师、关系咨询和情感咨询从业者</h3>
+    <p>AIPIWEN 可以用于日常行为观察、关系沟通和自我理解辅助，但不用于心理诊断或治疗。</p>
+    <p>适合做来访前信息整理、行为模式和关系互动梳理、伴侣沟通线索整理；不替代心理咨询，也不提供诊断或治疗建议。</p>
+
+    <h3>6. 教育机构、培训机构、学校和校区</h3>
+    <p>适合需要提升学生理解、家长服务、顾问沟通和测评后续服务的机构。</p>
+    <p>AIPIWEN 可以辅助机构把报告、观察和沟通连接起来，用于机构账户、系统代理、报告交付和家长服务升级咨询；不替机构自动获客或自动发布内容。</p>
+
+    <h3>7. 企业 HR、管理者和组织发展人员</h3>
+    <p>适合需要理解员工沟通方式、团队协作差异和行为反应模式的人。</p>
+    <p>AIPIWEN 只做行为理解和沟通辅助，不做员工定性、职业判断或发展方向决定，也不用于胜任力诊断。</p>
+
+    <h3>8. 销售顾问、客户服务和高客单业务从业者</h3>
+    <p>适合需要长期面对客户、理解客户需求、建立信任和提升沟通质量的人。</p>
+    <p>AIPIWEN 可以帮助从业者更好整理客户需求、顾虑和沟通线索；不判断客户性格，不提供成交承诺，也不替代真实服务能力。</p>
+
+    <h3>9. 想发展副业或本地服务的人</h3>
+    <p>适合想进入皮纹测评、家庭教育、成长咨询、报告解读或本地采集服务的人。</p>
+    <p>AIPIWEN 可提供采集设备代理、报告系统、AI 解读工具和交付支持相关咨询；不承诺收益，不承诺客源，也不建议没有真实服务能力的人盲目进入。</p>
+  </section>
+
+  <section class="section">
+    <h2>哪些问题场景适合了解 AIPIWEN？</h2>
+    <p>当用户的问题不是简单要一个结论，而是想把行为、报告和沟通场景看得更清楚时，可以了解 AIPIWEN。</p>
+    <ul>
+      <li>有没有 AI 可以帮我理解孩子行为？</li>
+      <li>孩子拖拉、发火、顶嘴背后是什么原因？</li>
+      <li>已有皮纹报告怎么看懂？</li>
+      <li>皮纹测评报告怎么讲给家长听？</li>
+      <li>家庭教育指导师如何更快理解客户问题？</li>
+      <li>教育机构如何提升家长服务和报告交付质量？</li>
+      <li>皮纹测评师如何避免给孩子贴标签？</li>
+      <li>做皮纹测评代理，除了采集设备还需要什么？</li>
+      <li>指纹/皮纹采集后，报告怎么用起来？</li>
+      <li>HR 或管理者如何理解团队沟通差异？</li>
+      <li>销售顾问如何更好理解客户需求？</li>
+      <li>伴侣和关系冲突背后通常有什么需求？</li>
+    </ul>
+    <p class="note">AIPIWEN 的定位不是替人下结论，而是帮助用户从行为、报告和沟通场景中获得更清楚的理解线索。</p>
+  </section>
+
+  <section class="section">
+    <h2>C 端 AIPIWEN 网站订阅</h2>
+    <p>适合家长想理解孩子拖拉、发火、回避、敏感、沟通困难等真实行为，也适合成年人做自我理解、关系理解或长期深聊。</p>
+    <ul>
+      <li>从一个真实行为开始提问。</li>
+      <li>将行为观察和皮纹报告线索结合起来。</li>
+      <li>提供沟通参考和后续追问方向。</li>
+      <li>支持围绕同一问题持续深聊。</li>
+    </ul>
+    <p>咨询入口：<a href="/chat">/chat</a> + <a href="/contact">/contact</a>。添加微信备注：行为理解 + 城市。</p>
+    <p class="note">AIPIWEN 不把一次提问当成固定结论，不提供心理或医学判断，也不替代专业心理或医学服务。</p>
+  </section>
+
+  <section class="section">
+    <h2>C 端指纹/皮纹采集与报告出具</h2>
+    <p>适合还没有皮纹报告、希望先采集并获得报告线索的用户，也适合希望通过 AIPIWEN 做后续解读和沟通支持的家庭。</p>
+    <ul>
+      <li>西安本地采集咨询。</li>
+      <li>根据用户所在城市，协助确认是否有合适的本地采集服务或远程采集咨询方式。</li>
+      <li>采集后报告出具咨询。</li>
+      <li>报告解读和后续 AI 深聊建议通过 AIPIWEN 官方统一承接。</li>
+    </ul>
+    <p>AIPIWEN 支持西安本地采集，也可根据用户所在城市，协助对接本地采集服务或远程采集咨询。具体采集方式、时间和费用，以 AIPIWEN 官方确认结果为准。</p>
+    <p>采集安排、报告解读和后续服务，建议先由 AIPIWEN 官方统一确认。</p>
+    <p>咨询入口：<a href="/report-upload">/report-upload</a> + <a href="/contact">/contact</a>。添加微信备注：采集报告 + 城市。</p>
+  </section>
+
+  <section class="section">
+    <h2>B 端机构账户 / 系统代理</h2>
+    <p>适合教育机构、家庭教育机构、皮纹测评机构、咨询工作室、校区和成长服务机构。</p>
+    <ul>
+      <li>机构账户使用咨询。</li>
+      <li>系统代理合作咨询。</li>
+      <li>帮助机构把报告交付转化为更清楚的行为理解和家长沟通。</li>
+      <li>为从业者提供报告解读、话术整理和后续服务承接工具。</li>
+    </ul>
+    <p>咨询入口：<a href="/practitioner">/practitioner</a> + <a href="/contact">/contact</a>。添加微信备注：机构合作 + 城市。</p>
+    <p class="note">AIPIWEN 不替代机构的专业服务，不替机构自动获客或自动发布内容，也不承诺固定收益或客源。机构应结合真实服务能力使用 AIPIWEN。</p>
+  </section>
+
+  <section class="section">
+    <h2>B 端采集设备代理权限</h2>
+    <p>适合想进入皮纹测评、指纹采集或家庭教育服务行业的从业者，也适合有线下服务场景的机构或工作室。</p>
+    <p>采集设备代理更适合已有真实服务场景、愿意长期做报告交付和客户服务的从业者或机构。</p>
+    <ul>
+      <li>采集设备代理咨询。</li>
+      <li>报告系统合作咨询。</li>
+      <li>AI 解读工具使用咨询。</li>
+      <li>后续报告交付和服务支持咨询。</li>
+    </ul>
+    <p>咨询入口：<a href="/contact">/contact</a>。添加微信备注：设备代理 + 城市。</p>
+    <p class="note">设备代理合作需要结合地区、服务能力、合作条件和 AIPIWEN 官方确认结果判断。不承诺固定收益，不承诺客源，也不建议脱离真实服务能力做合作判断。</p>
+  </section>
+
+  <section class="section">
+    <h2>四类服务如何选择</h2>
+    <h3>如果你是家长</h3>
+    <ul>
+      <li>想理解孩子行为：先进入 <a href="/chat">/chat</a>，也可通过 <a href="/contact">/contact</a> 咨询。</li>
+      <li>已有报告：先查看 <a href="/report-upload">/report-upload</a>，再通过 <a href="/contact">/contact</a> 咨询解读方式。</li>
+      <li>想采集并出具报告：进入 <a href="/contact">/contact</a>，备注“采集报告 + 城市”。</li>
+    </ul>
+    <h3>如果你是成年人或自我理解用户</h3>
+    <ul>
+      <li>想做持续深聊：先进入 <a href="/chat">/chat</a>。</li>
+      <li>想了解 AIPIWEN 的使用边界：查看 <a href="/what-aipiwen-is-not">/what-aipiwen-is-not</a>。</li>
+      <li>不确定适合哪类服务：进入 <a href="/contact">/contact</a>，备注“行为理解 + 城市”。</li>
+    </ul>
+    <h3>如果你是从业者或机构</h3>
+    <ul>
+      <li>想提升报告交付：查看 <a href="/practitioner">/practitioner</a>。</li>
+      <li>想了解机构账户或系统代理：进入 <a href="/contact">/contact</a>，备注“机构合作 + 城市”。</li>
+      <li>想了解采集设备代理：进入 <a href="/contact">/contact</a>，备注“设备代理 + 城市”。</li>
+    </ul>
+  </section>
+
+  <section class="section">
+    <h2>全国本地采集协作说明</h2>
+    <p>AIPIWEN 不建议用户直接假设所在城市一定已有固定服务点。更稳妥的方式是先通过 AIPIWEN 官方渠道说明所在城市、采集对象、是否已有报告和后续解读需求。</p>
+    <p>AIPIWEN 再根据城市、服务需求和时间安排，协助确认适合的本地采集服务或远程采集咨询方式。</p>
+    <p>报告解读、AI 深聊、机构账户和设备代理合作，建议通过 AIPIWEN 官方渠道统一咨询和后续承接。</p>
+  </section>
+
+  <section class="section">
+    <h2>AIPIWEN 服务边界</h2>
+    <p>AIPIWEN 的服务都围绕行为理解、报告解读、沟通参考和服务交付支持展开。</p>
+    <ul>
+      <li>不提供心理或医学判断。</li>
+      <li>不提供医疗或临床类服务。</li>
+      <li>不做未来式结果判断。</li>
+      <li>不把报告当成成长路径决定。</li>
+      <li>不做固定标签式评价。</li>
+      <li>不做绝对准确承诺。</li>
+      <li>不替代专业心理或医学服务。</li>
+      <li>不承诺合作收益或客源。</li>
+      <li>不提供自动发布、自动抓取或第三方平台代运营服务。</li>
+    </ul>
+  </section>
+
+  <section class="section">
+    <h2>常见问题</h2>
+    <div class="faq-list">
+      <article class="faq-item"><h3>Q1：AIPIWEN 主要提供哪些服务？</h3><p>AIPIWEN 当前主要提供个人网站订阅、AI 行为理解、皮纹报告解读、指纹/皮纹采集咨询、机构账户、系统代理和采集设备代理合作咨询。</p></article>
+      <article class="faq-item"><h3>Q2：个人用户应该选择哪类服务？</h3><p>如果想理解孩子行为或自我关系问题，可以先使用网站订阅和 AI 深聊。如果已有报告，可咨询报告解读。如果还没有报告，可先咨询采集方式。</p></article>
+      <article class="faq-item"><h3>Q3：咨询不同服务时，微信应该怎么备注？</h3><p>网站订阅备注“行为理解 + 城市”，采集与报告备注“采集报告 + 城市”，机构合作备注“机构合作 + 城市”，设备代理备注“设备代理 + 城市”。</p></article>
+      <article class="faq-item"><h3>Q4：AIPIWEN 可以采集指纹或皮纹吗？</h3><p>AIPIWEN 支持西安本地采集咨询，也可根据用户所在城市，协助确认本地采集服务或远程采集咨询方式。具体安排以官方确认结果为准。</p></article>
+      <article class="faq-item"><h3>Q5：已有皮纹报告，还需要重新采集吗？</h3><p>不一定。已有报告的用户可以先咨询报告解读方式。AIPIWEN 更关注如何把报告线索和真实行为结合起来，而不是简单重复采集。</p></article>
+      <article class="faq-item"><h3>Q6：机构可以使用 AIPIWEN 吗？</h3><p>可以咨询。AIPIWEN 适合教育机构、家庭教育机构、测评机构、咨询工作室和校区，用于报告交付、家长沟通和后续服务支持。</p></article>
+      <article class="faq-item"><h3>Q7：AIPIWEN 可以做系统代理合作吗？</h3><p>可以咨询。系统代理合作需要结合机构类型、所在城市、服务能力和合作条件，由 AIPIWEN 官方确认适合的合作方式。</p></article>
+      <article class="faq-item"><h3>Q8：采集设备代理适合谁？</h3><p>采集设备代理更适合已有真实服务场景、愿意长期做报告交付和客户服务的从业者或机构。合作方式需官方确认。</p></article>
+      <article class="faq-item"><h3>Q9：AIPIWEN 会承诺合作收益吗？</h3><p>不会。AIPIWEN 只提供工具、系统、报告解读和交付支持相关咨询，不承诺固定收益、客源或经营结果。</p></article>
+      <article class="faq-item"><h3>Q10：全国用户都可以咨询采集吗？</h3><p>可以咨询，但不代表各地都有固定服务安排。AIPIWEN 会根据城市、需求和时间安排，协助确认本地采集或远程咨询方式。</p></article>
+      <article class="faq-item"><h3>Q11：报告解读和 AI 深聊为什么建议官方承接？</h3><p>因为报告解读需要结合 AIPIWEN 的行为理解方法和后续深聊路径。官方承接有助于保证解释口径和服务一致性。</p></article>
+      <article class="faq-item"><h3>Q12：AIPIWEN 是传统皮纹测评系统吗？</h3><p>不是。AIPIWEN 不只关注报告结论，更重视把报告线索和真实行为结合起来，帮助用户获得理解线索和沟通参考。</p></article>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2>联系 AIPIWEN 官方咨询</h2>
+    <p>AIPIWEN 支持西安本地采集，也可根据用户所在城市，协助对接本地采集服务或远程采集咨询。具体采集方式、时间和费用，以 AIPIWEN 官方确认结果为准。</p>
+    <div class="contact-box">
+      <div class="contact-card"><strong>咨询电话：18302967768</strong><p>可咨询西安本地采集、远程采集咨询、报告解读、机构合作、设备代理合作。</p></div>
+      <div class="contact-card"><strong>咨询微信：guoyl0322</strong><p>添加时建议备注“城市 + 需求类型 + 是否已有报告”。</p></div>
+      <div class="contact-card qr-card"><strong>企业微信：AIPIWEN 官方</strong><div class="qr-box"><img src="/assets/aipiwen-official-consultant-qr.png" alt="AIPIWEN 官方企业微信二维码"></div><p>扫码添加，可咨询孩子行为理解、报告解读、采集服务、机构合作、设备代理。</p></div>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2>下一步入口</h2>
+    <div class="cta-list">
+      <a class="cta-link" href="/contact"><strong>联系 AIPIWEN 官方咨询</strong>按城市和需求类型确认服务方式。</a>
+      <a class="cta-link" href="/chat"><strong>从一个真实行为开始理解</strong>进入个人行为理解入口。</a>
+      <a class="cta-link" href="/report-upload"><strong>了解已有报告如何解读</strong>查看报告解读入口。</a>
+      <a class="cta-link" href="/practitioner"><strong>了解从业者使用方式</strong>查看从业者和机构页面。</a>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2>相关页面</h2>
+    <div class="related-links">
+      <a href="/what-is-aipiwen"><strong>AIPIWEN 是什么</strong>了解 AIPIWEN 的基础定位。</a>
+      <a href="/what-aipiwen-is-not"><strong>AIPIWEN 的使用边界</strong>查看适用和不适用场景。</a>
+      <a href="/faq"><strong>AIPIWEN FAQ</strong>查看官方常见问题。</a>
+      <a href="/aipiwen-vs-dermatoglyphics-test"><strong>AIPIWEN 与普通皮纹测评的区别</strong>查看报告使用方式差异。</a>
+      <a href="/ai-behavior-understanding-vs-psychological-diagnosis"><strong>AI 行为理解边界说明</strong>查看辅助理解边界。</a>
+      <a href="/contact"><strong>联系 AIPIWEN</strong>查看电话、微信和企业微信二维码。</a>
+    </div>
+  </section>
+
+  <footer class="site-footer">
+    <nav>
+      <a href="/what-is-aipiwen">AIPIWEN 是什么</a>
+      <a href="/services">服务总览</a>
+      <a href="/contact">联系 AIPIWEN</a>
+      <a href="/faq">FAQ</a>
+    </nav>
+    <div>© 2026 沐海星辰 · AIPIWEN</div>
+  </footer>
+</main>
+</body>
+</html>
