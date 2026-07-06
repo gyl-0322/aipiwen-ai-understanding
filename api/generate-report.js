@@ -558,14 +558,41 @@ function buildUserMessage(engineResult, age, name, requiredModules, selectedIssu
   const extra    = engineResult['叠加特质'] || {};
   const avg      = fp['个人均值'] || 0;
 
-  // 功能区相对强弱
-  const zones = ['精神','思维','体觉','听觉','视觉'];
-  const zoneDesc = zones.map(z => {
-    const v = fp[z] || 0;
-    const diff = v - avg;
-    const tag  = diff >= 5 ? '★强势区' : (diff <= -5 ? '△发展区' : '→均衡区');
-    return `${z}(${v}) ${tag}`;
-  }).join('  ');
+  const fingerValue = (pos) => {
+    const v = Number(fingers?.[pos]?.trc);
+    return Number.isFinite(v) ? v : null;
+  };
+  const fingerState = (pos) => {
+    const v = fingerValue(pos);
+    const a = Number(avg);
+    if (!Number.isFinite(v) || !Number.isFinite(a)) return '未识别';
+    const diff = +(v - a).toFixed(1);
+    const tag = diff >= 5 ? '明显高于个人均值'
+      : diff >= 2 ? '略高于个人均值'
+      : diff <= -5 ? '明显低于个人均值'
+      : diff <= -2 ? '略低于个人均值'
+      : '接近个人均值';
+    return `${v}（${tag}，差值${diff >= 0 ? '+' : ''}${diff}）`;
+  };
+  const pairState = (rightPos, leftPos) => {
+    const rv = fingerValue(rightPos);
+    const lv = fingerValue(leftPos);
+    if (!Number.isFinite(rv) || !Number.isFinite(lv)) return '左右差异待确认';
+    const diff = +(rv - lv).toFixed(1);
+    if (diff >= 3) return `右侧比左侧高${diff}，右侧代表的功能更容易先被调动`;
+    if (diff <= -3) return `左侧比右侧高${Math.abs(diff)}，左侧代表的功能更容易先被调动`;
+    return `左右差值${Math.abs(diff)}，两侧相对接近，需要结合真实场景看哪边更常被使用`;
+  };
+  const functionFingerDesc = [
+    `精神功能：右拇R1=${fingerState('R1')}；左拇L1=${fingerState('L1')}；${pairState('R1','L1')}`,
+    `思维功能：右食R2=${fingerState('R2')}；左食L2=${fingerState('L2')}；${pairState('R2','L2')}`,
+    `体觉功能：右中R3=${fingerState('R3')}；左中L3=${fingerState('L3')}；${pairState('R3','L3')}`,
+    `听觉功能：右无名R4=${fingerState('R4')}；左无名L4=${fingerState('L4')}；${pairState('R4','L4')}`,
+    `视觉功能：右小R5=${fingerState('R5')}；左小L5=${fingerState('L5')}；${pairState('R5','L5')}`,
+  ].join('\n');
+  const zoneTotalDesc = ['精神','思维','体觉','听觉','视觉']
+    .map(z => `${z}合计${fp[z] || 0}`)
+    .join(' / ');
 
   const ageTierDesc = {
     preschool:'学龄前(0-6岁)', school:'小学阶段(7-12岁)',
@@ -618,7 +645,11 @@ ATD：${atd['值'] || '未知'}（${atd['分区'] || '未测'}）
 - 所有固定模块、严正申明、勾选问题回答，都必须和当前年龄段一致；成年人报告不得出现“您孩子怎样怎样”“这孩子”“家长怎么配合”等错位表达。
 - 如果需要泛化表达，用“这个人/本人/你”替代“孩子”；只有0-18岁报告才使用“孩子/家长”表达。
 
-【五功能区】${zoneDesc}
+【五大功能区总览】${zoneTotalDesc}
+说明：上面的功能区合计只允许用于总览图或能力地图，禁止拿“两根手指合计值”和“单指个人均值”直接比较后写结论。五个独立功能页必须按下面的单指明细写。
+
+【五大功能区单指明细】（五个独立功能页必须优先使用这里，不得只写合计值）
+${functionFingerDesc}
 总TRC：${fp['总TRC']}
 ${兴趣班提示}
 ${knowledgeContext.reportKnowledgeBlock ? `\n${knowledgeContext.reportKnowledgeBlock}\n` : ''}
@@ -646,7 +677,8 @@ ${requiredModules.map((m,i)=>`${i+1}. ===${m}===`).join('\n')}
 - ===体觉功能（中指系统）=== 必须说明右中=小肌肉精细，左中=大运动/耐力/坚持；分别讲高低体现、行为表现、优势与应用。
 - ===听觉功能（无名指系统）=== 必须说明右无名=语言表达/记忆，左无名=音感/言外之意；分别讲高低体现、行为表现、优势与应用。
 - ===视觉功能（小指系统）=== 必须说明右小指=识人/察色/方向感，左小指=色彩审美/图像思考；分别讲高低体现、行为表现、优势与应用。
-- 以上每个五大功能模块都要像单独一页报告来写，不允许合并、不允许一句带过。必须至少包含：两根手指定义、当前功能区相对个人均值的位置、数值偏高/偏低的优势和可能卡点、学习/行为/沟通中的应用建议。
+- 以上每个五大功能模块都要像单独一页报告来写，不允许合并、不允许一句带过。必须至少包含：两根手指定义、每根手指各自与个人均值的对比、左右两根手指谁更容易先被调动、数值偏高/偏低的优势和可能卡点、学习/行为/沟通中的应用建议。
+- 严禁把两根手指的合计值拿去和个人单指均值比较后写成“当前某功能为X，明显高于个人均值”。这种写法会误判强弱。
 
 ⚠️ 同源一致（00i 规则2）：凡涉及职业/能力/兴趣班的内容，严格基于上方 RULE-F04 已修正判定展开，不另行重算高低；后续可选延伸问题将在此结论基础上深化，必须保持一致。
 
@@ -709,7 +741,7 @@ function parseSections(raw, requiredModules, selectedIssues) {
   return sections;
 }
 
-function coreModuleFallback(title, engineResult, tier = 'adult') {
+function coreModuleFallback(title, engineResult, tier = 'adult', fingers = null) {
   const fp = engineResult?.['五功能区'] || {};
   const chan = engineResult?.['学习通道'] || {};
   const behav = engineResult?.['行为模式'] || {};
@@ -719,15 +751,84 @@ function coreModuleFallback(title, engineResult, tier = 'adult') {
   const audience = getAudienceStyle(tier);
   const avg = fp['个人均值'] || '当前均值';
   const total = fp['总TRC'] || '当前总量';
-  const zoneState = (zone) => {
-    const v = Number(fp[zone]);
-    const a = Number(avg);
-    if (!Number.isFinite(v) || !Number.isFinite(a)) return '需要结合完整数值继续确认';
-    if (v >= a + 5) return '明显高于个人均值，属于更顺手、更容易被调动的入口';
-    if (v <= a - 5) return '低于个人均值，属于更需要节奏、方法和环境支持的入口';
-    return '接近个人均值，属于相对均衡、需要看具体场景调动的入口';
+
+  const fingerValue = (pos) => {
+    const v = Number(fingers?.[pos]?.trc);
+    return Number.isFinite(v) ? v : null;
   };
-  const valueOf = (zone) => fp[zone] || '—';
+  const fingerState = (pos) => {
+    const v = fingerValue(pos);
+    const a = Number(avg);
+    if (!Number.isFinite(v) || !Number.isFinite(a)) return '数值待确认';
+    const diff = +(v - a).toFixed(1);
+    if (diff >= 5) return `明显高于个人均值${a}（高${diff}）`;
+    if (diff >= 2) return `略高于个人均值${a}（高${diff}）`;
+    if (diff <= -5) return `明显低于个人均值${a}（低${Math.abs(diff)}）`;
+    if (diff <= -2) return `略低于个人均值${a}（低${Math.abs(diff)}）`;
+    return `接近个人均值${a}（差${Math.abs(diff)}）`;
+  };
+  const pairState = (rightPos, leftPos, rightLabel, leftLabel) => {
+    const rv = fingerValue(rightPos);
+    const lv = fingerValue(leftPos);
+    if (!Number.isFinite(rv) || !Number.isFinite(lv)) return '左右两侧差异需要结合原始数值继续确认。';
+    const diff = +(rv - lv).toFixed(1);
+    if (diff >= 3) return `${rightLabel}比${leftLabel}高${diff}，说明这个功能更容易先从${rightLabel}代表的方向启动；${leftLabel}并不是没有，而是需要更多结构、练习或场景来调动。`;
+    if (diff <= -3) return `${leftLabel}比${rightLabel}高${Math.abs(diff)}，说明这个功能更容易先从${leftLabel}代表的方向启动；${rightLabel}需要更明确的目标、步骤或反馈来带动。`;
+    return `${rightLabel}和${leftLabel}比较接近，说明两边都有可用入口，真正表现要看当下任务是在调用哪一种能力。`;
+  };
+  const functionBlocks = {
+    '精神功能（拇指系统）': {
+      rightPos:'R1', leftPos:'L1', rightName:'右拇', leftName:'左拇',
+      rightRole:'开创力、目标感、对外发起、号召和主导',
+      leftRole:'管理力、自我纪律、执行协调、承压和自制',
+      high:'更容易有目标、有主见、愿意扛事，也可能因为太想推进而显得急、硬、没耐心',
+      low:'不代表没能力，而是需要被点燃、被看见，适合先用小目标和外部结构启动',
+      apply:'学习或做事时，右拇强可以给挑战和责任，左拇强可以给计划和规则；偏低的一侧不要硬压大目标，先从一个能完成的小胜利开始。'
+    },
+    '思维功能（食指系统）': {
+      rightPos:'R2', leftPos:'L2', rightName:'右食', leftName:'左食',
+      rightRole:'逻辑推理、数学、规则理解、因果分析',
+      leftRole:'创意、空间想象、策略、跳出框架看问题',
+      high:'更容易抓结构、想办法、找规律，也可能标准高、想太多、卡在还没想清楚',
+      low:'不代表笨，而是不能只靠抽象讲道理，需要例子、图像、步骤或体验来带动',
+      apply:'学习上，右食强先讲公式和逻辑，左食强先用图像和策略；偏低的一侧用复述、画图、举例把思考落下来。'
+    },
+    '体觉功能（中指系统）': {
+      rightPos:'R3', leftPos:'L3', rightName:'右中', leftName:'左中',
+      rightRole:'小肌肉精细、写字、手工、操作细节、手眼协调',
+      leftRole:'大运动、身体节奏、耐力、坚持和律动',
+      high:'更适合通过做、摸、练、动来理解，身体记忆和实践感会更明显',
+      low:'不代表懒或没执行力，而是身体入口需要更短、更清楚、更可见的训练节奏',
+      apply:'学习上把知识变成动作：写出来、摆出来、演出来；精细侧偏低就少量多次练，律动侧偏低就先降低持续时间要求。'
+    },
+    '听觉功能（无名指系统）': {
+      rightPos:'R4', leftPos:'L4', rightName:'右无名', leftName:'左无名',
+      rightRole:'语言表达、口语记忆、听到后复述和讲出来',
+      leftRole:'音感、语气、节奏、言外之意和情绪声调',
+      high:'更容易从声音和语言里抓重点，也更容易被语气、音量和环境噪声影响',
+      low:'不代表听不懂，而是单靠口头讲解不够，需要文字、图像或动作一起辅助',
+      apply:'听觉强可以朗读、讲题、复述；偏低时把口头指令写下来，一次确认一个重点，先降低声音压力再谈要求。'
+    },
+    '视觉功能（小指系统）': {
+      rightPos:'R5', leftPos:'L5', rightName:'右小', leftName:'左小',
+      rightRole:'识人、察色、方向感、观察外部线索和细节辨识',
+      leftRole:'色彩审美、图像思考、画面感和内在想象',
+      high:'更容易看见细节、画面和氛围变化，优势是观察、审美、图像记忆和空间感',
+      low:'不代表没审美或没判断力，而是不能只靠图像输入，需要声音、步骤或逻辑辅助',
+      apply:'视觉强适合图表、颜色、流程图和空间定位；偏低时不要只给图，要配合口头解释、文字步骤和真实例子。'
+    },
+  };
+  const functionFallback = (cfg) => {
+    const rv = fingerValue(cfg.rightPos);
+    const lv = fingerValue(cfg.leftPos);
+    const rightValue = Number.isFinite(rv) ? rv : '待确认';
+    const leftValue = Number.isFinite(lv) ? lv : '待确认';
+    return [
+      `①是什么：这个板块不把两根手指简单相加来判断强弱，而是分别看${cfg.rightName}和${cfg.leftName}。${cfg.rightName}代表${cfg.rightRole}；${cfg.leftName}代表${cfg.leftRole}。两边合在一起，才构成这一项功能在生活里的完整样子。`,
+      `②对当前用户意味着什么：${cfg.rightName}数值为${rightValue}，${fingerState(cfg.rightPos)}；${cfg.leftName}数值为${leftValue}，${fingerState(cfg.leftPos)}。${pairState(cfg.rightPos, cfg.leftPos, cfg.rightName, cfg.leftName)} 当某一侧偏高时，${cfg.high}；当某一侧偏低时，${cfg.low}。所以这里看的不是“这个功能好不好”，而是它从哪一侧更容易被唤起、哪一侧更需要环境支持。`,
+      `③怎么应用：${cfg.apply} 如果两侧都高，要给空间和出口，避免能量被压成急躁；如果两侧都低，要先搭脚手架，不要用“你怎么做不到”去刺激。真正有效的用法，是把高的一侧当入口，把低的一侧当需要慢慢补足的节奏。`
+    ].join('\n\n');
+  };
 
   const lines = {
     '严正申明四原则': [
@@ -765,38 +866,19 @@ function coreModuleFallback(title, engineResult, tier = 'adult') {
       `②对你意味着什么：当前行为模式为${behav['结论'] || '待确认'}。这说明某些行为不是单纯听不听话、努不努力，而可能是启动方式、压力承接方式或反馈节奏不匹配。${audience.behaviorScene}如果只评价“懒、不认真、脾气大”，就容易错过真正能调整的入口。`,
       `③怎么应用：遇到卡住时，先看行为背后的需求，再给方法。学习上减少空泛催促，沟通上把要求说清楚、把步骤拆开、把反馈放近，行为才更容易回到合作。可以先观察三个点：这个行为通常发生在什么任务前；外界要求或提醒出现后是否加重；完成哪一步后会明显放松。找到这些线索，再给支持，效果会比单纯讲道理稳定得多。`
     ],
-    '精神功能（拇指系统）': [
-      `①是什么：精神功能对应两根拇指。右拇指更像“向外发起”的开创力，代表目标感、企图心、号召力、事业型驱动；左拇指更像“向内管理”的管理力，代表自我纪律、执行协调、承压能力和自制。它看的是一个人如何发起、坚持、管理自己，而不是简单说强势或不强势。`,
-      `②对当前用户意味着什么：当前精神功能为${valueOf('精神')}，个人均值为${avg}，${zoneState('精神')}。精神功能偏高时，容易有目标、有主见、想掌控进度，优势是能带头、能扛事；但过高时也可能急、硬、容易对别人没耐心。精神功能偏低时，不代表没能力，而是更需要被点燃和被支持，优势是没那么冒进，能减少冲动决策。`,
-      `③怎么应用：学习上，精神功能高的人适合设目标、拆阶段、给自己挑战；精神功能低的人先从小胜利开始，不要一上来压大目标。沟通上，对开创力强的人要给空间和责任，对管理力需要支持的人要给清楚规则和温和陪跑。接纳它，就是知道自己什么时候该发力，什么时候该借助外部结构。`
-    ],
-    '思维功能（食指系统）': [
-      `①是什么：思维功能对应两根食指。右食指更偏逻辑推理、数学、规则理解和因果分析；左食指更偏创意、空间、策略和跳出框架看问题。它不是“会不会思考”，而是看你更容易用哪种方式把事情想明白。`,
-      `②对当前用户意味着什么：当前思维功能为${valueOf('思维')}，个人均值为${avg}，${zoneState('思维')}。思维偏高时，优势是理解快、能分析、能抓结构，也容易想太多、标准高、卡在“还没想清楚”。思维偏低时，未必学不好，而是不能只靠讲道理和抽象推演，反而更适合用例子、步骤、体验来带动理解。`,
-      `③怎么应用：学习上，右食强可以先讲逻辑和公式，左食强可以先用图像、空间和策略；思维较弱时，要减少空讲概念，多给示范和具体场景。沟通时，不要把“想得慢”误解成“不懂”，给一点整理时间，理解反而更扎实。`
-    ],
-    '体觉功能（中指系统）': [
-      `①是什么：体觉功能对应两根中指。右中指偏小肌肉精细，比如写字、手工、操作细节和手眼协调；左中指偏大运动、耐力、身体节奏和坚持度。它看的是身体如何参与学习和行动，也会影响一个人能不能坐得住、做得细、坚持得久。`,
-      `②对当前用户意味着什么：当前体觉功能为${valueOf('体觉')}，个人均值为${avg}，${zoneState('体觉')}。体觉偏高的人，适合通过做、摸、练、动来理解，优势是实践感强、身体记忆好；但也可能不喜欢只听不做。体觉偏低的人，可能在精细动作、持续运动或长时间坐定上更费力，但优势是不会被身体冲动过度带走，更需要合适的训练节奏。`,
-      `③怎么应用：学习上，把知识变成可操作动作：写出来、摆出来、演出来、做实验。体觉高的人不要只靠听课，体觉低的人不要用惩罚式重复硬练，而是短时、多次、可见进步。关系里理解体觉差异，能少很多“你怎么这么拖/这么坐不住”的误会。`
-    ],
-    '听觉功能（无名指系统）': [
-      `①是什么：听觉功能对应两根无名指。右无名指偏语言表达、口语记忆、听到后复述和讲出来；左无名指偏音感、语气、言外之意和情绪声调。它看的是一个人如何通过声音、语言和语气接收世界。`,
-      `②对当前用户意味着什么：当前听觉功能为${valueOf('听觉')}，个人均值为${avg}，${zoneState('听觉')}。听觉偏高的人，容易从别人说话里抓重点，也更容易被语气影响，优势是表达、记忆、模仿语言和听懂情绪；但环境太吵、语气太重时也会更受干扰。听觉偏低时，不代表听不懂，而是单靠口头讲解不够，需要配合视觉、动作或文字。`,
-      `③怎么应用：学习上，听觉高可以用朗读、讲题、录音复述；听觉低则要把口头指令写下来、画出来。沟通上，注意语气比内容更早被接收，尤其是敏感的人，先把声音放柔，再谈要求，效果会完全不同。`
-    ],
-    '视觉功能（小指系统）': [
-      `①是什么：视觉功能对应两根小指。右小指偏识人、察色、方向感和看懂外部线索；左小指偏色彩审美、图像思考、画面感和内在想象。它看的是一个人如何通过画面、表情、空间和细节理解世界。`,
-      `②对当前用户意味着什么：当前视觉功能为${valueOf('视觉')}，个人均值为${avg}，${zoneState('视觉')}。视觉偏高的人，容易看见别人没注意到的细节，优势是观察力、审美、空间感和图像记忆；但也可能因为看得多而分心，或对环境变化敏感。视觉偏低时，不代表没有审美，而是不能只靠图像输入，可能更需要声音、动作或逻辑辅助。`,
-      `③怎么应用：学习上，视觉高可以用图表、颜色、流程图、空间关系来记；视觉低则不要把所有内容都堆成图，要加上口头解释和步骤。关系里，视觉敏感的人很容易从表情和现场氛围里读到信号，理解这一点，就能少把敏感误会成多想。`
-    ],
+    '精神功能（拇指系统）': functionFallback(functionBlocks['精神功能（拇指系统）']),
+    '思维功能（食指系统）': functionFallback(functionBlocks['思维功能（食指系统）']),
+    '体觉功能（中指系统）': functionFallback(functionBlocks['体觉功能（中指系统）']),
+    '听觉功能（无名指系统）': functionFallback(functionBlocks['听觉功能（无名指系统）']),
+    '视觉功能（小指系统）': functionFallback(functionBlocks['视觉功能（小指系统）']),
   };
 
-  return (lines[title] || [
+  const fallbackContent = lines[title] || [
     `①是什么：这个模块用于帮助你理解当前资料中呈现出的一个重要特征。`,
     `②对你意味着什么：它需要结合具体数值、年龄阶段和现实场景来看，不能孤立地下结论。`,
     `③怎么应用：先把它当作理解自己和沟通方式的线索，再用低风险的小动作慢慢调整。`,
-  ]).join('\n\n');
+  ];
+  return Array.isArray(fallbackContent) ? fallbackContent.join('\n\n') : fallbackContent;
 }
 
 function issueFallback(issueTitle) {
@@ -809,7 +891,7 @@ function issueFallback(issueTitle) {
   };
 }
 
-function normalizeSections(sections, requiredModules, selectedIssues, engineResult, tier = 'adult') {
+function normalizeSections(sections, requiredModules, selectedIssues, engineResult, tier = 'adult', fingers = null) {
   const byTitle = new Map();
   for (const sec of sections) {
     if (!sec?.title || byTitle.has(sec.title)) continue;
@@ -822,7 +904,7 @@ function normalizeSections(sections, requiredModules, selectedIssues, engineResu
     return {
       title,
       type: title === '性格类型（核心行为外显模块）' ? 'foundation' : 'required',
-      content: content || coreModuleFallback(title, engineResult, tier),
+      content: content || coreModuleFallback(title, engineResult, tier, fingers),
     };
   });
 
@@ -1041,7 +1123,7 @@ module.exports = async function handler(req, res) {
     raw = text;
   } catch (err1) {
     await logErr('primary_fail', err1);
-    const sections = normalizeSections([], requiredMods, selectedIssues, engineResult, tier);
+    const sections = normalizeSections([], requiredMods, selectedIssues, engineResult, tier, fingers);
     return res.status(200).json({
       ok: true,
       sections,
@@ -1058,7 +1140,7 @@ module.exports = async function handler(req, res) {
   }
 
   const parsedSections = parseSections(raw, requiredMods, selectedIssues);
-  const sections = normalizeSections(parsedSections, requiredMods, selectedIssues, engineResult, tier);
+  const sections = normalizeSections(parsedSections, requiredMods, selectedIssues, engineResult, tier, fingers);
 
   return res.status(200).json({ ok:true, sections, raw, requiredModules: requiredMods });
 };
