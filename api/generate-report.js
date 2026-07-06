@@ -1030,32 +1030,27 @@ module.exports = async function handler(req, res) {
     return detail;
   }
 
-  // qwen-plus 主力；若跨境调用过慢，切 qwen-turbo 兜底，避免用户端出现 AbortError
-  // 两段总超时控制在 Vercel 60s 内；缺失模块由 normalizeSections/coreModuleFallback 补齐
+  // qwen-plus 主力；若跨境调用过慢，立即返回本地兜底报告，避免用户端出现 AbortError
+  // 兜底报告保留完整固定模块和用户问题，后续再用异步长报告优化质量
   try {
     const { text } = await callClaude({
       model:     MODEL_FREE,       // qwen-plus
       messages,
-      maxTokens: 4200,
-      timeoutMs: 36000,
+      maxTokens: 3600,
+      timeoutMs: 26000,
     });
     raw = text;
   } catch (err1) {
     await logErr('primary_fail', err1);
-    try {
-      const { text } = await callClaude({
-        model: 'qwen-turbo',
-        messages,
-        maxTokens: 3600,
-        timeoutMs: 18000,
-      });
-      raw = text;
-      console.warn('[gen-report] fallback_success qwen-turbo');
-    } catch (err2) {
-      const d = await logErr('fallback_fail', err2);
-      const code = err2?.status ? `DS${err2.status}` : (err2?.name || err1?.name || 'ERR');
-      return res.status(200).json({ ok:false, error:`AI 请求失败 [${code}]，请重试` });
-    }
+    const sections = normalizeSections([], requiredMods, selectedIssues, engineResult, tier);
+    return res.status(200).json({
+      ok: true,
+      sections,
+      raw: '',
+      requiredModules: requiredMods,
+      degraded: true,
+      message: 'AI 生成较慢，已先返回安全兜底报告。',
+    });
   }
 
   if (!raw) {
