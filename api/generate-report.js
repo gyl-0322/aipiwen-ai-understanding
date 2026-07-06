@@ -1030,21 +1030,32 @@ module.exports = async function handler(req, res) {
     return detail;
   }
 
-  // qwen-plus 主力（文字报告，无图片，IAD1→阿里云跨境约35-50s生成完整核心模块）
-  // timeoutMs=50s：Vercel 60s 限制内留足网络/序列化余量；maxTokens=5000 避免长报告触发 AbortError
-  // 报告仍按提示词写丰富，但不把输出上限拉到会拖垮线上请求的区间
+  // qwen-plus 主力；若跨境调用过慢，切 qwen-turbo 兜底，避免用户端出现 AbortError
+  // 两段总超时控制在 Vercel 60s 内；缺失模块由 normalizeSections/coreModuleFallback 补齐
   try {
     const { text } = await callClaude({
       model:     MODEL_FREE,       // qwen-plus
       messages,
-      maxTokens: 5000,
-      timeoutMs: 50000,
+      maxTokens: 4200,
+      timeoutMs: 36000,
     });
     raw = text;
   } catch (err1) {
-    const d = await logErr('primary_fail', err1);
-    const code = err1?.status ? `DS${err1.status}` : (err1?.name || 'ERR');
-    return res.status(200).json({ ok:false, error:`AI 请求失败 [${code}]，请重试` });
+    await logErr('primary_fail', err1);
+    try {
+      const { text } = await callClaude({
+        model: 'qwen-turbo',
+        messages,
+        maxTokens: 3600,
+        timeoutMs: 18000,
+      });
+      raw = text;
+      console.warn('[gen-report] fallback_success qwen-turbo');
+    } catch (err2) {
+      const d = await logErr('fallback_fail', err2);
+      const code = err2?.status ? `DS${err2.status}` : (err2?.name || err1?.name || 'ERR');
+      return res.status(200).json({ ok:false, error:`AI 请求失败 [${code}]，请重试` });
+    }
   }
 
   if (!raw) {
