@@ -943,8 +943,102 @@ async function handleReportStore(req, res) {
   return res.status(405).json({ ok: false, error: 'Method not allowed' });
 }
 
+async function generateReportPayload(payload, options = {}) {
+  const { engineResult, age, name, selectedIssues = [], fingers = null } = payload || {};
+  if (!engineResult) {
+    const err = new Error('缺少 engineResult');
+    err.statusCode = 400;
+    throw err;
+  }
+
+  const tier          = getAgeTier(age);
+  const requiredMods  = REQUIRED_BY_STAGE[tier] || REQUIRED_BY_STAGE.adult;
+  const maxTokens     = options.maxTokens || 5000;
+  const timeoutMs     = options.timeoutMs || 52000;
+  const fallbackOnError = options.fallbackOnError !== false;
+  let knowledgeContext = {};
+
+  // 知识索引是增强层，不是硬依赖：检索失败时必须回退到原有 SYSTEM_PROMPT + 硬编码规则 + engineResult + selectedIssues 生成链路。
+  try {
+    const knowledgeQuery = buildReportKnowledgeQuery(engineResult, age, selectedIssues, fingers);
+    const reportKnowledgeHits = searchReportKnowledge(knowledgeQuery, {
+      topK: 6,
+      allowedStatuses: ['auto_safe', 'rewrite_required'],
+    });
+    const riskKnowledgeHits = searchReportKnowledge(knowledgeQuery, {
+      topK: 4,
+      allowedStatuses: ['human_only', 'blocked'],
+    });
+    knowledgeContext = {
+      reportKnowledgeBlock: buildReportGroundingBlock(reportKnowledgeHits, { maxItems: 6 }),
+      riskKnowledgeBlock: buildRiskKnowledgeBlock(riskKnowledgeHits),
+    };
+  } catch (e) {
+    console.warn('[gen-report] report knowledge index skipped:', e.message);
+  }
+
+  const userMessage = buildUserMessage(engineResult, age, name, requiredMods, selectedIssues, fingers, tier, knowledgeContext);
+  const messages = [
+    { role: 'system', content: SYSTEM_PROMPT },
+    { role: 'user',   content: userMessage },
+  ];
+
+  async function logErr(label, err) {
+    const detail = {
+      label, msg: err?.message || String(err),
+      status: err?.status || null,
+      body:   err?.body   || null,
+      ts: new Date().toISOString(),
+    };
+    console.error('[gen-report]', label, detail.msg, detail.status || '', detail.body || '');
+    await redisSet('lastErr:genrpt', detail, 86400).catch(() => {});
+    return detail;
+  }
+
+  let raw = null;
+  try {
+    const { text } = await callClaude({
+      model: MODEL_FREE,
+      messages,
+      maxTokens,
+      timeoutMs,
+    });
+    raw = text;
+  } catch (err1) {
+    await logErr('primary_fail', err1);
+    if (!fallbackOnError) throw err1;
+    const sections = normalizeSections([], requiredMods, selectedIssues, engineResult, tier);
+    return {
+      ok: true,
+      sections,
+      raw: '',
+      requiredModules: requiredMods,
+      degraded: true,
+      message: 'AI 生成较慢，已先返回安全兜底报告。',
+    };
+  }
+
+  if (!raw) {
+    const err = new Error('AI 未返回内容，请重试');
+    if (!fallbackOnError) throw err;
+    const sections = normalizeSections([], requiredMods, selectedIssues, engineResult, tier);
+    return {
+      ok: true,
+      sections,
+      raw: '',
+      requiredModules: requiredMods,
+      degraded: true,
+      message: 'AI 未返回内容，已先返回安全兜底报告。',
+    };
+  }
+
+  const parsedSections = parseSections(raw, requiredMods, selectedIssues);
+  const sections = normalizeSections(parsedSections, requiredMods, selectedIssues, engineResult, tier);
+  return { ok: true, sections, raw, requiredModules: requiredMods };
+}
+
 // ── 主 Handler ───────────────────────────────────────────────────────────
-module.exports = async function handler(req, res) {
+async function handler(req, res) {
   // 路由分发：/api/report-store → handleReportStore
   const urlPath = req.url ? req.url.split('?')[0] : '';
   if (urlPath === '/api/report-store') return handleReportStore(req, res);
@@ -977,88 +1071,31 @@ module.exports = async function handler(req, res) {
     return res.status(400).json({ ok:false, error:'请求格式错误' });
   }
 
-  const { engineResult, age, name, selectedIssues = [], refToken = null, fingers = null } = payload;
+  const { engineResult, refToken = null } = payload;
   if (!engineResult) return res.status(400).json({ ok:false, error:'缺少 engineResult' });
 
   // 邀请积分（异步，不阻塞主流程）
   if (refToken) creditReferral(ip, refToken, 'report').catch(() => {});
 
-  const tier          = getAgeTier(age);
-  const requiredMods  = REQUIRED_BY_STAGE[tier] || REQUIRED_BY_STAGE.adult;
-  let knowledgeContext = {};
-  // 知识索引是增强层，不是硬依赖：检索失败时必须回退到原有 SYSTEM_PROMPT + 硬编码规则 + engineResult + selectedIssues 生成链路。
   try {
-    const knowledgeQuery = buildReportKnowledgeQuery(engineResult, age, selectedIssues, fingers);
-    const reportKnowledgeHits = searchReportKnowledge(knowledgeQuery, {
-      topK: 6,
-      allowedStatuses: ['auto_safe', 'rewrite_required'],
-    });
-    const riskKnowledgeHits = searchReportKnowledge(knowledgeQuery, {
-      topK: 4,
-      allowedStatuses: ['human_only', 'blocked'],
-    });
-    knowledgeContext = {
-      reportKnowledgeBlock: buildReportGroundingBlock(reportKnowledgeHits, { maxItems: 6 }),
-      riskKnowledgeBlock: buildRiskKnowledgeBlock(riskKnowledgeHits),
-    };
-  } catch (e) {
-    console.warn('[gen-report] report knowledge index skipped:', e.message);
-  }
-  const userMessage   = buildUserMessage(engineResult, age, name, requiredMods, selectedIssues, fingers, tier, knowledgeContext);
-
-  const messages = [
-    { role: 'system', content: SYSTEM_PROMPT },
-    { role: 'user',   content: userMessage },
-  ];
-
-  // ── DashScope 报告生成（qwen-plus 正式路径 + 本地保命兜底）──────────────
-  // ⚠️ 不使用 qwen-vl-max：视觉模型对文字报告过慢，会超 Vercel 60s 限制 → 504
-  // qwen-plus 是正式报告主路径；本地兜底只在模型接近函数上限仍失败时保命，不能作为默认输出策略
-  let raw = null;
-
-  // 把错误详情写入 Redis，方便 admin 面板诊断（key=lastErr:genrpt，TTL 1天）
-  async function logErr(label, err) {
-    const detail = {
-      label, msg: err?.message || String(err),
-      status: err?.status || null,
-      body:   err?.body   || null,
-      ts: new Date().toISOString(),
-    };
-    console.error('[gen-report]', label, detail.msg, detail.status || '', detail.body || '');
-    await redisSet('lastErr:genrpt', detail, 86400).catch(() => {});
-    return detail;
-  }
-
-  // 给 qwen-plus 尽量接近 60s 函数上限的生成窗口，优先使用知识索引和完整提示词生成
-  // 只有真的超时/失败时才返回本地兜底，避免红叉，但不把兜底当常态
-  try {
-    const { text } = await callClaude({
-      model:     MODEL_FREE,       // qwen-plus
-      messages,
+    const result = await generateReportPayload(payload, {
       maxTokens: 5000,
       timeoutMs: 52000,
+      fallbackOnError: true,
     });
-    raw = text;
-  } catch (err1) {
-    await logErr('primary_fail', err1);
-    const sections = normalizeSections([], requiredMods, selectedIssues, engineResult, tier);
-    return res.status(200).json({
-      ok: true,
-      sections,
-      raw: '',
-      requiredModules: requiredMods,
-      degraded: true,
-      message: 'AI 生成较慢，已先返回安全兜底报告。',
+    return res.status(200).json(result);
+  } catch (err) {
+    const code = err?.statusCode || 500;
+    return res.status(code >= 400 && code < 500 ? code : 200).json({
+      ok: false,
+      error: err?.message || '报告生成失败，请重试',
     });
   }
+}
 
-  if (!raw) {
-    console.error('[gen-report] empty reply after both attempts');
-    return res.status(200).json({ ok:false, error:'AI 未返回内容，请重试' });
-  }
-
-  const parsedSections = parseSections(raw, requiredMods, selectedIssues);
-  const sections = normalizeSections(parsedSections, requiredMods, selectedIssues, engineResult, tier);
-
-  return res.status(200).json({ ok:true, sections, raw, requiredModules: requiredMods });
-};
+module.exports = handler;
+module.exports.generateReportPayload = generateReportPayload;
+module.exports.checkRate = checkRate;
+module.exports.isVipToken = isVipToken;
+module.exports.checkDailyQuota = checkDailyQuota;
+module.exports.SOFT_LIMIT_MSG = SOFT_LIMIT_MSG;

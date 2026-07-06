@@ -1070,7 +1070,7 @@ qs('#gen-btn').addEventListener('click', async () => {
 
   btn.disabled = true;
   btn.textContent = '正在生成…';
-  qs('#gen-status').textContent = 'AI 正在为你生成专属报告，约需 20-40 秒…';
+  qs('#gen-status').textContent = '正在创建报告任务，完整报告会分段生成，请稍等…';
 
   try {
     const _genVip = localStorage.getItem('aipiwen_vip') || '';
@@ -1079,17 +1079,18 @@ qs('#gen-btn').addEventListener('click', async () => {
     const selectedIssuesForRequest = issueNote
       ? [...ST.selectedIssues, `补充说明：${issueNote}`]
       : ST.selectedIssues;
-    const res = await fetch('/api/generate-report', {
+    const reportRequestBody = {
+      engineResult: ST.engineResult,
+      fingers: ST.fingers,        // 十大能力 RULE-F04 计算用
+      age: ST.age,
+      name: ST.name,
+      selectedIssues: selectedIssuesForRequest,
+      refToken: _refToken,   // 邀请来源 token（服务端积分，去重安全）
+    };
+    const res = await fetch('/api/report-job-create', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', ..._genVipHdr },
-      body: JSON.stringify({
-        engineResult: ST.engineResult,
-        fingers: ST.fingers,        // 十大能力 RULE-F04 计算用
-        age: ST.age,
-        name: ST.name,
-        selectedIssues: selectedIssuesForRequest,
-        refToken: _refToken,   // 邀请来源 token（服务端积分，去重安全）
-      }),
+      body: JSON.stringify(reportRequestBody),
     });
 
     // 先拿文本，再尝试 JSON 解析，避免 Vercel 超时返回 HTML 时 json() 抛出被误判为网络错误
@@ -1103,6 +1104,28 @@ qs('#gen-btn').addEventListener('click', async () => {
       btn.disabled = false;
       btn.textContent = '重新生成';
       return;
+    }
+
+    if (!data.ok && data.asyncDisabled) {
+      qs('#gen-status').textContent = '正在生成完整报告，请稍等…';
+      const syncRes = await fetch('/api/generate-report', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ..._genVipHdr },
+        body: JSON.stringify(reportRequestBody),
+      });
+      const syncText = await syncRes.text();
+      try { data = JSON.parse(syncText); } catch(e) {
+        qs('#gen-status').textContent = `❌ 服务器超时（${syncRes.status}），请稍等几秒再试`;
+        btn.disabled = false;
+        btn.textContent = '重新生成';
+        return;
+      }
+      if (data.ok) {
+        buildReportFlipBook(data.sections);
+        goScreen('s4');
+        _saveReportForClient(data.sections);
+        return;
+      }
     }
 
     if (!data.ok) {
@@ -1121,9 +1144,57 @@ qs('#gen-btn').addEventListener('click', async () => {
       return;
     }
 
-    buildReportFlipBook(data.sections);
+    const jobId = data.jobId;
+    if (!jobId) {
+      qs('#gen-status').textContent = '❌ 报告任务创建失败，请重试';
+      btn.disabled = false;
+      btn.textContent = '重新生成';
+      return;
+    }
+
+    let reportData = null;
+    const startedAt = Date.now();
+    const maxWaitMs = 5 * 60 * 1000;
+    while (Date.now() - startedAt < maxWaitMs) {
+      await new Promise(r => setTimeout(r, data.pollAfterMs || 3000));
+      const statusRes = await fetch(`/api/report-job-status?id=${encodeURIComponent(jobId)}`);
+      const statusText = await statusRes.text();
+      let statusData;
+      try { statusData = JSON.parse(statusText); } catch {
+        qs('#gen-status').textContent = '报告生成中，服务器正在整理结果…';
+        continue;
+      }
+      if (!statusData.ok) {
+        qs('#gen-status').textContent = '❌ ' + (statusData.error || '报告任务查询失败，请重试');
+        btn.disabled = false;
+        btn.textContent = '重新生成';
+        return;
+      }
+      if (statusData.status === 'done') {
+        reportData = statusData;
+        break;
+      }
+      if (statusData.status === 'failed') {
+        qs('#gen-status').textContent = '❌ ' + (statusData.error || '报告生成失败，请重试');
+        btn.disabled = false;
+        btn.textContent = '重新生成';
+        return;
+      }
+      const pct = Math.max(5, Math.min(95, Number(statusData.progress || 0)));
+      const current = statusData.currentModule || '正在生成完整报告';
+      qs('#gen-status').textContent = `${current}…${pct}%`;
+    }
+
+    if (!reportData?.sections?.length) {
+      qs('#gen-status').textContent = '报告还在生成中，请稍后刷新或重新生成';
+      btn.disabled = false;
+      btn.textContent = '重新生成';
+      return;
+    }
+
+    buildReportFlipBook(reportData.sections);
     goScreen('s4');
-    _saveReportForClient(data.sections); // 后台存档，生成客户分享链接
+    _saveReportForClient(reportData.sections); // 后台存档，生成客户分享链接
   } catch(err) {
     // 区分网络错误和渲染错误（fetch 失败 vs buildReportFlipBook 抛出）
     const isNetErr = err.name === 'AbortError' || (err.name === 'TypeError' && err.message.includes('fetch'));
