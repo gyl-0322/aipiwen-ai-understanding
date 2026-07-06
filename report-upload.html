@@ -893,10 +893,10 @@ function setPayStatus(text) {
 }
 
 async function createMockPayment(provider, reportId) {
-  const res = await fetch('/api/report-payment-dryrun', {
+  const res = await fetch('/api/report-store', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ action: 'create', provider, reportId }),
+    body: JSON.stringify({ action: 'payment_dryrun_create', provider, reportId }),
   });
   const data = await res.json();
   if (!data.ok) throw new Error(data.error || '模拟订单创建失败');
@@ -908,11 +908,11 @@ async function createMockPayment(provider, reportId) {
 async function confirmMockPayment() {
   const reportId = await getCurrentPaymentReportId();
   const order = _pendingMockOrder || await createMockPayment('alipay', reportId);
-  const res = await fetch('/api/report-payment-dryrun', {
+  const res = await fetch('/api/report-store', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      action: 'mock_paid',
+      action: 'payment_dryrun_mock_paid',
       provider: order.provider || 'alipay',
       reportId,
       orderId: order.orderId,
