@@ -880,11 +880,9 @@ async function getCurrentPaymentReportId() {
     _clientShareUrl = `https://aipiwen.cn/report-upload.html?rid=${rid}`;
     return rid;
   }
-  if (RV.sections?.length) {
-    const id = await _saveReportForClient(RV.sections);
-    if (id) return id;
-  }
-  return ST.displayReportId || `local-${Date.now()}`;
+  if (ST.displayReportId) return ST.displayReportId;
+  if (!ST.localPaymentReportId) ST.localPaymentReportId = `local-${Date.now()}`;
+  return ST.localPaymentReportId;
 }
 
 function setPayStatus(text) {
@@ -936,6 +934,9 @@ async function showPaymentDryRunModal(btnEl) {
   qs('#pay-report-id').textContent = `报告 ID：${reportId}`;
   setPayStatus(`当前报告尚未解锁，模拟支付 ¥${PAYMENT_DRYRUN_PRICE} 后可下载。`);
   qs('#pay-modal').classList.add('open');
+  if (RV.sections?.length && !_clientReportId && !_saveReportPromise) {
+    _saveReportForClient(RV.sections).catch(() => {});
+  }
 }
 
 function downloadPdfAfterPayment(btnEl) {
@@ -1501,7 +1502,7 @@ function buildReportFlipBook(sections) {
   const imgKey = KEY2IMG[E?.key || 'w'] || 'whorl';
   const fpSrc  = FP_IMGS[imgKey];
   const type   = E?.主性格类型 || '天赋型';
-  const reportId = `FP-${new Date().getFullYear()}-${(E?.key||'w').toUpperCase().slice(0,2)}${Math.floor(Math.random()*900+100)}`;
+  const reportId = _clientReportId || ST.displayReportId || `FP-${new Date().getFullYear()}-${(E?.key||'w').toUpperCase().slice(0,2)}${Math.floor(Math.random()*900+100)}`;
   ST.displayReportId = reportId;
 
   // 把主题应用到 #s4
@@ -1743,7 +1744,8 @@ async function generateReportPDF(btnEl) {
   const cfg = getThemeConfig(ST.ageTier || 'adult');
   const fpSrc  = FP_IMGS[KEY2IMG[E?.key||'w'] || 'whorl'];
   const type   = E?.主性格类型 || '天赋型';
-  const reportId = `FP-${new Date().getFullYear()}-${(E?.key||'w').toUpperCase().slice(0,2)}${Math.floor(Math.random()*900+100)}`;
+  const reportId = _clientReportId || ST.displayReportId || `FP-${new Date().getFullYear()}-${(E?.key||'w').toUpperCase().slice(0,2)}${Math.floor(Math.random()*900+100)}`;
+  ST.displayReportId = reportId;
   const sections = RV.sections || [];
   const bf = `-apple-system,'PingFang SC','Noto Sans SC',sans-serif`; // body font
 
