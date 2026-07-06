@@ -688,6 +688,13 @@ ${issueFormatGuide}
 }
 
 // ── 解析 sections ────────────────────────────────────────────────────────
+function stripRequiredModuleScaffold(text) {
+  return String(text || '')
+    .replace(/(^|\n)\s*[①1][\s.、-]*(是什么|这个板块是什么|指标是什么)[：:]\s*/g, '$1')
+    .replace(/(^|\n)\s*[②2][\s.、-]*(对当前用户意味着什么|对你意味着什么|意味着什么|放到你这里)[：:]\s*/g, '$1')
+    .replace(/(^|\n)\s*[③3][\s.、-]*(怎么应用|如何应用|可以怎么用)[：:]\s*/g, '$1');
+}
+
 function parseSections(raw, requiredModules, selectedIssues) {
   const sections = [];
 
@@ -729,7 +736,7 @@ function parseSections(raw, requiredModules, selectedIssues) {
       }
       sections.push({ title, type, ...parts });
     } else {
-      sections.push({ title, type, content: body });
+      sections.push({ title, type, content: stripRequiredModuleScaffold(body) });
     }
   }
 
@@ -751,11 +758,6 @@ function coreModuleFallback(title, engineResult, tier = 'adult', fingers = null)
   const audience = getAudienceStyle(tier);
   const avg = fp['个人均值'] || '当前均值';
   const total = fp['总TRC'] || '当前总量';
-  const cleanRequiredModuleScaffold = (text) => String(text || '')
-    .replace(/(^|\n)\s*[①1][\s.、-]*(是什么|这个板块是什么|指标是什么)[：:]\s*/g, '$1')
-    .replace(/(^|\n)\s*[②2][\s.、-]*(对当前用户意味着什么|对你意味着什么|意味着什么|放到你这里)[：:]\s*/g, '$1')
-    .replace(/(^|\n)\s*[③3][\s.、-]*(怎么应用|如何应用|可以怎么用)[：:]\s*/g, '$1');
-
   const fingerValue = (pos) => {
     const v = Number(fingers?.[pos]?.trc);
     return Number.isFinite(v) ? v : null;
@@ -882,7 +884,7 @@ function coreModuleFallback(title, engineResult, tier = 'adult', fingers = null)
     `②对你意味着什么：它需要结合具体数值、年龄阶段和现实场景来看，不能孤立地下结论。`,
     `③怎么应用：先把它当作理解自己和沟通方式的线索，再用低风险的小动作慢慢调整。`,
   ];
-  return cleanRequiredModuleScaffold(Array.isArray(fallbackContent) ? fallbackContent.join('\n\n') : fallbackContent);
+  return stripRequiredModuleScaffold(Array.isArray(fallbackContent) ? fallbackContent.join('\n\n') : fallbackContent);
 }
 
 function issueFallback(issueTitle, tier = 'adult') {
