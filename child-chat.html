@@ -415,6 +415,7 @@ function setAge(btn, age) {
   _subjectAge = age;
   document.querySelectorAll('.age-chip').forEach(b => b.classList.remove('selected'));
   btn.classList.add('selected');
+  renderExampleChips(getExampleChips(), { resetSelection: true });
   updateSubmitBtn();
 }
 
@@ -462,6 +463,29 @@ const CONTEXTS = {
 };
 
 const CTX = CONTEXTS[_for] || CONTEXTS.child;
+const AGE_SCENE_CHIPS = {
+  child: {
+    '幼儿3-6岁': ['不肯分离，一送幼儿园就哭', '吃饭睡觉总要反复拉扯', '一不顺心就躺地大哭', '抢玩具/打人，不会表达', '胆小怕生，不愿跟小朋友玩', '规则一多就崩溃'],
+    '小学7-12岁': ['一催作业就崩溃发脾气', '写作业拖拉磨蹭到很晚', '上课听懂，回家作业不会', '不爱阅读，一看书就躲', '粗心漏题，检查也查不出', '被批评就顶嘴或掉眼泪'],
+    '初中13-15岁': ['手机停不下来，怎么说都不听', '放学回来什么都不说，沉默关门', '成绩下滑后越来越摆烂', '开始顶嘴反抗，越管越炸', '在学校跟同学起冲突', '半夜睡不着，总是很焦虑'],
+    '高中16-18岁': ['考试焦虑，越临近越崩', '选科/志愿一问就烦', '明明想学，却总是启动不了', '和父母三观冲突，说两句就吵', '压力大到想逃避学校', '对未来很迷茫，不知道方向'],
+    '大学+': ['大学后什么都不愿和家里说', '专业不喜欢，又不知道怎么办', '考研/就业摇摆不定', '作息混乱，拖延越来越重', '恋爱/人际影响学习状态', '对未来没信心，总觉得自己不行'],
+    '职场成人': ['已经工作了，和家里仍然一说就吵', '职业选择总是摇摆，父母很焦虑', '压力大却不愿跟家里讲', '亲密关系让家长很担心', '工作没动力，生活也提不起劲', '成年后仍然逃避重要决定'],
+  },
+  self: {
+    '学生或刚毕业阶段': ['毕业方向很迷茫，不知道选什么', '明知道要准备，就是拖着不动', '一面试/考试就紧张到失常', '怕选错路，越想越乱', '总觉得自己不够好', '和父母谈未来就崩'],
+    '职场打拼阶段': ['道理都懂，就是一直拖', '一遇到压力就想逃开', '总想让别人满意，很难拒绝', '工作里不敢争取，也不敢表达', '换工作/转型反复纠结', '越努力越觉得自己不够好'],
+    '成家育儿阶段': ['一边带娃一边工作，快被耗空', '对孩子没耐心，事后又内疚', '伴侣不理解，什么都要自己扛', '总想把家里都安排好，却很累', '想改变现状，但没有力气开始', '情绪一上来就控制不住'],
+    '人生中场阶段': ['人到中场，突然不知道自己要什么', '事业有压力，家庭也放不下', '总觉得前半生被责任推着走', '想转型又怕来不及', '身体精力下降，心里更容易焦虑', '很难再为自己做选择'],
+  },
+  partner: {
+    '恋爱阶段': ['一不开心就沉默，说没事', '消息忽冷忽热，摸不准态度', '一吵架就说分开冷静', '很黏人，又容易没有安全感', '对未来规划总是回避', '我越追问，TA越退开'],
+    '新婚或结婚3年内': ['生活习惯一磨合就吵', '钱和家务怎么分都不舒服', '一谈双方父母就容易炸', '亲密感变少，不知道哪里变了', 'TA总说累，却不说哪里累', '小事积累成大情绪'],
+    '结婚3到10年': ['带娃后关系越来越像合作伙伴', '谁都觉得自己付出更多', '沟通只剩安排和催促', '一说问题就翻旧账', '亲密和陪伴越来越少', '教育孩子总是站不到一起'],
+    '结婚10年以上': ['很多话不想说，说了也没用', '彼此都累，但不知道怎么靠近', '人生阶段变了，需求也变了', '孩子长大后关系反而空了', '长期委屈堆着，没有出口', '想修复，又不知道从哪里开始'],
+  },
+};
+
 document.title = CTX.pageTitle;
 document.getElementById('form-eyebrow').textContent  = CTX.eyebrow;
 document.getElementById('form-title').innerHTML      = CTX.title;
@@ -513,17 +537,37 @@ document.getElementById('form-label').textContent    = CTX.label;
 document.getElementById('behavior-input').placeholder = CTX.placeholder;
 document.getElementById('cta-text').textContent      = CTX.ctaText;
 
-// render chips
-const chipsEl = document.getElementById('example-chips');
-CTX.chips.forEach(txt => {
-  const d = document.createElement('div');
-  d.className = 'example-chip'; d.textContent = txt;
-  d.onclick = () => fillExample(txt, d);
-  chipsEl.appendChild(d);
-});
-
 // ── Form state ───────────────────────────────────────────────
 const selectedChips = new Set();
+
+function getExampleChips() {
+  return AGE_SCENE_CHIPS[_for]?.[_subjectAge] || CTX.chips;
+}
+
+const chipsEl = document.getElementById('example-chips');
+
+function renderExampleChips(chips, opts = {}) {
+  const ta = document.getElementById('behavior-input');
+  const selectedText = Array.from(selectedChips).join('，');
+  const shouldClearText = opts.resetSelection && ta && ta.value.trim() === selectedText;
+  if (opts.resetSelection) {
+    selectedChips.clear();
+    if (shouldClearText) {
+      ta.value = '';
+      ta.dispatchEvent(new Event('input'));
+    }
+  }
+  chipsEl.innerHTML = '';
+  chips.forEach(txt => {
+    const d = document.createElement('div');
+    d.className = 'example-chip';
+    d.textContent = txt;
+    d.onclick = () => fillExample(txt, d);
+    chipsEl.appendChild(d);
+  });
+}
+
+renderExampleChips(getExampleChips());
 
 function updateSubmitBtn() {
   const hasText = document.getElementById('behavior-input').value.trim().length >= 4;
