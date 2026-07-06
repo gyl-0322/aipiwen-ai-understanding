@@ -953,6 +953,47 @@ function showShareButton(insight) {
   }, 800);
 }
 
+function buildQrFallbackUrl(text) {
+  return `https://api.qrserver.com/v1/create-qr-code/?size=160x160&margin=8&data=${encodeURIComponent(text || 'https://aipiwen.cn')}`;
+}
+
+function renderShareQr(qrEl, shareUrl) {
+  if (!qrEl) return;
+  const url = shareUrl || 'https://aipiwen.cn';
+  qrEl.innerHTML = '';
+  qrEl.style.background = '#FDFCF8';
+
+  function installFallbackImage() {
+    if (qrEl.querySelector('canvas,img')) return;
+    const img = document.createElement('img');
+    img.src = buildQrFallbackUrl(url);
+    img.alt = '扫码进入 aipiwen.cn';
+    img.crossOrigin = 'anonymous';
+    img.style.cssText = 'width:64px;height:64px;display:block;border-radius:6px;background:#FDFCF8;';
+    img.onerror = () => {
+      qrEl.innerHTML = '<div style="width:64px;height:64px;display:flex;align-items:center;justify-content:center;text-align:center;font-size:10px;line-height:1.35;color:#1A1714;background:#FDFCF8;border-radius:6px;">扫码进入<br>aipiwen.cn</div>';
+    };
+    qrEl.innerHTML = '';
+    qrEl.appendChild(img);
+  }
+
+  if (window.QRCode) {
+    try {
+      new QRCode(qrEl, {
+        text: url,
+        width: 64, height: 64,
+        colorDark:  '#1A1714',
+        colorLight: '#FDFCF8',
+        correctLevel: QRCode.CorrectLevel.M,
+      });
+      setTimeout(installFallbackImage, 120);
+      return;
+    } catch (e) {}
+  }
+
+  installFallbackImage();
+}
+
 // ── 分享卡片（html2canvas → 可长按保存的图 + 转发语选择器）────────
 function showShareCard(insight) {
   const CTX_TAG    = { child:'亲子理解', self:'自我理解', partner:'伴侣理解', business:'合伙理解' };
@@ -970,28 +1011,13 @@ function showShareCard(insight) {
 
   // 生成二维码（带邀请 token，朋友扫码进来后积分给当前用户）
   const qrEl = document.getElementById('src-qr');
-  qrEl.innerHTML = '';
+  const defaultShareUrl = 'https://aipiwen.cn';
+  renderShareQr(qrEl, defaultShareUrl);
   getMyInviteToken().then(tok => {
-    const shareUrl = tok ? `https://aipiwen.cn?ref=${tok}` : 'https://aipiwen.cn';
-    if (window.QRCode) {
-      qrEl.innerHTML = '';
-      new QRCode(qrEl, {
-        text: shareUrl,
-        width: 64, height: 64,
-        colorDark:  '#C2692A',
-        colorLight: '#2A2420',
-        correctLevel: QRCode.CorrectLevel.M,
-      });
-    }
+    const shareUrl = tok ? `https://aipiwen.cn?ref=${tok}` : defaultShareUrl;
+    renderShareQr(qrEl, shareUrl);
   }).catch(() => {
-    if (window.QRCode) {
-      new QRCode(qrEl, {
-        text: 'https://aipiwen.cn',
-        width: 64, height: 64,
-        colorDark: '#C2692A', colorLight: '#2A2420',
-        correctLevel: QRCode.CorrectLevel.M,
-      });
-    }
+    renderShareQr(qrEl, defaultShareUrl);
   });
 
   // 重置弹层为加载态
@@ -1013,6 +1039,9 @@ function showShareCard(insight) {
       return;
     }
     // 把QR码canvas内容转为img，避免html2canvas跨域canvas问题
+    if (!document.querySelector('#src-qr canvas,#src-qr img')) {
+      renderShareQr(qrEl, defaultShareUrl);
+    }
     const qrCanvas = document.querySelector('#src-qr canvas');
     if (qrCanvas) {
       try {
@@ -1126,7 +1155,7 @@ function closeShareCard() {
         <span id="src-tag" style="font-size:11px;padding:4px 12px;border-radius:10px;display:inline-block;background:rgba(194,105,42,.18);color:#C2692A;font-weight:700;"></span>
         <span style="font-size:11px;color:rgba(234,231,224,.35);letter-spacing:.04em;">aipiwen.cn</span>
       </div>
-      <div id="src-qr" style="width:72px;height:72px;flex-shrink:0;border-radius:10px;overflow:hidden;padding:4px;background:#2A2420;"></div>
+      <div id="src-qr" style="width:72px;height:72px;flex-shrink:0;border-radius:10px;overflow:hidden;padding:4px;background:#FDFCF8;"></div>
     </div>
   </div>
 </div>
