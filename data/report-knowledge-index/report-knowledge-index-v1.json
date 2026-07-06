@@ -1,6 +1,6 @@
 {
   "version": "report_knowledge_index_v1",
-  "updatedAt": "2026-07-05",
+  "updatedAt": "2026-07-06",
   "positioning": "AIPIWEN Report Knowledge Index V1 is a curated retrieval layer for report generation. It indexes teacher reading transcripts, Report OS language libraries, and approved Obsidian/expert-course knowledge candidates. It does not import raw Obsidian content directly into frontend output.",
   "retrievalPolicy": {
     "defaultTopK": 6,
@@ -364,6 +364,183 @@
       "safeGrounding": "正式报告生成依赖 engineResult、fingers、age 和 selectedIssues；用户自选问题必须围绕报告结构扩展，不应改变安全边界。",
       "outputGuidance": "用于约束报告结构和用户问题生成方式；issue 内部应包含机制解释、具体做法、积极意义、继续观察，但前台标题要自然变化，避免八股文。",
       "doNotUse": ["随意增删模块", "只输出一句总结", "忽略用户问题", "把输入字段暴露给用户"]
+    },
+    {
+      "id": "RKI-V1-016",
+      "title": "五大功能区单指解释规则：禁止两指合计误判",
+      "status": "auto_safe",
+      "modules": ["五大功能区", "精神功能", "思维功能", "体觉功能", "听觉功能", "视觉功能"],
+      "scenarios": ["功能区解释", "单指比较", "报告纠偏", "正式报告"],
+      "ageBands": ["all"],
+      "retrievalKeywords": ["五大功能区", "单指", "个人均值", "不能相加", "右拇", "左拇", "右食", "左食", "右中", "左中", "右无名", "左无名", "右小", "左小"],
+      "sourceRefs": [
+        {
+          "sourceType": "report_library",
+          "path": "docs/aipiwen_report_system/05_language_library_话术库/AIPIWEN_ReportLibrary_V1.2_五大功能区独立知识卡.md",
+          "locator": "第1节 总原则；第8节 输出模板"
+        },
+        {
+          "sourceType": "teacher_transcript",
+          "path": "docs/aipiwen_report_system/01_raw_materials_原始资料/teacher_courses_老师课程/teacher_report_reading_001_老师解读报告录音_转写稿.txt",
+          "locator": "思维功能与精神功能现场讲解段"
+        },
+        {
+          "sourceType": "code",
+          "path": "api/generate-report.js",
+          "locator": "functionFingerDesc / functionFallback"
+        }
+      ],
+      "safeGrounding": "五大功能区必须拆成五个独立模块，每个模块分别解释两根手指；每根手指都单独和个人均值比较，再解释左右差异。功能区合计只能用于总览，不能替代单指判断。",
+      "outputGuidance": "报告写五大功能区时必须说明对应两根手指、各自高低表现、左右谁更容易先被调动、优势与应用建议；禁止写成某功能合计值高于个人均值。",
+      "doNotUse": ["两根手指相加判断高低", "某功能总分高于个人均值", "这个功能决定", "高低代表好坏"]
+    },
+    {
+      "id": "RKI-V1-017",
+      "title": "精神功能：右拇开创力与左拇管理力",
+      "status": "auto_safe",
+      "modules": ["精神功能", "五大功能区", "行为模式"],
+      "scenarios": ["目标感", "主动性", "自我管理", "承压", "拖延", "内耗"],
+      "ageBands": ["all"],
+      "retrievalKeywords": ["精神功能", "右拇", "左拇", "开创力", "目标感", "管理力", "自我纪律", "承压", "双高", "双低"],
+      "sourceRefs": [
+        {
+          "sourceType": "report_library",
+          "path": "docs/aipiwen_report_system/05_language_library_话术库/AIPIWEN_ReportLibrary_V1.2_五大功能区独立知识卡.md",
+          "locator": "第3节 精神功能"
+        }
+      ],
+      "safeGrounding": "右拇代表向外发起、目标感和开创力；左拇代表向内管理、自我纪律和承压。精神功能低不代表没能力，而是目标和自律更需要通过小胜利、外部结构和支持被点燃。",
+      "outputGuidance": "解释精神功能时要分别写右拇和左拇。右高左低可写先点火再搭轨道；左高右低可写不抢发起权但能稳住责任；双低要避免否定，强调外部结构和小目标。",
+      "doNotUse": ["没目标", "没有自律", "没能力", "天生懒", "必须高压"]
+    },
+    {
+      "id": "RKI-V1-018",
+      "title": "思维功能：右食逻辑与左食创意空间",
+      "status": "auto_safe",
+      "modules": ["思维功能", "五大功能区", "学习方法"],
+      "scenarios": ["文理选科", "偏科", "表达", "创意", "空间想象", "逻辑推理"],
+      "ageBands": ["all"],
+      "retrievalKeywords": ["思维功能", "右食", "左食", "逻辑", "语言逻辑", "数学", "空间想象", "创意", "文理", "选科", "偏科"],
+      "sourceRefs": [
+        {
+          "sourceType": "report_library",
+          "path": "docs/aipiwen_report_system/05_language_library_话术库/AIPIWEN_ReportLibrary_V1.2_五大功能区独立知识卡.md",
+          "locator": "第4节 思维功能"
+        },
+        {
+          "sourceType": "teacher_transcript",
+          "path": "docs/aipiwen_report_system/01_raw_materials_原始资料/teacher_courses_老师课程/teacher_report_reading_001_老师解读报告录音_转写稿.txt",
+          "locator": "06:40:00-06:52:00 思维功能左右对比讲解"
+        }
+      ],
+      "safeGrounding": "右食侧重逻辑、规则、语言和因果；左食侧重空间、画面、创意和策略。右食高于左食可能嘴快脑图未跟上，左食高于右食可能想得多但表达只出来一部分。",
+      "outputGuidance": "用于文理选科、偏科、学习方法、表达和创意场景。建议先观察学习入口，再用画图、复述、公式步骤、空间材料等方式调整。",
+      "doNotUse": ["适合文科", "适合理科", "保证选科正确", "逻辑低就是笨", "创意低没有想象力"]
+    },
+    {
+      "id": "RKI-V1-019",
+      "title": "体觉功能：右中精细操作与左中大运动耐力",
+      "status": "auto_safe",
+      "modules": ["体觉功能", "五大功能区", "行为模式"],
+      "scenarios": ["写作业拖拉", "写字慢", "手工", "运动", "坚持", "执行力"],
+      "ageBands": ["all"],
+      "retrievalKeywords": ["体觉功能", "右中", "左中", "拖拉", "写字", "手工", "小肌肉", "大运动", "耐力", "执行力"],
+      "sourceRefs": [
+        {
+          "sourceType": "report_library",
+          "path": "docs/aipiwen_report_system/05_language_library_话术库/AIPIWEN_ReportLibrary_V1.2_五大功能区独立知识卡.md",
+          "locator": "第5节 体觉功能"
+        },
+        {
+          "sourceType": "teacher_transcript",
+          "path": "docs/aipiwen_report_system/01_raw_materials_原始资料/teacher_courses_老师课程/teacher_report_reading_001_老师解读报告录音_转写稿.txt",
+          "locator": "07:00:00-07:08:00 体觉功能讲解"
+        }
+      ],
+      "safeGrounding": "右中对应小肌肉精细、写字、手工和细节操作；左中对应大运动、身体节奏、耐力和坚持。拖拉可能是精细操作或任务启动慢，不等于懒。",
+      "outputGuidance": "用于作业拖拉、写字慢、动手操作、运动和坚持场景。要区分能动和能写、能运动和能精细操作不是一回事。",
+      "doNotUse": ["懒", "没执行力", "身体有问题", "多动症", "没规矩"]
+    },
+    {
+      "id": "RKI-V1-020",
+      "title": "听觉功能：右无名语言表达与左无名音感语气",
+      "status": "auto_safe",
+      "modules": ["听觉功能", "五大功能区", "沟通"],
+      "scenarios": ["听不进去", "复述", "语言表达", "语气敏感", "沟通冲突", "音乐"],
+      "ageBands": ["all"],
+      "retrievalKeywords": ["听觉功能", "右无名", "左无名", "语言表达", "记忆", "复述", "音感", "语气", "言外之意", "共情"],
+      "sourceRefs": [
+        {
+          "sourceType": "report_library",
+          "path": "docs/aipiwen_report_system/05_language_library_话术库/AIPIWEN_ReportLibrary_V1.2_五大功能区独立知识卡.md",
+          "locator": "第6节 听觉功能"
+        }
+      ],
+      "safeGrounding": "右无名侧重语言表达、口头记忆和听后复述；左无名侧重音感、语气、节奏、言外之意和情绪声调。听觉低不是听力问题，语气敏感也不是心理诊断。",
+      "outputGuidance": "用于沟通、听课、复述、语言学习、语气敏感和亲子冲突场景。低值建议写下重点、一次说一件事；高敏感建议降低语气压力。",
+      "doNotUse": ["听力不好", "心理脆弱", "情绪异常", "玻璃心", "精神问题"]
+    },
+    {
+      "id": "RKI-V1-021",
+      "title": "视觉功能：右小识人辨识与左小图像审美",
+      "status": "auto_safe",
+      "modules": ["视觉功能", "五大功能区", "学习通道"],
+      "scenarios": ["脸盲", "方向感", "审美", "画画", "图像思考", "观察"],
+      "ageBands": ["all"],
+      "retrievalKeywords": ["视觉功能", "右小", "左小", "识人", "察言观色", "方向感", "脸盲", "图像", "审美", "画画", "色彩"],
+      "sourceRefs": [
+        {
+          "sourceType": "report_library",
+          "path": "docs/aipiwen_report_system/05_language_library_话术库/AIPIWEN_ReportLibrary_V1.2_五大功能区独立知识卡.md",
+          "locator": "第7节 视觉功能"
+        }
+      ],
+      "safeGrounding": "右小侧重外部辨识、识人、察色、方向和环境线索；左小侧重图像思考、色彩审美和内在画面。会画画和找东西慢可以同时存在，因为两侧入口不同。",
+      "outputGuidance": "用于视觉学习、审美、方向感、识人和图像表达场景。要分别解释右小和左小，不把视觉功能整体高低一笔带过。",
+      "doNotUse": ["没眼力见", "没有审美", "视觉差", "一定适合设计", "一定路痴"]
+    },
+    {
+      "id": "RKI-V1-022",
+      "title": "年龄阶段问题库：先按人生阶段切换问题入口",
+      "status": "auto_safe",
+      "modules": ["年龄段适配", "用户问题", "行为模式"],
+      "scenarios": ["问题选择", "孩子行为", "成人自我理解", "高中升学", "职业阶段"],
+      "ageBands": ["all"],
+      "retrievalKeywords": ["年龄阶段", "幼儿", "小学", "初中", "高中", "大学", "成人", "职场", "问题库", "常见问题", "行为理解"],
+      "sourceRefs": [
+        {
+          "sourceType": "report_library",
+          "path": "docs/aipiwen_report_system/05_language_library_话术库/AIPIWEN_ReportLibrary_V1.2_年龄阶段问题库.md",
+          "locator": "全文件"
+        }
+      ],
+      "safeGrounding": "问题入口必须先看年龄阶段。幼儿、小学、初中、高中、大学、成人和中场阶段面对的问题不同，不能共用同一批选项。成年人报告不得出现孩子称谓。",
+      "outputGuidance": "用于前台问题选择和报告自选问题生成。先识别年龄段，再选择问题库、称谓和风险等级；自由输入命中高风险时必须提升风险。",
+      "doNotUse": ["所有年龄同一批问题", "成年人报告写孩子", "幼儿报告写升学职业", "统一模板套用"]
+    },
+    {
+      "id": "RKI-V1-023",
+      "title": "用户四问差异化回答：每个问题必须按类型和年龄生成不同答案",
+      "status": "auto_safe",
+      "modules": ["用户问题", "输出结构", "年龄段适配", "行为模式"],
+      "scenarios": ["四个问题", "selectedIssues", "自定义问题", "问题回答", "报告末尾"],
+      "ageBands": ["all"],
+      "retrievalKeywords": ["selectedIssues", "四个问题", "用户问题", "差异化回答", "文理选科", "偏科", "升学", "亲子沟通", "职业方向", "拖延", "关系去留"],
+      "sourceRefs": [
+        {
+          "sourceType": "report_library",
+          "path": "docs/aipiwen_report_system/05_language_library_话术库/AIPIWEN_ReportLibrary_V1.2_用户四问差异化回答库.md",
+          "locator": "全文件"
+        },
+        {
+          "sourceType": "test_cases",
+          "path": "docs/aipiwen_report_system/12_test_cases_测试样本/AIPIWEN_ReportLibrary_V1.2_内容资产质量测试样本.md",
+          "locator": "第3节 用户四问差异化测试"
+        }
+      ],
+      "safeGrounding": "用户四个问题不能只替换标题、正文套同一段。每个问题必须结合年龄、问题类型、用户原话和报告线索生成差异化回答；高风险问题只降级或转人工。",
+      "outputGuidance": "四问回答采用卡型制：行为类可三张卡，学习类可观察清单，重大决策类先边界后维度，心理/医学类只安全承接，关系类拆具体场景。内部保留机制、动作、积极意义、继续观察，但前台不强制三段式。",
+      "doNotUse": ["四页正文相同", "只替换问题标题", "所有问题强制三段", "保证升学", "判断分手", "心理诊断", "录用淘汰建议"]
     }
   ]
 }
