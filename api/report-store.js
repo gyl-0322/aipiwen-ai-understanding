@@ -14,6 +14,10 @@
 const { redisGet, redisSet, getOpenid } = require('./_lib');
 const crypto = require('crypto');
 
+const PAYMENT_DRYRUN_PRICE_CENTS = 1990;
+const PAYMENT_DRYRUN_PRICE_YUAN = '19.9';
+const PAYMENT_DRYRUN_PROVIDERS = new Set(['alipay', 'wechat']);
+
 // ── IP 限流：每 IP 每分钟最多 10 次 POST ─────────────────────────────────
 async function checkRate(ip) {
   const minute = Math.floor(Date.now() / 60000);
@@ -22,6 +26,61 @@ async function checkRate(ip) {
   if (count >= 10) return false;
   await redisSet(key, count + 1, 120);
   return true;
+}
+
+function buildPaymentDryRunResponse(body = {}) {
+  const action = String(body.action || '');
+  if (!['payment_dryrun_create', 'payment_dryrun_mock_paid', 'payment_dryrun_status'].includes(action)) return null;
+
+  const provider = String(body.provider || 'alipay').toLowerCase();
+  const reportId = String(body.reportId || '').trim();
+  if (!reportId) return { status: 400, body: { ok: false, error: '缺少 reportId' } };
+  if (!PAYMENT_DRYRUN_PROVIDERS.has(provider)) {
+    return { status: 400, body: { ok: false, error: '不支持的模拟支付方式' } };
+  }
+
+  const orderId = String(body.orderId || `DRYRUN-${provider.toUpperCase()}-${Date.now()}-${reportId.slice(0, 6)}`);
+  const base = {
+    ok: true,
+    dryRunOnly: true,
+    reportId,
+    amount: PAYMENT_DRYRUN_PRICE_YUAN,
+    amountCents: PAYMENT_DRYRUN_PRICE_CENTS,
+    provider,
+    orderId,
+  };
+
+  if (action === 'payment_dryrun_create') {
+    return {
+      status: 200,
+      body: {
+        ...base,
+        status: 'created',
+        message: '模拟订单已创建。Preview 不连接真实支付宝或微信。',
+      },
+    };
+  }
+
+  if (action === 'payment_dryrun_mock_paid') {
+    return {
+      status: 200,
+      body: {
+        ...base,
+        status: 'paid',
+        paidAt: Date.now(),
+        message: '模拟支付成功。Preview 中可解锁当前 reportId 的 PDF 下载。',
+      },
+    };
+  }
+
+  return {
+    status: 200,
+    body: {
+      ...base,
+      status: 'unknown',
+      message: 'dry-run 支付状态仅在前端 localStorage 中临时保存。',
+    },
+  };
 }
 
 module.exports = async function handler(req, res) {
@@ -64,6 +123,9 @@ module.exports = async function handler(req, res) {
       const code = e.code === 413 ? 413 : 400;
       return res.status(code).json({ ok: false, error: code === 413 ? '报告数据过大' : '请求体格式错误' });
     }
+
+    const paymentDryRun = buildPaymentDryRunResponse(body);
+    if (paymentDryRun) return res.status(paymentDryRun.status).json(paymentDryRun.body);
 
     const { sections, engineResult, fingers, name, age } = body;
     if (!sections?.length || !engineResult) {
