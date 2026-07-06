@@ -1011,10 +1011,9 @@ module.exports = async function handler(req, res) {
     { role: 'user',   content: userMessage },
   ];
 
-  // ── DashScope 报告生成（qwen-plus 单次调用，无 fallback）──────────────
+  // ── DashScope 报告生成（qwen-plus 正式路径 + 本地保命兜底）──────────────
   // ⚠️ 不使用 qwen-vl-max：视觉模型对文字报告过慢，会超 Vercel 60s 限制 → 504
-  // qwen-plus 文字生成（5–15s），timeoutMs=55s，Vercel 60s 内安全完成
-  // 不设 fallback：55s 仍超时说明 DashScope 本身过载，turbo 质量不够用于完整报告
+  // qwen-plus 是正式报告主路径；本地兜底只在模型接近函数上限仍失败时保命，不能作为默认输出策略
   let raw = null;
 
   // 把错误详情写入 Redis，方便 admin 面板诊断（key=lastErr:genrpt，TTL 1天）
@@ -1030,14 +1029,14 @@ module.exports = async function handler(req, res) {
     return detail;
   }
 
-  // qwen-plus 主力；若跨境调用过慢，立即返回本地兜底报告，避免用户端出现 AbortError
-  // 兜底报告保留完整固定模块和用户问题，后续再用异步长报告优化质量
+  // 给 qwen-plus 尽量接近 60s 函数上限的生成窗口，优先使用知识索引和完整提示词生成
+  // 只有真的超时/失败时才返回本地兜底，避免红叉，但不把兜底当常态
   try {
     const { text } = await callClaude({
       model:     MODEL_FREE,       // qwen-plus
       messages,
-      maxTokens: 3600,
-      timeoutMs: 26000,
+      maxTokens: 5000,
+      timeoutMs: 52000,
     });
     raw = text;
   } catch (err1) {
