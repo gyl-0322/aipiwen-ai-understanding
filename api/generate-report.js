@@ -1031,14 +1031,14 @@ module.exports = async function handler(req, res) {
   }
 
   // qwen-plus 主力（文字报告，无图片，IAD1→阿里云跨境约35-50s生成完整核心模块）
-  // timeoutMs=55s：Vercel 60s 限制内留 5s 余量；maxTokens=6200 给全模块丰富输出留足展开空间
-  // 不设 fallback：55s 内 qwen-plus 仍超时说明 DashScope 本身过载，turbo 质量不够用
+  // timeoutMs=50s：Vercel 60s 限制内留足网络/序列化余量；maxTokens=5000 避免长报告触发 AbortError
+  // 报告仍按提示词写丰富，但不把输出上限拉到会拖垮线上请求的区间
   try {
     const { text } = await callClaude({
       model:     MODEL_FREE,       // qwen-plus
       messages,
-      maxTokens: 6200,
-      timeoutMs: 55000,
+      maxTokens: 5000,
+      timeoutMs: 50000,
     });
     raw = text;
   } catch (err1) {
