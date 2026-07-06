@@ -431,8 +431,8 @@ button, a, .must-item, .fp-option-card, .back-btn, .issue-chip {
     </div>
   </div>
   <div class="s1-body">
-    <div class="s1-title">上传总表页</div>
-    <div class="s1-sub">上传皮纹测评报告的<strong>总表页</strong>图片<br>AI 自动读取十指数据</div>
+    <div class="s1-title">上传总表，解锁你的专属报告</div>
+    <div class="s1-sub">不只看到性格类型轮廓<br>还会把 TRC、ATD、学习通道、五大功能和你关心的问题放在一起看</div>
     <div class="dropzone" id="dropzone">
       <input type="file" id="file-gallery" accept="image/*">
       <div class="dz-icon">📄</div>
@@ -1186,6 +1186,17 @@ const CORE_REQUIRED_MODULES = [
   '视觉功能（小指系统）',
 ];
 
+const REQUIRED_MODULES_DISPLAY = [
+  '严正申明四原则',
+  'TRC（认知结构）',
+  'ATD（感受/反应节奏）',
+  '左右脑（信息处理风格）',
+  '性格类型（核心行为外显）',
+  '学习通道（学习输入系统）',
+  '行为模式（行为解释系统）',
+  '五大功能（精神、思维、体觉、听觉、视觉）',
+];
+
 const REQUIRED_BY_STAGE = {
   preschool:    CORE_REQUIRED_MODULES,
   school:       CORE_REQUIRED_MODULES,
@@ -1204,7 +1215,7 @@ function buildIssuesScreen() {
   // must-list
   const mustList = qs('#must-list');
   mustList.innerHTML = '';
-  ST.requiredMods.forEach(m => {
+  REQUIRED_MODULES_DISPLAY.forEach(m => {
     const item = el('div', 'must-item', m);
     mustList.appendChild(item);
   });
@@ -1419,9 +1430,16 @@ function issueBody(body, titleTxt, issueTitle) {
   return cleaned || issueFallback(titleTxt, issueTitle);
 }
 
+function cleanRequiredModuleScaffold(text) {
+  return String(text || '')
+    .replace(/(^|\n)\s*[①1][\s.、-]*(是什么|这个板块是什么|指标是什么)[：:]\s*/g, '$1')
+    .replace(/(^|\n)\s*[②2][\s.、-]*(对当前用户意味着什么|对你意味着什么|意味着什么|放到你这里)[：:]\s*/g, '$1')
+    .replace(/(^|\n)\s*[③3][\s.、-]*(怎么应用|如何应用|可以怎么用)[：:]\s*/g, '$1');
+}
+
 // ── 正文内容格式化（加高亮块） ─────────────────────────────────────────
 function formatContent(text) {
-  text = cleanSourceTraces(text || '');
+  text = cleanRequiredModuleScaffold(cleanSourceTraces(text || ''));
   if (!text) return '';
   // 处理 **粗体** 和 *斜体*
   let html = text
@@ -1681,6 +1699,7 @@ function getPDFTheme(ageTier) {
 // 规则：**关键词** → 橙色高亮；*斜体* → 橙色；▸ 开头行 → 单独动作行；正文近白(.92)；行距 2.0
 function fmtPDF(text, th, bf) {
   if (!text) return '';
+  text = cleanRequiredModuleScaffold(cleanSourceTraces(text));
   // 先处理 ▸ 动作行（单独成行，橙色标记）
   const lines0 = text.split('\n');
   const processedLines = lines0.map(line => {
