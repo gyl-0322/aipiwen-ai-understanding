@@ -1,0 +1,369 @@
+{
+  "version": "report_knowledge_index_v1",
+  "updatedAt": "2026-07-05",
+  "positioning": "AIPIWEN Report Knowledge Index V1 is a curated retrieval layer for report generation. It indexes teacher reading transcripts, Report OS language libraries, and approved Obsidian/expert-course knowledge candidates. It does not import raw Obsidian content directly into frontend output.",
+  "retrievalPolicy": {
+    "defaultTopK": 6,
+    "maxTopK": 8,
+    "allowedStatusesForAutoOutput": ["auto_safe"],
+    "allowedStatusesForPromptGrounding": ["auto_safe", "rewrite_required"],
+    "blockedStatuses": ["human_only", "blocked"],
+    "mustNotExpose": [
+      "source_path_to_user",
+      "internal_method_label",
+      "raw_transcript_excerpt",
+      "diagnostic_claim",
+      "prediction_claim",
+      "fate_claim",
+      "parent_blame",
+      "child_label"
+    ]
+  },
+  "entries": [
+    {
+      "id": "RKI-V1-001",
+      "title": "写作业拖拉：先拆启动困难，不说孩子懒",
+      "status": "auto_safe",
+      "modules": ["行为模式", "学习通道", "ATD"],
+      "scenarios": ["写作业拖拉", "不启动", "被催促", "学习成长"],
+      "ageBands": ["7-12", "13-18"],
+      "retrievalKeywords": ["拖拉", "写作业", "磨蹭", "不开始", "启动困难", "催促", "作业"],
+      "sourceRefs": [
+        {
+          "sourceType": "teacher_transcript",
+          "path": "docs/aipiwen_report_system/01_raw_materials_原始资料/teacher_courses_老师课程/teacher_report_reading_001_老师解读报告录音_转写稿.txt",
+          "locator": "老师录音 997-1003；4788-4868"
+        },
+        {
+          "sourceType": "report_library",
+          "path": "docs/aipiwen_report_system/05_language_library_话术库/AIPIWEN_ReportLibrary_V1.1_家长共鸣表达库_溯源增强版.md",
+          "locator": "RL-V11-001"
+        }
+      ],
+      "safeGrounding": "拖拉不直接等于懒，也不直接等于执行力差。先观察孩子是开始难、坚持难，还是收尾难，再给一个可执行的第一步。",
+      "outputGuidance": "可以写成：这类表现更像是进入任务前需要更清楚的第一个动作，而不是孩子不想学。",
+      "doNotUse": ["孩子就是懒", "天生拖拉", "执行力差", "家长管教不到位"]
+    },
+    {
+      "id": "RKI-V1-002",
+      "title": "容易生气：把情绪看作需求信号",
+      "status": "auto_safe",
+      "modules": ["行为模式", "ATD", "亲子沟通"],
+      "scenarios": ["容易生气", "情绪爆发", "顶嘴", "亲子冲突"],
+      "ageBands": ["0-6", "7-12", "13-18"],
+      "retrievalKeywords": ["生气", "发脾气", "一点就炸", "情绪", "顶嘴", "吵架", "沟通"],
+      "sourceRefs": [
+        {
+          "sourceType": "teacher_transcript",
+          "path": "docs/aipiwen_report_system/01_raw_materials_原始资料/teacher_courses_老师课程/teacher_report_reading_001_老师解读报告录音_转写稿.txt",
+          "locator": "老师录音 4970-5235"
+        },
+        {
+          "sourceType": "obsidian_or_expert_card",
+          "path": "/Users/gyl0322gmail.com/AI-CEO-System/expert_courses/04_merged_assets/pengkaiping_merged_v01/Obsidian_Knowledge_Candidates.md",
+          "locator": "亲子聊天与倾听 low risk；亲子沟通素材"
+        }
+      ],
+      "safeGrounding": "情绪不作为心理或性格标签。先看触发场景、表达需求和孩子是否缺少替代表达。",
+      "outputGuidance": "可以写成：这更像是在提醒我们，孩子当下还没有找到更合适的表达方式。",
+      "doNotUse": ["脾气差", "情绪异常", "心理有问题", "父母造成孩子这样"]
+    },
+    {
+      "id": "RKI-V1-003",
+      "title": "报告不像：把不一致当作校正线索",
+      "status": "auto_safe",
+      "modules": ["报告线索", "后天环境校正", "行为模式"],
+      "scenarios": ["报告不像", "学校家里不一样", "数据不贴近", "后天环境"],
+      "ageBands": ["all"],
+      "retrievalKeywords": ["不像", "不准", "学校", "家里", "不一样", "场景", "环境", "校正"],
+      "sourceRefs": [
+        {
+          "sourceType": "teacher_transcript",
+          "path": "docs/aipiwen_report_system/01_raw_materials_原始资料/teacher_courses_老师课程/teacher_report_reading_001_老师解读报告录音_转写稿.txt",
+          "locator": "老师录音 1430-1465；997-1003；1090-1107"
+        },
+        {
+          "sourceType": "report_library",
+          "path": "docs/aipiwen_report_system/05_language_library_话术库/AIPIWEN_ReportLibrary_V1.1_家长共鸣表达库_溯源增强版.md",
+          "locator": "RL-V11-003；RL-V11-006"
+        }
+      ],
+      "safeGrounding": "报告数据是理解线索，不是一次定论。表现差异通常要加入年龄、关系、学校环境、家庭节奏和近期压力一起看。",
+      "outputGuidance": "可以写成：如果这部分不完全贴近孩子，不代表报告没价值，可以把它当作校正线索。",
+      "doNotUse": ["报告一定准确", "孩子真实内在就是这样", "家长观察错了"]
+    },
+    {
+      "id": "RKI-V1-004",
+      "title": "不主动学习：从兴趣入口、可完成感和环境舒适度入手",
+      "status": "auto_safe",
+      "modules": ["学习通道", "行为模式", "后天环境校正"],
+      "scenarios": ["不主动学习", "没有目标", "学习没动力", "自驱力"],
+      "ageBands": ["7-12", "13-18"],
+      "retrievalKeywords": ["不主动", "自驱力", "没动力", "目标", "兴趣", "学习没意义", "学习动力"],
+      "sourceRefs": [
+        {
+          "sourceType": "teacher_transcript",
+          "path": "docs/aipiwen_report_system/01_raw_materials_原始资料/teacher_courses_老师课程/teacher_report_reading_001_老师解读报告录音_转写稿.txt",
+          "locator": "老师录音 4970-5235"
+        },
+        {
+          "sourceType": "obsidian_or_expert_card",
+          "path": "/Users/gyl0322gmail.com/AI-CEO-System/expert_courses/04_merged_assets/pengkaiping_merged_v01/Obsidian_Knowledge_Candidates.md",
+          "locator": "学习动力与意义感 low risk；自主学习与自驱力 low risk"
+        }
+      ],
+      "safeGrounding": "不主动不等于没有能力，也不等于没有未来。先找孩子愿意进入的兴趣点、可完成的小任务和被认可的方式。",
+      "outputGuidance": "可以写成：孩子的主动性通常不是靠一句你要自觉长出来，而是从一个能进入状态的小入口开始。",
+      "doNotUse": ["没有自驱力", "天生不爱学习", "现在不改以后就来不及"]
+    },
+    {
+      "id": "RKI-V1-005",
+      "title": "被催就炸：识别亲子互动循环",
+      "status": "auto_safe",
+      "modules": ["行为模式", "亲子沟通", "ATD"],
+      "scenarios": ["被催就炸", "一说就吵", "家长不知道怎么说", "亲子沟通"],
+      "ageBands": ["7-12", "13-18"],
+      "retrievalKeywords": ["催", "一催就炸", "一说就吵", "沟通", "不知道怎么说", "亲子", "反抗"],
+      "sourceRefs": [
+        {
+          "sourceType": "teacher_transcript",
+          "path": "docs/aipiwen_report_system/01_raw_materials_原始资料/teacher_courses_老师课程/teacher_report_reading_001_老师解读报告录音_转写稿.txt",
+          "locator": "老师录音 4788-4868"
+        },
+        {
+          "sourceType": "source_mapping",
+          "path": "docs/aipiwen_report_system/05_language_library_话术库/AIPIWEN_ReportLibrary_V1.1_现场解读与Obsidian来源映射表.md",
+          "locator": "MAP-V11-005；MAP-V11-007"
+        }
+      ],
+      "safeGrounding": "不要把问题归因到父母或孩子。先拆互动循环：家长担心、提醒变密、孩子压力反弹、冲突升级。",
+      "outputGuidance": "可以写成：你现在最难的可能不是不知道要不要管，而是不知道怎么管才不会把关系推得更紧。",
+      "doNotUse": ["家长太焦虑导致孩子这样", "孩子叛逆", "亲子关系已经出问题"]
+    },
+    {
+      "id": "RKI-V1-006",
+      "title": "怕难和不自信：用第一小步替代抗挫标签",
+      "status": "auto_safe",
+      "modules": ["行为模式", "后天环境校正", "学习通道"],
+      "scenarios": ["怕难", "不自信", "怕输", "逃避挑战"],
+      "ageBands": ["7-12", "13-18", "19-25"],
+      "retrievalKeywords": ["怕难", "不自信", "怕输", "抗挫", "逃避", "挑战", "第一步"],
+      "sourceRefs": [
+        {
+          "sourceType": "source_mapping",
+          "path": "docs/aipiwen_report_system/05_language_library_话术库/AIPIWEN_ReportLibrary_V1.1_现场解读与Obsidian来源映射表.md",
+          "locator": "MAP-V11-008"
+        },
+        {
+          "sourceType": "obsidian_or_expert_card",
+          "path": "/Users/gyl0322gmail.com/AI-CEO-System/expert_courses/04_merged_assets/pengkaiping_merged_v01/Obsidian_Knowledge_Candidates.md",
+          "locator": "鼓励与优势发展 low risk；儿童自信发展需人工改写"
+        }
+      ],
+      "safeGrounding": "怕难可以先理解为保护性反应或需要更小的成功体验，不使用心理诊断或人格标签。",
+      "outputGuidance": "可以写成：这不一定是孩子不敢面对，而是他需要先体验一个能完成的小台阶。",
+      "doNotUse": ["抗挫力差", "玻璃心", "心理脆弱", "以后竞争不过别人"]
+    },
+    {
+      "id": "RKI-V1-007",
+      "title": "不爱阅读：区分能力、兴趣和进入方式",
+      "status": "auto_safe",
+      "modules": ["学习通道", "行为模式", "视觉功能", "听觉功能"],
+      "scenarios": ["不爱阅读", "阅读困难", "注意力飘", "学习方式"],
+      "ageBands": ["7-12", "13-18"],
+      "retrievalKeywords": ["阅读", "不爱看书", "注意力", "看不进去", "听", "看", "学习方式"],
+      "sourceRefs": [
+        {
+          "sourceType": "teacher_transcript",
+          "path": "docs/aipiwen_report_system/01_raw_materials_原始资料/teacher_courses_老师课程/teacher_report_reading_001_老师解读报告录音_转写稿.txt",
+          "locator": "老师录音 4970-5235"
+        },
+        {
+          "sourceType": "report_library",
+          "path": "docs/aipiwen_report_system/05_language_library_话术库/AIPIWEN_ReportLibrary_V1.1_家长共鸣表达库_溯源增强版.md",
+          "locator": "RL-V11-009"
+        }
+      ],
+      "safeGrounding": "不爱阅读不直接等于能力不足。先看输入通道、兴趣入口、材料难度和阅读环境。",
+      "outputGuidance": "可以写成：可以先分清孩子是不喜欢这类材料，还是需要换一种进入文字的方式。",
+      "doNotUse": ["阅读能力差", "以后语文会很差", "不读书就没前途"]
+    },
+    {
+      "id": "RKI-V1-008",
+      "title": "报告线索保留：皮纹/指纹可以作为理解线索",
+      "status": "auto_safe",
+      "modules": ["报告线索", "TRC", "ATD", "五大功能区"],
+      "scenarios": ["报告准不准", "皮纹线索", "指标解释", "严正声明"],
+      "ageBands": ["all"],
+      "retrievalKeywords": ["皮纹", "指纹", "报告", "线索", "指标", "准不准", "严正声明", "定论"],
+      "sourceRefs": [
+        {
+          "sourceType": "source_mapping",
+          "path": "docs/aipiwen_report_system/05_language_library_话术库/AIPIWEN_ReportLibrary_V1.1_现场解读与Obsidian来源映射表.md",
+          "locator": "第4节：皮纹/指纹/报告线索保留规则"
+        }
+      ],
+      "safeGrounding": "不要把皮纹/指纹完全抹掉。它们可以作为理解入口和观察线索，但不能作为决定依据、诊断依据或命运判断。",
+      "outputGuidance": "可以写成：从这份报告线索看，可以先观察几个方向；它不是结论，而是帮助你回到真实场景里看。",
+      "doNotUse": ["指纹决定未来", "报告证明孩子就是", "皮纹可以判断疾病", "一定准确"]
+    },
+    {
+      "id": "RKI-V1-009",
+      "title": "心理/医学相关：自动报告只降级，不判断",
+      "status": "human_only",
+      "modules": ["安全边界", "降级输出", "转人工"],
+      "scenarios": ["心理疾病", "医学诊断", "ADHD", "抑郁", "焦虑"],
+      "ageBands": ["all"],
+      "retrievalKeywords": ["心理疾病", "精神", "ADHD", "多动", "抑郁", "焦虑", "诊断", "医学", "疾病"],
+      "sourceRefs": [
+        {
+          "sourceType": "source_mapping",
+          "path": "docs/aipiwen_report_system/05_language_library_话术库/AIPIWEN_ReportLibrary_V1.1_现场解读与Obsidian来源映射表.md",
+          "locator": "MAP-V11-011"
+        },
+        {
+          "sourceType": "obsidian_or_expert_card",
+          "path": "/Users/gyl0322gmail.com/AI-CEO-System/expert_courses/04_merged_assets/pengkaiping_merged_v01/Obsidian_Knowledge_Candidates.md",
+          "locator": "心理韧性、情绪识别多为 high/medium risk，需人工改写"
+        }
+      ],
+      "safeGrounding": "报告不能判断心理、医学或疾病问题。只能建议整理具体表现、持续时间、影响范围，必要时寻求专业支持。",
+      "outputGuidance": "自动生成只可降级：这个问题不适合直接用报告判断，可以先整理具体情况并建议人工/专业支持。",
+      "doNotUse": ["孩子有心理问题", "疑似ADHD", "抑郁倾向", "精神问题"]
+    },
+    {
+      "id": "RKI-V1-010",
+      "title": "关系去留：不做分合结论，只拆沟通场景",
+      "status": "human_only",
+      "modules": ["安全边界", "关系沟通", "降级输出"],
+      "scenarios": ["关系去留", "适不适合", "分手", "亲密关系"],
+      "ageBands": ["adult"],
+      "retrievalKeywords": ["分手", "继续在一起", "适不适合", "关系", "伴侣", "婚姻", "谁对谁错"],
+      "sourceRefs": [
+        {
+          "sourceType": "source_mapping",
+          "path": "docs/aipiwen_report_system/05_language_library_话术库/AIPIWEN_ReportLibrary_V1.1_现场解读与Obsidian来源映射表.md",
+          "locator": "MAP-V11-012"
+        }
+      ],
+      "safeGrounding": "报告不能判断关系去留或谁对谁错。可以帮助用户整理冲突场景、需求表达和沟通方式。",
+      "outputGuidance": "自动生成只可降级：这个问题更适合把一个具体冲突场景拆清楚，不适合直接做关系决定。",
+      "doNotUse": ["应该分手", "不适合继续", "注定不合", "对方不适合你"]
+    },
+    {
+      "id": "RKI-V1-011",
+      "title": "企业/学校筛选：不做录用、淘汰、分班或分层",
+      "status": "blocked",
+      "modules": ["安全边界", "企业学校禁用"],
+      "scenarios": ["招聘筛选", "学校分层", "是否录用", "是否分班"],
+      "ageBands": ["all"],
+      "retrievalKeywords": ["录用", "淘汰", "招聘", "候选人", "分班", "分层", "筛选", "重点培养"],
+      "sourceRefs": [
+        {
+          "sourceType": "source_mapping",
+          "path": "docs/aipiwen_report_system/05_language_library_话术库/AIPIWEN_ReportLibrary_V1.1_现场解读与Obsidian来源映射表.md",
+          "locator": "MAP-V11-013"
+        }
+      ],
+      "safeGrounding": "报告不能用于企业或学校的人事筛选、学生分层、录用淘汰。只可在授权与合规前提下讨论支持策略。",
+      "outputGuidance": "自动输出应阻断或转人工：这份报告不能用于录用、淘汰、分班或筛选。",
+      "doNotUse": ["适合录用", "建议淘汰", "可以分班", "不适合培养"]
+    },
+    {
+      "id": "RKI-V1-012",
+      "title": "人工解读承接：不硬销售，不制造焦虑",
+      "status": "auto_safe",
+      "modules": ["人工解读承接", "CTA", "安全边界"],
+      "scenarios": ["需要人工解读", "问题反复出现", "复杂场景", "报告不确定"],
+      "ageBands": ["all"],
+      "retrievalKeywords": ["人工", "解读", "复核", "复杂", "反复", "不知道怎么办", "一对一"],
+      "sourceRefs": [
+        {
+          "sourceType": "report_library",
+          "path": "docs/aipiwen_report_system/05_language_library_话术库/AIPIWEN_ReportLibrary_V1_人工解读承接话术库.md",
+          "locator": "全文件"
+        },
+        {
+          "sourceType": "source_mapping",
+          "path": "docs/aipiwen_report_system/05_language_library_话术库/AIPIWEN_ReportLibrary_V1.1_现场解读与Obsidian来源映射表.md",
+          "locator": "第5节：进入产品前的白名单表达"
+        }
+      ],
+      "safeGrounding": "人工解读是把真实场景拆细，不是给确定性结论，也不是制造焦虑。",
+      "outputGuidance": "可以写成：如果这个问题反复出现，可以人工一起看一个具体场景，把报告线索和现实表现对齐。",
+      "doNotUse": ["不解读会耽误孩子", "必须马上处理", "专家能给最终答案"]
+    },
+    {
+      "id": "RKI-V1-013",
+      "title": "正式报告语言底座：沐海星辰语气、四大前提与输出规则",
+      "status": "rewrite_required",
+      "modules": ["语言人格", "严正申明", "安全边界", "输出结构"],
+      "scenarios": ["报告语气", "系统提示词", "人类化表达", "四大前提", "报告结构"],
+      "ageBands": ["all"],
+      "retrievalKeywords": ["SYSTEM_PROMPT", "沐海星辰", "四大前提", "严正申明", "报告语气", "输出规则", "人类化表达", "不贴标签"],
+      "sourceRefs": [
+        {
+          "sourceType": "obsidian_system_card",
+          "path": "/Users/gyl0322gmail.com/AI-CEO-System/AI-CEO-Vault/知识库/自建系统/AIPIWEN_Report_OS/AIPIWEN_generate-report_SYSTEM_PROMPT_知识卡.md",
+          "locator": "全文件"
+        },
+        {
+          "sourceType": "code",
+          "path": "api/generate-report.js",
+          "locator": "SYSTEM_PROMPT"
+        }
+      ],
+      "safeGrounding": "报告语言必须先看见人，再解释数据；数值没有好坏，不预测未来，不和别人比较，不贴标签。",
+      "outputGuidance": "用于生成报告的语言底座：温和、具体、有人味，禁止系统腔、诊断腔和命定化表达。",
+      "doNotUse": ["本系统认为", "模型判断", "数据证明", "天生就是", "一定会"]
+    },
+    {
+      "id": "RKI-V1-014",
+      "title": "正式报告硬编码规则底座：十大能力、五功能区、RULE-F04、年龄段模块",
+      "status": "rewrite_required",
+      "modules": ["五大功能区", "十大能力", "兴趣班建议", "年龄段适配"],
+      "scenarios": ["功能区解释", "手指能力映射", "兴趣班", "职业方向", "年龄段报告"],
+      "ageBands": ["all"],
+      "retrievalKeywords": ["ABILITY_MAP", "RULE_F04", "RULE-N14", "精神功能", "思维功能", "体觉功能", "听觉功能", "视觉功能", "十大能力", "兴趣班"],
+      "sourceRefs": [
+        {
+          "sourceType": "obsidian_system_card",
+          "path": "/Users/gyl0322gmail.com/AI-CEO-System/AI-CEO-Vault/知识库/自建系统/AIPIWEN_Report_OS/AIPIWEN_generate-report_硬编码规则_知识卡.md",
+          "locator": "全文件"
+        },
+        {
+          "sourceType": "code",
+          "path": "api/generate-report.js",
+          "locator": "ABILITY_MAP / POS_ZONE / RULE_F04 / REQUIRED_BY_STAGE"
+        }
+      ],
+      "safeGrounding": "十大能力与五功能区是报告解释的计算底座；高低值只和个人均值比，不能直接作为优劣或筛选依据。",
+      "outputGuidance": "用于解释手指、功能区、兴趣班和年龄段适配；前台必须转成人话，不裸露 RULE_F04、ABILITY_MAP 等内部术语。",
+      "doNotUse": ["RULE_F04", "ABILITY_MAP", "硬编码", "高低决定优劣", "按这个筛选"]
+    },
+    {
+      "id": "RKI-V1-015",
+      "title": "正式报告输入契约：engineResult、fingers、selectedIssues 如何进入报告",
+      "status": "rewrite_required",
+      "modules": ["Schema", "报告生成流程", "用户问题", "输出结构"],
+      "scenarios": ["engineResult", "selectedIssues", "用户自选问题", "报告生成链路", "结构防漂移"],
+      "ageBands": ["all"],
+      "retrievalKeywords": ["engineResult", "selectedIssues", "fingers", "用户问题", "四要素自然表达", "机制解释", "具体做法", "积极意义", "必给模块", "输入契约", "报告生成"],
+      "sourceRefs": [
+        {
+          "sourceType": "obsidian_system_card",
+          "path": "/Users/gyl0322gmail.com/AI-CEO-System/AI-CEO-Vault/知识库/自建系统/AIPIWEN_Report_OS/AIPIWEN_generate-report_engineResult_selectedIssues_输入契约.md",
+          "locator": "全文件"
+        },
+        {
+          "sourceType": "code",
+          "path": "api/generate-report.js",
+          "locator": "buildUserMessage / buildReportKnowledgeQuery / parseSections"
+        }
+      ],
+      "safeGrounding": "正式报告生成依赖 engineResult、fingers、age 和 selectedIssues；用户自选问题必须围绕报告结构扩展，不应改变安全边界。",
+      "outputGuidance": "用于约束报告结构和用户问题生成方式；issue 内部应包含机制解释、具体做法、积极意义、继续观察，但前台标题要自然变化，避免八股文。",
+      "doNotUse": ["随意增删模块", "只输出一句总结", "忽略用户问题", "把输入字段暴露给用户"]
+    }
+  ]
+}

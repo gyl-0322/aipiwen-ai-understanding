@@ -1318,6 +1318,29 @@ function buildReportFlipBook(sections) {
   }
 
   // ── Content slides ──────────────────────────────────────────────────
+  function issuePartLabels(title) {
+    const t = String(title || '');
+    if (/作业|拖拉|磨蹭|启动|不主动/.test(t)) {
+      return ['先看卡在哪一步', '把任务缩到第一个动作', '慢下来，也可能是在找入口'];
+    }
+    if (/生气|情绪|顶嘴|吵|炸|沟通/.test(t)) {
+      return ['情绪先是在替他说话', '先降温，再换一种问法', '会表达，比会忍住更重要'];
+    }
+    if (/阅读|注意力|听|看|学习方式/.test(t)) {
+      return ['先分清是哪种进入方式', '换一个更顺的输入入口', '找到通道，学习会轻一点'];
+    }
+    if (/怕难|不自信|怕输|内耗/.test(t)) {
+      return ['这更像是在保护自己', '先给一个能完成的小台阶', '被看见后，勇气会慢慢长出来'];
+    }
+    if (/关系|朋友|亲子|伴侣|冲突/.test(t)) {
+      return ['先回到一个具体场景', '把需求说清，比判对错更有用', '关系里的差异，也能变成理解入口'];
+    }
+    if (/职业|专业|兴趣班|学科|升学|方向/.test(t)) {
+      return ['先看哪类能力更顺手', '把选择变成可尝试的小路径', '方向不是保证，是更聪明地试'];
+    }
+    return ['先看背后的机制', '可以先做的小动作', '值得保留的力量'];
+  }
+
   sections.forEach((sec, i) => {
     const slide = el('div', 'rv-slide');
     slide.dataset.title = sec.title;
@@ -1326,22 +1349,23 @@ function buildReportFlipBook(sections) {
     if (sec.type === 'issue') {
       const icon = cfg.icon.issue;
       const eyebrow = `${icon} 专项解读 · ${secNum}`;
+      const labels = issuePartLabels(sec.title);
       slide.dataset.sub = '家长关注';
       slide.innerHTML = `
         <div class="sec-eyebrow">${eyebrow}</div>
         <div class="sec-h">${sec.title}</div>
         <div class="fp-parts">
           <div class="fp-part">
-            <div class="fp-badge"><div class="fp-badge-n">1</div><div class="fp-badge-t">为什么会这样</div></div>
-            <div class="fp-text">${formatContent(issueBody(sec.why, '为什么会这样', sec.title))}</div>
+            <div class="fp-badge"><div class="fp-badge-n">1</div><div class="fp-badge-t">${labels[0]}</div></div>
+            <div class="fp-text">${formatContent(issueBody(sec.why, labels[0], sec.title))}</div>
           </div>
           <div class="fp-part">
-            <div class="fp-badge"><div class="fp-badge-n">2</div><div class="fp-badge-t">怎么应对</div></div>
-            <div class="fp-text">${formatContent(issueBody(sec.how, '怎么应对', sec.title))}</div>
+            <div class="fp-badge"><div class="fp-badge-n">2</div><div class="fp-badge-t">${labels[1]}</div></div>
+            <div class="fp-text">${formatContent(issueBody(sec.how, labels[1], sec.title))}</div>
           </div>
           <div class="fp-part">
-            <div class="fp-badge"><div class="fp-badge-n">3</div><div class="fp-badge-t">未来可期</div></div>
-            <div class="fp-text">${formatContent(issueBody(sec.future, '未来可期', sec.title))}</div>
+            <div class="fp-badge"><div class="fp-badge-n">3</div><div class="fp-badge-t">${labels[2]}</div></div>
+            <div class="fp-text">${formatContent(issueBody(sec.future, labels[2], sec.title))}</div>
           </div>
           <button class="fp-cta-btn" onclick="window.location='/child-chat.html'">
             <span>💬 ${sec.cta || '还想深聊？继续问我'}</span>
@@ -1711,11 +1735,14 @@ async function generateReportPDF(btnEl) {
       </div>`;
     }
     const bodyHTML = isIssue
-      ? `<div style="display:flex;flex-direction:column;gap:9px;">
-          ${issueCard(1, '为什么会这样', sec.why)}
-          ${issueCard(2, '怎么应对', sec.how)}
-          ${issueCard(3, '未来可期', sec.future)}
+      ? (() => {
+          const labels = issuePartLabels(sec.title);
+          return `<div style="display:flex;flex-direction:column;gap:9px;">
+          ${issueCard(1, labels[0], sec.why)}
+          ${issueCard(2, labels[1], sec.how)}
+          ${issueCard(3, labels[2], sec.future)}
         </div>`
+        })()
       : fmtPDF(sec.content || '', th, bf);
     return wrap(`
       ${pHdr(n)}

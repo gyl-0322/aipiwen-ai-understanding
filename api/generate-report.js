@@ -10,6 +10,7 @@
 
 const crypto = require('crypto');
 const { redisGet, redisSet, creditReferral, callClaude, MODEL_DEEP, MODEL_FREE, getOpenid } = require('./_lib');
+const { searchReportKnowledge, buildReportGroundingBlock } = require('../lib/report-knowledge-index');
 
 // ── 案例库索引（Upstash list，max 2000 条）──────────────────────────────────
 function kvUrl()   { return process.env.KV_REST_API_URL   || process.env.REDIS_URL  || ''; }
@@ -24,6 +25,42 @@ async function pushCaseIndex(entry) {
       ['LTRIM', 'cases:index', 0, 1999],
     ]),
   }).catch(e => console.warn('[cases] pushCaseIndex failed:', e.message));
+}
+
+function buildReportKnowledgeQuery(engineResult, age, selectedIssues, fingers) {
+  const fp = engineResult?.['五功能区'] || {};
+  const chan = engineResult?.['学习通道'] || {};
+  const behav = engineResult?.['行为模式'] || {};
+  const brain = engineResult?.['左右脑'] || {};
+  const atd = engineResult?.['ATD'] || {};
+  const fingerText = fingers ? Object.entries(fingers)
+    .map(([key, value]) => `${key}:${value?.sym || ''}/${value?.trc || ''}`)
+    .join(' ') : '';
+
+  return [
+    `年龄:${age || ''}`,
+    `主性格类型:${engineResult?.['主性格类型'] || ''}`,
+    `学习通道:${chan?.['主通道'] || ''}`,
+    `行为模式:${behav?.['结论'] || ''}`,
+    `左右脑:${brain?.['结论'] || ''}`,
+    `ATD:${atd?.['分区'] || atd?.['值'] || ''}`,
+    `五功能区:${['精神', '思维', '体觉', '听觉', '视觉'].map(key => `${key}${fp?.[key] || ''}`).join(' ')}`,
+    `手指:${fingerText}`,
+    `用户问题:${(selectedIssues || []).join(' ')}`,
+  ].filter(Boolean).join('\n');
+}
+
+function buildRiskKnowledgeBlock(results) {
+  if (!results?.length) return '';
+  return [
+    '【Report Knowledge Index 安全边界命中｜只用于降级、禁用和转人工判断】',
+    '使用规则：这些内容不得作为普通报告结论输出；遇到相关问题时，只能安全改写、降级或建议人工/专业支持。',
+    ...results.map((item, index) => [
+      `${index + 1}. ${item.title}`,
+      `边界：${item.safeGrounding}`,
+      item.doNotUse?.length ? `禁用：${item.doNotUse.join(' / ')}` : '',
+    ].filter(Boolean).join('\n')),
+  ].join('\n\n');
 }
 
 // ── 十大能力官方映射（来源：中级研修-十大能力对应兴趣班职业专业）────────────
@@ -440,7 +477,7 @@ const SYSTEM_PROMPT = `你是 AIPIWEN 天赋底色解读 AI，拥有完整的皮
 【分量与丰富度（来源：00i §6）】
 - 天赋底色/地基段：2–3段，把主类型×通道×ATD×行为揉成"一个活人"，不逐条念数据。
 - 每个必给板块：多段展开、举生活场景，用户读完要觉得"内容很满、被认真对待了"。
-- 勾选问题三段式：每段写实写满——"怎么应对"给2–3个具体动作说清怎么做，"积极意义"把那束"光"讲到位。
+- 勾选问题采用"四要素自然表达"：内部必须包含机制解释、具体做法、积极意义、继续观察/承接，但前台不要写成八股文；"具体做法"给2–3个具体动作，"积极意义"讲清这个特质值得如何被看见。
 - ⚠️ 多≠注水：每句话有信息增量，不堆形容词。
 
 【文风分寸（替代旧"三条红线"，不是硬规则）】
@@ -472,11 +509,11 @@ const SYSTEM_PROMPT = `你是 AIPIWEN 天赋底色解读 AI，拥有完整的皮
 - 必给板块必须严格按指定标题输出，不允许删除、合并、改名、调序
 - 每个必给板块内部必须固定三段：①是什么 ②对当前用户意味着什么 ③怎么应用到学习/行为/沟通
 - 五大功能必须拆成五个独立板块：精神功能、思维功能、体觉功能、听觉功能、视觉功能；禁止合并成一页。
-- issue 板块内部用 ①为什么会这样 ②怎么应对 ③积极意义 标记三段
+- issue 类型仍用 ①②③④ 标记，供系统解析；但内容要按"四要素自然表达"写，禁止机械套"为什么/怎么办/未来趋势/还想深聊"四个标题
 - 直接开始正文，禁止任何开场白（"收到""好的""当然"等）`;
 
 // ── 构建用户消息（引擎数据 + 格式规范） ────────────────────────────────
-function buildUserMessage(engineResult, age, name, requiredModules, selectedIssues, fingers, tier) {
+function buildUserMessage(engineResult, age, name, requiredModules, selectedIssues, fingers, tier, knowledgeContext = {}) {
   const fp      = engineResult['五功能区'] || {};
   const chan     = engineResult['学习通道'] || {};
   const behav    = engineResult['行为模式'] || {};
@@ -515,16 +552,17 @@ function buildUserMessage(engineResult, age, name, requiredModules, selectedIssu
   // ⚠️ 同源一致：可选问题里的职业/能力类只能延伸必给模块2的结论，不得重新判断高低
   // 用 dedupedIssues（已去掉与必给重复项），避免 AI 收到冗余格式指令
   const issueFormatGuide = dedupedIssues.length > 0
-    ? `\n【问题模块格式（每个 issue 严格三段式）】\n` + dedupedIssues.map(issue => {
+    ? `\n【问题模块格式（每个 issue 使用四要素自然表达）】\n` + dedupedIssues.map(issue => {
         if (兴趣班板块Names.has(issue)) {
           // 职业/能力类延伸问题：必须在必给模块2结论基础上展开，禁止重新判断高低
           return `===issue:${issue}===
 ⚠️ 此板块是上方五个功能板块与「TRC（认知结构）」的延伸决策——直接基于已给出的能力结构，聚焦「${issue}」这个具体问题，禁止重新做高低判断，数据用上方 RULE-F04 已修正结果。
-①为什么会这样：（在能力结构结论基础上，点明此决策的关键数据依据，1-2句）
-②怎么办：（针对"${issue}"给出3-4条具体可选路径，引用官方职业/方向映射，今天就能落地）
-③积极意义：（这个方向的长期价值和潜在优势，1-2句）`;
+①机制解释：（在能力结构结论基础上，点明此决策的关键数据依据，1-2句；不要写成系统分析）
+②具体做法：（针对"${issue}"给出3-4条具体可选路径，引用官方职业/方向映射，今天就能落地）
+③积极意义：（这个方向如果被合适支持，长期可能长成什么价值；不做保证）
+④继续观察：（一句自然承接，指向最值得继续补充的真实场景或追问）`;
         }
-        return `===issue:${issue}===\n①为什么会这样（机制解释，基于具体手指/类型/通道/ATD，2-3句）\n②怎么应对（可执行动作，明天就能做，2-4条）\n③积极意义（潜力/优势，让用户看到这不是问题本身，2句）`;
+        return `===issue:${issue}===\n①机制解释：（基于具体手指/类型/通道/ATD解释背后的可能机制，2-3句；先讲场景，不要像系统规则）\n②具体做法：（给明天就能做的具体动作，2-4条；低风险、可执行）\n③积极意义：（说明这个特质被看见和支持后，可以发展成什么优势；不预测、不保证）\n④继续观察：（一句自然承接，建议观察一个具体场景、补充信息或人工一起看）`;
       }).join('\n\n')
     : '';
 
@@ -540,6 +578,8 @@ ATD：${atd['值'] || '未知'}（${atd['分区'] || '未测'}）
 【五功能区】${zoneDesc}
 总TRC：${fp['总TRC']}
 ${兴趣班提示}
+${knowledgeContext.reportKnowledgeBlock ? `\n${knowledgeContext.reportKnowledgeBlock}\n` : ''}
+${knowledgeContext.riskKnowledgeBlock ? `\n${knowledgeContext.riskKnowledgeBlock}\n` : ''}
 【需要生成的板块】（按顺序，前${requiredModules.length}个是固定骨架，不可删除/合并/调序）
 ${allModules.map((m,i)=>`${i+1}. ${m}`).join('\n')}
 
@@ -591,12 +631,12 @@ function parseSections(raw, requiredModules, selectedIssues) {
                       : (title === '天赋底色' ? 'foundation' : 'required');
 
     if (isIssue) {
-      // 三段式拆分（兼容旧版④CTA，但前端只展示前三段）
+      // 四要素拆分：内部仍用 ①②③④ 稳定解析，前台标题可自然化，避免八股文。
       const parts = { why:'', how:'', future:'', cta:'' };
-      const whyM    = body.match(/①\s*(?:为什么会这样|为什么|Why)?(?:[（(][^）)]*[）)])?[：:]?\s*([\s\S]*?)(?=②|$)/i);
-      const howM    = body.match(/②\s*(?:怎么应对|怎么办|How)?(?:[（(][^）)]*[）)])?[：:]?\s*([\s\S]*?)(?=③|$)/i);
-      const futureM = body.match(/③\s*(?:积极意义|未来趋势|未来|Future)?(?:[（(][^）)]*[）)])?[：:]?\s*([\s\S]*?)(?=④|$)/i);
-      const ctaM    = body.match(/④\s*(?:还想深聊|还想聊|深聊|CTA)?[？?:：]?\s*([\s\S]*?)$/i);
+      const whyM    = body.match(/①[^：:\n]*[：:]?([\s\S]*?)(?=②|$)/i);
+      const howM    = body.match(/②[^：:\n]*[：:]?([\s\S]*?)(?=③|$)/i);
+      const futureM = body.match(/③[^：:\n]*[：:]?([\s\S]*?)(?=④|$)/i);
+      const ctaM    = body.match(/④[^：:\n]*[？?:：]?([\s\S]*?)$/i);
 
       // fallback: 按段落分
       if (!whyM && !howM) {
@@ -900,7 +940,26 @@ module.exports = async function handler(req, res) {
 
   const tier          = getAgeTier(age);
   const requiredMods  = REQUIRED_BY_STAGE[tier] || REQUIRED_BY_STAGE.adult;
-  const userMessage   = buildUserMessage(engineResult, age, name, requiredMods, selectedIssues, fingers, tier);
+  let knowledgeContext = {};
+  // 知识索引是增强层，不是硬依赖：检索失败时必须回退到原有 SYSTEM_PROMPT + 硬编码规则 + engineResult + selectedIssues 生成链路。
+  try {
+    const knowledgeQuery = buildReportKnowledgeQuery(engineResult, age, selectedIssues, fingers);
+    const reportKnowledgeHits = searchReportKnowledge(knowledgeQuery, {
+      topK: 6,
+      allowedStatuses: ['auto_safe', 'rewrite_required'],
+    });
+    const riskKnowledgeHits = searchReportKnowledge(knowledgeQuery, {
+      topK: 4,
+      allowedStatuses: ['human_only', 'blocked'],
+    });
+    knowledgeContext = {
+      reportKnowledgeBlock: buildReportGroundingBlock(reportKnowledgeHits, { maxItems: 6 }),
+      riskKnowledgeBlock: buildRiskKnowledgeBlock(riskKnowledgeHits),
+    };
+  } catch (e) {
+    console.warn('[gen-report] report knowledge index skipped:', e.message);
+  }
+  const userMessage   = buildUserMessage(engineResult, age, name, requiredMods, selectedIssues, fingers, tier, knowledgeContext);
 
   const messages = [
     { role: 'system', content: SYSTEM_PROMPT },
