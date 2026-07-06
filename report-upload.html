@@ -384,6 +384,26 @@ html,body{height:100%;overflow:hidden;background:#060810;
   font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;}
 #cmodal-copy{background:var(--amber);color:var(--bg);}
 #cmodal-close-btn{background:rgba(255,255,255,.08);color:var(--dim);}
+/* ─── PDF PAYMENT DRY-RUN MODAL ───────────────────────────── */
+#pay-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);
+  backdrop-filter:blur(12px);z-index:1100;align-items:center;justify-content:center;padding:24px;}
+#pay-modal.open{display:flex;}
+.pay-box{width:min(340px,100%);background:var(--bg);border:1px solid rgba(194,105,42,.28);
+  border-radius:20px;padding:22px 20px;box-shadow:0 24px 60px rgba(0,0,0,.4);}
+.pay-kicker{font-size:10px;letter-spacing:.18em;color:var(--amber);font-weight:800;margin-bottom:8px;}
+.pay-title{font-size:19px;color:var(--text);font-weight:800;margin-bottom:8px;}
+.pay-price{font-size:32px;line-height:1;color:var(--amber);font-weight:900;margin:8px 0 12px;}
+.pay-sub{font-size:12px;line-height:1.8;color:var(--dim);margin-bottom:14px;}
+.pay-report{font-size:11px;color:var(--faint);word-break:break-all;background:rgba(255,255,255,.045);
+  border:1px solid var(--border);border-radius:10px;padding:9px 10px;margin-bottom:14px;}
+.pay-actions{display:grid;gap:9px;}
+.pay-actions button{width:100%;border:none;border-radius:13px;padding:13px 14px;font-size:14px;
+  font-weight:700;font-family:inherit;cursor:pointer;}
+#pay-alipay{background:#1677ff;color:#fff;}
+#pay-wechat{background:#07c160;color:#fff;}
+#pay-confirm{background:var(--amber);color:var(--bg);}
+#pay-cancel{background:rgba(255,255,255,.08);color:var(--dim);}
+#pay-status{min-height:18px;margin-top:10px;font-size:12px;line-height:1.6;color:var(--amber);}
 /* iOS 点击两次问题：全局修复 */
 button, a, .must-item, .fp-option-card, .back-btn, .issue-chip {
   touch-action: manipulation;
@@ -558,6 +578,24 @@ button, a, .must-item, .fp-option-card, .back-btn, .issue-chip {
       <button id="cmodal-copy">复制链接</button>
       <button id="cmodal-close-btn">关闭</button>
     </div>
+  </div>
+</div>
+
+<!-- PDF Payment Dry-run Modal -->
+<div id="pay-modal">
+  <div class="pay-box">
+    <div class="pay-kicker">PAYMENT DRY-RUN</div>
+    <div class="pay-title">下载完整 PDF 报告</div>
+    <div class="pay-price">¥19.9</div>
+    <div class="pay-sub">这是 Preview 模拟支付，不会连接真实支付宝或微信，也不会出现真实收款码。模拟成功后，只解锁当前这份报告的 PDF 下载。</div>
+    <div class="pay-report" id="pay-report-id">报告 ID：生成中…</div>
+    <div class="pay-actions">
+      <button id="pay-alipay">支付宝支付（模拟）</button>
+      <button id="pay-wechat">微信支付（模拟）</button>
+      <button id="pay-confirm">我已支付（模拟解锁）</button>
+      <button id="pay-cancel">暂不下载</button>
+    </div>
+    <div id="pay-status"></div>
   </div>
 </div>
 
@@ -777,8 +815,13 @@ async function getMyInviteToken() {
 
 // ─── 报告存档 & 客户分享链接 ───────────────────────────────────────────────────
 let _clientShareUrl = '';
+let _clientReportId = '';
+let _saveReportPromise = null;
 
 async function _saveReportForClient(sections) {
+  if (_clientReportId) return _clientReportId;
+  if (_saveReportPromise) return _saveReportPromise;
+  _saveReportPromise = (async () => {
   try {
     const r = await fetch('/api/report-store', {
       method: 'POST',
@@ -786,7 +829,8 @@ async function _saveReportForClient(sections) {
       body: JSON.stringify({ sections, engineResult: ST.engineResult, fingers: ST.fingers, name: ST.name || null, age: ST.age || null }),
     });
     const d = await r.json();
-    if (!d.ok || !d.id) return;
+    if (!d.ok || !d.id) return null;
+    _clientReportId = d.id;
     const shareUrl = `https://aipiwen.cn/report-upload.html?rid=${d.id}`;
     _clientShareUrl = shareUrl;
     qs('#cmodal-url-text').textContent = shareUrl;
@@ -796,7 +840,134 @@ async function _saveReportForClient(sections) {
     new QRCode(qrEl, { text: shareUrl, width: 148, height: 148,
       colorDark: '#000000', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.M });
     qs('#rv-client-btn').style.display = '';
+    return d.id;
   } catch(e) { console.warn('report-store error:', e); }
+  return null;
+  })();
+  return _saveReportPromise;
+}
+
+const PAYMENT_DRYRUN_PRICE = '19.9';
+const PAYMENT_DRYRUN_KEY = 'aipiwen_paid_report_ids_dryrun';
+let _pendingPdfButton = null;
+let _pendingMockOrder = null;
+
+function getPaidReportIds() {
+  try {
+    const ids = JSON.parse(localStorage.getItem(PAYMENT_DRYRUN_KEY) || '[]');
+    return Array.isArray(ids) ? ids : [];
+  } catch(e) {
+    return [];
+  }
+}
+
+function isReportPaidDryRun(reportId) {
+  return !!reportId && getPaidReportIds().includes(reportId);
+}
+
+function markReportPaidDryRun(reportId) {
+  if (!reportId) return;
+  const ids = getPaidReportIds();
+  if (!ids.includes(reportId)) ids.push(reportId);
+  try { localStorage.setItem(PAYMENT_DRYRUN_KEY, JSON.stringify(ids)); } catch(e) {}
+}
+
+async function getCurrentPaymentReportId() {
+  if (_clientReportId) return _clientReportId;
+  const rid = new URLSearchParams(location.search).get('rid');
+  if (rid) {
+    _clientReportId = rid;
+    _clientShareUrl = `https://aipiwen.cn/report-upload.html?rid=${rid}`;
+    return rid;
+  }
+  if (RV.sections?.length) {
+    const id = await _saveReportForClient(RV.sections);
+    if (id) return id;
+  }
+  return ST.displayReportId || `local-${Date.now()}`;
+}
+
+function setPayStatus(text) {
+  const el = qs('#pay-status');
+  if (el) el.textContent = text || '';
+}
+
+async function createMockPayment(provider, reportId) {
+  const res = await fetch('/api/report-payment-dryrun', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action: 'create', provider, reportId }),
+  });
+  const data = await res.json();
+  if (!data.ok) throw new Error(data.error || '模拟订单创建失败');
+  _pendingMockOrder = data;
+  setPayStatus(`${provider === 'alipay' ? '支付宝' : '微信'}模拟订单已创建：${data.orderId}`);
+  return data;
+}
+
+async function confirmMockPayment() {
+  const reportId = await getCurrentPaymentReportId();
+  const order = _pendingMockOrder || await createMockPayment('alipay', reportId);
+  const res = await fetch('/api/report-payment-dryrun', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      action: 'mock_paid',
+      provider: order.provider || 'alipay',
+      reportId,
+      orderId: order.orderId,
+    }),
+  });
+  const data = await res.json();
+  if (!data.ok) throw new Error(data.error || '模拟支付失败');
+  markReportPaidDryRun(reportId);
+  qs('#pay-modal').classList.remove('open');
+  setPayStatus('');
+  const btn = _pendingPdfButton;
+  _pendingPdfButton = null;
+  _pendingMockOrder = null;
+  if (btn) downloadPdfAfterPayment(btn);
+}
+
+async function showPaymentDryRunModal(btnEl) {
+  const reportId = await getCurrentPaymentReportId();
+  _pendingPdfButton = btnEl;
+  _pendingMockOrder = null;
+  qs('#pay-report-id').textContent = `报告 ID：${reportId}`;
+  setPayStatus(`当前报告尚未解锁，模拟支付 ¥${PAYMENT_DRYRUN_PRICE} 后可下载。`);
+  qs('#pay-modal').classList.add('open');
+}
+
+function downloadPdfAfterPayment(btnEl) {
+  // 仅微信内置 WebView 拦截（不支持 blob download）
+  // 华为/小米/Chrome 等手机浏览器原生支持，直接下载
+  if (/MicroMessenger/i.test(navigator.userAgent)) {
+    const pdfUrl = (_clientShareUrl || '') + (_clientShareUrl ? '&pdf=1' : '');
+    if (pdfUrl && _clientShareUrl) {
+      try {
+        const ta = document.createElement('textarea');
+        ta.value = pdfUrl; ta.style.cssText = 'position:fixed;left:-9999px;opacity:0;';
+        document.body.appendChild(ta); ta.select(); document.execCommand('copy');
+        document.body.removeChild(ta);
+        alert('已复制报告链接！\n\n请点右上角「···」→「在浏览器中打开」，浏览器会自动开始下载 PDF。\n\n（或在浏览器地址栏粘贴刚才复制的链接）');
+      } catch(_) {
+        alert('微信内无法直接下载 PDF。\n\n请复制链接在外部浏览器打开：\n' + pdfUrl);
+      }
+    } else {
+      alert('微信内无法直接下载 PDF。\n\n请点右上角「···」→「在浏览器中打开」，再点下载即可。');
+    }
+    return;
+  }
+  generateReportPDF(btnEl);
+}
+
+async function requestPdfDownload(btnEl) {
+  const reportId = await getCurrentPaymentReportId();
+  if (isReportPaidDryRun(reportId)) {
+    downloadPdfAfterPayment(btnEl);
+    return;
+  }
+  await showPaymentDryRunModal(btnEl);
 }
 
 // ─── UTILITIES ────────────────────────────────────────────────────────────
@@ -1290,6 +1461,7 @@ function buildReportFlipBook(sections) {
   const fpSrc  = FP_IMGS[imgKey];
   const type   = E?.主性格类型 || '天赋型';
   const reportId = `FP-${new Date().getFullYear()}-${(E?.key||'w').toUpperCase().slice(0,2)}${Math.floor(Math.random()*900+100)}`;
+  ST.displayReportId = reportId;
 
   // 把主题应用到 #s4
   qs('#s4').dataset.theme = cfg.theme;
@@ -1453,28 +1625,9 @@ function buildReportFlipBook(sections) {
     });
     document.querySelectorAll('#rv-dl-fin,#rv-dl-btn').forEach(b => {
       b.addEventListener('click', function() {
-        // 仅微信内置 WebView 拦截（不支持 blob download）
-        // 华为/小米/Chrome 等手机浏览器原生支持，直接下载
-        if (/MicroMessenger/i.test(navigator.userAgent)) {
-          // 构造可在外部浏览器打开并自动触发 PDF 下载的链接
-          const pdfUrl = (_clientShareUrl || '') + (_clientShareUrl ? '&pdf=1' : '');
-          if (pdfUrl && _clientShareUrl) {
-            // 复制到剪贴板（微信内 clipboard.writeText 兼容性差，用 execCommand 兜底）
-            try {
-              const ta = document.createElement('textarea');
-              ta.value = pdfUrl; ta.style.cssText = 'position:fixed;left:-9999px;opacity:0;';
-              document.body.appendChild(ta); ta.select(); document.execCommand('copy');
-              document.body.removeChild(ta);
-              alert('已复制报告链接！\n\n请点右上角「···」→「在浏览器中打开」，浏览器会自动开始下载 PDF。\n\n（或在浏览器地址栏粘贴刚才复制的链接）');
-            } catch(_) {
-              alert('微信内无法直接下载 PDF。\n\n请复制链接在外部浏览器打开：\n' + pdfUrl);
-            }
-          } else {
-            alert('微信内无法直接下载 PDF。\n\n请点右上角「···」→「在浏览器中打开」，再点下载即可。');
-          }
-          return;
-        }
-        generateReportPDF(this);
+        requestPdfDownload(this).catch(e => {
+          alert('支付检查失败，请稍后重试。\n' + e.message);
+        });
       });
     });
   }, 100);
@@ -2071,6 +2224,23 @@ qs('#cmodal-copy').addEventListener('click', () => {
     });
 });
 
+qs('#pay-modal').addEventListener('click', e => {
+  if (e.target === qs('#pay-modal')) qs('#pay-modal').classList.remove('open');
+});
+qs('#pay-cancel').addEventListener('click', () => qs('#pay-modal').classList.remove('open'));
+qs('#pay-alipay').addEventListener('click', async () => {
+  try { await createMockPayment('alipay', await getCurrentPaymentReportId()); }
+  catch(e) { setPayStatus(e.message); }
+});
+qs('#pay-wechat').addEventListener('click', async () => {
+  try { await createMockPayment('wechat', await getCurrentPaymentReportId()); }
+  catch(e) { setPayStatus(e.message); }
+});
+qs('#pay-confirm').addEventListener('click', async () => {
+  try { await confirmMockPayment(); }
+  catch(e) { setPayStatus(e.message); }
+});
+
 // ─── 客户打开分享链接：?rid=xxx 直接显示报告 ─────────────────────────────
 (function() {
   const rid = new URLSearchParams(location.search).get('rid');
@@ -2096,6 +2266,8 @@ qs('#cmodal-copy').addEventListener('click', () => {
       ST.name         = rep.name   || null;
       ST.age          = rep.age    || rep.engineResult?.age || null;
       ST.ageTier      = getAgeTier(ST.age);   // FIX: shared-link loads never set ageTier → adult report showed school theme
+      _clientReportId = rid;
+      _clientShareUrl = `https://aipiwen.cn/report-upload.html?rid=${rid}`;
       buildReportFlipBook(rep.sections);
       goScreen('s4');
       qs('#rv-client-btn').style.display = 'none'; // 客户不看"发客户"按钮
