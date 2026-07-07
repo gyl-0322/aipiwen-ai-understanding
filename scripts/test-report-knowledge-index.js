@@ -2,6 +2,7 @@ const assert = require('assert');
 const {
   loadReportKnowledgeIndex,
   searchReportKnowledge,
+  buildReportKnowledgeRetrievalDryRun,
   buildReportGroundingBlock,
 } = require('../lib/report-knowledge-index');
 
@@ -116,8 +117,91 @@ assert(groundingBlock.includes('Report Knowledge Index 命中内容'), 'groundin
 assert(!groundingBlock.includes('teacher_report_reading_001'), 'grounding block must not expose source paths');
 assert(!groundingBlock.includes('/Users/'), 'grounding block must not expose local absolute paths');
 
+const juniorDryRun = buildReportKnowledgeRetrievalDryRun({
+  ageBand: '初中13-15岁',
+  userIdentity: 'parent',
+  reportSubject: 'child',
+  selectedIssues: [
+    '开始顶嘴/叛逆，怎么沟通不炸',
+    '考试焦虑/输不起怎么疏导',
+    '这型孩子最怕的老师/课堂是什么',
+  ],
+  customUserQuestion: '孩子一说学习就烦，手机也很难约定边界',
+  reportModules: ['TRC', 'ATD', '左右脑', '性格类型', '学习通道', '行为模式'],
+  functionAreas: ['精神功能', '听觉功能'],
+  metrics: {
+    精神功能: {
+      右拇: '高于个人均值，目标感和主导性明显',
+      左拇: '低于个人均值，自我管理需要外部结构',
+    },
+    听觉功能: {
+      右无名: '低于个人均值，口头提醒容易漏',
+    },
+  },
+});
+
+assert.strictEqual(juniorDryRun.ok, true);
+assert.strictEqual(juniorDryRun.dryRunOnly, true);
+assert(juniorDryRun.uniqueHitIds.includes('RKI-V1.3-JUNIOR-BOUNDARY'), 'junior dry-run should hit junior boundary card');
+assert(juniorDryRun.uniqueHitIds.includes('RKI-V1.3-JUNIOR-STUDY-EMOTION'), 'junior dry-run should hit junior study/emotion card');
+assert(juniorDryRun.uniqueHitIds.includes('RKI-V1.2-SPIRIT-R_HIGH'), 'five-function dry-run should hit right-thumb spirit card');
+assert(juniorDryRun.uniqueHitIds.includes('RKI-V1.2-SPIRIT-L_LOW'), 'five-function dry-run should hit left-thumb spirit card');
+assert(juniorDryRun.uniqueHitIds.includes('RKI-V1.2-AUDIO-R_LOW'), 'five-function dry-run should hit right-ring audio card');
+assert(
+  juniorDryRun.stageResults.some(stage => stage.stage === 'risk_guardrails' && stage.hitCount > 0),
+  'dry-run should include risk guardrail stage'
+);
+
+const adultDryRun = buildReportKnowledgeRetrievalDryRun({
+  ageBand: '26-40岁',
+  userIdentity: 'self',
+  reportSubject: 'self',
+  selectedIssues: [
+    '职业瓶颈，创业还是继续打工',
+    '伴侣沟通和家庭责任怎么平衡',
+  ],
+  customUserQuestion: '我总觉得工作很累，想转型但又担心不稳定',
+  reportModules: ['性格类型', '行为模式'],
+  functionAreas: ['思维功能', '视觉功能'],
+  metrics: {
+    思维功能: {
+      右食: '高于个人均值，逻辑规则理解快',
+    },
+    视觉功能: {
+      左小: '高于个人均值，图像和审美联想强',
+    },
+  },
+});
+
+assert(adultDryRun.uniqueHitIds.includes('RKI-V1.3-ADULT-WORK'), 'adult dry-run should hit adult work card');
+assert(adultDryRun.uniqueHitIds.includes('RKI-V1.3-ADULT-FAMILY'), 'adult dry-run should hit adult family card');
+assert(adultDryRun.uniqueHitIds.includes('RKI-V1.2-THINK-R_HIGH'), 'adult dry-run should hit right-index thinking card');
+assert(adultDryRun.uniqueHitIds.includes('RKI-V1.2-VISUAL-L_HIGH'), 'adult dry-run should hit left-little visual card');
+assert(!adultDryRun.uniqueHitIds.includes('RKI-V1.3-JUNIOR-BOUNDARY'), 'adult dry-run should not rely on junior boundary card');
+
+const riskDryRun = buildReportKnowledgeRetrievalDryRun({
+  ageBand: '高中16-18岁',
+  userIdentity: 'parent',
+  reportSubject: 'child',
+  selectedIssues: ['升学决策：冲名校还是选适合专业'],
+  customUserQuestion: '能不能保证升学成功，孩子是不是有心理疾病',
+  riskSignals: ['保证升学', '心理疾病', '诊断'],
+});
+
+assert(riskDryRun.uniqueHitIds.includes('RKI-V1.3-SENIOR-EDUCATION'), 'risk dry-run should still hit senior education context');
+assert(
+  riskDryRun.stageResults.some(stage => stage.hits.some(hit => hit.isGuardrailOnly)),
+  'risk dry-run should retrieve guardrail-only cards for unsafe questions'
+);
+assert(
+  riskDryRun.summary.guardrailHitCount > 0,
+  'risk dry-run should count guardrail hits'
+);
+
 console.log(JSON.stringify({
   ok: true,
   totalEntries: index.entries.length,
   sampleGroundingItems: groundingBlock.split('\n\n').length - 2,
+  dryRunStages: juniorDryRun.summary.stageCount,
+  dryRunUniqueHits: juniorDryRun.uniqueHitIds.length,
 }, null, 2));
