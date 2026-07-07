@@ -10,7 +10,11 @@
 
 const crypto = require('crypto');
 const { redisGet, redisSet, creditReferral, callClaude, MODEL_DEEP, MODEL_FREE, getOpenid } = require('./_lib');
-const { searchReportKnowledge, buildReportGroundingBlock } = require('../lib/report-knowledge-index');
+const {
+  searchReportKnowledge,
+  buildReportGroundingBlock,
+  buildReportKnowledgePromptContext,
+} = require('../lib/report-knowledge-index');
 
 // ── 案例库索引（Upstash list，max 2000 条）──────────────────────────────────
 function kvUrl()   { return process.env.KV_REST_API_URL   || process.env.REDIS_URL  || ''; }
@@ -61,6 +65,88 @@ function buildRiskKnowledgeBlock(results) {
       item.doNotUse?.length ? `禁用：${item.doNotUse.join(' / ')}` : '',
     ].filter(Boolean).join('\n')),
   ].join('\n\n');
+}
+
+function ageBandLabelFromTier(tier, age) {
+  const labels = {
+    preschool: '幼儿3-6岁',
+    school: '小学7-12岁',
+    junior_teen: '初中13-15岁',
+    senior_teen: '高中16-18岁',
+    young_adult: '19-25岁',
+    adult: '26-40岁',
+    mature_adult: '40+',
+  };
+  return labels[tier] || `年龄${age || ''}`;
+}
+
+function describeFingerForRetrieval(fingers, pos, avg) {
+  const value = Number(fingers?.[pos]?.trc);
+  const avgValue = Number(avg);
+  if (!Number.isFinite(value) || !Number.isFinite(avgValue)) return '未识别';
+  const diff = +(value - avgValue).toFixed(1);
+  const level = diff >= 3 ? '高于个人均值'
+    : diff <= -3 ? '低于个人均值'
+    : '接近个人均值';
+  return `${value} ${level} 差值${diff >= 0 ? '+' : ''}${diff}`;
+}
+
+function buildFiveFunctionRetrievalMetrics(engineResult, fingers) {
+  const avg = engineResult?.['五功能区']?.['个人均值'] || 0;
+  return {
+    精神功能: {
+      右拇: describeFingerForRetrieval(fingers, 'R1', avg),
+      左拇: describeFingerForRetrieval(fingers, 'L1', avg),
+    },
+    思维功能: {
+      右食: describeFingerForRetrieval(fingers, 'R2', avg),
+      左食: describeFingerForRetrieval(fingers, 'L2', avg),
+    },
+    体觉功能: {
+      右中: describeFingerForRetrieval(fingers, 'R3', avg),
+      左中: describeFingerForRetrieval(fingers, 'L3', avg),
+    },
+    听觉功能: {
+      右无名: describeFingerForRetrieval(fingers, 'R4', avg),
+      左无名: describeFingerForRetrieval(fingers, 'L4', avg),
+    },
+    视觉功能: {
+      右小: describeFingerForRetrieval(fingers, 'R5', avg),
+      左小: describeFingerForRetrieval(fingers, 'L5', avg),
+    },
+  };
+}
+
+function buildReportKnowledgeContextInput(payload, requiredModules, tier) {
+  const { engineResult, age, selectedIssues = [], fingers = null } = payload;
+  const chan = engineResult?.['学习通道'] || {};
+  const behav = engineResult?.['行为模式'] || {};
+  const brain = engineResult?.['左右脑'] || {};
+  const atd = engineResult?.['ATD'] || {};
+
+  return {
+    ageBand: ageBandLabelFromTier(tier, age),
+    subjectAge: age,
+    userIdentity: Number(age) && Number(age) <= 18 ? 'parent' : 'self',
+    reportSubject: Number(age) && Number(age) <= 18 ? 'child' : 'self',
+    selectedIssues,
+    customUserQuestion: payload.customUserQuestion || payload.extraQuestion || '',
+    reportModules: requiredModules,
+    functionAreas: ['精神功能', '思维功能', '体觉功能', '听觉功能', '视觉功能'],
+    metrics: buildFiveFunctionRetrievalMetrics(engineResult, fingers),
+    personalityType: engineResult?.['主性格类型'] || '',
+    learningChannel: chan?.['主通道'] || '',
+    behaviorPattern: behav?.['结论'] || '',
+    trc: `个人均值 ${engineResult?.['五功能区']?.['个人均值'] || ''} 总TRC ${engineResult?.['五功能区']?.['总TRC'] || ''}`,
+    atd: atd?.['分区'] || atd?.['值'] || '',
+    reportTextSummary: [
+      brain?.['结论'],
+      chan?.['主通道'],
+      behav?.['结论'],
+      atd?.['分区'],
+    ].filter(Boolean).join(' '),
+    riskSignals: selectedIssues.join(' '),
+  };
 }
 
 // ── 十大能力官方映射（来源：中级研修-十大能力对应兴趣班职业专业）────────────
@@ -1235,23 +1321,32 @@ module.exports = async function handler(req, res) {
   const tier          = getAgeTier(age);
   const requiredMods  = REQUIRED_BY_STAGE[tier] || REQUIRED_BY_STAGE.adult;
   let knowledgeContext = {};
-  // 知识索引是增强层，不是硬依赖：检索失败时必须回退到原有 SYSTEM_PROMPT + 硬编码规则 + engineResult + selectedIssues 生成链路。
+  // 知识索引是增强层，不是硬依赖：V1.5 分阶段检索失败时回退旧单查询；旧查询也失败时继续原有生成链路。
   try {
-    const knowledgeQuery = buildReportKnowledgeQuery(engineResult, age, selectedIssues, fingers);
-    const reportKnowledgeHits = searchReportKnowledge(knowledgeQuery, {
-      topK: 6,
-      allowedStatuses: ['auto_safe', 'rewrite_required'],
-    });
-    const riskKnowledgeHits = searchReportKnowledge(knowledgeQuery, {
-      topK: 4,
-      allowedStatuses: ['human_only', 'blocked'],
-    });
-    knowledgeContext = {
-      reportKnowledgeBlock: buildReportGroundingBlock(reportKnowledgeHits, { maxItems: 6 }),
-      riskKnowledgeBlock: buildRiskKnowledgeBlock(riskKnowledgeHits),
-    };
-  } catch (e) {
-    console.warn('[gen-report] report knowledge index skipped:', e.message);
+    knowledgeContext = buildReportKnowledgePromptContext(
+      buildReportKnowledgeContextInput(payload, requiredMods, tier),
+      { maxReportItems: 6, maxRiskItems: 4 }
+    );
+  } catch (v15Error) {
+    console.warn('[gen-report] report knowledge index v1.5 skipped:', v15Error.message);
+    try {
+      const knowledgeQuery = buildReportKnowledgeQuery(engineResult, age, selectedIssues, fingers);
+      const reportKnowledgeHits = searchReportKnowledge(knowledgeQuery, {
+        topK: 6,
+        allowedStatuses: ['auto_safe', 'rewrite_required'],
+      });
+      const riskKnowledgeHits = searchReportKnowledge(knowledgeQuery, {
+        topK: 4,
+        allowedStatuses: ['human_only', 'blocked'],
+      });
+      knowledgeContext = {
+        mode: 'legacy_single_query_context',
+        reportKnowledgeBlock: buildReportGroundingBlock(reportKnowledgeHits, { maxItems: 6 }),
+        riskKnowledgeBlock: buildRiskKnowledgeBlock(riskKnowledgeHits),
+      };
+    } catch (legacyError) {
+      console.warn('[gen-report] report knowledge index legacy skipped:', legacyError.message);
+    }
   }
   const userMessage   = buildUserMessage(engineResult, age, name, requiredMods, selectedIssues, fingers, tier, knowledgeContext);
 

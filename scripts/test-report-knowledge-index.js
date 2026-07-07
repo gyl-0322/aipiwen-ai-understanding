@@ -3,6 +3,7 @@ const {
   loadReportKnowledgeIndex,
   searchReportKnowledge,
   buildReportKnowledgeRetrievalDryRun,
+  buildReportKnowledgePromptContext,
   buildReportGroundingBlock,
 } = require('../lib/report-knowledge-index');
 
@@ -198,10 +199,55 @@ assert(
   'risk dry-run should count guardrail hits'
 );
 
+const promptContext = buildReportKnowledgePromptContext({
+  ageBand: '初中13-15岁',
+  userIdentity: 'parent',
+  reportSubject: 'child',
+  selectedIssues: [
+    '开始顶嘴/叛逆，怎么沟通不炸',
+    '考试焦虑/输不起怎么疏导',
+  ],
+  customUserQuestion: '孩子一说学习就烦，手机也很难约定边界',
+  reportModules: ['TRC（认知结构）', 'ATD（感受/反应节奏）', '性格类型（核心行为外显模块）'],
+  functionAreas: ['精神功能', '听觉功能'],
+  metrics: {
+    精神功能: {
+      右拇: '26 高于个人均值 差值+5.9',
+      左拇: '14 低于个人均值 差值-6.1',
+    },
+    听觉功能: {
+      右无名: '15 低于个人均值 差值-5.1',
+      左无名: '24 高于个人均值 差值+3.9',
+    },
+  },
+});
+
+assert.strictEqual(promptContext.ok, true);
+assert.strictEqual(promptContext.mode, 'v1.5_dry_run_context');
+assert(promptContext.reportKnowledgeBlock.includes('Report Knowledge Index 命中内容'), 'V1.5 prompt context should include report grounding block');
+assert(promptContext.retrievalSummary.uniqueHitIds.includes('RKI-V1.3-JUNIOR-BOUNDARY'), 'V1.5 context should include age-stage hit id');
+assert(promptContext.retrievalSummary.uniqueHitIds.includes('RKI-V1.2-SPIRIT-R_HIGH'), 'V1.5 context should include five-function hit id');
+assert(!promptContext.reportKnowledgeBlock.includes('/Users/'), 'V1.5 report grounding must not expose local paths');
+assert(!promptContext.reportKnowledgeBlock.includes('teacher_report_reading_001'), 'V1.5 report grounding must not expose raw source filenames');
+
+const riskyPromptContext = buildReportKnowledgePromptContext({
+  ageBand: '高中16-18岁',
+  userIdentity: 'parent',
+  reportSubject: 'child',
+  selectedIssues: ['升学决策：冲名校还是选适合专业'],
+  customUserQuestion: '能不能保证升学成功，孩子是不是有心理疾病',
+  riskSignals: ['保证升学', '心理疾病', '诊断'],
+});
+
+assert(riskyPromptContext.riskKnowledgeBlock.includes('安全边界命中'), 'V1.5 risky context should include risk grounding block');
+assert(riskyPromptContext.retrievalSummary.guardrailHitCount > 0, 'V1.5 risky context should count guardrail hits');
+assert(!riskyPromptContext.riskKnowledgeBlock.includes('/Users/'), 'V1.5 risk grounding must not expose local paths');
+
 console.log(JSON.stringify({
   ok: true,
   totalEntries: index.entries.length,
   sampleGroundingItems: groundingBlock.split('\n\n').length - 2,
   dryRunStages: juniorDryRun.summary.stageCount,
   dryRunUniqueHits: juniorDryRun.uniqueHitIds.length,
+  promptContextHits: promptContext.retrievalSummary.uniqueHitIds.length,
 }, null, 2));
