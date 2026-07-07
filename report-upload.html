@@ -431,8 +431,8 @@ button, a, .must-item, .fp-option-card, .back-btn, .issue-chip {
     </div>
   </div>
   <div class="s1-body">
-    <div class="s1-title">上传总表，解锁你的专属报告</div>
-    <div class="s1-sub">不只看到性格类型轮廓<br>还会把 TRC、ATD、学习通道、五大功能和你关心的问题放在一起看</div>
+    <div class="s1-title">上传总表页</div>
+    <div class="s1-sub">上传皮纹测评报告的<strong>总表页</strong>图片<br>AI 自动读取十指数据</div>
     <div class="dropzone" id="dropzone">
       <input type="file" id="file-gallery" accept="image/*">
       <div class="dz-icon">📄</div>
@@ -581,7 +581,6 @@ button, a, .must-item, .fp-option-card, .back-btn, .issue-chip {
   </div>
 </div>
 
-<!-- PDF Payment Dry-run Modal -->
 <div id="pay-modal">
   <div class="pay-box">
     <div class="pay-kicker">PAYMENT DRY-RUN</div>
@@ -648,9 +647,9 @@ const SYM_OPTIONS = [
 
 // ── 问题选项池（按年龄段，可配置常量）── 来源：知识库 00i ─────────────────
 // 规则：0-18 家长视角，18+ 本人视角；每段 10 项按主题分组；最多选 6、至少 1
-// ⚠️ 去重铁律：必给模块已统一为12项固定骨架；这里的问题只做延伸追问，不再承担固定模块职责。
+// ⚠️ 去重铁律：不得含与必给模块同名/同义的项（天赋底色/职业优势/自我成长等已自动给）
 const ISSUE_POOL = {
-  // 0–6 岁·家长视角：问题聚焦启蒙、规则、情绪和亲子陪伴。
+  // 0–6 岁·家长视角（必给已含：兴趣班潜能 · 成长引导）
   seg_0_6: [
     { group: '日常沟通', items: [
       '怎么跟这型孩子说话他才听',
@@ -671,7 +670,7 @@ const ISSUE_POOL = {
       '早期最该保护的天赋火苗是什么',
     ]},
   ],
-  // 7–12 岁·家长视角：问题聚焦作业、学习方式、兴趣和亲子沟通。
+  // 7–12 岁·家长视角（必给已含：学科潜能 · 成长引导）
   seg_7_12: [
     { group: '学习成长', items: [
       '适合哪种学习方式（听·看·动手）',
@@ -692,7 +691,7 @@ const ISSUE_POOL = {
       '亲子冲突的根源与化解',
     ]},
   ],
-  // 13–18 岁·家长/本人视角：问题聚焦选科、升学压力、情绪和代际沟通。
+  // 13–18 岁·家长/本人视角（必给已含：学科/职业潜能 · 成长引导）
   seg_13_18: [
     { group: '学习升学', items: [
       '文理/选科，天赋更偏哪边',
@@ -711,7 +710,7 @@ const ISSUE_POOL = {
       '他和父母的"三观差"怎么相处',
     ]},
   ],
-  // 18–25 岁·本人视角：问题聚焦专业、职业起步、自我理解和关系相处。
+  // 18–25 岁·本人视角（必给已含：职业优势 · 自我成长）
   seg_18_25: [
     { group: '职业决策', items: [
       '考研还是就业，怎么定',
@@ -730,7 +729,7 @@ const ISSUE_POOL = {
       '拖延/三分钟热度怎么破',
     ]},
   ],
-  // 25–40 岁·本人视角：问题聚焦职业瓶颈、家庭责任、关系和压力节奏。
+  // 25–40 岁·本人视角（必给已含：职业优势 · 自我成长）
   seg_25_40: [
     { group: '职业决策', items: [
       '职业瓶颈：突破还是转型',
@@ -749,7 +748,7 @@ const ISSUE_POOL = {
       '中年焦虑/价值感低怎么调',
     ]},
   ],
-  // 40+ 岁·本人视角：问题聚焦转型、经验传承、代际沟通和人生节奏。
+  // 40+ 岁·本人视角（必给已含：职业优势 · 自我成长）
   seg_40plus: [
     { group: '职业决策', items: [
       '二次成长/转型/再出发往哪走',
@@ -786,6 +785,7 @@ let ST = {
   fingers: null, atd: null, age: null, name: null,
   engineResult: null, selectedIssues: [], ageTier: 'school',
   requiredMods: [],
+  displayReportId: '',
 };
 
 // ── 邀请来源捕获 ──────────────────────────────────────────────
@@ -819,7 +819,6 @@ let _clientReportId = '';
 let _saveReportPromise = null;
 
 async function _saveReportForClient(sections) {
-  if (_clientReportId) return _clientReportId;
   if (_saveReportPromise) return _saveReportPromise;
   _saveReportPromise = (async () => {
   try {
@@ -831,6 +830,7 @@ async function _saveReportForClient(sections) {
     const d = await r.json();
     if (!d.ok || !d.id) return null;
     _clientReportId = d.id;
+    ST.displayReportId = ST.displayReportId || d.id;
     const shareUrl = `https://aipiwen.cn/report-upload.html?rid=${d.id}`;
     _clientShareUrl = shareUrl;
     qs('#cmodal-url-text').textContent = shareUrl;
@@ -877,12 +877,13 @@ async function getCurrentPaymentReportId() {
   const rid = new URLSearchParams(location.search).get('rid');
   if (rid) {
     _clientReportId = rid;
+    ST.displayReportId = ST.displayReportId || rid;
     _clientShareUrl = `https://aipiwen.cn/report-upload.html?rid=${rid}`;
     return rid;
   }
   if (ST.displayReportId) return ST.displayReportId;
-  if (!ST.localPaymentReportId) ST.localPaymentReportId = `local-${Date.now()}`;
-  return ST.localPaymentReportId;
+  ST.displayReportId = `FP-${new Date().getFullYear()}-${(ST.engineResult?.key||'w').toUpperCase().slice(0,2)}${Math.floor(Math.random()*900+100)}`;
+  return ST.displayReportId;
 }
 
 function setPayStatus(text) {
@@ -1170,42 +1171,15 @@ qs('#s2-confirm-btn').addEventListener('click', () => {
 });
 
 /// ─── SCREEN 3: ISSUES ────────────────────────────────────────────────────
-// 必给模块：与 /api/generate-report.js 的 CORE_REQUIRED_MODULES 保持一致。
-// 前端只展示自动包含范围；真正生成结构仍以后端为准。
-const CORE_REQUIRED_MODULES = [
-  '严正申明四原则',
-  'TRC（认知结构）',
-  'ATD（感受/反应节奏）',
-  '左右脑（信息处理风格）',
-  '性格类型（核心行为外显模块）',
-  '学习通道（学习输入系统）',
-  '行为模式（行为解释系统）',
-  '精神功能（拇指系统）',
-  '思维功能（食指系统）',
-  '体觉功能（中指系统）',
-  '听觉功能（无名指系统）',
-  '视觉功能（小指系统）',
-];
-
-const REQUIRED_MODULES_DISPLAY = [
-  '严正申明四原则',
-  'TRC（认知结构）',
-  'ATD（感受/反应节奏）',
-  '左右脑（信息处理风格）',
-  '性格类型（核心行为外显）',
-  '学习通道（学习输入系统）',
-  '行为模式（行为解释系统）',
-  '五大功能（能力结构地图）',
-];
-
+// 必给模块：来源 00i 规则1（按人生阶段定制，模块2随阶段换主题）
 const REQUIRED_BY_STAGE = {
-  preschool:    CORE_REQUIRED_MODULES,
-  school:       CORE_REQUIRED_MODULES,
-  junior_teen:  CORE_REQUIRED_MODULES,
-  senior_teen:  CORE_REQUIRED_MODULES,
-  young_adult:  CORE_REQUIRED_MODULES,
-  adult:        CORE_REQUIRED_MODULES,
-  mature_adult: CORE_REQUIRED_MODULES,
+  preschool:    ['天赋底色','兴趣启蒙与潜能','性格养育引导'],
+  school:       ['天赋底色','学科潜能与兴趣特长','成长引导'],
+  junior_teen:  ['天赋底色','选科与升学/专业方向','成长引导'],
+  senior_teen:  ['天赋底色','选科与升学/专业方向','成长引导'],
+  young_adult:  ['天赋底色','职业起步方向','自我成长'],
+  adult:        ['天赋底色','职业优势与发展','自我成长'],
+  mature_adult: ['天赋底色','职业价值与二次发展','自我成长'],
 };
 
 function buildIssuesScreen() {
@@ -1216,7 +1190,7 @@ function buildIssuesScreen() {
   // must-list
   const mustList = qs('#must-list');
   mustList.innerHTML = '';
-  REQUIRED_MODULES_DISPLAY.forEach(m => {
+  ST.requiredMods.forEach(m => {
     const item = el('div', 'must-item', m);
     mustList.appendChild(item);
   });
@@ -1431,16 +1405,9 @@ function issueBody(body, titleTxt, issueTitle) {
   return cleaned || issueFallback(titleTxt, issueTitle);
 }
 
-function cleanRequiredModuleScaffold(text) {
-  return String(text || '')
-    .replace(/(^|\n)\s*[①1][\s.、-]*(是什么|这个板块是什么|指标是什么)[：:]\s*/g, '$1')
-    .replace(/(^|\n)\s*[②2][\s.、-]*(对当前用户意味着什么|对你意味着什么|意味着什么|放到你这里)[：:]\s*/g, '$1')
-    .replace(/(^|\n)\s*[③3][\s.、-]*(怎么应用|如何应用|可以怎么用)[：:]\s*/g, '$1');
-}
-
 // ── 正文内容格式化（加高亮块） ─────────────────────────────────────────
 function formatContent(text) {
-  text = cleanRequiredModuleScaffold(cleanSourceTraces(text || ''));
+  text = cleanSourceTraces(text || '');
   if (!text) return '';
   // 处理 **粗体** 和 *斜体*
   let html = text
@@ -1467,29 +1434,6 @@ function formatContent(text) {
   }).join('');
 }
 
-function issuePartLabels(title) {
-  const t = String(title || '');
-  if (/作业|拖拉|磨蹭|启动|不主动/.test(t)) {
-    return ['先看卡在哪一步', '把任务缩到第一个动作', '慢下来，也可能是在找入口'];
-  }
-  if (/生气|情绪|顶嘴|吵|炸|沟通/.test(t)) {
-    return ['情绪先是在替他说话', '先降温，再换一种问法', '会表达，比会忍住更重要'];
-  }
-  if (/阅读|注意力|听|看|学习方式/.test(t)) {
-    return ['先分清是哪种进入方式', '换一个更顺的输入入口', '找到通道，学习会轻一点'];
-  }
-  if (/怕难|不自信|怕输|内耗/.test(t)) {
-    return ['这更像是在保护自己', '先给一个能完成的小台阶', '被看见后，勇气会慢慢长出来'];
-  }
-  if (/关系|朋友|亲子|伴侣|冲突/.test(t)) {
-    return ['先回到一个具体场景', '把需求说清，比判对错更有用', '关系里的差异，也能变成理解入口'];
-  }
-  if (/职业|专业|兴趣班|学科|升学|方向/.test(t)) {
-    return ['先看哪类能力更顺手', '把选择变成可尝试的小路径', '方向不是保证，是更聪明地试'];
-  }
-  return ['先看背后的机制', '可以先做的小动作', '值得保留的力量'];
-}
-
 function buildReportFlipBook(sections) {
   const track = qs('#rv-track');
   track.innerHTML = '';
@@ -1502,7 +1446,7 @@ function buildReportFlipBook(sections) {
   const imgKey = KEY2IMG[E?.key || 'w'] || 'whorl';
   const fpSrc  = FP_IMGS[imgKey];
   const type   = E?.主性格类型 || '天赋型';
-  const reportId = _clientReportId || ST.displayReportId || `FP-${new Date().getFullYear()}-${(E?.key||'w').toUpperCase().slice(0,2)}${Math.floor(Math.random()*900+100)}`;
+  const reportId = ST.displayReportId || _clientReportId || `FP-${new Date().getFullYear()}-${(E?.key||'w').toUpperCase().slice(0,2)}${Math.floor(Math.random()*900+100)}`;
   ST.displayReportId = reportId;
 
   // 把主题应用到 #s4
@@ -1556,23 +1500,22 @@ function buildReportFlipBook(sections) {
     if (sec.type === 'issue') {
       const icon = cfg.icon.issue;
       const eyebrow = `${icon} 专项解读 · ${secNum}`;
-      const labels = issuePartLabels(sec.title);
       slide.dataset.sub = '家长关注';
       slide.innerHTML = `
         <div class="sec-eyebrow">${eyebrow}</div>
         <div class="sec-h">${sec.title}</div>
         <div class="fp-parts">
           <div class="fp-part">
-            <div class="fp-badge"><div class="fp-badge-n">1</div><div class="fp-badge-t">${labels[0]}</div></div>
-            <div class="fp-text">${formatContent(issueBody(sec.why, labels[0], sec.title))}</div>
+            <div class="fp-badge"><div class="fp-badge-n">1</div><div class="fp-badge-t">为什么会这样</div></div>
+            <div class="fp-text">${formatContent(issueBody(sec.why, '为什么会这样', sec.title))}</div>
           </div>
           <div class="fp-part">
-            <div class="fp-badge"><div class="fp-badge-n">2</div><div class="fp-badge-t">${labels[1]}</div></div>
-            <div class="fp-text">${formatContent(issueBody(sec.how, labels[1], sec.title))}</div>
+            <div class="fp-badge"><div class="fp-badge-n">2</div><div class="fp-badge-t">怎么应对</div></div>
+            <div class="fp-text">${formatContent(issueBody(sec.how, '怎么应对', sec.title))}</div>
           </div>
           <div class="fp-part">
-            <div class="fp-badge"><div class="fp-badge-n">3</div><div class="fp-badge-t">${labels[2]}</div></div>
-            <div class="fp-text">${formatContent(issueBody(sec.future, labels[2], sec.title))}</div>
+            <div class="fp-badge"><div class="fp-badge-n">3</div><div class="fp-badge-t">未来可期</div></div>
+            <div class="fp-text">${formatContent(issueBody(sec.future, '未来可期', sec.title))}</div>
           </div>
           <button class="fp-cta-btn" onclick="window.location='/child-chat.html'">
             <span>💬 ${sec.cta || '还想深聊？继续问我'}</span>
@@ -1644,8 +1587,8 @@ function buildReportFlipBook(sections) {
     });
     document.querySelectorAll('#rv-dl-fin,#rv-dl-btn').forEach(b => {
       b.addEventListener('click', function() {
-        requestPdfDownload(this).catch(e => {
-          alert('支付检查失败，请稍后重试。\n' + e.message);
+        requestPdfDownload(this).catch(err => {
+          alert('支付检查失败，请稍后重试。\n' + (err?.message || ''));
         });
       });
     });
@@ -1700,7 +1643,6 @@ function getPDFTheme(ageTier) {
 // 规则：**关键词** → 橙色高亮；*斜体* → 橙色；▸ 开头行 → 单独动作行；正文近白(.92)；行距 2.0
 function fmtPDF(text, th, bf) {
   if (!text) return '';
-  text = cleanRequiredModuleScaffold(cleanSourceTraces(text));
   // 先处理 ▸ 动作行（单独成行，橙色标记）
   const lines0 = text.split('\n');
   const processedLines = lines0.map(line => {
@@ -1744,7 +1686,7 @@ async function generateReportPDF(btnEl) {
   const cfg = getThemeConfig(ST.ageTier || 'adult');
   const fpSrc  = FP_IMGS[KEY2IMG[E?.key||'w'] || 'whorl'];
   const type   = E?.主性格类型 || '天赋型';
-  const reportId = _clientReportId || ST.displayReportId || `FP-${new Date().getFullYear()}-${(E?.key||'w').toUpperCase().slice(0,2)}${Math.floor(Math.random()*900+100)}`;
+  const reportId = ST.displayReportId || _clientReportId || `FP-${new Date().getFullYear()}-${(E?.key||'w').toUpperCase().slice(0,2)}${Math.floor(Math.random()*900+100)}`;
   ST.displayReportId = reportId;
   const sections = RV.sections || [];
   const bf = `-apple-system,'PingFang SC','Noto Sans SC',sans-serif`; // body font
@@ -1925,14 +1867,11 @@ async function generateReportPDF(btnEl) {
       </div>`;
     }
     const bodyHTML = isIssue
-      ? (() => {
-          const labels = issuePartLabels(sec.title);
-          return `<div style="display:flex;flex-direction:column;gap:9px;">
-          ${issueCard(1, labels[0], sec.why)}
-          ${issueCard(2, labels[1], sec.how)}
-          ${issueCard(3, labels[2], sec.future)}
+      ? `<div style="display:flex;flex-direction:column;gap:9px;">
+          ${issueCard(1, '为什么会这样', sec.why)}
+          ${issueCard(2, '怎么应对', sec.how)}
+          ${issueCard(3, '未来可期', sec.future)}
         </div>`
-        })()
       : fmtPDF(sec.content || '', th, bf);
     return wrap(`
       ${pHdr(n)}
@@ -2244,22 +2183,19 @@ qs('#cmodal-copy').addEventListener('click', () => {
       btn.textContent = '已复制 ✓'; setTimeout(() => { btn.textContent = '复制链接'; }, 2000);
     });
 });
-
-qs('#pay-modal').addEventListener('click', e => {
-  if (e.target === qs('#pay-modal')) qs('#pay-modal').classList.remove('open');
-});
+qs('#pay-modal').addEventListener('click', e => { if (e.target === qs('#pay-modal')) qs('#pay-modal').classList.remove('open'); });
 qs('#pay-cancel').addEventListener('click', () => qs('#pay-modal').classList.remove('open'));
 qs('#pay-alipay').addEventListener('click', async () => {
   try { await createMockPayment('alipay', await getCurrentPaymentReportId()); }
-  catch(e) { setPayStatus(e.message); }
+  catch(e) { setPayStatus(e?.message || '支付宝模拟订单创建失败'); }
 });
 qs('#pay-wechat').addEventListener('click', async () => {
   try { await createMockPayment('wechat', await getCurrentPaymentReportId()); }
-  catch(e) { setPayStatus(e.message); }
+  catch(e) { setPayStatus(e?.message || '微信模拟订单创建失败'); }
 });
 qs('#pay-confirm').addEventListener('click', async () => {
   try { await confirmMockPayment(); }
-  catch(e) { setPayStatus(e.message); }
+  catch(e) { setPayStatus(e?.message || '模拟解锁失败'); }
 });
 
 // ─── 客户打开分享链接：?rid=xxx 直接显示报告 ─────────────────────────────
@@ -2287,8 +2223,6 @@ qs('#pay-confirm').addEventListener('click', async () => {
       ST.name         = rep.name   || null;
       ST.age          = rep.age    || rep.engineResult?.age || null;
       ST.ageTier      = getAgeTier(ST.age);   // FIX: shared-link loads never set ageTier → adult report showed school theme
-      _clientReportId = rid;
-      _clientShareUrl = `https://aipiwen.cn/report-upload.html?rid=${rid}`;
       buildReportFlipBook(rep.sections);
       goScreen('s4');
       qs('#rv-client-btn').style.display = 'none'; // 客户不看"发客户"按钮
