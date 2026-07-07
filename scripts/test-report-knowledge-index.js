@@ -35,6 +35,27 @@ assertHit('高中 16-18 文理选科，升学专业，考试焦虑', 'RKI-V1-031
 assertHit('成人职场拖延，职业方向摇摆，边界压力和自我理解', 'RKI-V1-032');
 assertHit('四个问题不要全部三段式，不要八股，学习方法可以观察清单', 'RKI-V1-033');
 assertHit('成年人报告严正申明不要写您孩子，要按年龄称谓', 'RKI-V1-035');
+assertHit('幼儿 3-6 分离哭闹 不守规则 总说不要 情绪安抚', 'RKI-V1.3-PRESCHOOL-ROUTINE');
+assertHit('幼儿坐不住 穿衣吃饭慢 体觉精细 身体控制', 'RKI-V1.3-PRESCHOOL-BODY');
+assertHit('小学 7-12 作业拖拉 一催就炸 启动困难 任务颗粒度', 'RKI-V1.3-SCHOOL-HOMEWORK');
+assertHit('小学不爱阅读 看书坐不住 放学沉默 同学冲突 手机停不下来', 'RKI-V1.3-SCHOOL-READING-SOCIAL');
+assertHit('初中 13-15 青春期顶嘴 叛逆 一说就吵 手机游戏 边界', 'RKI-V1.3-JUNIOR-BOUNDARY');
+assertHit('初中偏科 学习方法 考试焦虑 兴趣特长 同伴关系', 'RKI-V1.3-JUNIOR-STUDY-EMOTION');
+assertHit('高中 16-18 文理选科 升学 专业 未来方向 迷茫', 'RKI-V1.3-SENIOR-EDUCATION', {
+  allowedStatuses: ['auto_safe', 'rewrite_required'],
+});
+assertHit('高中考试焦虑 输不起 父母三观差 亲子压力', 'RKI-V1.3-SENIOR-STRESS-PARENT', {
+  allowedStatuses: ['auto_safe', 'rewrite_required'],
+});
+assertHit('19-25 大学刚毕业 专业不喜欢 考研就业 找工作 考公', 'RKI-V1.3-YOUNG-CAREER');
+assertHit('19-25 明知道要做就是拖 总想让别人满意 关系适不适合', 'RKI-V1.3-YOUNG-SELF-RELATION');
+assertHit('26-40 职业瓶颈 转型 创业打工 团队角色 工作很累', 'RKI-V1.3-ADULT-WORK');
+assertHit('26-40 育儿 吼孩子 伴侣沟通 夫妻教育观念 原生家庭', 'RKI-V1.3-ADULT-FAMILY');
+assertHit('40+ 转型 再出发 带教 退休 价值感 经验传承', 'RKI-V1.3-MATURE-TRANSITION');
+assertHit('40+ 家庭责任 空巢 子女沟通 养老照护 健康焦虑', 'RKI-V1.3-MATURE-FAMILY-SUPPORT', {
+  allowedStatuses: ['auto_safe', 'rewrite_required'],
+});
+assertHit('成年人报告不要出现您孩子，本人视角，孩子青少年称谓不能混用', 'RKI-V1.3-AGE-TITLE-VOICE');
 
 assertHit('精神功能右拇高 目标感 开创力 对外主导 高于个人均值', 'RKI-V1.2-SPIRIT-R_HIGH');
 assertHit('精神功能左拇低 自我管理 自律需要外部结构 低于个人均值', 'RKI-V1.2-SPIRIT-L_LOW');

@@ -4680,6 +4680,1037 @@
         "命定",
         "没有能力"
       ]
+    },
+    {
+      "id": "RKI-V1.3-PRESCHOOL-ROUTINE",
+      "title": "幼儿 3-6：规则、分离与情绪表达要先看安全感",
+      "status": "auto_safe",
+      "modules": [
+        "年龄段适配",
+        "幼儿问题库",
+        "亲子沟通",
+        "行为模式"
+      ],
+      "scenarios": [
+        "幼儿",
+        "分离哭闹",
+        "不守规则",
+        "情绪哭闹",
+        "穿衣吃饭",
+        "新环境"
+      ],
+      "ageBands": [
+        "3-6"
+      ],
+      "retrievalKeywords": [
+        "幼儿",
+        "3-6",
+        "分离",
+        "哭闹",
+        "安抚",
+        "规则",
+        "总说不要",
+        "穿衣",
+        "吃饭",
+        "新环境",
+        "害怕",
+        "坐不住"
+      ],
+      "safeGrounding": "3-6 岁更像是在学习分离、规则、表达和身体控制。分离哭闹、不守规则、坐不住或情绪来得快，先看安全感、过渡仪式、选择权和身体安抚，不把它写成叛逆或心理问题。",
+      "outputGuidance": "用于幼儿家长问题。语气要柔和，少讲复杂指标，多写“孩子不是故意闹，而是在学习表达和控制”。",
+      "doNotUse": [
+        "依恋障碍",
+        "心理问题",
+        "叛逆",
+        "不听话",
+        "多动症",
+        "ADHD",
+        "胆小没出息",
+        "所有年龄同一批问题",
+        "成年人报告写孩子",
+        "幼儿报告写升学职业",
+        "统一模板套用",
+        "心理诊断",
+        "保证升学",
+        "保证职业",
+        "关系去留判断",
+        "录用淘汰建议"
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "report_library",
+          "path": "docs/aipiwen_report_system/05_language_library_话术库/AIPIWEN_ReportLibrary_V1.2_年龄阶段问题库.md",
+          "locator": "幼儿 3-6：规则、分离与情绪表达要先看安全感"
+        },
+        {
+          "sourceType": "obsidian",
+          "path": "/Users/gyl0322gmail.com/AI-CEO-System/AI-CEO-Vault/知识库/宋老师天赋测评教学/00i-报告选项池(年龄段)与话术红线.md",
+          "locator": "按年龄段问题选项池"
+        },
+        {
+          "sourceType": "report_library",
+          "path": "docs/aipiwen_report_system/05_language_library_话术库/AIPIWEN_ReportLibrary_V1.2_用户四问差异化回答库.md",
+          "locator": "用户四问差异化回答库"
+        }
+      ]
+    },
+    {
+      "id": "RKI-V1.3-PRESCHOOL-BODY",
+      "title": "幼儿 3-6：坐不住和动手慢要从体觉入口理解",
+      "status": "auto_safe",
+      "modules": [
+        "年龄段适配",
+        "幼儿问题库",
+        "体觉功能"
+      ],
+      "scenarios": [
+        "坐不住",
+        "穿衣慢",
+        "吃饭慢",
+        "动作协调",
+        "精细操作"
+      ],
+      "ageBands": [
+        "3-6"
+      ],
+      "retrievalKeywords": [
+        "幼儿",
+        "坐不住",
+        "想动",
+        "穿衣",
+        "吃饭",
+        "精细操作",
+        "体觉",
+        "右中",
+        "左中",
+        "身体控制",
+        "动作协调"
+      ],
+      "safeGrounding": "幼儿坐不住、穿衣吃饭慢，常常要从体觉精细、身体节奏和任务第一步看。可以先用短任务、动作示范和可视化步骤，不说懒、笨或故意。",
+      "outputGuidance": "用于幼儿生活自理和身体发展问题。建议写具体动作：先示范一步、给选择、缩短任务时长。",
+      "doNotUse": [
+        "懒",
+        "笨",
+        "多动症",
+        "动作有问题",
+        "故意磨蹭",
+        "所有年龄同一批问题",
+        "成年人报告写孩子",
+        "幼儿报告写升学职业",
+        "统一模板套用",
+        "心理诊断",
+        "保证升学",
+        "保证职业",
+        "关系去留判断",
+        "录用淘汰建议"
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "report_library",
+          "path": "docs/aipiwen_report_system/05_language_library_话术库/AIPIWEN_ReportLibrary_V1.2_年龄阶段问题库.md",
+          "locator": "幼儿 3-6：坐不住和动手慢要从体觉入口理解"
+        },
+        {
+          "sourceType": "obsidian",
+          "path": "/Users/gyl0322gmail.com/AI-CEO-System/AI-CEO-Vault/知识库/宋老师天赋测评教学/00i-报告选项池(年龄段)与话术红线.md",
+          "locator": "按年龄段问题选项池"
+        },
+        {
+          "sourceType": "report_library",
+          "path": "docs/aipiwen_report_system/05_language_library_话术库/AIPIWEN_ReportLibrary_V1.2_用户四问差异化回答库.md",
+          "locator": "用户四问差异化回答库"
+        }
+      ]
+    },
+    {
+      "id": "RKI-V1.3-SCHOOL-HOMEWORK",
+      "title": "小学 7-12：作业拖拉先拆启动困难与任务颗粒度",
+      "status": "auto_safe",
+      "modules": [
+        "年龄段适配",
+        "小学问题库",
+        "行为模式",
+        "体觉功能"
+      ],
+      "scenarios": [
+        "小学",
+        "作业拖拉",
+        "一催就炸",
+        "做题粗心",
+        "不主动学习"
+      ],
+      "ageBands": [
+        "7-12"
+      ],
+      "retrievalKeywords": [
+        "小学",
+        "7-12",
+        "作业",
+        "拖拉",
+        "磨蹭",
+        "一催就炸",
+        "启动困难",
+        "任务颗粒度",
+        "做题粗心",
+        "不主动学习"
+      ],
+      "safeGrounding": "小学阶段作业拖拉常常卡在启动、颗粒度、评价压力或精细操作入口。先把任务缩到第一个动作，再看体觉、学习通道和 ATD 节奏，不说孩子懒。",
+      "outputGuidance": "用于小学作业和习惯问题。建议给“打开本子、写日期、5-10 分钟开始”这类可执行小动作。",
+      "doNotUse": [
+        "懒",
+        "脾气差",
+        "不认真",
+        "没希望",
+        "家长方法错",
+        "所有年龄同一批问题",
+        "成年人报告写孩子",
+        "幼儿报告写升学职业",
+        "统一模板套用",
+        "心理诊断",
+        "保证升学",
+        "保证职业",
+        "关系去留判断",
+        "录用淘汰建议"
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "report_library",
+          "path": "docs/aipiwen_report_system/05_language_library_话术库/AIPIWEN_ReportLibrary_V1.2_年龄阶段问题库.md",
+          "locator": "小学 7-12：作业拖拉先拆启动困难与任务颗粒度"
+        },
+        {
+          "sourceType": "obsidian",
+          "path": "/Users/gyl0322gmail.com/AI-CEO-System/AI-CEO-Vault/知识库/宋老师天赋测评教学/00i-报告选项池(年龄段)与话术红线.md",
+          "locator": "按年龄段问题选项池"
+        },
+        {
+          "sourceType": "report_library",
+          "path": "docs/aipiwen_report_system/05_language_library_话术库/AIPIWEN_ReportLibrary_V1.2_用户四问差异化回答库.md",
+          "locator": "用户四问差异化回答库"
+        }
+      ]
+    },
+    {
+      "id": "RKI-V1.3-SCHOOL-READING-SOCIAL",
+      "title": "小学 7-12：阅读、同伴和沉默关门要区分入口与安全感",
+      "status": "auto_safe",
+      "modules": [
+        "年龄段适配",
+        "小学问题库",
+        "学习通道",
+        "亲子沟通"
+      ],
+      "scenarios": [
+        "小学",
+        "不爱阅读",
+        "看书坐不住",
+        "同学冲突",
+        "放学沉默",
+        "手机"
+      ],
+      "ageBands": [
+        "7-12"
+      ],
+      "retrievalKeywords": [
+        "小学",
+        "阅读",
+        "不爱看书",
+        "看书坐不住",
+        "同学冲突",
+        "放学不说话",
+        "沉默关门",
+        "手机停不下来",
+        "语文"
+      ],
+      "safeGrounding": "小学不爱阅读不一定是能力差，可能是输入通道没有对上；放学沉默和同伴冲突要看安全感、过渡空间和边界表达。手机问题先做规则一致和替代活动，不做成瘾诊断。",
+      "outputGuidance": "用于小学阅读、同伴、手机和亲子沟通。输出要帮助家长换入口，不贴“语文没希望”“亲子关系坏了”。",
+      "doNotUse": [
+        "语文没希望",
+        "亲子关系坏了",
+        "成瘾诊断",
+        "性格有问题",
+        "心理疾病",
+        "所有年龄同一批问题",
+        "成年人报告写孩子",
+        "幼儿报告写升学职业",
+        "统一模板套用",
+        "心理诊断",
+        "保证升学",
+        "保证职业",
+        "关系去留判断",
+        "录用淘汰建议"
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "report_library",
+          "path": "docs/aipiwen_report_system/05_language_library_话术库/AIPIWEN_ReportLibrary_V1.2_年龄阶段问题库.md",
+          "locator": "小学 7-12：阅读、同伴和沉默关门要区分入口与安全感"
+        },
+        {
+          "sourceType": "obsidian",
+          "path": "/Users/gyl0322gmail.com/AI-CEO-System/AI-CEO-Vault/知识库/宋老师天赋测评教学/00i-报告选项池(年龄段)与话术红线.md",
+          "locator": "按年龄段问题选项池"
+        },
+        {
+          "sourceType": "report_library",
+          "path": "docs/aipiwen_report_system/05_language_library_话术库/AIPIWEN_ReportLibrary_V1.2_用户四问差异化回答库.md",
+          "locator": "用户四问差异化回答库"
+        }
+      ]
+    },
+    {
+      "id": "RKI-V1.3-JUNIOR-BOUNDARY",
+      "title": "初中 13-15：顶嘴和叛逆先看边界感与自主表达",
+      "status": "auto_safe",
+      "modules": [
+        "年龄段适配",
+        "初中问题库",
+        "亲子沟通",
+        "行为模式"
+      ],
+      "scenarios": [
+        "初中",
+        "青春期",
+        "顶嘴",
+        "叛逆",
+        "一说就吵",
+        "手机游戏"
+      ],
+      "ageBands": [
+        "13-15"
+      ],
+      "retrievalKeywords": [
+        "初中",
+        "13-15",
+        "青春期",
+        "顶嘴",
+        "叛逆",
+        "一说就吵",
+        "沟通不炸",
+        "手机",
+        "游戏",
+        "边界"
+      ],
+      "safeGrounding": "13-15 岁的顶嘴和一说就吵，常常是在练习边界、自主感和表达方式。先降温，再把评价句换成具体场景句，不说孩子变坏或不孝。",
+      "outputGuidance": "用于初中亲子沟通、手机和学习动力。要写尊重、边界、协商和具体开口方式。",
+      "doNotUse": [
+        "叛逆不孝",
+        "孩子变坏",
+        "你必须听话",
+        "成瘾诊断",
+        "人格问题",
+        "所有年龄同一批问题",
+        "成年人报告写孩子",
+        "幼儿报告写升学职业",
+        "统一模板套用",
+        "心理诊断",
+        "保证升学",
+        "保证职业",
+        "关系去留判断",
+        "录用淘汰建议"
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "report_library",
+          "path": "docs/aipiwen_report_system/05_language_library_话术库/AIPIWEN_ReportLibrary_V1.2_年龄阶段问题库.md",
+          "locator": "初中 13-15：顶嘴和叛逆先看边界感与自主表达"
+        },
+        {
+          "sourceType": "obsidian",
+          "path": "/Users/gyl0322gmail.com/AI-CEO-System/AI-CEO-Vault/知识库/宋老师天赋测评教学/00i-报告选项池(年龄段)与话术红线.md",
+          "locator": "按年龄段问题选项池"
+        },
+        {
+          "sourceType": "report_library",
+          "path": "docs/aipiwen_report_system/05_language_library_话术库/AIPIWEN_ReportLibrary_V1.2_用户四问差异化回答库.md",
+          "locator": "用户四问差异化回答库"
+        }
+      ]
+    },
+    {
+      "id": "RKI-V1.3-JUNIOR-STUDY-EMOTION",
+      "title": "初中 13-15：偏科、兴趣聚焦和考试压力要分层处理",
+      "status": "auto_safe",
+      "modules": [
+        "年龄段适配",
+        "初中问题库",
+        "学习方法",
+        "安全边界"
+      ],
+      "scenarios": [
+        "初中",
+        "偏科",
+        "学习方法",
+        "考试焦虑",
+        "兴趣特长",
+        "同伴关系"
+      ],
+      "ageBands": [
+        "13-15"
+      ],
+      "retrievalKeywords": [
+        "初中",
+        "偏科",
+        "学习方法",
+        "考试焦虑",
+        "输不起",
+        "兴趣特长",
+        "聚焦",
+        "同学关系",
+        "学习动力"
+      ],
+      "safeGrounding": "初中偏科和学习方法先看输入通道、科目任务和复盘方式；考试焦虑和同伴紧张要看压力情境和支持策略，必要时降级或人工看，不做焦虑症或人格判断。",
+      "outputGuidance": "用于初中学习、兴趣、考试和同伴问题。学习类可给观察清单，压力类要保守表达。",
+      "doNotUse": [
+        "焦虑症判断",
+        "人格问题",
+        "天生适合某路",
+        "保证提分",
+        "心理疾病",
+        "所有年龄同一批问题",
+        "成年人报告写孩子",
+        "幼儿报告写升学职业",
+        "统一模板套用",
+        "心理诊断",
+        "保证升学",
+        "保证职业",
+        "关系去留判断",
+        "录用淘汰建议"
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "report_library",
+          "path": "docs/aipiwen_report_system/05_language_library_话术库/AIPIWEN_ReportLibrary_V1.2_年龄阶段问题库.md",
+          "locator": "初中 13-15：偏科、兴趣聚焦和考试压力要分层处理"
+        },
+        {
+          "sourceType": "obsidian",
+          "path": "/Users/gyl0322gmail.com/AI-CEO-System/AI-CEO-Vault/知识库/宋老师天赋测评教学/00i-报告选项池(年龄段)与话术红线.md",
+          "locator": "按年龄段问题选项池"
+        },
+        {
+          "sourceType": "report_library",
+          "path": "docs/aipiwen_report_system/05_language_library_话术库/AIPIWEN_ReportLibrary_V1.2_用户四问差异化回答库.md",
+          "locator": "用户四问差异化回答库"
+        }
+      ]
+    },
+    {
+      "id": "RKI-V1.3-SENIOR-EDUCATION",
+      "title": "高中 16-18：选科升学只给观察维度，不给保证答案",
+      "status": "rewrite_required",
+      "modules": [
+        "年龄段适配",
+        "高中问题库",
+        "学习方法",
+        "安全边界"
+      ],
+      "scenarios": [
+        "高中",
+        "选科",
+        "文理",
+        "偏科",
+        "升学",
+        "专业",
+        "未来方向"
+      ],
+      "ageBands": [
+        "16-18"
+      ],
+      "retrievalKeywords": [
+        "高中",
+        "16-18",
+        "文理",
+        "选科",
+        "偏科",
+        "升学",
+        "冲名校",
+        "专业",
+        "未来方向",
+        "迷茫"
+      ],
+      "safeGrounding": "高中选科、升学和专业方向只能提供观察维度：学习通道、思维入口、压力反应、科目任务和低风险试错。不能保证文理、专业、名校或结果。",
+      "outputGuidance": "用于高中选科和升学问题。先讲边界，再给可观察维度和下一步试法，复杂决策建议人工一起看。",
+      "doNotUse": [
+        "保证适合文科",
+        "保证适合理科",
+        "保证升学",
+        "冲名校一定成功",
+        "命定职业",
+        "所有年龄同一批问题",
+        "成年人报告写孩子",
+        "幼儿报告写升学职业",
+        "统一模板套用",
+        "心理诊断",
+        "保证职业",
+        "关系去留判断",
+        "录用淘汰建议"
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "report_library",
+          "path": "docs/aipiwen_report_system/05_language_library_话术库/AIPIWEN_ReportLibrary_V1.2_年龄阶段问题库.md",
+          "locator": "高中 16-18：选科升学只给观察维度，不给保证答案"
+        },
+        {
+          "sourceType": "obsidian",
+          "path": "/Users/gyl0322gmail.com/AI-CEO-System/AI-CEO-Vault/知识库/宋老师天赋测评教学/00i-报告选项池(年龄段)与话术红线.md",
+          "locator": "按年龄段问题选项池"
+        },
+        {
+          "sourceType": "report_library",
+          "path": "docs/aipiwen_report_system/05_language_library_话术库/AIPIWEN_ReportLibrary_V1.2_用户四问差异化回答库.md",
+          "locator": "用户四问差异化回答库"
+        }
+      ]
+    },
+    {
+      "id": "RKI-V1.3-SENIOR-STRESS-PARENT",
+      "title": "高中 16-18：考试压力和亲子三观差要从支持与边界看",
+      "status": "rewrite_required",
+      "modules": [
+        "年龄段适配",
+        "高中问题库",
+        "亲子沟通",
+        "安全边界"
+      ],
+      "scenarios": [
+        "高中",
+        "考试焦虑",
+        "输不起",
+        "父母三观差",
+        "亲子沟通",
+        "压力状态"
+      ],
+      "ageBands": [
+        "16-18"
+      ],
+      "retrievalKeywords": [
+        "高中",
+        "考试焦虑",
+        "输不起",
+        "压力",
+        "三观差",
+        "父母",
+        "亲子",
+        "沟通",
+        "自我认同"
+      ],
+      "safeGrounding": "高中考试压力和亲子三观差不能写成谁对谁错。先整理触发场景、持续时间、影响范围和支持资源，再看需求表达与边界。",
+      "outputGuidance": "用于高中压力和代际沟通。压力持续影响睡眠、生活或学习时，应降级建议专业支持。",
+      "doNotUse": [
+        "心理诊断",
+        "谁对谁错",
+        "孩子不懂事",
+        "父母害了孩子",
+        "焦虑症判断",
+        "所有年龄同一批问题",
+        "成年人报告写孩子",
+        "幼儿报告写升学职业",
+        "统一模板套用",
+        "保证升学",
+        "保证职业",
+        "关系去留判断",
+        "录用淘汰建议"
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "report_library",
+          "path": "docs/aipiwen_report_system/05_language_library_话术库/AIPIWEN_ReportLibrary_V1.2_年龄阶段问题库.md",
+          "locator": "高中 16-18：考试压力和亲子三观差要从支持与边界看"
+        },
+        {
+          "sourceType": "obsidian",
+          "path": "/Users/gyl0322gmail.com/AI-CEO-System/AI-CEO-Vault/知识库/宋老师天赋测评教学/00i-报告选项池(年龄段)与话术红线.md",
+          "locator": "按年龄段问题选项池"
+        },
+        {
+          "sourceType": "report_library",
+          "path": "docs/aipiwen_report_system/05_language_library_话术库/AIPIWEN_ReportLibrary_V1.2_用户四问差异化回答库.md",
+          "locator": "用户四问差异化回答库"
+        }
+      ]
+    },
+    {
+      "id": "RKI-V1.3-YOUNG-CAREER",
+      "title": "19-25：专业、就业和考研要用低风险试错，不替用户决定",
+      "status": "auto_safe",
+      "modules": [
+        "年龄段适配",
+        "青年问题库",
+        "职业方向",
+        "自我理解"
+      ],
+      "scenarios": [
+        "大学",
+        "刚毕业",
+        "专业不喜欢",
+        "考研就业",
+        "找工作",
+        "考公"
+      ],
+      "ageBands": [
+        "19-25"
+      ],
+      "retrievalKeywords": [
+        "大学",
+        "刚毕业",
+        "19-25",
+        "专业不喜欢",
+        "转方向",
+        "找工作",
+        "考研",
+        "就业",
+        "考公",
+        "体制",
+        "岗位"
+      ],
+      "safeGrounding": "19-25 岁更关注专业、职业起步和独立生活。报告可以提供能力线索、工作方式、协作偏好和小范围试错，但不能替用户决定考研、就业、转专业或职业。",
+      "outputGuidance": "用于青年本人视角。用“你/本人/当前阶段”，不要写孩子；给低风险试法，不给保证职业。",
+      "doNotUse": [
+        "立刻转专业",
+        "保证职业",
+        "必须考研",
+        "必须就业",
+        "你孩子",
+        "所有年龄同一批问题",
+        "成年人报告写孩子",
+        "幼儿报告写升学职业",
+        "统一模板套用",
+        "心理诊断",
+        "保证升学",
+        "关系去留判断",
+        "录用淘汰建议"
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "report_library",
+          "path": "docs/aipiwen_report_system/05_language_library_话术库/AIPIWEN_ReportLibrary_V1.2_年龄阶段问题库.md",
+          "locator": "19-25：专业、就业和考研要用低风险试错，不替用户决定"
+        },
+        {
+          "sourceType": "obsidian",
+          "path": "/Users/gyl0322gmail.com/AI-CEO-System/AI-CEO-Vault/知识库/宋老师天赋测评教学/00i-报告选项池(年龄段)与话术红线.md",
+          "locator": "按年龄段问题选项池"
+        },
+        {
+          "sourceType": "report_library",
+          "path": "docs/aipiwen_report_system/05_language_library_话术库/AIPIWEN_ReportLibrary_V1.2_用户四问差异化回答库.md",
+          "locator": "用户四问差异化回答库"
+        }
+      ]
+    },
+    {
+      "id": "RKI-V1.3-YOUNG-SELF-RELATION",
+      "title": "19-25：拖延、边界和关系纠结要像陪他整理自己",
+      "status": "auto_safe",
+      "modules": [
+        "年龄段适配",
+        "青年问题库",
+        "自我理解",
+        "关系沟通"
+      ],
+      "scenarios": [
+        "拖延",
+        "边界",
+        "讨好",
+        "压力逃开",
+        "关系适不适合",
+        "自我状态"
+      ],
+      "ageBands": [
+        "19-25"
+      ],
+      "retrievalKeywords": [
+        "19-25",
+        "拖延",
+        "明知道要做",
+        "总想让别人满意",
+        "难拒绝",
+        "压力逃开",
+        "关系纠结",
+        "适不适合"
+      ],
+      "safeGrounding": "青年自我理解类问题要像陪用户整理自己。拖延看启动机制和压力回避，边界看自我需求和沟通方式，关系适不适合必须降级为具体冲突场景。",
+      "outputGuidance": "用于成人本人自我理解。语气要陪伴式，不像老师讲课；关系去留不自动下结论。",
+      "doNotUse": [
+        "讨好型人格诊断",
+        "心理病症",
+        "分手",
+        "继续在一起",
+        "你就是没自律",
+        "所有年龄同一批问题",
+        "成年人报告写孩子",
+        "幼儿报告写升学职业",
+        "统一模板套用",
+        "心理诊断",
+        "保证升学",
+        "保证职业",
+        "关系去留判断",
+        "录用淘汰建议"
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "report_library",
+          "path": "docs/aipiwen_report_system/05_language_library_话术库/AIPIWEN_ReportLibrary_V1.2_年龄阶段问题库.md",
+          "locator": "19-25：拖延、边界和关系纠结要像陪他整理自己"
+        },
+        {
+          "sourceType": "obsidian",
+          "path": "/Users/gyl0322gmail.com/AI-CEO-System/AI-CEO-Vault/知识库/宋老师天赋测评教学/00i-报告选项池(年龄段)与话术红线.md",
+          "locator": "按年龄段问题选项池"
+        },
+        {
+          "sourceType": "report_library",
+          "path": "docs/aipiwen_report_system/05_language_library_话术库/AIPIWEN_ReportLibrary_V1.2_用户四问差异化回答库.md",
+          "locator": "用户四问差异化回答库"
+        }
+      ]
+    },
+    {
+      "id": "RKI-V1.3-ADULT-WORK",
+      "title": "26-40：职业瓶颈、创业打工和工作很累要回到能力入口",
+      "status": "auto_safe",
+      "modules": [
+        "年龄段适配",
+        "成人问题库",
+        "职业方向",
+        "五大功能区"
+      ],
+      "scenarios": [
+        "职场",
+        "职业瓶颈",
+        "转型",
+        "创业",
+        "打工",
+        "团队角色",
+        "工作很累"
+      ],
+      "ageBands": [
+        "26-40"
+      ],
+      "retrievalKeywords": [
+        "26-40",
+        "职场",
+        "职业瓶颈",
+        "突破",
+        "转型",
+        "创业",
+        "打工",
+        "团队",
+        "带人",
+        "专家",
+        "工作很累"
+      ],
+      "safeGrounding": "26-40 岁职业问题要从能力入口、价值排序、团队角色和现实约束看。可以讨论突破、转型、带人或做专家的观察维度，不能建议马上辞职或保证创业成功。",
+      "outputGuidance": "用于成人职业和团队问题。输出应具体到低风险试错、角色边界、能量恢复和现实条件。",
+      "doNotUse": [
+        "马上辞职",
+        "保证创业",
+        "保证转型",
+        "你就是劳碌命",
+        "录用筛选",
+        "所有年龄同一批问题",
+        "成年人报告写孩子",
+        "幼儿报告写升学职业",
+        "统一模板套用",
+        "心理诊断",
+        "保证升学",
+        "保证职业",
+        "关系去留判断",
+        "录用淘汰建议"
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "report_library",
+          "path": "docs/aipiwen_report_system/05_language_library_话术库/AIPIWEN_ReportLibrary_V1.2_年龄阶段问题库.md",
+          "locator": "26-40：职业瓶颈、创业打工和工作很累要回到能力入口"
+        },
+        {
+          "sourceType": "obsidian",
+          "path": "/Users/gyl0322gmail.com/AI-CEO-System/AI-CEO-Vault/知识库/宋老师天赋测评教学/00i-报告选项池(年龄段)与话术红线.md",
+          "locator": "按年龄段问题选项池"
+        },
+        {
+          "sourceType": "report_library",
+          "path": "docs/aipiwen_report_system/05_language_library_话术库/AIPIWEN_ReportLibrary_V1.2_用户四问差异化回答库.md",
+          "locator": "用户四问差异化回答库"
+        }
+      ]
+    },
+    {
+      "id": "RKI-V1.3-ADULT-FAMILY",
+      "title": "26-40：育儿、伴侣和原生家庭要拆具体场景，不判对错",
+      "status": "auto_safe",
+      "modules": [
+        "年龄段适配",
+        "成人问题库",
+        "亲子沟通",
+        "关系沟通"
+      ],
+      "scenarios": [
+        "育儿",
+        "吼孩子",
+        "伴侣沟通",
+        "夫妻教育观念",
+        "原生家庭",
+        "公婆"
+      ],
+      "ageBands": [
+        "26-40"
+      ],
+      "retrievalKeywords": [
+        "26-40",
+        "育儿",
+        "吼孩子",
+        "伴侣沟通",
+        "夫妻",
+        "教育观念",
+        "原生家庭",
+        "公婆",
+        "父母",
+        "亲子"
+      ],
+      "safeGrounding": "成人家庭问题要先拆具体场景。育儿里看压力溢出、互动循环和替代动作；伴侣和父母问题看边界、需求和沟通方式，不判断谁对谁错。",
+      "outputGuidance": "用于成家育儿期问题。避免制造家长内疚，不写父母导致孩子问题。",
+      "doNotUse": [
+        "父母导致孩子问题",
+        "谁对谁错",
+        "家长方法错",
+        "关系完了",
+        "心理问题诊断",
+        "所有年龄同一批问题",
+        "成年人报告写孩子",
+        "幼儿报告写升学职业",
+        "统一模板套用",
+        "心理诊断",
+        "保证升学",
+        "保证职业",
+        "关系去留判断",
+        "录用淘汰建议"
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "report_library",
+          "path": "docs/aipiwen_report_system/05_language_library_话术库/AIPIWEN_ReportLibrary_V1.2_年龄阶段问题库.md",
+          "locator": "26-40：育儿、伴侣和原生家庭要拆具体场景，不判对错"
+        },
+        {
+          "sourceType": "obsidian",
+          "path": "/Users/gyl0322gmail.com/AI-CEO-System/AI-CEO-Vault/知识库/宋老师天赋测评教学/00i-报告选项池(年龄段)与话术红线.md",
+          "locator": "按年龄段问题选项池"
+        },
+        {
+          "sourceType": "report_library",
+          "path": "docs/aipiwen_report_system/05_language_library_话术库/AIPIWEN_ReportLibrary_V1.2_用户四问差异化回答库.md",
+          "locator": "用户四问差异化回答库"
+        }
+      ]
+    },
+    {
+      "id": "RKI-V1.3-MATURE-TRANSITION",
+      "title": "40+：转型、带教和价值重定位要强调经验复用",
+      "status": "auto_safe",
+      "modules": [
+        "年龄段适配",
+        "成熟阶段问题库",
+        "职业方向",
+        "自我理解"
+      ],
+      "scenarios": [
+        "40+",
+        "转型",
+        "再出发",
+        "带教",
+        "退休",
+        "价值感",
+        "经验传承"
+      ],
+      "ageBands": [
+        "40+"
+      ],
+      "retrievalKeywords": [
+        "40+",
+        "成熟",
+        "转型",
+        "再出发",
+        "带教",
+        "经验",
+        "退休",
+        "半退",
+        "价值感",
+        "二次成长"
+      ],
+      "safeGrounding": "40+ 阶段更适合从能力迁移、经验复用、带教、家庭责任和下一阶段价值感来谈。转型只能给低风险试错和经验复用方向，不保证结果。",
+      "outputGuidance": "用于 40+ 本人视角。语气要尊重经验，不写“来不及”或命定式衰退。",
+      "doNotUse": [
+        "保证转型",
+        "来不及了",
+        "命苦",
+        "劳碌命",
+        "没有价值",
+        "所有年龄同一批问题",
+        "成年人报告写孩子",
+        "幼儿报告写升学职业",
+        "统一模板套用",
+        "心理诊断",
+        "保证升学",
+        "保证职业",
+        "关系去留判断",
+        "录用淘汰建议"
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "report_library",
+          "path": "docs/aipiwen_report_system/05_language_library_话术库/AIPIWEN_ReportLibrary_V1.2_年龄阶段问题库.md",
+          "locator": "40+：转型、带教和价值重定位要强调经验复用"
+        },
+        {
+          "sourceType": "obsidian",
+          "path": "/Users/gyl0322gmail.com/AI-CEO-System/AI-CEO-Vault/知识库/宋老师天赋测评教学/00i-报告选项池(年龄段)与话术红线.md",
+          "locator": "按年龄段问题选项池"
+        },
+        {
+          "sourceType": "report_library",
+          "path": "docs/aipiwen_report_system/05_language_library_话术库/AIPIWEN_ReportLibrary_V1.2_用户四问差异化回答库.md",
+          "locator": "用户四问差异化回答库"
+        }
+      ]
+    },
+    {
+      "id": "RKI-V1.3-MATURE-FAMILY-SUPPORT",
+      "title": "40+：家庭责任、空巢和代际沟通要做安全承接",
+      "status": "rewrite_required",
+      "modules": [
+        "年龄段适配",
+        "成熟阶段问题库",
+        "关系沟通",
+        "安全边界"
+      ],
+      "scenarios": [
+        "40+",
+        "家庭责任",
+        "空巢",
+        "子女沟通",
+        "养老照护",
+        "健康焦虑"
+      ],
+      "ageBands": [
+        "40+"
+      ],
+      "retrievalKeywords": [
+        "40+",
+        "家庭责任",
+        "没有空间",
+        "空巢",
+        "子女",
+        "代际沟通",
+        "养老",
+        "照护",
+        "健康焦虑",
+        "未来没期待"
+      ],
+      "safeGrounding": "40+ 家庭责任、空巢、养老照护和健康焦虑，需要承接现实压力和支持系统。若涉及持续低落、未来没期待或健康焦虑，要降级为具体支持和专业帮助。",
+      "outputGuidance": "用于成熟阶段家庭与情绪支持。不得做抑郁、疾病或康养承诺。",
+      "doNotUse": [
+        "抑郁判断",
+        "疾病判断",
+        "康养承诺",
+        "命苦",
+        "亲子关系定论",
+        "所有年龄同一批问题",
+        "成年人报告写孩子",
+        "幼儿报告写升学职业",
+        "统一模板套用",
+        "心理诊断",
+        "保证升学",
+        "保证职业",
+        "关系去留判断",
+        "录用淘汰建议"
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "report_library",
+          "path": "docs/aipiwen_report_system/05_language_library_话术库/AIPIWEN_ReportLibrary_V1.2_年龄阶段问题库.md",
+          "locator": "40+：家庭责任、空巢和代际沟通要做安全承接"
+        },
+        {
+          "sourceType": "obsidian",
+          "path": "/Users/gyl0322gmail.com/AI-CEO-System/AI-CEO-Vault/知识库/宋老师天赋测评教学/00i-报告选项池(年龄段)与话术红线.md",
+          "locator": "按年龄段问题选项池"
+        },
+        {
+          "sourceType": "report_library",
+          "path": "docs/aipiwen_report_system/05_language_library_话术库/AIPIWEN_ReportLibrary_V1.2_用户四问差异化回答库.md",
+          "locator": "用户四问差异化回答库"
+        }
+      ]
+    },
+    {
+      "id": "RKI-V1.3-AGE-TITLE-VOICE",
+      "title": "年龄阶段称谓与语气：孩子、青少年、本人不能混用",
+      "status": "auto_safe",
+      "modules": [
+        "年龄段适配",
+        "称谓规则",
+        "严正申明",
+        "输出结构"
+      ],
+      "scenarios": [
+        "称谓错位",
+        "成年人报告",
+        "孩子报告",
+        "严正申明",
+        "报告语气"
+      ],
+      "ageBands": [
+        "all"
+      ],
+      "retrievalKeywords": [
+        "年龄",
+        "称谓",
+        "孩子",
+        "青少年",
+        "本人",
+        "成年人",
+        "您孩子",
+        "家长",
+        "严正申明",
+        "语气"
+      ],
+      "safeGrounding": "报告必须先看年龄和报告对象。3-18 岁可用家长/孩子视角，19 岁以上必须用你/本人/当前阶段。成年人报告不得出现“您孩子”；孩子报告不得写成人职场问题。",
+      "outputGuidance": "用于报告开头、严正申明、固定模块和自选问题称谓校验。",
+      "doNotUse": [
+        "成年人报告写孩子",
+        "幼儿报告写职业",
+        "所有年龄统一称谓",
+        "您孩子用于成年人",
+        "所有年龄同一批问题",
+        "幼儿报告写升学职业",
+        "统一模板套用",
+        "心理诊断",
+        "保证升学",
+        "保证职业",
+        "关系去留判断",
+        "录用淘汰建议"
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "report_library",
+          "path": "docs/aipiwen_report_system/05_language_library_话术库/AIPIWEN_ReportLibrary_V1.2_年龄阶段问题库.md",
+          "locator": "年龄阶段称谓与语气：孩子、青少年、本人不能混用"
+        },
+        {
+          "sourceType": "obsidian",
+          "path": "/Users/gyl0322gmail.com/AI-CEO-System/AI-CEO-Vault/知识库/宋老师天赋测评教学/00i-报告选项池(年龄段)与话术红线.md",
+          "locator": "按年龄段问题选项池"
+        },
+        {
+          "sourceType": "report_library",
+          "path": "docs/aipiwen_report_system/05_language_library_话术库/AIPIWEN_ReportLibrary_V1.2_用户四问差异化回答库.md",
+          "locator": "用户四问差异化回答库"
+        }
+      ]
     }
   ]
 }
