@@ -766,6 +766,12 @@ function normalizeSections(sections, requiredModules, selectedIssues, engineResu
   return normalized;
 }
 
+function chunkModules(modules, size) {
+  const chunks = [];
+  for (let i = 0; i < modules.length; i += size) chunks.push(modules.slice(i, i + size));
+  return chunks;
+}
+
 // ── 报告存储处理器（merged from report-store.js）─────────────────────────────
 async function checkStoreRate(ip) {
   const minute = Math.floor(Date.now() / 60000);
@@ -900,19 +906,6 @@ module.exports = async function handler(req, res) {
 
   const tier          = getAgeTier(age);
   const requiredMods  = REQUIRED_BY_STAGE[tier] || REQUIRED_BY_STAGE.adult;
-  const userMessage   = buildUserMessage(engineResult, age, name, requiredMods, selectedIssues, fingers, tier);
-
-  const messages = [
-    { role: 'system', content: SYSTEM_PROMPT },
-    { role: 'user',   content: userMessage },
-  ];
-
-  // ── DashScope 报告生成（qwen-plus 单次调用，无 fallback）──────────────
-  // ⚠️ 不使用 qwen-vl-max：视觉模型对文字报告过慢，会超 Vercel 60s 限制 → 504
-  // qwen-plus 文字生成（5–15s），timeoutMs=55s，Vercel 60s 内安全完成
-  // 不设 fallback：55s 仍超时说明 DashScope 本身过载，turbo 质量不够用于完整报告
-  let raw = null;
-
   // 把错误详情写入 Redis，方便 admin 面板诊断（key=lastErr:genrpt，TTL 1天）
   async function logErr(label, err) {
     const detail = {
@@ -926,19 +919,51 @@ module.exports = async function handler(req, res) {
     return detail;
   }
 
-  // qwen-plus 主力（文字报告，无图片，IAD1→阿里云跨境约35-50s生成完整核心模块）
-  // timeoutMs=55s：Vercel 60s 限制内留 5s 余量；maxTokens=3800 覆盖固定核心模块
-  // 不设 fallback：55s 内 qwen-plus 仍超时说明 DashScope 本身过载，turbo 质量不够用
-  try {
+  async function generatePart(partModules, partIssues, label) {
+    const userMessage = buildUserMessage(engineResult, age, name, partModules, partIssues, fingers, tier);
     const { text } = await callClaude({
       model:     MODEL_FREE,       // qwen-plus
-      messages,
-      maxTokens: 3800,
-      timeoutMs: 55000,
+      messages: [
+        { role: 'system', content: SYSTEM_PROMPT },
+        { role: 'user',   content: userMessage },
+      ],
+      maxTokens: partIssues.length ? 1300 : 1500,
+      timeoutMs: 38000,
     });
-    raw = text;
-  } catch (err1) {
-    await logErr('primary_fail', err1);
+    if (!text) throw new Error(`${label}_empty_reply`);
+    return text;
+  }
+
+  // 单次完整报告已经超过 Vercel 60s 的稳定承载范围；拆成小块并行生成，
+  // 单块失败只局部兜底，避免整份报告常态进入基础兜底。
+  const jobs = [
+    ...chunkModules(requiredMods, 4).map((mods, idx) => ({
+      label: `core_${idx + 1}`,
+      modules: mods,
+      issues: [],
+    })),
+  ];
+  if (selectedIssues.length) {
+    jobs.push({ label: 'issues', modules: [], issues: selectedIssues });
+  }
+
+  const results = await Promise.allSettled(
+    jobs.map(job => generatePart(job.modules, job.issues, job.label))
+  );
+
+  const rawParts = [];
+  const failures = [];
+  for (let i = 0; i < results.length; i += 1) {
+    const result = results[i];
+    if (result.status === 'fulfilled') rawParts.push(result.value);
+    else {
+      failures.push(jobs[i].label);
+      await logErr(`part_fail:${jobs[i].label}`, result.reason);
+    }
+  }
+
+  const raw = rawParts.join('\n\n');
+  if (!rawParts.length) {
     const sections = normalizeSections([], requiredMods, selectedIssues, engineResult);
     return res.status(200).json({
       ok: true,
@@ -950,21 +975,15 @@ module.exports = async function handler(req, res) {
     });
   }
 
-  if (!raw) {
-    console.error('[gen-report] empty reply after both attempts');
-    const sections = normalizeSections([], requiredMods, selectedIssues, engineResult);
-    return res.status(200).json({
-      ok: true,
-      degraded: true,
-      warning: 'AI暂时没有返回完整内容，已先生成基础版专属报告。',
-      sections,
-      raw: '',
-      requiredModules: requiredMods,
-    });
-  }
-
   const parsedSections = parseSections(raw, requiredMods, selectedIssues);
   const sections = normalizeSections(parsedSections, requiredMods, selectedIssues, engineResult);
 
-  return res.status(200).json({ ok:true, sections, raw, requiredModules: requiredMods });
+  return res.status(200).json({
+    ok:true,
+    degraded: failures.length > 0,
+    warning: failures.length ? '部分内容生成较忙，已自动补齐安全兜底内容。' : undefined,
+    sections,
+    raw,
+    requiredModules: requiredMods,
+  });
 };
