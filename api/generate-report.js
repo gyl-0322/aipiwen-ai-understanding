@@ -10,6 +10,11 @@
 
 const crypto = require('crypto');
 const { redisGet, redisSet, creditReferral, callClaude, MODEL_DEEP, MODEL_FREE, getOpenid } = require('./_lib');
+const {
+  searchReportKnowledge,
+  buildReportGroundingBlock,
+  buildKnowledgeTrace,
+} = require('../lib/report-knowledge-retriever');
 
 // ── 案例库索引（Upstash list，max 2000 条）──────────────────────────────────
 function kvUrl()   { return process.env.KV_REST_API_URL   || process.env.REDIS_URL  || ''; }
@@ -475,8 +480,33 @@ const SYSTEM_PROMPT = `你是 AIPIWEN 天赋底色解读 AI，拥有完整的皮
 - issue 板块内部用 ①为什么会这样 ②怎么应对 ③积极意义 标记三段
 - 直接开始正文，禁止任何开场白（"收到""好的""当然"等）`;
 
+function buildReportKnowledgeQuery(engineResult, age, selectedIssues, fingers, tier) {
+  const fp = engineResult?.['五功能区'] || {};
+  const chan = engineResult?.['学习通道'] || {};
+  const behav = engineResult?.['行为模式'] || {};
+  const brain = engineResult?.['左右脑'] || {};
+  const atd = engineResult?.['ATD'] || {};
+  const fingerText = Array.isArray(fingers)
+    ? fingers.map(f => `${f.pos || ''}${f.pattern || ''}${f.trc || ''}`).join(' ')
+    : '';
+  return [
+    `年龄:${age || ''}`,
+    `阶段:${tier || ''}`,
+    `主性格类型:${engineResult?.['主性格类型'] || ''}`,
+    `TRC:${fp['总TRC'] || ''} 均值:${fp['个人均值'] || ''}`,
+    `五功能:${['精神','思维','体觉','听觉','视觉'].map(z => `${z}${fp[z] || ''}`).join(' ')}`,
+    `ATD:${atd['值'] || ''} ${atd['分区'] || ''}`,
+    `左右脑:${brain['结论'] || ''} 左脑${brain['左脑'] || ''} 右脑${brain['右脑'] || ''}`,
+    `学习通道:${chan['主通道'] || ''}`,
+    `行为模式:${behav['结论'] || ''}`,
+    `用户问题:${(selectedIssues || []).join(' ')}`,
+    `手指:${fingerText}`,
+    '报告输出 解释 用户听得懂 沐海星辰 话术 风险边界 禁止诊断',
+  ].join('\n').slice(0, 2400);
+}
+
 // ── 构建用户消息（引擎数据 + 格式规范） ────────────────────────────────
-function buildUserMessage(engineResult, age, name, requiredModules, selectedIssues, fingers, tier) {
+function buildUserMessage(engineResult, age, name, requiredModules, selectedIssues, fingers, tier, knowledgeContext = {}) {
   const fp      = engineResult['五功能区'] || {};
   const chan     = engineResult['学习通道'] || {};
   const behav    = engineResult['行为模式'] || {};
@@ -567,6 +597,8 @@ ${requiredModules.map((m,i)=>`${i+1}. ===${m}===`).join('\n')}
 ⚠️ 同源一致（00i 规则2）：凡涉及职业/能力/兴趣班的内容，严格基于上方 RULE-F04 已修正判定展开，不另行重算高低；后续可选延伸问题将在此结论基础上深化，必须保持一致。
 
 ${issueFormatGuide}
+
+${knowledgeContext.groundingBlock || ''}
 
 ===END=== 结尾。现在开始生成：`;
 }
@@ -906,6 +938,19 @@ module.exports = async function handler(req, res) {
 
   const tier          = getAgeTier(age);
   const requiredMods  = REQUIRED_BY_STAGE[tier] || REQUIRED_BY_STAGE.adult;
+  const debugKnowledge = payload.debugKnowledge === true || req.headers['x-debug-knowledge'] === '1';
+  let knowledgeHits = [];
+  let knowledgeError = null;
+  try {
+    const knowledgeQuery = buildReportKnowledgeQuery(engineResult, age, selectedIssues, fingers, tier);
+    knowledgeHits = searchReportKnowledge(knowledgeQuery, { topK: 8 });
+  } catch (err) {
+    knowledgeError = err?.message || String(err);
+    console.warn('[gen-report] knowledge retrieval failed:', knowledgeError);
+  }
+  const knowledgeContext = {
+    groundingBlock: buildReportGroundingBlock(knowledgeHits),
+  };
   // 把错误详情写入 Redis，方便 admin 面板诊断（key=lastErr:genrpt，TTL 1天）
   async function logErr(label, err) {
     const detail = {
@@ -920,7 +965,7 @@ module.exports = async function handler(req, res) {
   }
 
   async function generatePart(partModules, partIssues, label) {
-    const userMessage = buildUserMessage(engineResult, age, name, partModules, partIssues, fingers, tier);
+    const userMessage = buildUserMessage(engineResult, age, name, partModules, partIssues, fingers, tier, knowledgeContext);
     const { text } = await callClaude({
       model:     MODEL_FREE,       // qwen-plus
       messages: [
@@ -972,6 +1017,8 @@ module.exports = async function handler(req, res) {
       sections,
       raw: '',
       requiredModules: requiredMods,
+      knowledgeUsed: knowledgeHits.length > 0,
+      ...(debugKnowledge ? { retrievedChunks: buildKnowledgeTrace(knowledgeHits), knowledgeError } : {}),
     });
   }
 
@@ -985,5 +1032,7 @@ module.exports = async function handler(req, res) {
     sections,
     raw,
     requiredModules: requiredMods,
+    knowledgeUsed: knowledgeHits.length > 0,
+    ...(debugKnowledge ? { retrievedChunks: buildKnowledgeTrace(knowledgeHits), knowledgeError } : {}),
   });
 };
