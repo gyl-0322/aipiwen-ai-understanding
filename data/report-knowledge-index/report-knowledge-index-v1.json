@@ -1,13 +1,21 @@
 {
   "version": "report_knowledge_index_v1",
-  "updatedAt": "2026-07-06",
+  "updatedAt": "2026-07-07T00:00:00-07:00",
   "positioning": "AIPIWEN Report Knowledge Index V1 is a curated retrieval layer for report generation. It indexes teacher reading transcripts, Report OS language libraries, and approved Obsidian/expert-course knowledge candidates. It does not import raw Obsidian content directly into frontend output.",
   "retrievalPolicy": {
     "defaultTopK": 6,
     "maxTopK": 8,
-    "allowedStatusesForAutoOutput": ["auto_safe"],
-    "allowedStatusesForPromptGrounding": ["auto_safe", "rewrite_required"],
-    "blockedStatuses": ["human_only", "blocked"],
+    "allowedStatusesForAutoOutput": [
+      "auto_safe"
+    ],
+    "allowedStatusesForPromptGrounding": [
+      "auto_safe",
+      "rewrite_required"
+    ],
+    "blockedStatuses": [
+      "human_only",
+      "blocked"
+    ],
     "mustNotExpose": [
       "source_path_to_user",
       "internal_method_label",
@@ -24,10 +32,30 @@
       "id": "RKI-V1-001",
       "title": "写作业拖拉：先拆启动困难，不说孩子懒",
       "status": "auto_safe",
-      "modules": ["行为模式", "学习通道", "ATD"],
-      "scenarios": ["写作业拖拉", "不启动", "被催促", "学习成长"],
-      "ageBands": ["7-12", "13-18"],
-      "retrievalKeywords": ["拖拉", "写作业", "磨蹭", "不开始", "启动困难", "催促", "作业"],
+      "modules": [
+        "行为模式",
+        "学习通道",
+        "ATD"
+      ],
+      "scenarios": [
+        "写作业拖拉",
+        "不启动",
+        "被催促",
+        "学习成长"
+      ],
+      "ageBands": [
+        "7-12",
+        "13-18"
+      ],
+      "retrievalKeywords": [
+        "拖拉",
+        "写作业",
+        "磨蹭",
+        "不开始",
+        "启动困难",
+        "催促",
+        "作业"
+      ],
       "sourceRefs": [
         {
           "sourceType": "teacher_transcript",
@@ -42,16 +70,42 @@
       ],
       "safeGrounding": "拖拉不直接等于懒，也不直接等于执行力差。先观察孩子是开始难、坚持难，还是收尾难，再给一个可执行的第一步。",
       "outputGuidance": "可以写成：这类表现更像是进入任务前需要更清楚的第一个动作，而不是孩子不想学。",
-      "doNotUse": ["孩子就是懒", "天生拖拉", "执行力差", "家长管教不到位"]
+      "doNotUse": [
+        "孩子就是懒",
+        "天生拖拉",
+        "执行力差",
+        "家长管教不到位"
+      ]
     },
     {
       "id": "RKI-V1-002",
       "title": "容易生气：把情绪看作需求信号",
       "status": "auto_safe",
-      "modules": ["行为模式", "ATD", "亲子沟通"],
-      "scenarios": ["容易生气", "情绪爆发", "顶嘴", "亲子冲突"],
-      "ageBands": ["0-6", "7-12", "13-18"],
-      "retrievalKeywords": ["生气", "发脾气", "一点就炸", "情绪", "顶嘴", "吵架", "沟通"],
+      "modules": [
+        "行为模式",
+        "ATD",
+        "亲子沟通"
+      ],
+      "scenarios": [
+        "容易生气",
+        "情绪爆发",
+        "顶嘴",
+        "亲子冲突"
+      ],
+      "ageBands": [
+        "0-6",
+        "7-12",
+        "13-18"
+      ],
+      "retrievalKeywords": [
+        "生气",
+        "发脾气",
+        "一点就炸",
+        "情绪",
+        "顶嘴",
+        "吵架",
+        "沟通"
+      ],
       "sourceRefs": [
         {
           "sourceType": "teacher_transcript",
@@ -66,16 +120,41 @@
       ],
       "safeGrounding": "情绪不作为心理或性格标签。先看触发场景、表达需求和孩子是否缺少替代表达。",
       "outputGuidance": "可以写成：这更像是在提醒我们，孩子当下还没有找到更合适的表达方式。",
-      "doNotUse": ["脾气差", "情绪异常", "心理有问题", "父母造成孩子这样"]
+      "doNotUse": [
+        "脾气差",
+        "情绪异常",
+        "心理有问题",
+        "父母造成孩子这样"
+      ]
     },
     {
       "id": "RKI-V1-003",
       "title": "报告不像：把不一致当作校正线索",
       "status": "auto_safe",
-      "modules": ["报告线索", "后天环境校正", "行为模式"],
-      "scenarios": ["报告不像", "学校家里不一样", "数据不贴近", "后天环境"],
-      "ageBands": ["all"],
-      "retrievalKeywords": ["不像", "不准", "学校", "家里", "不一样", "场景", "环境", "校正"],
+      "modules": [
+        "报告线索",
+        "后天环境校正",
+        "行为模式"
+      ],
+      "scenarios": [
+        "报告不像",
+        "学校家里不一样",
+        "数据不贴近",
+        "后天环境"
+      ],
+      "ageBands": [
+        "all"
+      ],
+      "retrievalKeywords": [
+        "不像",
+        "不准",
+        "学校",
+        "家里",
+        "不一样",
+        "场景",
+        "环境",
+        "校正"
+      ],
       "sourceRefs": [
         {
           "sourceType": "teacher_transcript",
@@ -90,16 +169,40 @@
       ],
       "safeGrounding": "报告数据是理解线索，不是一次定论。表现差异通常要加入年龄、关系、学校环境、家庭节奏和近期压力一起看。",
       "outputGuidance": "可以写成：如果这部分不完全贴近孩子，不代表报告没价值，可以把它当作校正线索。",
-      "doNotUse": ["报告一定准确", "孩子真实内在就是这样", "家长观察错了"]
+      "doNotUse": [
+        "报告一定准确",
+        "孩子真实内在就是这样",
+        "家长观察错了"
+      ]
     },
     {
       "id": "RKI-V1-004",
       "title": "不主动学习：从兴趣入口、可完成感和环境舒适度入手",
       "status": "auto_safe",
-      "modules": ["学习通道", "行为模式", "后天环境校正"],
-      "scenarios": ["不主动学习", "没有目标", "学习没动力", "自驱力"],
-      "ageBands": ["7-12", "13-18"],
-      "retrievalKeywords": ["不主动", "自驱力", "没动力", "目标", "兴趣", "学习没意义", "学习动力"],
+      "modules": [
+        "学习通道",
+        "行为模式",
+        "后天环境校正"
+      ],
+      "scenarios": [
+        "不主动学习",
+        "没有目标",
+        "学习没动力",
+        "自驱力"
+      ],
+      "ageBands": [
+        "7-12",
+        "13-18"
+      ],
+      "retrievalKeywords": [
+        "不主动",
+        "自驱力",
+        "没动力",
+        "目标",
+        "兴趣",
+        "学习没意义",
+        "学习动力"
+      ],
       "sourceRefs": [
         {
           "sourceType": "teacher_transcript",
@@ -114,16 +217,40 @@
       ],
       "safeGrounding": "不主动不等于没有能力，也不等于没有未来。先找孩子愿意进入的兴趣点、可完成的小任务和被认可的方式。",
       "outputGuidance": "可以写成：孩子的主动性通常不是靠一句你要自觉长出来，而是从一个能进入状态的小入口开始。",
-      "doNotUse": ["没有自驱力", "天生不爱学习", "现在不改以后就来不及"]
+      "doNotUse": [
+        "没有自驱力",
+        "天生不爱学习",
+        "现在不改以后就来不及"
+      ]
     },
     {
       "id": "RKI-V1-005",
       "title": "被催就炸：识别亲子互动循环",
       "status": "auto_safe",
-      "modules": ["行为模式", "亲子沟通", "ATD"],
-      "scenarios": ["被催就炸", "一说就吵", "家长不知道怎么说", "亲子沟通"],
-      "ageBands": ["7-12", "13-18"],
-      "retrievalKeywords": ["催", "一催就炸", "一说就吵", "沟通", "不知道怎么说", "亲子", "反抗"],
+      "modules": [
+        "行为模式",
+        "亲子沟通",
+        "ATD"
+      ],
+      "scenarios": [
+        "被催就炸",
+        "一说就吵",
+        "家长不知道怎么说",
+        "亲子沟通"
+      ],
+      "ageBands": [
+        "7-12",
+        "13-18"
+      ],
+      "retrievalKeywords": [
+        "催",
+        "一催就炸",
+        "一说就吵",
+        "沟通",
+        "不知道怎么说",
+        "亲子",
+        "反抗"
+      ],
       "sourceRefs": [
         {
           "sourceType": "teacher_transcript",
@@ -138,16 +265,41 @@
       ],
       "safeGrounding": "不要把问题归因到父母或孩子。先拆互动循环：家长担心、提醒变密、孩子压力反弹、冲突升级。",
       "outputGuidance": "可以写成：你现在最难的可能不是不知道要不要管，而是不知道怎么管才不会把关系推得更紧。",
-      "doNotUse": ["家长太焦虑导致孩子这样", "孩子叛逆", "亲子关系已经出问题"]
+      "doNotUse": [
+        "家长太焦虑导致孩子这样",
+        "孩子叛逆",
+        "亲子关系已经出问题"
+      ]
     },
     {
       "id": "RKI-V1-006",
       "title": "怕难和不自信：用第一小步替代抗挫标签",
       "status": "auto_safe",
-      "modules": ["行为模式", "后天环境校正", "学习通道"],
-      "scenarios": ["怕难", "不自信", "怕输", "逃避挑战"],
-      "ageBands": ["7-12", "13-18", "19-25"],
-      "retrievalKeywords": ["怕难", "不自信", "怕输", "抗挫", "逃避", "挑战", "第一步"],
+      "modules": [
+        "行为模式",
+        "后天环境校正",
+        "学习通道"
+      ],
+      "scenarios": [
+        "怕难",
+        "不自信",
+        "怕输",
+        "逃避挑战"
+      ],
+      "ageBands": [
+        "7-12",
+        "13-18",
+        "19-25"
+      ],
+      "retrievalKeywords": [
+        "怕难",
+        "不自信",
+        "怕输",
+        "抗挫",
+        "逃避",
+        "挑战",
+        "第一步"
+      ],
       "sourceRefs": [
         {
           "sourceType": "source_mapping",
@@ -162,16 +314,42 @@
       ],
       "safeGrounding": "怕难可以先理解为保护性反应或需要更小的成功体验，不使用心理诊断或人格标签。",
       "outputGuidance": "可以写成：这不一定是孩子不敢面对，而是他需要先体验一个能完成的小台阶。",
-      "doNotUse": ["抗挫力差", "玻璃心", "心理脆弱", "以后竞争不过别人"]
+      "doNotUse": [
+        "抗挫力差",
+        "玻璃心",
+        "心理脆弱",
+        "以后竞争不过别人"
+      ]
     },
     {
       "id": "RKI-V1-007",
       "title": "不爱阅读：区分能力、兴趣和进入方式",
       "status": "auto_safe",
-      "modules": ["学习通道", "行为模式", "视觉功能", "听觉功能"],
-      "scenarios": ["不爱阅读", "阅读困难", "注意力飘", "学习方式"],
-      "ageBands": ["7-12", "13-18"],
-      "retrievalKeywords": ["阅读", "不爱看书", "注意力", "看不进去", "听", "看", "学习方式"],
+      "modules": [
+        "学习通道",
+        "行为模式",
+        "视觉功能",
+        "听觉功能"
+      ],
+      "scenarios": [
+        "不爱阅读",
+        "阅读困难",
+        "注意力飘",
+        "学习方式"
+      ],
+      "ageBands": [
+        "7-12",
+        "13-18"
+      ],
+      "retrievalKeywords": [
+        "阅读",
+        "不爱看书",
+        "注意力",
+        "看不进去",
+        "听",
+        "看",
+        "学习方式"
+      ],
       "sourceRefs": [
         {
           "sourceType": "teacher_transcript",
@@ -186,16 +364,41 @@
       ],
       "safeGrounding": "不爱阅读不直接等于能力不足。先看输入通道、兴趣入口、材料难度和阅读环境。",
       "outputGuidance": "可以写成：可以先分清孩子是不喜欢这类材料，还是需要换一种进入文字的方式。",
-      "doNotUse": ["阅读能力差", "以后语文会很差", "不读书就没前途"]
+      "doNotUse": [
+        "阅读能力差",
+        "以后语文会很差",
+        "不读书就没前途"
+      ]
     },
     {
       "id": "RKI-V1-008",
       "title": "报告线索保留：皮纹/指纹可以作为理解线索",
       "status": "auto_safe",
-      "modules": ["报告线索", "TRC", "ATD", "五大功能区"],
-      "scenarios": ["报告准不准", "皮纹线索", "指标解释", "严正声明"],
-      "ageBands": ["all"],
-      "retrievalKeywords": ["皮纹", "指纹", "报告", "线索", "指标", "准不准", "严正声明", "定论"],
+      "modules": [
+        "报告线索",
+        "TRC",
+        "ATD",
+        "五大功能区"
+      ],
+      "scenarios": [
+        "报告准不准",
+        "皮纹线索",
+        "指标解释",
+        "严正声明"
+      ],
+      "ageBands": [
+        "all"
+      ],
+      "retrievalKeywords": [
+        "皮纹",
+        "指纹",
+        "报告",
+        "线索",
+        "指标",
+        "准不准",
+        "严正声明",
+        "定论"
+      ],
       "sourceRefs": [
         {
           "sourceType": "source_mapping",
@@ -205,16 +408,43 @@
       ],
       "safeGrounding": "不要把皮纹/指纹完全抹掉。它们可以作为理解入口和观察线索，但不能作为决定依据、诊断依据或命运判断。",
       "outputGuidance": "可以写成：从这份报告线索看，可以先观察几个方向；它不是结论，而是帮助你回到真实场景里看。",
-      "doNotUse": ["指纹决定未来", "报告证明孩子就是", "皮纹可以判断疾病", "一定准确"]
+      "doNotUse": [
+        "指纹决定未来",
+        "报告证明孩子就是",
+        "皮纹可以判断疾病",
+        "一定准确"
+      ]
     },
     {
       "id": "RKI-V1-009",
       "title": "心理/医学相关：自动报告只降级，不判断",
       "status": "human_only",
-      "modules": ["安全边界", "降级输出", "转人工"],
-      "scenarios": ["心理疾病", "医学诊断", "ADHD", "抑郁", "焦虑"],
-      "ageBands": ["all"],
-      "retrievalKeywords": ["心理疾病", "精神", "ADHD", "多动", "抑郁", "焦虑", "诊断", "医学", "疾病"],
+      "modules": [
+        "安全边界",
+        "降级输出",
+        "转人工"
+      ],
+      "scenarios": [
+        "心理疾病",
+        "医学诊断",
+        "ADHD",
+        "抑郁",
+        "焦虑"
+      ],
+      "ageBands": [
+        "all"
+      ],
+      "retrievalKeywords": [
+        "心理疾病",
+        "精神",
+        "ADHD",
+        "多动",
+        "抑郁",
+        "焦虑",
+        "诊断",
+        "医学",
+        "疾病"
+      ],
       "sourceRefs": [
         {
           "sourceType": "source_mapping",
@@ -229,16 +459,40 @@
       ],
       "safeGrounding": "报告不能判断心理、医学或疾病问题。只能建议整理具体表现、持续时间、影响范围，必要时寻求专业支持。",
       "outputGuidance": "自动生成只可降级：这个问题不适合直接用报告判断，可以先整理具体情况并建议人工/专业支持。",
-      "doNotUse": ["孩子有心理问题", "疑似ADHD", "抑郁倾向", "精神问题"]
+      "doNotUse": [
+        "孩子有心理问题",
+        "疑似ADHD",
+        "抑郁倾向",
+        "精神问题"
+      ]
     },
     {
       "id": "RKI-V1-010",
       "title": "关系去留：不做分合结论，只拆沟通场景",
       "status": "human_only",
-      "modules": ["安全边界", "关系沟通", "降级输出"],
-      "scenarios": ["关系去留", "适不适合", "分手", "亲密关系"],
-      "ageBands": ["adult"],
-      "retrievalKeywords": ["分手", "继续在一起", "适不适合", "关系", "伴侣", "婚姻", "谁对谁错"],
+      "modules": [
+        "安全边界",
+        "关系沟通",
+        "降级输出"
+      ],
+      "scenarios": [
+        "关系去留",
+        "适不适合",
+        "分手",
+        "亲密关系"
+      ],
+      "ageBands": [
+        "adult"
+      ],
+      "retrievalKeywords": [
+        "分手",
+        "继续在一起",
+        "适不适合",
+        "关系",
+        "伴侣",
+        "婚姻",
+        "谁对谁错"
+      ],
       "sourceRefs": [
         {
           "sourceType": "source_mapping",
@@ -248,16 +502,40 @@
       ],
       "safeGrounding": "报告不能判断关系去留或谁对谁错。可以帮助用户整理冲突场景、需求表达和沟通方式。",
       "outputGuidance": "自动生成只可降级：这个问题更适合把一个具体冲突场景拆清楚，不适合直接做关系决定。",
-      "doNotUse": ["应该分手", "不适合继续", "注定不合", "对方不适合你"]
+      "doNotUse": [
+        "应该分手",
+        "不适合继续",
+        "注定不合",
+        "对方不适合你"
+      ]
     },
     {
       "id": "RKI-V1-011",
       "title": "企业/学校筛选：不做录用、淘汰、分班或分层",
       "status": "blocked",
-      "modules": ["安全边界", "企业学校禁用"],
-      "scenarios": ["招聘筛选", "学校分层", "是否录用", "是否分班"],
-      "ageBands": ["all"],
-      "retrievalKeywords": ["录用", "淘汰", "招聘", "候选人", "分班", "分层", "筛选", "重点培养"],
+      "modules": [
+        "安全边界",
+        "企业学校禁用"
+      ],
+      "scenarios": [
+        "招聘筛选",
+        "学校分层",
+        "是否录用",
+        "是否分班"
+      ],
+      "ageBands": [
+        "all"
+      ],
+      "retrievalKeywords": [
+        "录用",
+        "淘汰",
+        "招聘",
+        "候选人",
+        "分班",
+        "分层",
+        "筛选",
+        "重点培养"
+      ],
       "sourceRefs": [
         {
           "sourceType": "source_mapping",
@@ -267,16 +545,40 @@
       ],
       "safeGrounding": "报告不能用于企业或学校的人事筛选、学生分层、录用淘汰。只可在授权与合规前提下讨论支持策略。",
       "outputGuidance": "自动输出应阻断或转人工：这份报告不能用于录用、淘汰、分班或筛选。",
-      "doNotUse": ["适合录用", "建议淘汰", "可以分班", "不适合培养"]
+      "doNotUse": [
+        "适合录用",
+        "建议淘汰",
+        "可以分班",
+        "不适合培养"
+      ]
     },
     {
       "id": "RKI-V1-012",
       "title": "人工解读承接：不硬销售，不制造焦虑",
       "status": "auto_safe",
-      "modules": ["人工解读承接", "CTA", "安全边界"],
-      "scenarios": ["需要人工解读", "问题反复出现", "复杂场景", "报告不确定"],
-      "ageBands": ["all"],
-      "retrievalKeywords": ["人工", "解读", "复核", "复杂", "反复", "不知道怎么办", "一对一"],
+      "modules": [
+        "人工解读承接",
+        "CTA",
+        "安全边界"
+      ],
+      "scenarios": [
+        "需要人工解读",
+        "问题反复出现",
+        "复杂场景",
+        "报告不确定"
+      ],
+      "ageBands": [
+        "all"
+      ],
+      "retrievalKeywords": [
+        "人工",
+        "解读",
+        "复核",
+        "复杂",
+        "反复",
+        "不知道怎么办",
+        "一对一"
+      ],
       "sourceRefs": [
         {
           "sourceType": "report_library",
@@ -291,16 +593,42 @@
       ],
       "safeGrounding": "人工解读是把真实场景拆细，不是给确定性结论，也不是制造焦虑。",
       "outputGuidance": "可以写成：如果这个问题反复出现，可以人工一起看一个具体场景，把报告线索和现实表现对齐。",
-      "doNotUse": ["不解读会耽误孩子", "必须马上处理", "专家能给最终答案"]
+      "doNotUse": [
+        "不解读会耽误孩子",
+        "必须马上处理",
+        "专家能给最终答案"
+      ]
     },
     {
       "id": "RKI-V1-013",
       "title": "正式报告语言底座：沐海星辰语气、四大前提与输出规则",
       "status": "rewrite_required",
-      "modules": ["语言人格", "严正申明", "安全边界", "输出结构"],
-      "scenarios": ["报告语气", "系统提示词", "人类化表达", "四大前提", "报告结构"],
-      "ageBands": ["all"],
-      "retrievalKeywords": ["SYSTEM_PROMPT", "沐海星辰", "四大前提", "严正申明", "报告语气", "输出规则", "人类化表达", "不贴标签"],
+      "modules": [
+        "语言人格",
+        "严正申明",
+        "安全边界",
+        "输出结构"
+      ],
+      "scenarios": [
+        "报告语气",
+        "系统提示词",
+        "人类化表达",
+        "四大前提",
+        "报告结构"
+      ],
+      "ageBands": [
+        "all"
+      ],
+      "retrievalKeywords": [
+        "SYSTEM_PROMPT",
+        "沐海星辰",
+        "四大前提",
+        "严正申明",
+        "报告语气",
+        "输出规则",
+        "人类化表达",
+        "不贴标签"
+      ],
       "sourceRefs": [
         {
           "sourceType": "obsidian_system_card",
@@ -315,16 +643,46 @@
       ],
       "safeGrounding": "报告语言必须先看见人，再解释数据；数值没有好坏，不预测未来，不和别人比较，不贴标签。",
       "outputGuidance": "用于生成报告的语言底座：温和、具体、有人味，禁止系统腔、诊断腔和命定化表达。",
-      "doNotUse": ["本系统认为", "模型判断", "数据证明", "天生就是", "一定会"]
+      "doNotUse": [
+        "本系统认为",
+        "模型判断",
+        "数据证明",
+        "天生就是",
+        "一定会"
+      ]
     },
     {
       "id": "RKI-V1-014",
       "title": "正式报告硬编码规则底座：十大能力、五功能区、RULE-F04、年龄段模块",
       "status": "rewrite_required",
-      "modules": ["五大功能区", "十大能力", "兴趣班建议", "年龄段适配"],
-      "scenarios": ["功能区解释", "手指能力映射", "兴趣班", "职业方向", "年龄段报告"],
-      "ageBands": ["all"],
-      "retrievalKeywords": ["ABILITY_MAP", "RULE_F04", "RULE-N14", "精神功能", "思维功能", "体觉功能", "听觉功能", "视觉功能", "十大能力", "兴趣班"],
+      "modules": [
+        "五大功能区",
+        "十大能力",
+        "兴趣班建议",
+        "年龄段适配"
+      ],
+      "scenarios": [
+        "功能区解释",
+        "手指能力映射",
+        "兴趣班",
+        "职业方向",
+        "年龄段报告"
+      ],
+      "ageBands": [
+        "all"
+      ],
+      "retrievalKeywords": [
+        "ABILITY_MAP",
+        "RULE_F04",
+        "RULE-N14",
+        "精神功能",
+        "思维功能",
+        "体觉功能",
+        "听觉功能",
+        "视觉功能",
+        "十大能力",
+        "兴趣班"
+      ],
       "sourceRefs": [
         {
           "sourceType": "obsidian_system_card",
@@ -339,16 +697,47 @@
       ],
       "safeGrounding": "十大能力与五功能区是报告解释的计算底座；高低值只和个人均值比，不能直接作为优劣或筛选依据。",
       "outputGuidance": "用于解释手指、功能区、兴趣班和年龄段适配；前台必须转成人话，不裸露 RULE_F04、ABILITY_MAP 等内部术语。",
-      "doNotUse": ["RULE_F04", "ABILITY_MAP", "硬编码", "高低决定优劣", "按这个筛选"]
+      "doNotUse": [
+        "RULE_F04",
+        "ABILITY_MAP",
+        "硬编码",
+        "高低决定优劣",
+        "按这个筛选"
+      ]
     },
     {
       "id": "RKI-V1-015",
       "title": "正式报告输入契约：engineResult、fingers、selectedIssues 如何进入报告",
       "status": "rewrite_required",
-      "modules": ["Schema", "报告生成流程", "用户问题", "输出结构"],
-      "scenarios": ["engineResult", "selectedIssues", "用户自选问题", "报告生成链路", "结构防漂移"],
-      "ageBands": ["all"],
-      "retrievalKeywords": ["engineResult", "selectedIssues", "fingers", "用户问题", "四要素自然表达", "机制解释", "具体做法", "积极意义", "必给模块", "输入契约", "报告生成"],
+      "modules": [
+        "Schema",
+        "报告生成流程",
+        "用户问题",
+        "输出结构"
+      ],
+      "scenarios": [
+        "engineResult",
+        "selectedIssues",
+        "用户自选问题",
+        "报告生成链路",
+        "结构防漂移"
+      ],
+      "ageBands": [
+        "all"
+      ],
+      "retrievalKeywords": [
+        "engineResult",
+        "selectedIssues",
+        "fingers",
+        "用户问题",
+        "四要素自然表达",
+        "机制解释",
+        "具体做法",
+        "积极意义",
+        "必给模块",
+        "输入契约",
+        "报告生成"
+      ],
       "sourceRefs": [
         {
           "sourceType": "obsidian_system_card",
@@ -363,16 +752,50 @@
       ],
       "safeGrounding": "正式报告生成依赖 engineResult、fingers、age 和 selectedIssues；用户自选问题必须围绕报告结构扩展，不应改变安全边界。",
       "outputGuidance": "用于约束报告结构和用户问题生成方式；issue 内部应包含机制解释、具体做法、积极意义、继续观察，但前台标题要自然变化，避免八股文。",
-      "doNotUse": ["随意增删模块", "只输出一句总结", "忽略用户问题", "把输入字段暴露给用户"]
+      "doNotUse": [
+        "随意增删模块",
+        "只输出一句总结",
+        "忽略用户问题",
+        "把输入字段暴露给用户"
+      ]
     },
     {
       "id": "RKI-V1-016",
       "title": "五大功能区单指解释规则：禁止两指合计误判",
       "status": "auto_safe",
-      "modules": ["五大功能区", "精神功能", "思维功能", "体觉功能", "听觉功能", "视觉功能"],
-      "scenarios": ["功能区解释", "单指比较", "报告纠偏", "正式报告"],
-      "ageBands": ["all"],
-      "retrievalKeywords": ["五大功能区", "单指", "个人均值", "不能相加", "右拇", "左拇", "右食", "左食", "右中", "左中", "右无名", "左无名", "右小", "左小"],
+      "modules": [
+        "五大功能区",
+        "精神功能",
+        "思维功能",
+        "体觉功能",
+        "听觉功能",
+        "视觉功能"
+      ],
+      "scenarios": [
+        "功能区解释",
+        "单指比较",
+        "报告纠偏",
+        "正式报告"
+      ],
+      "ageBands": [
+        "all"
+      ],
+      "retrievalKeywords": [
+        "五大功能区",
+        "单指",
+        "个人均值",
+        "不能相加",
+        "右拇",
+        "左拇",
+        "右食",
+        "左食",
+        "右中",
+        "左中",
+        "右无名",
+        "左无名",
+        "右小",
+        "左小"
+      ],
       "sourceRefs": [
         {
           "sourceType": "report_library",
@@ -392,16 +815,45 @@
       ],
       "safeGrounding": "五大功能区必须拆成五个独立模块，每个模块分别解释两根手指；每根手指都单独和个人均值比较，再解释左右差异。功能区合计只能用于总览，不能替代单指判断。",
       "outputGuidance": "报告写五大功能区时必须说明对应两根手指、各自高低表现、左右谁更容易先被调动、优势与应用建议；禁止写成某功能合计值高于个人均值。",
-      "doNotUse": ["两根手指相加判断高低", "某功能总分高于个人均值", "这个功能决定", "高低代表好坏"]
+      "doNotUse": [
+        "两根手指相加判断高低",
+        "某功能总分高于个人均值",
+        "这个功能决定",
+        "高低代表好坏"
+      ]
     },
     {
       "id": "RKI-V1-017",
       "title": "精神功能：右拇开创力与左拇管理力",
       "status": "auto_safe",
-      "modules": ["精神功能", "五大功能区", "行为模式"],
-      "scenarios": ["目标感", "主动性", "自我管理", "承压", "拖延", "内耗"],
-      "ageBands": ["all"],
-      "retrievalKeywords": ["精神功能", "右拇", "左拇", "开创力", "目标感", "管理力", "自我纪律", "承压", "双高", "双低"],
+      "modules": [
+        "精神功能",
+        "五大功能区",
+        "行为模式"
+      ],
+      "scenarios": [
+        "目标感",
+        "主动性",
+        "自我管理",
+        "承压",
+        "拖延",
+        "内耗"
+      ],
+      "ageBands": [
+        "all"
+      ],
+      "retrievalKeywords": [
+        "精神功能",
+        "右拇",
+        "左拇",
+        "开创力",
+        "目标感",
+        "管理力",
+        "自我纪律",
+        "承压",
+        "双高",
+        "双低"
+      ],
       "sourceRefs": [
         {
           "sourceType": "report_library",
@@ -411,16 +863,47 @@
       ],
       "safeGrounding": "右拇代表向外发起、目标感和开创力；左拇代表向内管理、自我纪律和承压。精神功能低不代表没能力，而是目标和自律更需要通过小胜利、外部结构和支持被点燃。",
       "outputGuidance": "解释精神功能时要分别写右拇和左拇。右高左低可写先点火再搭轨道；左高右低可写不抢发起权但能稳住责任；双低要避免否定，强调外部结构和小目标。",
-      "doNotUse": ["没目标", "没有自律", "没能力", "天生懒", "必须高压"]
+      "doNotUse": [
+        "没目标",
+        "没有自律",
+        "没能力",
+        "天生懒",
+        "必须高压"
+      ]
     },
     {
       "id": "RKI-V1-018",
       "title": "思维功能：右食逻辑与左食创意空间",
       "status": "auto_safe",
-      "modules": ["思维功能", "五大功能区", "学习方法"],
-      "scenarios": ["文理选科", "偏科", "表达", "创意", "空间想象", "逻辑推理"],
-      "ageBands": ["all"],
-      "retrievalKeywords": ["思维功能", "右食", "左食", "逻辑", "语言逻辑", "数学", "空间想象", "创意", "文理", "选科", "偏科"],
+      "modules": [
+        "思维功能",
+        "五大功能区",
+        "学习方法"
+      ],
+      "scenarios": [
+        "文理选科",
+        "偏科",
+        "表达",
+        "创意",
+        "空间想象",
+        "逻辑推理"
+      ],
+      "ageBands": [
+        "all"
+      ],
+      "retrievalKeywords": [
+        "思维功能",
+        "右食",
+        "左食",
+        "逻辑",
+        "语言逻辑",
+        "数学",
+        "空间想象",
+        "创意",
+        "文理",
+        "选科",
+        "偏科"
+      ],
       "sourceRefs": [
         {
           "sourceType": "report_library",
@@ -435,16 +918,46 @@
       ],
       "safeGrounding": "右食侧重逻辑、规则、语言和因果；左食侧重空间、画面、创意和策略。右食高于左食可能嘴快脑图未跟上，左食高于右食可能想得多但表达只出来一部分。",
       "outputGuidance": "用于文理选科、偏科、学习方法、表达和创意场景。建议先观察学习入口，再用画图、复述、公式步骤、空间材料等方式调整。",
-      "doNotUse": ["适合文科", "适合理科", "保证选科正确", "逻辑低就是笨", "创意低没有想象力"]
+      "doNotUse": [
+        "适合文科",
+        "适合理科",
+        "保证选科正确",
+        "逻辑低就是笨",
+        "创意低没有想象力"
+      ]
     },
     {
       "id": "RKI-V1-019",
       "title": "体觉功能：右中精细操作与左中大运动耐力",
       "status": "auto_safe",
-      "modules": ["体觉功能", "五大功能区", "行为模式"],
-      "scenarios": ["写作业拖拉", "写字慢", "手工", "运动", "坚持", "执行力"],
-      "ageBands": ["all"],
-      "retrievalKeywords": ["体觉功能", "右中", "左中", "拖拉", "写字", "手工", "小肌肉", "大运动", "耐力", "执行力"],
+      "modules": [
+        "体觉功能",
+        "五大功能区",
+        "行为模式"
+      ],
+      "scenarios": [
+        "写作业拖拉",
+        "写字慢",
+        "手工",
+        "运动",
+        "坚持",
+        "执行力"
+      ],
+      "ageBands": [
+        "all"
+      ],
+      "retrievalKeywords": [
+        "体觉功能",
+        "右中",
+        "左中",
+        "拖拉",
+        "写字",
+        "手工",
+        "小肌肉",
+        "大运动",
+        "耐力",
+        "执行力"
+      ],
       "sourceRefs": [
         {
           "sourceType": "report_library",
@@ -459,16 +972,46 @@
       ],
       "safeGrounding": "右中对应小肌肉精细、写字、手工和细节操作；左中对应大运动、身体节奏、耐力和坚持。拖拉可能是精细操作或任务启动慢，不等于懒。",
       "outputGuidance": "用于作业拖拉、写字慢、动手操作、运动和坚持场景。要区分能动和能写、能运动和能精细操作不是一回事。",
-      "doNotUse": ["懒", "没执行力", "身体有问题", "多动症", "没规矩"]
+      "doNotUse": [
+        "懒",
+        "没执行力",
+        "身体有问题",
+        "多动症",
+        "没规矩"
+      ]
     },
     {
       "id": "RKI-V1-020",
       "title": "听觉功能：右无名语言表达与左无名音感语气",
       "status": "auto_safe",
-      "modules": ["听觉功能", "五大功能区", "沟通"],
-      "scenarios": ["听不进去", "复述", "语言表达", "语气敏感", "沟通冲突", "音乐"],
-      "ageBands": ["all"],
-      "retrievalKeywords": ["听觉功能", "右无名", "左无名", "语言表达", "记忆", "复述", "音感", "语气", "言外之意", "共情"],
+      "modules": [
+        "听觉功能",
+        "五大功能区",
+        "沟通"
+      ],
+      "scenarios": [
+        "听不进去",
+        "复述",
+        "语言表达",
+        "语气敏感",
+        "沟通冲突",
+        "音乐"
+      ],
+      "ageBands": [
+        "all"
+      ],
+      "retrievalKeywords": [
+        "听觉功能",
+        "右无名",
+        "左无名",
+        "语言表达",
+        "记忆",
+        "复述",
+        "音感",
+        "语气",
+        "言外之意",
+        "共情"
+      ],
       "sourceRefs": [
         {
           "sourceType": "report_library",
@@ -478,16 +1021,47 @@
       ],
       "safeGrounding": "右无名侧重语言表达、口头记忆和听后复述；左无名侧重音感、语气、节奏、言外之意和情绪声调。听觉低不是听力问题，语气敏感也不是心理诊断。",
       "outputGuidance": "用于沟通、听课、复述、语言学习、语气敏感和亲子冲突场景。低值建议写下重点、一次说一件事；高敏感建议降低语气压力。",
-      "doNotUse": ["听力不好", "心理脆弱", "情绪异常", "玻璃心", "精神问题"]
+      "doNotUse": [
+        "听力不好",
+        "心理脆弱",
+        "情绪异常",
+        "玻璃心",
+        "精神问题"
+      ]
     },
     {
       "id": "RKI-V1-021",
       "title": "视觉功能：右小识人辨识与左小图像审美",
       "status": "auto_safe",
-      "modules": ["视觉功能", "五大功能区", "学习通道"],
-      "scenarios": ["脸盲", "方向感", "审美", "画画", "图像思考", "观察"],
-      "ageBands": ["all"],
-      "retrievalKeywords": ["视觉功能", "右小", "左小", "识人", "察言观色", "方向感", "脸盲", "图像", "审美", "画画", "色彩"],
+      "modules": [
+        "视觉功能",
+        "五大功能区",
+        "学习通道"
+      ],
+      "scenarios": [
+        "脸盲",
+        "方向感",
+        "审美",
+        "画画",
+        "图像思考",
+        "观察"
+      ],
+      "ageBands": [
+        "all"
+      ],
+      "retrievalKeywords": [
+        "视觉功能",
+        "右小",
+        "左小",
+        "识人",
+        "察言观色",
+        "方向感",
+        "脸盲",
+        "图像",
+        "审美",
+        "画画",
+        "色彩"
+      ],
       "sourceRefs": [
         {
           "sourceType": "report_library",
@@ -497,16 +1071,46 @@
       ],
       "safeGrounding": "右小侧重外部辨识、识人、察色、方向和环境线索；左小侧重图像思考、色彩审美和内在画面。会画画和找东西慢可以同时存在，因为两侧入口不同。",
       "outputGuidance": "用于视觉学习、审美、方向感、识人和图像表达场景。要分别解释右小和左小，不把视觉功能整体高低一笔带过。",
-      "doNotUse": ["没眼力见", "没有审美", "视觉差", "一定适合设计", "一定路痴"]
+      "doNotUse": [
+        "没眼力见",
+        "没有审美",
+        "视觉差",
+        "一定适合设计",
+        "一定路痴"
+      ]
     },
     {
       "id": "RKI-V1-022",
       "title": "年龄阶段问题库：先按人生阶段切换问题入口",
       "status": "auto_safe",
-      "modules": ["年龄段适配", "用户问题", "行为模式"],
-      "scenarios": ["问题选择", "孩子行为", "成人自我理解", "高中升学", "职业阶段"],
-      "ageBands": ["all"],
-      "retrievalKeywords": ["年龄阶段", "幼儿", "小学", "初中", "高中", "大学", "成人", "职场", "问题库", "常见问题", "行为理解"],
+      "modules": [
+        "年龄段适配",
+        "用户问题",
+        "行为模式"
+      ],
+      "scenarios": [
+        "问题选择",
+        "孩子行为",
+        "成人自我理解",
+        "高中升学",
+        "职业阶段"
+      ],
+      "ageBands": [
+        "all"
+      ],
+      "retrievalKeywords": [
+        "年龄阶段",
+        "幼儿",
+        "小学",
+        "初中",
+        "高中",
+        "大学",
+        "成人",
+        "职场",
+        "问题库",
+        "常见问题",
+        "行为理解"
+      ],
       "sourceRefs": [
         {
           "sourceType": "report_library",
@@ -516,16 +1120,46 @@
       ],
       "safeGrounding": "问题入口必须先看年龄阶段。幼儿、小学、初中、高中、大学、成人和中场阶段面对的问题不同，不能共用同一批选项。成年人报告不得出现孩子称谓。",
       "outputGuidance": "用于前台问题选择和报告自选问题生成。先识别年龄段，再选择问题库、称谓和风险等级；自由输入命中高风险时必须提升风险。",
-      "doNotUse": ["所有年龄同一批问题", "成年人报告写孩子", "幼儿报告写升学职业", "统一模板套用"]
+      "doNotUse": [
+        "所有年龄同一批问题",
+        "成年人报告写孩子",
+        "幼儿报告写升学职业",
+        "统一模板套用"
+      ]
     },
     {
       "id": "RKI-V1-023",
       "title": "用户四问差异化回答：每个问题必须按类型和年龄生成不同答案",
       "status": "auto_safe",
-      "modules": ["用户问题", "输出结构", "年龄段适配", "行为模式"],
-      "scenarios": ["四个问题", "selectedIssues", "自定义问题", "问题回答", "报告末尾"],
-      "ageBands": ["all"],
-      "retrievalKeywords": ["selectedIssues", "四个问题", "用户问题", "差异化回答", "文理选科", "偏科", "升学", "亲子沟通", "职业方向", "拖延", "关系去留"],
+      "modules": [
+        "用户问题",
+        "输出结构",
+        "年龄段适配",
+        "行为模式"
+      ],
+      "scenarios": [
+        "四个问题",
+        "selectedIssues",
+        "自定义问题",
+        "问题回答",
+        "报告末尾"
+      ],
+      "ageBands": [
+        "all"
+      ],
+      "retrievalKeywords": [
+        "selectedIssues",
+        "四个问题",
+        "用户问题",
+        "差异化回答",
+        "文理选科",
+        "偏科",
+        "升学",
+        "亲子沟通",
+        "职业方向",
+        "拖延",
+        "关系去留"
+      ],
       "sourceRefs": [
         {
           "sourceType": "report_library",
@@ -540,7 +1174,3512 @@
       ],
       "safeGrounding": "用户四个问题不能只替换标题、正文套同一段。每个问题必须结合年龄、问题类型、用户原话和报告线索生成差异化回答；高风险问题只降级或转人工。",
       "outputGuidance": "四问回答采用卡型制：行为类可三张卡，学习类可观察清单，重大决策类先边界后维度，心理/医学类只安全承接，关系类拆具体场景。内部保留机制、动作、积极意义、继续观察，但前台不强制三段式。",
-      "doNotUse": ["四页正文相同", "只替换问题标题", "所有问题强制三段", "保证升学", "判断分手", "心理诊断", "录用淘汰建议"]
+      "doNotUse": [
+        "四页正文相同",
+        "只替换问题标题",
+        "所有问题强制三段",
+        "保证升学",
+        "判断分手",
+        "心理诊断",
+        "录用淘汰建议"
+      ]
+    },
+    {
+      "id": "RKI-V1-024",
+      "title": "精神功能单指细分：右拇目标发起，左拇自我管理",
+      "status": "auto_safe",
+      "modules": [
+        "精神功能",
+        "五大功能区",
+        "行为模式"
+      ],
+      "scenarios": [
+        "目标感",
+        "主动性",
+        "自律",
+        "管理力",
+        "拖延",
+        "责任感"
+      ],
+      "ageBands": [
+        "all"
+      ],
+      "retrievalKeywords": [
+        "精神功能",
+        "右拇",
+        "左拇",
+        "R1",
+        "L1",
+        "开创力",
+        "目标感",
+        "管理力",
+        "自律",
+        "责任感",
+        "发起",
+        "承压"
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "obsidian",
+          "path": "/Users/gyl0322gmail.com/AI-CEO-System/AI-CEO-Vault/知识库/宋老师天赋测评教学/专业数值篇第八讲-五大功能区与精神功能.md",
+          "locator": "精神功能左右拇指"
+        },
+        {
+          "sourceType": "report_library",
+          "path": "docs/aipiwen_report_system/05_language_library_话术库/AIPIWEN_ReportLibrary_V1.2_五大功能区独立知识卡.md",
+          "locator": "第3节 精神功能"
+        }
+      ],
+      "safeGrounding": "精神功能不能把左右拇指相加后下结论。右拇更像向外发起、目标感、带头和开创；左拇更像向内管理、自我纪律、承压和收尾。右高左低时先点火后补轨道，左高右低时先接住责任再慢慢启动。",
+      "outputGuidance": "用于解释目标感、自律、责任感、拖延和执行问题。每次必须分别说右拇与个人均值、左拇与个人均值，再解释左右差异。",
+      "doNotUse": [
+        "精神功能总分高低决定能力",
+        "天生领导",
+        "没目标",
+        "没自律",
+        "没有责任心"
+      ]
+    },
+    {
+      "id": "RKI-V1-025",
+      "title": "思维功能单指细分：右食逻辑推理，左食创意空间",
+      "status": "auto_safe",
+      "modules": [
+        "思维功能",
+        "五大功能区",
+        "学习方法"
+      ],
+      "scenarios": [
+        "逻辑",
+        "数学",
+        "文理选科",
+        "创意",
+        "空间想象",
+        "表达"
+      ],
+      "ageBands": [
+        "all"
+      ],
+      "retrievalKeywords": [
+        "思维功能",
+        "右食",
+        "左食",
+        "R2",
+        "L2",
+        "逻辑",
+        "数学",
+        "推理",
+        "创意",
+        "空间",
+        "策略",
+        "文理",
+        "选科"
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "obsidian",
+          "path": "/Users/gyl0322gmail.com/AI-CEO-System/AI-CEO-Vault/知识库/宋老师天赋测评教学/专业数值篇-思维功能.md",
+          "locator": "思维功能"
+        },
+        {
+          "sourceType": "report_library",
+          "path": "docs/aipiwen_report_system/05_language_library_话术库/AIPIWEN_ReportLibrary_V1.2_五大功能区独立知识卡.md",
+          "locator": "第4节 思维功能"
+        }
+      ],
+      "safeGrounding": "右食侧重规则、推理、因果、数学和把话讲清楚；左食侧重画面、空间、构思、创意和策略。右食高不等于只能学理，左食高也不等于只能走艺术，要回到具体科目任务和学习方式验证。",
+      "outputGuidance": "用于文理选科、偏科、表达、创意和解题方式。输出时要讲“哪种思考入口更顺”，不做升学或专业保证。",
+      "doNotUse": [
+        "保证适合理科",
+        "保证适合文科",
+        "天生数学好",
+        "没有逻辑",
+        "没有创意"
+      ]
+    },
+    {
+      "id": "RKI-V1-026",
+      "title": "体觉功能单指细分：右中精细操作，左中身体耐力",
+      "status": "auto_safe",
+      "modules": [
+        "体觉功能",
+        "五大功能区",
+        "行为模式"
+      ],
+      "scenarios": [
+        "写字慢",
+        "作业拖拉",
+        "动手",
+        "运动",
+        "坚持",
+        "坐不住"
+      ],
+      "ageBands": [
+        "all"
+      ],
+      "retrievalKeywords": [
+        "体觉功能",
+        "右中",
+        "左中",
+        "R3",
+        "L3",
+        "精细操作",
+        "小肌肉",
+        "写字",
+        "手工",
+        "大运动",
+        "耐力",
+        "坚持",
+        "坐不住"
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "obsidian",
+          "path": "/Users/gyl0322gmail.com/AI-CEO-System/AI-CEO-Vault/知识库/宋老师天赋测评教学/专业数值篇-体觉听觉视觉三大功能区及天赋应用.md",
+          "locator": "体觉功能"
+        },
+        {
+          "sourceType": "report_library",
+          "path": "docs/aipiwen_report_system/05_language_library_话术库/AIPIWEN_ReportLibrary_V1.2_五大功能区独立知识卡.md",
+          "locator": "第5节 体觉功能"
+        }
+      ],
+      "safeGrounding": "右中更偏精细操作、写字、手工和手部细节；左中更偏身体节奏、大运动、耐力和坚持。写作业拖拉可能卡在启动、精细书写、身体坐稳或任务收尾，不能一句话归为懒。",
+      "outputGuidance": "用于作业拖拉、写字慢、手工、运动和执行类问题。建议从第一个动作、任务颗粒度和身体节奏支持入手。",
+      "doNotUse": [
+        "懒",
+        "多动症",
+        "身体有问题",
+        "没执行力",
+        "笨手笨脚"
+      ]
+    },
+    {
+      "id": "RKI-V1-027",
+      "title": "听觉功能单指细分：右无名表达复述，左无名语气音感",
+      "status": "auto_safe",
+      "modules": [
+        "听觉功能",
+        "五大功能区",
+        "沟通"
+      ],
+      "scenarios": [
+        "听不进去",
+        "复述",
+        "语言表达",
+        "语气敏感",
+        "沟通冲突",
+        "音乐"
+      ],
+      "ageBands": [
+        "all"
+      ],
+      "retrievalKeywords": [
+        "听觉功能",
+        "右无名",
+        "左无名",
+        "R4",
+        "L4",
+        "语言表达",
+        "复述",
+        "听后记忆",
+        "音感",
+        "语气",
+        "言外之意",
+        "音乐"
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "obsidian",
+          "path": "/Users/gyl0322gmail.com/AI-CEO-System/AI-CEO-Vault/知识库/宋老师天赋测评教学/落地应用-体觉听觉视觉三感官功能组合.md",
+          "locator": "听觉功能"
+        },
+        {
+          "sourceType": "report_library",
+          "path": "docs/aipiwen_report_system/05_language_library_话术库/AIPIWEN_ReportLibrary_V1.2_五大功能区独立知识卡.md",
+          "locator": "第6节 听觉功能"
+        }
+      ],
+      "safeGrounding": "右无名偏语言表达、口头记忆、听后复述；左无名偏音感、语气、节奏、言外之意和情绪声调。听觉低不是听力问题，语气敏感也不是心理问题。",
+      "outputGuidance": "用于沟通、听课、复述和语气冲突。低值建议一次说一件事、写下重点；高敏感建议降低语气压力。",
+      "doNotUse": [
+        "听力不好",
+        "玻璃心",
+        "心理脆弱",
+        "情绪异常",
+        "精神问题"
+      ]
+    },
+    {
+      "id": "RKI-V1-028",
+      "title": "视觉功能单指细分：右小外部辨识，左小内在图像",
+      "status": "auto_safe",
+      "modules": [
+        "视觉功能",
+        "五大功能区",
+        "学习通道"
+      ],
+      "scenarios": [
+        "图像学习",
+        "审美",
+        "方向感",
+        "识人",
+        "脸盲",
+        "观察力"
+      ],
+      "ageBands": [
+        "all"
+      ],
+      "retrievalKeywords": [
+        "视觉功能",
+        "右小",
+        "左小",
+        "R5",
+        "L5",
+        "识人",
+        "方向感",
+        "脸盲",
+        "图像",
+        "审美",
+        "画画",
+        "色彩",
+        "观察"
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "obsidian",
+          "path": "/Users/gyl0322gmail.com/AI-CEO-System/AI-CEO-Vault/知识库/宋老师天赋测评教学/专业数值篇-体觉听觉视觉三大功能区及天赋应用.md",
+          "locator": "视觉功能"
+        },
+        {
+          "sourceType": "report_library",
+          "path": "docs/aipiwen_report_system/05_language_library_话术库/AIPIWEN_ReportLibrary_V1.2_五大功能区独立知识卡.md",
+          "locator": "第7节 视觉功能"
+        }
+      ],
+      "safeGrounding": "右小偏外部辨识、识人、察色、方向和环境线索；左小偏内在图像、色彩、审美和画面构思。会画画和找东西慢可以同时存在，因为两侧视觉入口不同。",
+      "outputGuidance": "用于视觉学习、审美、方向感、识人和图像表达。必须分别解释右小与左小，不把视觉功能整体高低一笔带过。",
+      "doNotUse": [
+        "没眼力见",
+        "没有审美",
+        "一定适合设计",
+        "一定路痴",
+        "视觉差"
+      ]
+    },
+    {
+      "id": "RKI-V1-029",
+      "title": "小学拖拉与阅读：先找启动入口和学习通道",
+      "status": "auto_safe",
+      "modules": [
+        "年龄段适配",
+        "用户问题",
+        "行为模式",
+        "学习通道"
+      ],
+      "scenarios": [
+        "小学",
+        "写作业拖拉",
+        "一催就炸",
+        "不爱阅读",
+        "看书坐不住"
+      ],
+      "ageBands": [
+        "7-12"
+      ],
+      "retrievalKeywords": [
+        "小学",
+        "7-12",
+        "写作业",
+        "拖拉",
+        "磨蹭",
+        "一催就炸",
+        "不爱阅读",
+        "看书",
+        "学习通道",
+        "作业"
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "report_library",
+          "path": "docs/aipiwen_report_system/05_language_library_话术库/AIPIWEN_ReportLibrary_V1.2_年龄阶段问题库.md",
+          "locator": "第4节 小学问题库"
+        },
+        {
+          "sourceType": "report_library",
+          "path": "docs/aipiwen_report_system/05_language_library_话术库/AIPIWEN_ReportLibrary_V1.2_用户四问差异化回答库.md",
+          "locator": "第4节 小学回答素材"
+        }
+      ],
+      "safeGrounding": "小学阶段的拖拉、阅读困难和一催就炸，优先看任务启动、颗粒度、学习通道和亲子互动循环。先把任务缩到第一个动作，再观察是看、听、动手哪个入口更顺。",
+      "outputGuidance": "用于 7-12 岁家长问题。语气要像帮家长看见孩子，不说懒、不说笨、不说没希望。",
+      "doNotUse": [
+        "孩子懒",
+        "语文没希望",
+        "脾气差",
+        "不认真",
+        "家长方法错"
+      ]
+    },
+    {
+      "id": "RKI-V1-030",
+      "title": "初中青春期沟通：把顶嘴看作边界与表达练习",
+      "status": "auto_safe",
+      "modules": [
+        "年龄段适配",
+        "用户问题",
+        "亲子沟通",
+        "行为模式"
+      ],
+      "scenarios": [
+        "初中",
+        "顶嘴",
+        "叛逆",
+        "一说就吵",
+        "手机游戏",
+        "同伴关系"
+      ],
+      "ageBands": [
+        "13-15"
+      ],
+      "retrievalKeywords": [
+        "初中",
+        "13-15",
+        "青春期",
+        "顶嘴",
+        "叛逆",
+        "一说就吵",
+        "亲子沟通",
+        "手机",
+        "游戏",
+        "同伴"
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "report_library",
+          "path": "docs/aipiwen_report_system/05_language_library_话术库/AIPIWEN_ReportLibrary_V1.2_年龄阶段问题库.md",
+          "locator": "第5节 初中问题库"
+        },
+        {
+          "sourceType": "report_library",
+          "path": "docs/aipiwen_report_system/05_language_library_话术库/AIPIWEN_ReportLibrary_V1.2_用户四问差异化回答库.md",
+          "locator": "第5节 初中回答素材"
+        }
+      ],
+      "safeGrounding": "初中阶段的顶嘴和一说就吵，常常不是孩子变坏，而是在练习边界、面子、自主感和表达方式。要先降温，再把评价句改成场景句。",
+      "outputGuidance": "用于 13-15 岁亲子沟通、手机、同伴和学习动力问题。避免把青春期表现道德化。",
+      "doNotUse": [
+        "叛逆不孝",
+        "孩子变坏",
+        "你必须听话",
+        "手机成瘾诊断",
+        "人格问题"
+      ]
+    },
+    {
+      "id": "RKI-V1-031",
+      "title": "高中选科升学：只给观察维度，不做保证结论",
+      "status": "rewrite_required",
+      "modules": [
+        "年龄段适配",
+        "用户问题",
+        "学习方法",
+        "安全边界"
+      ],
+      "scenarios": [
+        "高中",
+        "选科",
+        "文理",
+        "偏科",
+        "升学",
+        "考试焦虑",
+        "未来方向"
+      ],
+      "ageBands": [
+        "16-18"
+      ],
+      "retrievalKeywords": [
+        "高中",
+        "16-18",
+        "选科",
+        "文理",
+        "偏科",
+        "升学",
+        "冲名校",
+        "专业",
+        "考试焦虑",
+        "未来方向"
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "report_library",
+          "path": "docs/aipiwen_report_system/05_language_library_话术库/AIPIWEN_ReportLibrary_V1.2_年龄阶段问题库.md",
+          "locator": "第6节 高中问题库"
+        },
+        {
+          "sourceType": "report_library",
+          "path": "docs/aipiwen_report_system/05_language_library_话术库/AIPIWEN_ReportLibrary_V1.2_用户四问差异化回答库.md",
+          "locator": "education_decision 卡型"
+        }
+      ],
+      "safeGrounding": "高中选科、升学和未来方向只能提供观察维度：学习通道、思维入口、压力反应、科目任务和低风险试错。不能承诺名校、专业或升学结果。",
+      "outputGuidance": "用于高中升学类问题。先说边界，再给可观察维度和下一步试法；必要时建议人工一起看。",
+      "doNotUse": [
+        "保证升学",
+        "一定适合文科",
+        "一定适合理科",
+        "冲名校一定成功",
+        "命定专业"
+      ]
+    },
+    {
+      "id": "RKI-V1-032",
+      "title": "成人自我理解：拖延、边界和职业方向要回到当前阶段",
+      "status": "auto_safe",
+      "modules": [
+        "年龄段适配",
+        "用户问题",
+        "行为模式",
+        "职业方向"
+      ],
+      "scenarios": [
+        "成人",
+        "职场",
+        "拖延",
+        "职业方向",
+        "边界",
+        "压力",
+        "转型"
+      ],
+      "ageBands": [
+        "19-25",
+        "26-40",
+        "40+"
+      ],
+      "retrievalKeywords": [
+        "成人",
+        "大学",
+        "刚毕业",
+        "职场",
+        "拖延",
+        "职业方向",
+        "转型",
+        "边界",
+        "压力",
+        "自我理解",
+        "工作"
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "report_library",
+          "path": "docs/aipiwen_report_system/05_language_library_话术库/AIPIWEN_ReportLibrary_V1.2_年龄阶段问题库.md",
+          "locator": "第7-10节 成人问题库"
+        },
+        {
+          "sourceType": "report_library",
+          "path": "docs/aipiwen_report_system/05_language_library_话术库/AIPIWEN_ReportLibrary_V1.2_用户四问差异化回答库.md",
+          "locator": "自我理解型"
+        }
+      ],
+      "safeGrounding": "成人问题要用本人视角，不写孩子。职业方向和拖延要回到当前阶段、现实约束、能力入口、协作偏好和低风险试错，不给辞职、转型或职业保证。",
+      "outputGuidance": "用于 19 岁以上自我理解、职业方向、边界和压力问题。语气像陪用户整理自己，不像老师训话。",
+      "doNotUse": [
+        "你孩子",
+        "马上辞职",
+        "保证职业成功",
+        "你就是没自律",
+        "劳碌命"
+      ]
+    },
+    {
+      "id": "RKI-V1-033",
+      "title": "四问卡型：行为拆解型适合三卡，学习类不必硬凑三段",
+      "status": "auto_safe",
+      "modules": [
+        "用户问题",
+        "输出结构",
+        "行为模式"
+      ],
+      "scenarios": [
+        "四个问题",
+        "作业拖拉",
+        "学习方法",
+        "偏科",
+        "阅读",
+        "卡片结构"
+      ],
+      "ageBands": [
+        "all"
+      ],
+      "retrievalKeywords": [
+        "四个问题",
+        "三段式",
+        "卡型",
+        "行为拆解",
+        "学习诊断",
+        "作业拖拉",
+        "偏科",
+        "学习方法",
+        "阅读",
+        "不要八股"
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "report_library",
+          "path": "docs/aipiwen_report_system/05_language_library_话术库/AIPIWEN_ReportLibrary_V1.2_用户四问差异化回答库.md",
+          "locator": "第3.3 前台卡型选择规则"
+        }
+      ],
+      "safeGrounding": "四问回答不强制全部三段。行为拆解型可以三卡：安住、动作、希望；学习诊断型更适合总判断、观察清单、下一步试法；如果两张卡就讲清，不要为了统一硬凑。",
+      "outputGuidance": "用于生成 selectedIssues 回答结构。目标是自然、有差异、有用，不是格式整齐。",
+      "doNotUse": [
+        "所有问题强制三段",
+        "四页答案一样",
+        "只替换标题",
+        "空卡片",
+        "系统式模板"
+      ]
+    },
+    {
+      "id": "RKI-V1-034",
+      "title": "四问高风险卡型：诊断、关系去留、筛选和升学保证必须降级",
+      "status": "human_only",
+      "modules": [
+        "用户问题",
+        "安全边界",
+        "降级输出"
+      ],
+      "scenarios": [
+        "ADHD",
+        "心理疾病",
+        "关系去留",
+        "录用淘汰",
+        "分班筛选",
+        "升学保证"
+      ],
+      "ageBands": [
+        "all"
+      ],
+      "retrievalKeywords": [
+        "ADHD",
+        "心理疾病",
+        "精神问题",
+        "抑郁",
+        "焦虑",
+        "适不适合继续",
+        "分手",
+        "录用",
+        "淘汰",
+        "分班",
+        "筛选",
+        "保证升学"
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "report_library",
+          "path": "docs/aipiwen_report_system/05_language_library_话术库/AIPIWEN_ReportLibrary_V1.2_用户四问差异化回答库.md",
+          "locator": "卡型 C/D 高风险承接"
+        },
+        {
+          "sourceType": "report_library",
+          "path": "docs/aipiwen_report_system/09_safety_风险边界/AIPIWEN_前台安全话术与禁用表达_V0.1.md",
+          "locator": "高风险表达"
+        }
+      ],
+      "safeGrounding": "涉及心理/医学诊断、关系去留、录用淘汰、学生分层、升学保证的问题，不能自动生成普通建议。只能降级为具体场景整理、风险边界说明和人工/专业支持。",
+      "outputGuidance": "用于风险 grounding。不得进入自动普通报告输出；可用于提醒模型降级、追问或转人工。",
+      "doNotUse": [
+        "判断 ADHD",
+        "建议分手或继续",
+        "是否录用",
+        "是否分班",
+        "保证成功",
+        "保证升学"
+      ]
+    },
+    {
+      "id": "RKI-V1-035",
+      "title": "严正申明年龄称谓规则：先看年龄和报告对象再写称谓",
+      "status": "auto_safe",
+      "modules": [
+        "严正申明",
+        "年龄段适配",
+        "安全边界"
+      ],
+      "scenarios": [
+        "成年人报告",
+        "孩子报告",
+        "称谓错位",
+        "严正申明",
+        "开场页"
+      ],
+      "ageBands": [
+        "all"
+      ],
+      "retrievalKeywords": [
+        "严正申明",
+        "四原则",
+        "年龄",
+        "称谓",
+        "成年人",
+        "孩子",
+        "本人",
+        "家长",
+        "不要写您孩子",
+        "报告对象"
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "obsidian",
+          "path": "/Users/gyl0322gmail.com/AI-CEO-System/AI-CEO-Vault/知识库/自建系统/AIPIWEN_Report_OS/AIPIWEN_generate-report_SYSTEM_PROMPT_知识卡.md",
+          "locator": "称谓与安全边界"
+        },
+        {
+          "sourceType": "report_library",
+          "path": "docs/aipiwen_report_system/05_language_library_话术库/AIPIWEN_ReportLibrary_V1.2_年龄阶段问题库.md",
+          "locator": "第11节 接入规则"
+        }
+      ],
+      "safeGrounding": "严正申明和所有固定模块必须先看年龄与报告对象。未成年人可写“孩子/家长”，成年人必须写“你/本人/当前阶段”。成年人报告不得出现“您孩子”。",
+      "outputGuidance": "用于报告开头、严正申明和固定模块称谓校验。输出要温和说明报告是理解线索，不是诊断、预测或决定依据。",
+      "doNotUse": [
+        "成年人报告写您孩子",
+        "所有年龄统一称谓",
+        "报告决定人生",
+        "诊断预测筛选"
+      ]
+    },
+    {
+      "id": "RKI-V1.2-SPIRIT-R_HIGH",
+      "title": "精神功能深度解释：右侧单指高（拇指系统）",
+      "status": "auto_safe",
+      "modules": [
+        "精神功能",
+        "五大功能区",
+        "单指比较",
+        "左右差异"
+      ],
+      "scenarios": [
+        "目标感",
+        "自律",
+        "责任感",
+        "拖延",
+        "主动性",
+        "领导力",
+        "承压",
+        "右侧单指高",
+        "右拇",
+        "左拇"
+      ],
+      "ageBands": [
+        "all"
+      ],
+      "retrievalKeywords": [
+        "精神功能",
+        "拇指",
+        "右拇",
+        "左拇",
+        "R1",
+        "L1",
+        "个人均值",
+        "单指比较",
+        "目标感",
+        "开创力",
+        "管理力",
+        "自律",
+        "责任感",
+        "右拇高",
+        "R1高",
+        "右侧高",
+        "高于个人均值",
+        "高值表现"
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "obsidian",
+          "path": "/Users/gyl0322gmail.com/AI-CEO-System/AI-CEO-Vault/知识库/宋老师天赋测评教学/落地应用-精神与思维功能左右数值组合.md",
+          "locator": "精神功能左右数值组合"
+        },
+        {
+          "sourceType": "report_library",
+          "path": "docs/aipiwen_report_system/05_language_library_话术库/AIPIWEN_ReportLibrary_V1.2_五大功能区独立知识卡.md",
+          "locator": "精神功能 右侧单指高"
+        }
+      ],
+      "safeGrounding": "右拇R1 数值高：目标感、发起欲、带头和对外推动更容易被调动；遇到有意义的挑战，能量会更快起来。",
+      "outputGuidance": "用于解释 右拇 高于个人均值时的优势、卡点和应用。必须说“更容易被调动”，不能说“决定”。",
+      "doNotUse": [
+        "天生就是",
+        "决定未来",
+        "诊断",
+        "筛选淘汰",
+        "保证升学",
+        "保证职业",
+        "命定",
+        "没有能力"
+      ]
+    },
+    {
+      "id": "RKI-V1.2-SPIRIT-R_LOW",
+      "title": "精神功能深度解释：右侧单指低（拇指系统）",
+      "status": "auto_safe",
+      "modules": [
+        "精神功能",
+        "五大功能区",
+        "单指比较",
+        "左右差异"
+      ],
+      "scenarios": [
+        "目标感",
+        "自律",
+        "责任感",
+        "拖延",
+        "主动性",
+        "领导力",
+        "承压",
+        "右侧单指低",
+        "右拇",
+        "左拇"
+      ],
+      "ageBands": [
+        "all"
+      ],
+      "retrievalKeywords": [
+        "精神功能",
+        "拇指",
+        "右拇",
+        "左拇",
+        "R1",
+        "L1",
+        "个人均值",
+        "单指比较",
+        "目标感",
+        "开创力",
+        "管理力",
+        "自律",
+        "责任感",
+        "右拇低",
+        "R1低",
+        "右侧低",
+        "低于个人均值",
+        "低值支持"
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "obsidian",
+          "path": "/Users/gyl0322gmail.com/AI-CEO-System/AI-CEO-Vault/知识库/宋老师天赋测评教学/落地应用-精神与思维功能左右数值组合.md",
+          "locator": "精神功能左右数值组合"
+        },
+        {
+          "sourceType": "report_library",
+          "path": "docs/aipiwen_report_system/05_language_library_话术库/AIPIWEN_ReportLibrary_V1.2_五大功能区独立知识卡.md",
+          "locator": "精神功能 右侧单指低"
+        }
+      ],
+      "safeGrounding": "右拇R1 数值低：不太靠大目标和口号启动，更适合从小目标、可完成任务和现实反馈里慢慢进入。",
+      "outputGuidance": "用于解释 右拇 低于个人均值时的支持方式。重点是补入口、补结构，不贴短板标签。",
+      "doNotUse": [
+        "天生就是",
+        "决定未来",
+        "诊断",
+        "筛选淘汰",
+        "保证升学",
+        "保证职业",
+        "命定",
+        "没有能力"
+      ]
+    },
+    {
+      "id": "RKI-V1.2-SPIRIT-L_HIGH",
+      "title": "精神功能深度解释：左侧单指高（拇指系统）",
+      "status": "auto_safe",
+      "modules": [
+        "精神功能",
+        "五大功能区",
+        "单指比较",
+        "左右差异"
+      ],
+      "scenarios": [
+        "目标感",
+        "自律",
+        "责任感",
+        "拖延",
+        "主动性",
+        "领导力",
+        "承压",
+        "左侧单指高",
+        "右拇",
+        "左拇"
+      ],
+      "ageBands": [
+        "all"
+      ],
+      "retrievalKeywords": [
+        "精神功能",
+        "拇指",
+        "右拇",
+        "左拇",
+        "R1",
+        "L1",
+        "个人均值",
+        "单指比较",
+        "目标感",
+        "开创力",
+        "管理力",
+        "自律",
+        "责任感",
+        "左拇高",
+        "L1高",
+        "左侧高",
+        "高于个人均值",
+        "高值表现"
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "obsidian",
+          "path": "/Users/gyl0322gmail.com/AI-CEO-System/AI-CEO-Vault/知识库/宋老师天赋测评教学/落地应用-精神与思维功能左右数值组合.md",
+          "locator": "精神功能左右数值组合"
+        },
+        {
+          "sourceType": "report_library",
+          "path": "docs/aipiwen_report_system/05_language_library_话术库/AIPIWEN_ReportLibrary_V1.2_五大功能区独立知识卡.md",
+          "locator": "精神功能 左侧单指高"
+        }
+      ],
+      "safeGrounding": "左拇L1 数值高：自我管理、计划、责任感和承压收尾更容易被调动；接下来的事情会更想做完整。",
+      "outputGuidance": "用于解释 左拇 高于个人均值时的优势、卡点和应用。要回到真实行为观察。",
+      "doNotUse": [
+        "天生就是",
+        "决定未来",
+        "诊断",
+        "筛选淘汰",
+        "保证升学",
+        "保证职业",
+        "命定",
+        "没有能力"
+      ]
+    },
+    {
+      "id": "RKI-V1.2-SPIRIT-L_LOW",
+      "title": "精神功能深度解释：左侧单指低（拇指系统）",
+      "status": "auto_safe",
+      "modules": [
+        "精神功能",
+        "五大功能区",
+        "单指比较",
+        "左右差异"
+      ],
+      "scenarios": [
+        "目标感",
+        "自律",
+        "责任感",
+        "拖延",
+        "主动性",
+        "领导力",
+        "承压",
+        "左侧单指低",
+        "右拇",
+        "左拇"
+      ],
+      "ageBands": [
+        "all"
+      ],
+      "retrievalKeywords": [
+        "精神功能",
+        "拇指",
+        "右拇",
+        "左拇",
+        "R1",
+        "L1",
+        "个人均值",
+        "单指比较",
+        "目标感",
+        "开创力",
+        "管理力",
+        "自律",
+        "责任感",
+        "左拇低",
+        "L1低",
+        "左侧低",
+        "低于个人均值",
+        "低值支持"
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "obsidian",
+          "path": "/Users/gyl0322gmail.com/AI-CEO-System/AI-CEO-Vault/知识库/宋老师天赋测评教学/落地应用-精神与思维功能左右数值组合.md",
+          "locator": "精神功能左右数值组合"
+        },
+        {
+          "sourceType": "report_library",
+          "path": "docs/aipiwen_report_system/05_language_library_话术库/AIPIWEN_ReportLibrary_V1.2_五大功能区独立知识卡.md",
+          "locator": "精神功能 左侧单指低"
+        }
+      ],
+      "safeGrounding": "左拇L1 数值低：自我管理更需要外部结构、提醒、陪跑和可见进度，不适合只靠意志硬撑。",
+      "outputGuidance": "用于解释 左拇 低于个人均值时的支持方式。表达为需要环境带动，不表达为没有能力。",
+      "doNotUse": [
+        "天生就是",
+        "决定未来",
+        "诊断",
+        "筛选淘汰",
+        "保证升学",
+        "保证职业",
+        "命定",
+        "没有能力"
+      ]
+    },
+    {
+      "id": "RKI-V1.2-SPIRIT-R_GT_L",
+      "title": "精神功能深度解释：右高左低（拇指系统）",
+      "status": "auto_safe",
+      "modules": [
+        "精神功能",
+        "五大功能区",
+        "单指比较",
+        "左右差异"
+      ],
+      "scenarios": [
+        "目标感",
+        "自律",
+        "责任感",
+        "拖延",
+        "主动性",
+        "领导力",
+        "承压",
+        "右高左低",
+        "右拇",
+        "左拇"
+      ],
+      "ageBands": [
+        "all"
+      ],
+      "retrievalKeywords": [
+        "精神功能",
+        "拇指",
+        "右拇",
+        "左拇",
+        "R1",
+        "L1",
+        "个人均值",
+        "单指比较",
+        "目标感",
+        "开创力",
+        "管理力",
+        "自律",
+        "责任感",
+        "右拇高左拇低",
+        "右拇明显高于左拇",
+        "右高左低",
+        "左右差异",
+        "先从右侧进入"
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "obsidian",
+          "path": "/Users/gyl0322gmail.com/AI-CEO-System/AI-CEO-Vault/知识库/宋老师天赋测评教学/落地应用-精神与思维功能左右数值组合.md",
+          "locator": "精神功能左右数值组合"
+        },
+        {
+          "sourceType": "report_library",
+          "path": "docs/aipiwen_report_system/05_language_library_话术库/AIPIWEN_ReportLibrary_V1.2_五大功能区独立知识卡.md",
+          "locator": "精神功能 右高左低"
+        }
+      ],
+      "safeGrounding": "右拇明显高于左拇：像先点火再搭轨道：发起很快，但需要计划、步骤和收尾结构帮它落地。",
+      "outputGuidance": "用于解释 精神功能 右侧入口更先启动、左侧需要补结构或支持的情况。",
+      "doNotUse": [
+        "天生就是",
+        "决定未来",
+        "诊断",
+        "筛选淘汰",
+        "保证升学",
+        "保证职业",
+        "命定",
+        "没有能力"
+      ]
+    },
+    {
+      "id": "RKI-V1.2-SPIRIT-L_GT_R",
+      "title": "精神功能深度解释：左高右低（拇指系统）",
+      "status": "auto_safe",
+      "modules": [
+        "精神功能",
+        "五大功能区",
+        "单指比较",
+        "左右差异"
+      ],
+      "scenarios": [
+        "目标感",
+        "自律",
+        "责任感",
+        "拖延",
+        "主动性",
+        "领导力",
+        "承压",
+        "左高右低",
+        "右拇",
+        "左拇"
+      ],
+      "ageBands": [
+        "all"
+      ],
+      "retrievalKeywords": [
+        "精神功能",
+        "拇指",
+        "右拇",
+        "左拇",
+        "R1",
+        "L1",
+        "个人均值",
+        "单指比较",
+        "目标感",
+        "开创力",
+        "管理力",
+        "自律",
+        "责任感",
+        "左拇高右拇低",
+        "左拇明显高于右拇",
+        "左高右低",
+        "左右差异",
+        "先从左侧进入"
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "obsidian",
+          "path": "/Users/gyl0322gmail.com/AI-CEO-System/AI-CEO-Vault/知识库/宋老师天赋测评教学/落地应用-精神与思维功能左右数值组合.md",
+          "locator": "精神功能左右数值组合"
+        },
+        {
+          "sourceType": "report_library",
+          "path": "docs/aipiwen_report_system/05_language_library_话术库/AIPIWEN_ReportLibrary_V1.2_五大功能区独立知识卡.md",
+          "locator": "精神功能 左高右低"
+        }
+      ],
+      "safeGrounding": "左拇明显高于右拇：像先接住责任再慢慢发起：不一定抢在前面，但一旦任务明确，会更在意稳稳完成。",
+      "outputGuidance": "用于解释 精神功能 左侧入口更先启动、右侧需要补表达、目标或外部化的情况。",
+      "doNotUse": [
+        "天生就是",
+        "决定未来",
+        "诊断",
+        "筛选淘汰",
+        "保证升学",
+        "保证职业",
+        "命定",
+        "没有能力"
+      ]
+    },
+    {
+      "id": "RKI-V1.2-SPIRIT-BOTH_HIGH",
+      "title": "精神功能深度解释：双高（拇指系统）",
+      "status": "auto_safe",
+      "modules": [
+        "精神功能",
+        "五大功能区",
+        "单指比较",
+        "左右差异"
+      ],
+      "scenarios": [
+        "目标感",
+        "自律",
+        "责任感",
+        "拖延",
+        "主动性",
+        "领导力",
+        "承压",
+        "双高",
+        "右拇",
+        "左拇"
+      ],
+      "ageBands": [
+        "all"
+      ],
+      "retrievalKeywords": [
+        "精神功能",
+        "拇指",
+        "右拇",
+        "左拇",
+        "R1",
+        "L1",
+        "个人均值",
+        "单指比较",
+        "目标感",
+        "开创力",
+        "管理力",
+        "自律",
+        "责任感",
+        "右拇左拇都高",
+        "双高",
+        "两侧都高",
+        "双侧都高",
+        "过载风险"
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "obsidian",
+          "path": "/Users/gyl0322gmail.com/AI-CEO-System/AI-CEO-Vault/知识库/宋老师天赋测评教学/落地应用-精神与思维功能左右数值组合.md",
+          "locator": "精神功能左右数值组合"
+        },
+        {
+          "sourceType": "report_library",
+          "path": "docs/aipiwen_report_system/05_language_library_话术库/AIPIWEN_ReportLibrary_V1.2_五大功能区独立知识卡.md",
+          "locator": "精神功能 双高"
+        }
+      ],
+      "safeGrounding": "右拇与左拇都高：目标感和管理力都强，有推进力也有承接力；需要避免把自己绷太紧或对别人没耐心。",
+      "outputGuidance": "用于解释 精神功能 双侧都高时的优势、过载风险和应用建议。",
+      "doNotUse": [
+        "天生就是",
+        "决定未来",
+        "诊断",
+        "筛选淘汰",
+        "保证升学",
+        "保证职业",
+        "命定",
+        "没有能力"
+      ]
+    },
+    {
+      "id": "RKI-V1.2-SPIRIT-BOTH_LOW",
+      "title": "精神功能深度解释：双低（拇指系统）",
+      "status": "auto_safe",
+      "modules": [
+        "精神功能",
+        "五大功能区",
+        "单指比较",
+        "左右差异"
+      ],
+      "scenarios": [
+        "目标感",
+        "自律",
+        "责任感",
+        "拖延",
+        "主动性",
+        "领导力",
+        "承压",
+        "双低",
+        "右拇",
+        "左拇"
+      ],
+      "ageBands": [
+        "all"
+      ],
+      "retrievalKeywords": [
+        "精神功能",
+        "拇指",
+        "右拇",
+        "左拇",
+        "R1",
+        "L1",
+        "个人均值",
+        "单指比较",
+        "目标感",
+        "开创力",
+        "管理力",
+        "自律",
+        "责任感",
+        "右拇左拇都低",
+        "双低",
+        "两侧都低",
+        "双侧都低",
+        "温和支持"
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "obsidian",
+          "path": "/Users/gyl0322gmail.com/AI-CEO-System/AI-CEO-Vault/知识库/宋老师天赋测评教学/落地应用-精神与思维功能左右数值组合.md",
+          "locator": "精神功能左右数值组合"
+        },
+        {
+          "sourceType": "report_library",
+          "path": "docs/aipiwen_report_system/05_language_library_话术库/AIPIWEN_ReportLibrary_V1.2_五大功能区独立知识卡.md",
+          "locator": "精神功能 双低"
+        }
+      ],
+      "safeGrounding": "右拇与左拇都低：不适合高压目标启动，更需要小胜利、清晰反馈和外部结构来慢慢养出目标感。",
+      "outputGuidance": "用于解释 精神功能 双侧都低时的温和支持方式。不能表达为缺陷或没天赋。",
+      "doNotUse": [
+        "天生就是",
+        "决定未来",
+        "诊断",
+        "筛选淘汰",
+        "保证升学",
+        "保证职业",
+        "命定",
+        "没有能力"
+      ]
+    },
+    {
+      "id": "RKI-V1.2-THINK-R_HIGH",
+      "title": "思维功能深度解释：右侧单指高（食指系统）",
+      "status": "auto_safe",
+      "modules": [
+        "思维功能",
+        "五大功能区",
+        "单指比较",
+        "左右差异"
+      ],
+      "scenarios": [
+        "逻辑",
+        "数学",
+        "文理选科",
+        "创意",
+        "空间想象",
+        "表达",
+        "偏科",
+        "右侧单指高",
+        "右食",
+        "左食"
+      ],
+      "ageBands": [
+        "all"
+      ],
+      "retrievalKeywords": [
+        "思维功能",
+        "食指",
+        "右食",
+        "左食",
+        "R2",
+        "L2",
+        "个人均值",
+        "单指比较",
+        "逻辑",
+        "推理",
+        "空间",
+        "创意",
+        "选科",
+        "文理",
+        "右食高",
+        "R2高",
+        "右侧高",
+        "高于个人均值",
+        "高值表现"
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "obsidian",
+          "path": "/Users/gyl0322gmail.com/AI-CEO-System/AI-CEO-Vault/知识库/宋老师天赋测评教学/落地应用-精神与思维功能左右数值组合.md",
+          "locator": "思维功能左右数值组合"
+        },
+        {
+          "sourceType": "report_library",
+          "path": "docs/aipiwen_report_system/05_language_library_话术库/AIPIWEN_ReportLibrary_V1.2_五大功能区独立知识卡.md",
+          "locator": "思维功能 右侧单指高"
+        }
+      ],
+      "safeGrounding": "右食R2 数值高：逻辑、规则、因果、语言组织和抽象推理更容易被调动，适合用步骤、框架、公式进入。",
+      "outputGuidance": "用于解释 右食 高于个人均值时的优势、卡点和应用。必须说“更容易被调动”，不能说“决定”。",
+      "doNotUse": [
+        "天生就是",
+        "决定未来",
+        "诊断",
+        "筛选淘汰",
+        "保证升学",
+        "保证职业",
+        "命定",
+        "没有能力"
+      ]
+    },
+    {
+      "id": "RKI-V1.2-THINK-R_LOW",
+      "title": "思维功能深度解释：右侧单指低（食指系统）",
+      "status": "auto_safe",
+      "modules": [
+        "思维功能",
+        "五大功能区",
+        "单指比较",
+        "左右差异"
+      ],
+      "scenarios": [
+        "逻辑",
+        "数学",
+        "文理选科",
+        "创意",
+        "空间想象",
+        "表达",
+        "偏科",
+        "右侧单指低",
+        "右食",
+        "左食"
+      ],
+      "ageBands": [
+        "all"
+      ],
+      "retrievalKeywords": [
+        "思维功能",
+        "食指",
+        "右食",
+        "左食",
+        "R2",
+        "L2",
+        "个人均值",
+        "单指比较",
+        "逻辑",
+        "推理",
+        "空间",
+        "创意",
+        "选科",
+        "文理",
+        "右食低",
+        "R2低",
+        "右侧低",
+        "低于个人均值",
+        "低值支持"
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "obsidian",
+          "path": "/Users/gyl0322gmail.com/AI-CEO-System/AI-CEO-Vault/知识库/宋老师天赋测评教学/落地应用-精神与思维功能左右数值组合.md",
+          "locator": "思维功能左右数值组合"
+        },
+        {
+          "sourceType": "report_library",
+          "path": "docs/aipiwen_report_system/05_language_library_话术库/AIPIWEN_ReportLibrary_V1.2_五大功能区独立知识卡.md",
+          "locator": "思维功能 右侧单指低"
+        }
+      ],
+      "safeGrounding": "右食R2 数值低：纯抽象推理不一定最顺，更需要例子、图像、操作或生活场景来辅助理解。",
+      "outputGuidance": "用于解释 右食 低于个人均值时的支持方式。重点是补入口、补结构，不贴短板标签。",
+      "doNotUse": [
+        "天生就是",
+        "决定未来",
+        "诊断",
+        "筛选淘汰",
+        "保证升学",
+        "保证职业",
+        "命定",
+        "没有能力"
+      ]
+    },
+    {
+      "id": "RKI-V1.2-THINK-L_HIGH",
+      "title": "思维功能深度解释：左侧单指高（食指系统）",
+      "status": "auto_safe",
+      "modules": [
+        "思维功能",
+        "五大功能区",
+        "单指比较",
+        "左右差异"
+      ],
+      "scenarios": [
+        "逻辑",
+        "数学",
+        "文理选科",
+        "创意",
+        "空间想象",
+        "表达",
+        "偏科",
+        "左侧单指高",
+        "右食",
+        "左食"
+      ],
+      "ageBands": [
+        "all"
+      ],
+      "retrievalKeywords": [
+        "思维功能",
+        "食指",
+        "右食",
+        "左食",
+        "R2",
+        "L2",
+        "个人均值",
+        "单指比较",
+        "逻辑",
+        "推理",
+        "空间",
+        "创意",
+        "选科",
+        "文理",
+        "左食高",
+        "L2高",
+        "左侧高",
+        "高于个人均值",
+        "高值表现"
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "obsidian",
+          "path": "/Users/gyl0322gmail.com/AI-CEO-System/AI-CEO-Vault/知识库/宋老师天赋测评教学/落地应用-精神与思维功能左右数值组合.md",
+          "locator": "思维功能左右数值组合"
+        },
+        {
+          "sourceType": "report_library",
+          "path": "docs/aipiwen_report_system/05_language_library_话术库/AIPIWEN_ReportLibrary_V1.2_五大功能区独立知识卡.md",
+          "locator": "思维功能 左侧单指高"
+        }
+      ],
+      "safeGrounding": "左食L2 数值高：画面感、空间感、构思、策略和创意联想更容易被调动，脑子里可能先有图再有话。",
+      "outputGuidance": "用于解释 左食 高于个人均值时的优势、卡点和应用。要回到真实行为观察。",
+      "doNotUse": [
+        "天生就是",
+        "决定未来",
+        "诊断",
+        "筛选淘汰",
+        "保证升学",
+        "保证职业",
+        "命定",
+        "没有能力"
+      ]
+    },
+    {
+      "id": "RKI-V1.2-THINK-L_LOW",
+      "title": "思维功能深度解释：左侧单指低（食指系统）",
+      "status": "auto_safe",
+      "modules": [
+        "思维功能",
+        "五大功能区",
+        "单指比较",
+        "左右差异"
+      ],
+      "scenarios": [
+        "逻辑",
+        "数学",
+        "文理选科",
+        "创意",
+        "空间想象",
+        "表达",
+        "偏科",
+        "左侧单指低",
+        "右食",
+        "左食"
+      ],
+      "ageBands": [
+        "all"
+      ],
+      "retrievalKeywords": [
+        "思维功能",
+        "食指",
+        "右食",
+        "左食",
+        "R2",
+        "L2",
+        "个人均值",
+        "单指比较",
+        "逻辑",
+        "推理",
+        "空间",
+        "创意",
+        "选科",
+        "文理",
+        "左食低",
+        "L2低",
+        "左侧低",
+        "低于个人均值",
+        "低值支持"
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "obsidian",
+          "path": "/Users/gyl0322gmail.com/AI-CEO-System/AI-CEO-Vault/知识库/宋老师天赋测评教学/落地应用-精神与思维功能左右数值组合.md",
+          "locator": "思维功能左右数值组合"
+        },
+        {
+          "sourceType": "report_library",
+          "path": "docs/aipiwen_report_system/05_language_library_话术库/AIPIWEN_ReportLibrary_V1.2_五大功能区独立知识卡.md",
+          "locator": "思维功能 左侧单指低"
+        }
+      ],
+      "safeGrounding": "左食L2 数值低：凭空想象和空间构思不一定顺，更适合清楚步骤、样例、文字说明或实际材料。",
+      "outputGuidance": "用于解释 左食 低于个人均值时的支持方式。表达为需要环境带动，不表达为没有能力。",
+      "doNotUse": [
+        "天生就是",
+        "决定未来",
+        "诊断",
+        "筛选淘汰",
+        "保证升学",
+        "保证职业",
+        "命定",
+        "没有能力"
+      ]
+    },
+    {
+      "id": "RKI-V1.2-THINK-R_GT_L",
+      "title": "思维功能深度解释：右高左低（食指系统）",
+      "status": "auto_safe",
+      "modules": [
+        "思维功能",
+        "五大功能区",
+        "单指比较",
+        "左右差异"
+      ],
+      "scenarios": [
+        "逻辑",
+        "数学",
+        "文理选科",
+        "创意",
+        "空间想象",
+        "表达",
+        "偏科",
+        "右高左低",
+        "右食",
+        "左食"
+      ],
+      "ageBands": [
+        "all"
+      ],
+      "retrievalKeywords": [
+        "思维功能",
+        "食指",
+        "右食",
+        "左食",
+        "R2",
+        "L2",
+        "个人均值",
+        "单指比较",
+        "逻辑",
+        "推理",
+        "空间",
+        "创意",
+        "选科",
+        "文理",
+        "右食高左食低",
+        "右食明显高于左食",
+        "右高左低",
+        "左右差异",
+        "先从右侧进入"
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "obsidian",
+          "path": "/Users/gyl0322gmail.com/AI-CEO-System/AI-CEO-Vault/知识库/宋老师天赋测评教学/落地应用-精神与思维功能左右数值组合.md",
+          "locator": "思维功能左右数值组合"
+        },
+        {
+          "sourceType": "report_library",
+          "path": "docs/aipiwen_report_system/05_language_library_话术库/AIPIWEN_ReportLibrary_V1.2_五大功能区独立知识卡.md",
+          "locator": "思维功能 右高左低"
+        }
+      ],
+      "safeGrounding": "右食明显高于左食：语言逻辑跑在画面前面，容易先讲道理或先答应；重要任务要让他复述第一步。",
+      "outputGuidance": "用于解释 思维功能 右侧入口更先启动、左侧需要补结构或支持的情况。",
+      "doNotUse": [
+        "天生就是",
+        "决定未来",
+        "诊断",
+        "筛选淘汰",
+        "保证升学",
+        "保证职业",
+        "命定",
+        "没有能力"
+      ]
+    },
+    {
+      "id": "RKI-V1.2-THINK-L_GT_R",
+      "title": "思维功能深度解释：左高右低（食指系统）",
+      "status": "auto_safe",
+      "modules": [
+        "思维功能",
+        "五大功能区",
+        "单指比较",
+        "左右差异"
+      ],
+      "scenarios": [
+        "逻辑",
+        "数学",
+        "文理选科",
+        "创意",
+        "空间想象",
+        "表达",
+        "偏科",
+        "左高右低",
+        "右食",
+        "左食"
+      ],
+      "ageBands": [
+        "all"
+      ],
+      "retrievalKeywords": [
+        "思维功能",
+        "食指",
+        "右食",
+        "左食",
+        "R2",
+        "L2",
+        "个人均值",
+        "单指比较",
+        "逻辑",
+        "推理",
+        "空间",
+        "创意",
+        "选科",
+        "文理",
+        "左食高右食低",
+        "左食明显高于右食",
+        "左高右低",
+        "左右差异",
+        "先从左侧进入"
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "obsidian",
+          "path": "/Users/gyl0322gmail.com/AI-CEO-System/AI-CEO-Vault/知识库/宋老师天赋测评教学/落地应用-精神与思维功能左右数值组合.md",
+          "locator": "思维功能左右数值组合"
+        },
+        {
+          "sourceType": "report_library",
+          "path": "docs/aipiwen_report_system/05_language_library_话术库/AIPIWEN_ReportLibrary_V1.2_五大功能区独立知识卡.md",
+          "locator": "思维功能 左高右低"
+        }
+      ],
+      "safeGrounding": "左食明显高于右食：脑内画面和想法多于语言输出，适合画图、写关键词、慢慢把想法倒出来。",
+      "outputGuidance": "用于解释 思维功能 左侧入口更先启动、右侧需要补表达、目标或外部化的情况。",
+      "doNotUse": [
+        "天生就是",
+        "决定未来",
+        "诊断",
+        "筛选淘汰",
+        "保证升学",
+        "保证职业",
+        "命定",
+        "没有能力"
+      ]
+    },
+    {
+      "id": "RKI-V1.2-THINK-BOTH_HIGH",
+      "title": "思维功能深度解释：双高（食指系统）",
+      "status": "auto_safe",
+      "modules": [
+        "思维功能",
+        "五大功能区",
+        "单指比较",
+        "左右差异"
+      ],
+      "scenarios": [
+        "逻辑",
+        "数学",
+        "文理选科",
+        "创意",
+        "空间想象",
+        "表达",
+        "偏科",
+        "双高",
+        "右食",
+        "左食"
+      ],
+      "ageBands": [
+        "all"
+      ],
+      "retrievalKeywords": [
+        "思维功能",
+        "食指",
+        "右食",
+        "左食",
+        "R2",
+        "L2",
+        "个人均值",
+        "单指比较",
+        "逻辑",
+        "推理",
+        "空间",
+        "创意",
+        "选科",
+        "文理",
+        "右食左食都高",
+        "双高",
+        "两侧都高",
+        "双侧都高",
+        "过载风险"
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "obsidian",
+          "path": "/Users/gyl0322gmail.com/AI-CEO-System/AI-CEO-Vault/知识库/宋老师天赋测评教学/落地应用-精神与思维功能左右数值组合.md",
+          "locator": "思维功能左右数值组合"
+        },
+        {
+          "sourceType": "report_library",
+          "path": "docs/aipiwen_report_system/05_language_library_话术库/AIPIWEN_ReportLibrary_V1.2_五大功能区独立知识卡.md",
+          "locator": "思维功能 双高"
+        }
+      ],
+      "safeGrounding": "右食与左食都高：逻辑和空间都容易启动，适合复杂理解、方案设计和综合分析；要避免想太多而迟迟不落地。",
+      "outputGuidance": "用于解释 思维功能 双侧都高时的优势、过载风险和应用建议。",
+      "doNotUse": [
+        "天生就是",
+        "决定未来",
+        "诊断",
+        "筛选淘汰",
+        "保证升学",
+        "保证职业",
+        "命定",
+        "没有能力"
+      ]
+    },
+    {
+      "id": "RKI-V1.2-THINK-BOTH_LOW",
+      "title": "思维功能深度解释：双低（食指系统）",
+      "status": "auto_safe",
+      "modules": [
+        "思维功能",
+        "五大功能区",
+        "单指比较",
+        "左右差异"
+      ],
+      "scenarios": [
+        "逻辑",
+        "数学",
+        "文理选科",
+        "创意",
+        "空间想象",
+        "表达",
+        "偏科",
+        "双低",
+        "右食",
+        "左食"
+      ],
+      "ageBands": [
+        "all"
+      ],
+      "retrievalKeywords": [
+        "思维功能",
+        "食指",
+        "右食",
+        "左食",
+        "R2",
+        "L2",
+        "个人均值",
+        "单指比较",
+        "逻辑",
+        "推理",
+        "空间",
+        "创意",
+        "选科",
+        "文理",
+        "右食左食都低",
+        "双低",
+        "两侧都低",
+        "双侧都低",
+        "温和支持"
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "obsidian",
+          "path": "/Users/gyl0322gmail.com/AI-CEO-System/AI-CEO-Vault/知识库/宋老师天赋测评教学/落地应用-精神与思维功能左右数值组合.md",
+          "locator": "思维功能左右数值组合"
+        },
+        {
+          "sourceType": "report_library",
+          "path": "docs/aipiwen_report_system/05_language_library_话术库/AIPIWEN_ReportLibrary_V1.2_五大功能区独立知识卡.md",
+          "locator": "思维功能 双低"
+        }
+      ],
+      "safeGrounding": "右食与左食都低：不代表脑子不好，而是不适合纯理论硬推，更需要经验、实操、节奏和反馈来带动。",
+      "outputGuidance": "用于解释 思维功能 双侧都低时的温和支持方式。不能表达为缺陷或没天赋。",
+      "doNotUse": [
+        "天生就是",
+        "决定未来",
+        "诊断",
+        "筛选淘汰",
+        "保证升学",
+        "保证职业",
+        "命定",
+        "没有能力"
+      ]
+    },
+    {
+      "id": "RKI-V1.2-BODY-R_HIGH",
+      "title": "体觉功能深度解释：右侧单指高（中指系统）",
+      "status": "auto_safe",
+      "modules": [
+        "体觉功能",
+        "五大功能区",
+        "单指比较",
+        "左右差异"
+      ],
+      "scenarios": [
+        "写字慢",
+        "作业拖拉",
+        "动手",
+        "运动",
+        "坚持",
+        "坐不住",
+        "精细操作",
+        "右侧单指高",
+        "右中",
+        "左中"
+      ],
+      "ageBands": [
+        "all"
+      ],
+      "retrievalKeywords": [
+        "体觉功能",
+        "中指",
+        "右中",
+        "左中",
+        "R3",
+        "L3",
+        "个人均值",
+        "单指比较",
+        "写字",
+        "手工",
+        "精细操作",
+        "大运动",
+        "耐力",
+        "拖拉",
+        "右中高",
+        "R3高",
+        "右侧高",
+        "高于个人均值",
+        "高值表现"
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "obsidian",
+          "path": "/Users/gyl0322gmail.com/AI-CEO-System/AI-CEO-Vault/知识库/宋老师天赋测评教学/落地应用-体觉听觉视觉三感官功能组合.md",
+          "locator": "体觉功能左右数值组合"
+        },
+        {
+          "sourceType": "report_library",
+          "path": "docs/aipiwen_report_system/05_language_library_话术库/AIPIWEN_ReportLibrary_V1.2_五大功能区独立知识卡.md",
+          "locator": "体觉功能 右侧单指高"
+        }
+      ],
+      "safeGrounding": "右中R3 数值高：精细操作、写字、手工、拆装和做中学更容易被调动，适合先动手试一遍。",
+      "outputGuidance": "用于解释 右中 高于个人均值时的优势、卡点和应用。必须说“更容易被调动”，不能说“决定”。",
+      "doNotUse": [
+        "天生就是",
+        "决定未来",
+        "诊断",
+        "筛选淘汰",
+        "保证升学",
+        "保证职业",
+        "命定",
+        "没有能力"
+      ]
+    },
+    {
+      "id": "RKI-V1.2-BODY-R_LOW",
+      "title": "体觉功能深度解释：右侧单指低（中指系统）",
+      "status": "auto_safe",
+      "modules": [
+        "体觉功能",
+        "五大功能区",
+        "单指比较",
+        "左右差异"
+      ],
+      "scenarios": [
+        "写字慢",
+        "作业拖拉",
+        "动手",
+        "运动",
+        "坚持",
+        "坐不住",
+        "精细操作",
+        "右侧单指低",
+        "右中",
+        "左中"
+      ],
+      "ageBands": [
+        "all"
+      ],
+      "retrievalKeywords": [
+        "体觉功能",
+        "中指",
+        "右中",
+        "左中",
+        "R3",
+        "L3",
+        "个人均值",
+        "单指比较",
+        "写字",
+        "手工",
+        "精细操作",
+        "大运动",
+        "耐力",
+        "拖拉",
+        "右中低",
+        "R3低",
+        "右侧低",
+        "低于个人均值",
+        "低值支持"
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "obsidian",
+          "path": "/Users/gyl0322gmail.com/AI-CEO-System/AI-CEO-Vault/知识库/宋老师天赋测评教学/落地应用-体觉听觉视觉三感官功能组合.md",
+          "locator": "体觉功能左右数值组合"
+        },
+        {
+          "sourceType": "report_library",
+          "path": "docs/aipiwen_report_system/05_language_library_话术库/AIPIWEN_ReportLibrary_V1.2_五大功能区独立知识卡.md",
+          "locator": "体觉功能 右侧单指低"
+        }
+      ],
+      "safeGrounding": "右中R3 数值低：写字、整理、手工和细节操作启动会慢一些，拖拉可能卡在身体入口而不是态度。",
+      "outputGuidance": "用于解释 右中 低于个人均值时的支持方式。重点是补入口、补结构，不贴短板标签。",
+      "doNotUse": [
+        "天生就是",
+        "决定未来",
+        "诊断",
+        "筛选淘汰",
+        "保证升学",
+        "保证职业",
+        "命定",
+        "没有能力"
+      ]
+    },
+    {
+      "id": "RKI-V1.2-BODY-L_HIGH",
+      "title": "体觉功能深度解释：左侧单指高（中指系统）",
+      "status": "auto_safe",
+      "modules": [
+        "体觉功能",
+        "五大功能区",
+        "单指比较",
+        "左右差异"
+      ],
+      "scenarios": [
+        "写字慢",
+        "作业拖拉",
+        "动手",
+        "运动",
+        "坚持",
+        "坐不住",
+        "精细操作",
+        "左侧单指高",
+        "右中",
+        "左中"
+      ],
+      "ageBands": [
+        "all"
+      ],
+      "retrievalKeywords": [
+        "体觉功能",
+        "中指",
+        "右中",
+        "左中",
+        "R3",
+        "L3",
+        "个人均值",
+        "单指比较",
+        "写字",
+        "手工",
+        "精细操作",
+        "大运动",
+        "耐力",
+        "拖拉",
+        "左中高",
+        "L3高",
+        "左侧高",
+        "高于个人均值",
+        "高值表现"
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "obsidian",
+          "path": "/Users/gyl0322gmail.com/AI-CEO-System/AI-CEO-Vault/知识库/宋老师天赋测评教学/落地应用-体觉听觉视觉三感官功能组合.md",
+          "locator": "体觉功能左右数值组合"
+        },
+        {
+          "sourceType": "report_library",
+          "path": "docs/aipiwen_report_system/05_language_library_话术库/AIPIWEN_ReportLibrary_V1.2_五大功能区独立知识卡.md",
+          "locator": "体觉功能 左侧单指高"
+        }
+      ],
+      "safeGrounding": "左中L3 数值高：大运动、身体能量、律动、耐力和坚持更容易被调动，可以通过身体活动释放压力。",
+      "outputGuidance": "用于解释 左中 高于个人均值时的优势、卡点和应用。要回到真实行为观察。",
+      "doNotUse": [
+        "天生就是",
+        "决定未来",
+        "诊断",
+        "筛选淘汰",
+        "保证升学",
+        "保证职业",
+        "命定",
+        "没有能力"
+      ]
+    },
+    {
+      "id": "RKI-V1.2-BODY-L_LOW",
+      "title": "体觉功能深度解释：左侧单指低（中指系统）",
+      "status": "auto_safe",
+      "modules": [
+        "体觉功能",
+        "五大功能区",
+        "单指比较",
+        "左右差异"
+      ],
+      "scenarios": [
+        "写字慢",
+        "作业拖拉",
+        "动手",
+        "运动",
+        "坚持",
+        "坐不住",
+        "精细操作",
+        "左侧单指低",
+        "右中",
+        "左中"
+      ],
+      "ageBands": [
+        "all"
+      ],
+      "retrievalKeywords": [
+        "体觉功能",
+        "中指",
+        "右中",
+        "左中",
+        "R3",
+        "L3",
+        "个人均值",
+        "单指比较",
+        "写字",
+        "手工",
+        "精细操作",
+        "大运动",
+        "耐力",
+        "拖拉",
+        "左中低",
+        "L3低",
+        "左侧低",
+        "低于个人均值",
+        "低值支持"
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "obsidian",
+          "path": "/Users/gyl0322gmail.com/AI-CEO-System/AI-CEO-Vault/知识库/宋老师天赋测评教学/落地应用-体觉听觉视觉三感官功能组合.md",
+          "locator": "体觉功能左右数值组合"
+        },
+        {
+          "sourceType": "report_library",
+          "path": "docs/aipiwen_report_system/05_language_library_话术库/AIPIWEN_ReportLibrary_V1.2_五大功能区独立知识卡.md",
+          "locator": "体觉功能 左侧单指低"
+        }
+      ],
+      "safeGrounding": "左中L3 数值低：长时间运动、耐力和身体协调需要短时多次练习，不适合一上来拉长训练时间。",
+      "outputGuidance": "用于解释 左中 低于个人均值时的支持方式。表达为需要环境带动，不表达为没有能力。",
+      "doNotUse": [
+        "天生就是",
+        "决定未来",
+        "诊断",
+        "筛选淘汰",
+        "保证升学",
+        "保证职业",
+        "命定",
+        "没有能力"
+      ]
+    },
+    {
+      "id": "RKI-V1.2-BODY-R_GT_L",
+      "title": "体觉功能深度解释：右高左低（中指系统）",
+      "status": "auto_safe",
+      "modules": [
+        "体觉功能",
+        "五大功能区",
+        "单指比较",
+        "左右差异"
+      ],
+      "scenarios": [
+        "写字慢",
+        "作业拖拉",
+        "动手",
+        "运动",
+        "坚持",
+        "坐不住",
+        "精细操作",
+        "右高左低",
+        "右中",
+        "左中"
+      ],
+      "ageBands": [
+        "all"
+      ],
+      "retrievalKeywords": [
+        "体觉功能",
+        "中指",
+        "右中",
+        "左中",
+        "R3",
+        "L3",
+        "个人均值",
+        "单指比较",
+        "写字",
+        "手工",
+        "精细操作",
+        "大运动",
+        "耐力",
+        "拖拉",
+        "右中高左中低",
+        "右中明显高于左中",
+        "右高左低",
+        "左右差异",
+        "先从右侧进入"
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "obsidian",
+          "path": "/Users/gyl0322gmail.com/AI-CEO-System/AI-CEO-Vault/知识库/宋老师天赋测评教学/落地应用-体觉听觉视觉三感官功能组合.md",
+          "locator": "体觉功能左右数值组合"
+        },
+        {
+          "sourceType": "report_library",
+          "path": "docs/aipiwen_report_system/05_language_library_话术库/AIPIWEN_ReportLibrary_V1.2_五大功能区独立知识卡.md",
+          "locator": "体觉功能 右高左低"
+        }
+      ],
+      "safeGrounding": "右中明显高于左中：小手部和精细任务比较容易进入，但长时间坚持可能需要节奏补给和阶段反馈。",
+      "outputGuidance": "用于解释 体觉功能 右侧入口更先启动、左侧需要补结构或支持的情况。",
+      "doNotUse": [
+        "天生就是",
+        "决定未来",
+        "诊断",
+        "筛选淘汰",
+        "保证升学",
+        "保证职业",
+        "命定",
+        "没有能力"
+      ]
+    },
+    {
+      "id": "RKI-V1.2-BODY-L_GT_R",
+      "title": "体觉功能深度解释：左高右低（中指系统）",
+      "status": "auto_safe",
+      "modules": [
+        "体觉功能",
+        "五大功能区",
+        "单指比较",
+        "左右差异"
+      ],
+      "scenarios": [
+        "写字慢",
+        "作业拖拉",
+        "动手",
+        "运动",
+        "坚持",
+        "坐不住",
+        "精细操作",
+        "左高右低",
+        "右中",
+        "左中"
+      ],
+      "ageBands": [
+        "all"
+      ],
+      "retrievalKeywords": [
+        "体觉功能",
+        "中指",
+        "右中",
+        "左中",
+        "R3",
+        "L3",
+        "个人均值",
+        "单指比较",
+        "写字",
+        "手工",
+        "精细操作",
+        "大运动",
+        "耐力",
+        "拖拉",
+        "左中高右中低",
+        "左中明显高于右中",
+        "左高右低",
+        "左右差异",
+        "先从左侧进入"
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "obsidian",
+          "path": "/Users/gyl0322gmail.com/AI-CEO-System/AI-CEO-Vault/知识库/宋老师天赋测评教学/落地应用-体觉听觉视觉三感官功能组合.md",
+          "locator": "体觉功能左右数值组合"
+        },
+        {
+          "sourceType": "report_library",
+          "path": "docs/aipiwen_report_system/05_language_library_话术库/AIPIWEN_ReportLibrary_V1.2_五大功能区独立知识卡.md",
+          "locator": "体觉功能 左高右低"
+        }
+      ],
+      "safeGrounding": "左中明显高于右中：大身体能量强，但精细书写或细节任务可能慢；可以先活动身体再回到精细任务。",
+      "outputGuidance": "用于解释 体觉功能 左侧入口更先启动、右侧需要补表达、目标或外部化的情况。",
+      "doNotUse": [
+        "天生就是",
+        "决定未来",
+        "诊断",
+        "筛选淘汰",
+        "保证升学",
+        "保证职业",
+        "命定",
+        "没有能力"
+      ]
+    },
+    {
+      "id": "RKI-V1.2-BODY-BOTH_HIGH",
+      "title": "体觉功能深度解释：双高（中指系统）",
+      "status": "auto_safe",
+      "modules": [
+        "体觉功能",
+        "五大功能区",
+        "单指比较",
+        "左右差异"
+      ],
+      "scenarios": [
+        "写字慢",
+        "作业拖拉",
+        "动手",
+        "运动",
+        "坚持",
+        "坐不住",
+        "精细操作",
+        "双高",
+        "右中",
+        "左中"
+      ],
+      "ageBands": [
+        "all"
+      ],
+      "retrievalKeywords": [
+        "体觉功能",
+        "中指",
+        "右中",
+        "左中",
+        "R3",
+        "L3",
+        "个人均值",
+        "单指比较",
+        "写字",
+        "手工",
+        "精细操作",
+        "大运动",
+        "耐力",
+        "拖拉",
+        "右中左中都高",
+        "双高",
+        "两侧都高",
+        "双侧都高",
+        "过载风险"
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "obsidian",
+          "path": "/Users/gyl0322gmail.com/AI-CEO-System/AI-CEO-Vault/知识库/宋老师天赋测评教学/落地应用-体觉听觉视觉三感官功能组合.md",
+          "locator": "体觉功能左右数值组合"
+        },
+        {
+          "sourceType": "report_library",
+          "path": "docs/aipiwen_report_system/05_language_library_话术库/AIPIWEN_ReportLibrary_V1.2_五大功能区独立知识卡.md",
+          "locator": "体觉功能 双高"
+        }
+      ],
+      "safeGrounding": "右中与左中都高：身体操作和身体耐力都容易启动，适合动手实践、运动、舞台和需要身体参与的学习。",
+      "outputGuidance": "用于解释 体觉功能 双侧都高时的优势、过载风险和应用建议。",
+      "doNotUse": [
+        "天生就是",
+        "决定未来",
+        "诊断",
+        "筛选淘汰",
+        "保证升学",
+        "保证职业",
+        "命定",
+        "没有能力"
+      ]
+    },
+    {
+      "id": "RKI-V1.2-BODY-BOTH_LOW",
+      "title": "体觉功能深度解释：双低（中指系统）",
+      "status": "auto_safe",
+      "modules": [
+        "体觉功能",
+        "五大功能区",
+        "单指比较",
+        "左右差异"
+      ],
+      "scenarios": [
+        "写字慢",
+        "作业拖拉",
+        "动手",
+        "运动",
+        "坚持",
+        "坐不住",
+        "精细操作",
+        "双低",
+        "右中",
+        "左中"
+      ],
+      "ageBands": [
+        "all"
+      ],
+      "retrievalKeywords": [
+        "体觉功能",
+        "中指",
+        "右中",
+        "左中",
+        "R3",
+        "L3",
+        "个人均值",
+        "单指比较",
+        "写字",
+        "手工",
+        "精细操作",
+        "大运动",
+        "耐力",
+        "拖拉",
+        "右中左中都低",
+        "双低",
+        "两侧都低",
+        "双侧都低",
+        "温和支持"
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "obsidian",
+          "path": "/Users/gyl0322gmail.com/AI-CEO-System/AI-CEO-Vault/知识库/宋老师天赋测评教学/落地应用-体觉听觉视觉三感官功能组合.md",
+          "locator": "体觉功能左右数值组合"
+        },
+        {
+          "sourceType": "report_library",
+          "path": "docs/aipiwen_report_system/05_language_library_话术库/AIPIWEN_ReportLibrary_V1.2_五大功能区独立知识卡.md",
+          "locator": "体觉功能 双低"
+        }
+      ],
+      "safeGrounding": "右中与左中都低：身体入口需要被温和带动，任务要拆小、慢示范、低压力重复，不要用懒或不认真评价。",
+      "outputGuidance": "用于解释 体觉功能 双侧都低时的温和支持方式。不能表达为缺陷或没天赋。",
+      "doNotUse": [
+        "天生就是",
+        "决定未来",
+        "诊断",
+        "筛选淘汰",
+        "保证升学",
+        "保证职业",
+        "命定",
+        "没有能力"
+      ]
+    },
+    {
+      "id": "RKI-V1.2-AUDIO-R_HIGH",
+      "title": "听觉功能深度解释：右侧单指高（无名指系统）",
+      "status": "auto_safe",
+      "modules": [
+        "听觉功能",
+        "五大功能区",
+        "单指比较",
+        "左右差异"
+      ],
+      "scenarios": [
+        "听不进去",
+        "复述",
+        "语言表达",
+        "语气敏感",
+        "沟通冲突",
+        "音乐",
+        "听课",
+        "右侧单指高",
+        "右无名",
+        "左无名"
+      ],
+      "ageBands": [
+        "all"
+      ],
+      "retrievalKeywords": [
+        "听觉功能",
+        "无名指",
+        "右无名",
+        "左无名",
+        "R4",
+        "L4",
+        "个人均值",
+        "单指比较",
+        "语言",
+        "复述",
+        "语气",
+        "音感",
+        "听课",
+        "沟通",
+        "右无名高",
+        "R4高",
+        "右侧高",
+        "高于个人均值",
+        "高值表现"
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "obsidian",
+          "path": "/Users/gyl0322gmail.com/AI-CEO-System/AI-CEO-Vault/知识库/宋老师天赋测评教学/落地应用-体觉听觉视觉三感官功能组合.md",
+          "locator": "听觉功能左右数值组合"
+        },
+        {
+          "sourceType": "report_library",
+          "path": "docs/aipiwen_report_system/05_language_library_话术库/AIPIWEN_ReportLibrary_V1.2_五大功能区独立知识卡.md",
+          "locator": "听觉功能 右侧单指高"
+        }
+      ],
+      "safeGrounding": "右无名R4 数值高：口头信息、语言表达、听后复述和口语记忆更容易被调动，适合讲出来、复述一遍来巩固。",
+      "outputGuidance": "用于解释 右无名 高于个人均值时的优势、卡点和应用。必须说“更容易被调动”，不能说“决定”。",
+      "doNotUse": [
+        "天生就是",
+        "决定未来",
+        "诊断",
+        "筛选淘汰",
+        "保证升学",
+        "保证职业",
+        "命定",
+        "没有能力"
+      ]
+    },
+    {
+      "id": "RKI-V1.2-AUDIO-R_LOW",
+      "title": "听觉功能深度解释：右侧单指低（无名指系统）",
+      "status": "auto_safe",
+      "modules": [
+        "听觉功能",
+        "五大功能区",
+        "单指比较",
+        "左右差异"
+      ],
+      "scenarios": [
+        "听不进去",
+        "复述",
+        "语言表达",
+        "语气敏感",
+        "沟通冲突",
+        "音乐",
+        "听课",
+        "右侧单指低",
+        "右无名",
+        "左无名"
+      ],
+      "ageBands": [
+        "all"
+      ],
+      "retrievalKeywords": [
+        "听觉功能",
+        "无名指",
+        "右无名",
+        "左无名",
+        "R4",
+        "L4",
+        "个人均值",
+        "单指比较",
+        "语言",
+        "复述",
+        "语气",
+        "音感",
+        "听课",
+        "沟通",
+        "右无名低",
+        "R4低",
+        "右侧低",
+        "低于个人均值",
+        "低值支持"
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "obsidian",
+          "path": "/Users/gyl0322gmail.com/AI-CEO-System/AI-CEO-Vault/知识库/宋老师天赋测评教学/落地应用-体觉听觉视觉三感官功能组合.md",
+          "locator": "听觉功能左右数值组合"
+        },
+        {
+          "sourceType": "report_library",
+          "path": "docs/aipiwen_report_system/05_language_library_话术库/AIPIWEN_ReportLibrary_V1.2_五大功能区独立知识卡.md",
+          "locator": "听觉功能 右侧单指低"
+        }
+      ],
+      "safeGrounding": "右无名R4 数值低：单靠口头讲解容易漏信息，重要事情需要写下来、画出来或让他复述确认。",
+      "outputGuidance": "用于解释 右无名 低于个人均值时的支持方式。重点是补入口、补结构，不贴短板标签。",
+      "doNotUse": [
+        "天生就是",
+        "决定未来",
+        "诊断",
+        "筛选淘汰",
+        "保证升学",
+        "保证职业",
+        "命定",
+        "没有能力"
+      ]
+    },
+    {
+      "id": "RKI-V1.2-AUDIO-L_HIGH",
+      "title": "听觉功能深度解释：左侧单指高（无名指系统）",
+      "status": "auto_safe",
+      "modules": [
+        "听觉功能",
+        "五大功能区",
+        "单指比较",
+        "左右差异"
+      ],
+      "scenarios": [
+        "听不进去",
+        "复述",
+        "语言表达",
+        "语气敏感",
+        "沟通冲突",
+        "音乐",
+        "听课",
+        "左侧单指高",
+        "右无名",
+        "左无名"
+      ],
+      "ageBands": [
+        "all"
+      ],
+      "retrievalKeywords": [
+        "听觉功能",
+        "无名指",
+        "右无名",
+        "左无名",
+        "R4",
+        "L4",
+        "个人均值",
+        "单指比较",
+        "语言",
+        "复述",
+        "语气",
+        "音感",
+        "听课",
+        "沟通",
+        "左无名高",
+        "L4高",
+        "左侧高",
+        "高于个人均值",
+        "高值表现"
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "obsidian",
+          "path": "/Users/gyl0322gmail.com/AI-CEO-System/AI-CEO-Vault/知识库/宋老师天赋测评教学/落地应用-体觉听觉视觉三感官功能组合.md",
+          "locator": "听觉功能左右数值组合"
+        },
+        {
+          "sourceType": "report_library",
+          "path": "docs/aipiwen_report_system/05_language_library_话术库/AIPIWEN_ReportLibrary_V1.2_五大功能区独立知识卡.md",
+          "locator": "听觉功能 左侧单指高"
+        }
+      ],
+      "safeGrounding": "左无名L4 数值高：音感、语气、节奏、言外之意和情绪声调更容易被捕捉，也更容易被语气影响。",
+      "outputGuidance": "用于解释 左无名 高于个人均值时的优势、卡点和应用。要回到真实行为观察。",
+      "doNotUse": [
+        "天生就是",
+        "决定未来",
+        "诊断",
+        "筛选淘汰",
+        "保证升学",
+        "保证职业",
+        "命定",
+        "没有能力"
+      ]
+    },
+    {
+      "id": "RKI-V1.2-AUDIO-L_LOW",
+      "title": "听觉功能深度解释：左侧单指低（无名指系统）",
+      "status": "auto_safe",
+      "modules": [
+        "听觉功能",
+        "五大功能区",
+        "单指比较",
+        "左右差异"
+      ],
+      "scenarios": [
+        "听不进去",
+        "复述",
+        "语言表达",
+        "语气敏感",
+        "沟通冲突",
+        "音乐",
+        "听课",
+        "左侧单指低",
+        "右无名",
+        "左无名"
+      ],
+      "ageBands": [
+        "all"
+      ],
+      "retrievalKeywords": [
+        "听觉功能",
+        "无名指",
+        "右无名",
+        "左无名",
+        "R4",
+        "L4",
+        "个人均值",
+        "单指比较",
+        "语言",
+        "复述",
+        "语气",
+        "音感",
+        "听课",
+        "沟通",
+        "左无名低",
+        "L4低",
+        "左侧低",
+        "低于个人均值",
+        "低值支持"
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "obsidian",
+          "path": "/Users/gyl0322gmail.com/AI-CEO-System/AI-CEO-Vault/知识库/宋老师天赋测评教学/落地应用-体觉听觉视觉三感官功能组合.md",
+          "locator": "听觉功能左右数值组合"
+        },
+        {
+          "sourceType": "report_library",
+          "path": "docs/aipiwen_report_system/05_language_library_话术库/AIPIWEN_ReportLibrary_V1.2_五大功能区独立知识卡.md",
+          "locator": "听觉功能 左侧单指低"
+        }
+      ],
+      "safeGrounding": "左无名L4 数值低：不太被语气和声音氛围牵着走，更直接抓内容，但可能显得不够柔软。",
+      "outputGuidance": "用于解释 左无名 低于个人均值时的支持方式。表达为需要环境带动，不表达为没有能力。",
+      "doNotUse": [
+        "天生就是",
+        "决定未来",
+        "诊断",
+        "筛选淘汰",
+        "保证升学",
+        "保证职业",
+        "命定",
+        "没有能力"
+      ]
+    },
+    {
+      "id": "RKI-V1.2-AUDIO-R_GT_L",
+      "title": "听觉功能深度解释：右高左低（无名指系统）",
+      "status": "auto_safe",
+      "modules": [
+        "听觉功能",
+        "五大功能区",
+        "单指比较",
+        "左右差异"
+      ],
+      "scenarios": [
+        "听不进去",
+        "复述",
+        "语言表达",
+        "语气敏感",
+        "沟通冲突",
+        "音乐",
+        "听课",
+        "右高左低",
+        "右无名",
+        "左无名"
+      ],
+      "ageBands": [
+        "all"
+      ],
+      "retrievalKeywords": [
+        "听觉功能",
+        "无名指",
+        "右无名",
+        "左无名",
+        "R4",
+        "L4",
+        "个人均值",
+        "单指比较",
+        "语言",
+        "复述",
+        "语气",
+        "音感",
+        "听课",
+        "沟通",
+        "右无名高左无名低",
+        "右无名明显高于左无名",
+        "右高左低",
+        "左右差异",
+        "先从右侧进入"
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "obsidian",
+          "path": "/Users/gyl0322gmail.com/AI-CEO-System/AI-CEO-Vault/知识库/宋老师天赋测评教学/落地应用-体觉听觉视觉三感官功能组合.md",
+          "locator": "听觉功能左右数值组合"
+        },
+        {
+          "sourceType": "report_library",
+          "path": "docs/aipiwen_report_system/05_language_library_话术库/AIPIWEN_ReportLibrary_V1.2_五大功能区独立知识卡.md",
+          "locator": "听觉功能 右高左低"
+        }
+      ],
+      "safeGrounding": "右无名明显高于左无名：听得懂信息和语言，但情绪声调未必同步捕捉；沟通要把需求直接说清。",
+      "outputGuidance": "用于解释 听觉功能 右侧入口更先启动、左侧需要补结构或支持的情况。",
+      "doNotUse": [
+        "天生就是",
+        "决定未来",
+        "诊断",
+        "筛选淘汰",
+        "保证升学",
+        "保证职业",
+        "命定",
+        "没有能力"
+      ]
+    },
+    {
+      "id": "RKI-V1.2-AUDIO-L_GT_R",
+      "title": "听觉功能深度解释：左高右低（无名指系统）",
+      "status": "auto_safe",
+      "modules": [
+        "听觉功能",
+        "五大功能区",
+        "单指比较",
+        "左右差异"
+      ],
+      "scenarios": [
+        "听不进去",
+        "复述",
+        "语言表达",
+        "语气敏感",
+        "沟通冲突",
+        "音乐",
+        "听课",
+        "左高右低",
+        "右无名",
+        "左无名"
+      ],
+      "ageBands": [
+        "all"
+      ],
+      "retrievalKeywords": [
+        "听觉功能",
+        "无名指",
+        "右无名",
+        "左无名",
+        "R4",
+        "L4",
+        "个人均值",
+        "单指比较",
+        "语言",
+        "复述",
+        "语气",
+        "音感",
+        "听课",
+        "沟通",
+        "左无名高右无名低",
+        "左无名明显高于右无名",
+        "左高右低",
+        "左右差异",
+        "先从左侧进入"
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "obsidian",
+          "path": "/Users/gyl0322gmail.com/AI-CEO-System/AI-CEO-Vault/知识库/宋老师天赋测评教学/落地应用-体觉听觉视觉三感官功能组合.md",
+          "locator": "听觉功能左右数值组合"
+        },
+        {
+          "sourceType": "report_library",
+          "path": "docs/aipiwen_report_system/05_language_library_话术库/AIPIWEN_ReportLibrary_V1.2_五大功能区独立知识卡.md",
+          "locator": "听觉功能 左高右低"
+        }
+      ],
+      "safeGrounding": "左无名明显高于右无名：先听到语气和氛围，再处理内容，容易被声调影响，需要更稳定温和的表达环境。",
+      "outputGuidance": "用于解释 听觉功能 左侧入口更先启动、右侧需要补表达、目标或外部化的情况。",
+      "doNotUse": [
+        "天生就是",
+        "决定未来",
+        "诊断",
+        "筛选淘汰",
+        "保证升学",
+        "保证职业",
+        "命定",
+        "没有能力"
+      ]
+    },
+    {
+      "id": "RKI-V1.2-AUDIO-BOTH_HIGH",
+      "title": "听觉功能深度解释：双高（无名指系统）",
+      "status": "auto_safe",
+      "modules": [
+        "听觉功能",
+        "五大功能区",
+        "单指比较",
+        "左右差异"
+      ],
+      "scenarios": [
+        "听不进去",
+        "复述",
+        "语言表达",
+        "语气敏感",
+        "沟通冲突",
+        "音乐",
+        "听课",
+        "双高",
+        "右无名",
+        "左无名"
+      ],
+      "ageBands": [
+        "all"
+      ],
+      "retrievalKeywords": [
+        "听觉功能",
+        "无名指",
+        "右无名",
+        "左无名",
+        "R4",
+        "L4",
+        "个人均值",
+        "单指比较",
+        "语言",
+        "复述",
+        "语气",
+        "音感",
+        "听课",
+        "沟通",
+        "右无名左无名都高",
+        "双高",
+        "两侧都高",
+        "双侧都高",
+        "过载风险"
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "obsidian",
+          "path": "/Users/gyl0322gmail.com/AI-CEO-System/AI-CEO-Vault/知识库/宋老师天赋测评教学/落地应用-体觉听觉视觉三感官功能组合.md",
+          "locator": "听觉功能左右数值组合"
+        },
+        {
+          "sourceType": "report_library",
+          "path": "docs/aipiwen_report_system/05_language_library_话术库/AIPIWEN_ReportLibrary_V1.2_五大功能区独立知识卡.md",
+          "locator": "听觉功能 双高"
+        }
+      ],
+      "safeGrounding": "右无名与左无名都高：语言信息和声音情绪都敏感，适合语言、音乐、倾听、表达；也要避免噪音和语气过载。",
+      "outputGuidance": "用于解释 听觉功能 双侧都高时的优势、过载风险和应用建议。",
+      "doNotUse": [
+        "天生就是",
+        "决定未来",
+        "诊断",
+        "筛选淘汰",
+        "保证升学",
+        "保证职业",
+        "命定",
+        "没有能力"
+      ]
+    },
+    {
+      "id": "RKI-V1.2-AUDIO-BOTH_LOW",
+      "title": "听觉功能深度解释：双低（无名指系统）",
+      "status": "auto_safe",
+      "modules": [
+        "听觉功能",
+        "五大功能区",
+        "单指比较",
+        "左右差异"
+      ],
+      "scenarios": [
+        "听不进去",
+        "复述",
+        "语言表达",
+        "语气敏感",
+        "沟通冲突",
+        "音乐",
+        "听课",
+        "双低",
+        "右无名",
+        "左无名"
+      ],
+      "ageBands": [
+        "all"
+      ],
+      "retrievalKeywords": [
+        "听觉功能",
+        "无名指",
+        "右无名",
+        "左无名",
+        "R4",
+        "L4",
+        "个人均值",
+        "单指比较",
+        "语言",
+        "复述",
+        "语气",
+        "音感",
+        "听课",
+        "沟通",
+        "右无名左无名都低",
+        "双低",
+        "两侧都低",
+        "双侧都低",
+        "温和支持"
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "obsidian",
+          "path": "/Users/gyl0322gmail.com/AI-CEO-System/AI-CEO-Vault/知识库/宋老师天赋测评教学/落地应用-体觉听觉视觉三感官功能组合.md",
+          "locator": "听觉功能左右数值组合"
+        },
+        {
+          "sourceType": "report_library",
+          "path": "docs/aipiwen_report_system/05_language_library_话术库/AIPIWEN_ReportLibrary_V1.2_五大功能区独立知识卡.md",
+          "locator": "听觉功能 双低"
+        }
+      ],
+      "safeGrounding": "右无名与左无名都低：听觉入口不是最省力的通道，学习和沟通要配合文字、图像、动作和外部提醒。",
+      "outputGuidance": "用于解释 听觉功能 双侧都低时的温和支持方式。不能表达为缺陷或没天赋。",
+      "doNotUse": [
+        "天生就是",
+        "决定未来",
+        "诊断",
+        "筛选淘汰",
+        "保证升学",
+        "保证职业",
+        "命定",
+        "没有能力"
+      ]
+    },
+    {
+      "id": "RKI-V1.2-VISUAL-R_HIGH",
+      "title": "视觉功能深度解释：右侧单指高（小指系统）",
+      "status": "auto_safe",
+      "modules": [
+        "视觉功能",
+        "五大功能区",
+        "单指比较",
+        "左右差异"
+      ],
+      "scenarios": [
+        "图像学习",
+        "审美",
+        "方向感",
+        "识人",
+        "脸盲",
+        "观察力",
+        "阅读",
+        "右侧单指高",
+        "右小",
+        "左小"
+      ],
+      "ageBands": [
+        "all"
+      ],
+      "retrievalKeywords": [
+        "视觉功能",
+        "小指",
+        "右小",
+        "左小",
+        "R5",
+        "L5",
+        "个人均值",
+        "单指比较",
+        "识人",
+        "方向感",
+        "脸盲",
+        "图像",
+        "审美",
+        "阅读",
+        "右小高",
+        "R5高",
+        "右侧高",
+        "高于个人均值",
+        "高值表现"
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "obsidian",
+          "path": "/Users/gyl0322gmail.com/AI-CEO-System/AI-CEO-Vault/知识库/宋老师天赋测评教学/落地应用-体觉听觉视觉三感官功能组合.md",
+          "locator": "视觉功能左右数值组合"
+        },
+        {
+          "sourceType": "report_library",
+          "path": "docs/aipiwen_report_system/05_language_library_话术库/AIPIWEN_ReportLibrary_V1.2_五大功能区独立知识卡.md",
+          "locator": "视觉功能 右侧单指高"
+        }
+      ],
+      "safeGrounding": "右小R5 数值高：外部线索、识人、察色、方向感、观察和细节辨识更容易被调动。",
+      "outputGuidance": "用于解释 右小 高于个人均值时的优势、卡点和应用。必须说“更容易被调动”，不能说“决定”。",
+      "doNotUse": [
+        "天生就是",
+        "决定未来",
+        "诊断",
+        "筛选淘汰",
+        "保证升学",
+        "保证职业",
+        "命定",
+        "没有能力"
+      ]
+    },
+    {
+      "id": "RKI-V1.2-VISUAL-R_LOW",
+      "title": "视觉功能深度解释：右侧单指低（小指系统）",
+      "status": "auto_safe",
+      "modules": [
+        "视觉功能",
+        "五大功能区",
+        "单指比较",
+        "左右差异"
+      ],
+      "scenarios": [
+        "图像学习",
+        "审美",
+        "方向感",
+        "识人",
+        "脸盲",
+        "观察力",
+        "阅读",
+        "右侧单指低",
+        "右小",
+        "左小"
+      ],
+      "ageBands": [
+        "all"
+      ],
+      "retrievalKeywords": [
+        "视觉功能",
+        "小指",
+        "右小",
+        "左小",
+        "R5",
+        "L5",
+        "个人均值",
+        "单指比较",
+        "识人",
+        "方向感",
+        "脸盲",
+        "图像",
+        "审美",
+        "阅读",
+        "右小低",
+        "R5低",
+        "右侧低",
+        "低于个人均值",
+        "低值支持"
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "obsidian",
+          "path": "/Users/gyl0322gmail.com/AI-CEO-System/AI-CEO-Vault/知识库/宋老师天赋测评教学/落地应用-体觉听觉视觉三感官功能组合.md",
+          "locator": "视觉功能左右数值组合"
+        },
+        {
+          "sourceType": "report_library",
+          "path": "docs/aipiwen_report_system/05_language_library_话术库/AIPIWEN_ReportLibrary_V1.2_五大功能区独立知识卡.md",
+          "locator": "视觉功能 右侧单指低"
+        }
+      ],
+      "safeGrounding": "右小R5 数值低：识人、方向、外部细节和脸色变化可能不敏感，不是不在乎，而是外部视觉入口慢。",
+      "outputGuidance": "用于解释 右小 低于个人均值时的支持方式。重点是补入口、补结构，不贴短板标签。",
+      "doNotUse": [
+        "天生就是",
+        "决定未来",
+        "诊断",
+        "筛选淘汰",
+        "保证升学",
+        "保证职业",
+        "命定",
+        "没有能力"
+      ]
+    },
+    {
+      "id": "RKI-V1.2-VISUAL-L_HIGH",
+      "title": "视觉功能深度解释：左侧单指高（小指系统）",
+      "status": "auto_safe",
+      "modules": [
+        "视觉功能",
+        "五大功能区",
+        "单指比较",
+        "左右差异"
+      ],
+      "scenarios": [
+        "图像学习",
+        "审美",
+        "方向感",
+        "识人",
+        "脸盲",
+        "观察力",
+        "阅读",
+        "左侧单指高",
+        "右小",
+        "左小"
+      ],
+      "ageBands": [
+        "all"
+      ],
+      "retrievalKeywords": [
+        "视觉功能",
+        "小指",
+        "右小",
+        "左小",
+        "R5",
+        "L5",
+        "个人均值",
+        "单指比较",
+        "识人",
+        "方向感",
+        "脸盲",
+        "图像",
+        "审美",
+        "阅读",
+        "左小高",
+        "L5高",
+        "左侧高",
+        "高于个人均值",
+        "高值表现"
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "obsidian",
+          "path": "/Users/gyl0322gmail.com/AI-CEO-System/AI-CEO-Vault/知识库/宋老师天赋测评教学/落地应用-体觉听觉视觉三感官功能组合.md",
+          "locator": "视觉功能左右数值组合"
+        },
+        {
+          "sourceType": "report_library",
+          "path": "docs/aipiwen_report_system/05_language_library_话术库/AIPIWEN_ReportLibrary_V1.2_五大功能区独立知识卡.md",
+          "locator": "视觉功能 左侧单指高"
+        }
+      ],
+      "safeGrounding": "左小L5 数值高：图像记忆、色彩、审美、画面联想和设计感更容易被调动，适合视觉化材料。",
+      "outputGuidance": "用于解释 左小 高于个人均值时的优势、卡点和应用。要回到真实行为观察。",
+      "doNotUse": [
+        "天生就是",
+        "决定未来",
+        "诊断",
+        "筛选淘汰",
+        "保证升学",
+        "保证职业",
+        "命定",
+        "没有能力"
+      ]
+    },
+    {
+      "id": "RKI-V1.2-VISUAL-L_LOW",
+      "title": "视觉功能深度解释：左侧单指低（小指系统）",
+      "status": "auto_safe",
+      "modules": [
+        "视觉功能",
+        "五大功能区",
+        "单指比较",
+        "左右差异"
+      ],
+      "scenarios": [
+        "图像学习",
+        "审美",
+        "方向感",
+        "识人",
+        "脸盲",
+        "观察力",
+        "阅读",
+        "左侧单指低",
+        "右小",
+        "左小"
+      ],
+      "ageBands": [
+        "all"
+      ],
+      "retrievalKeywords": [
+        "视觉功能",
+        "小指",
+        "右小",
+        "左小",
+        "R5",
+        "L5",
+        "个人均值",
+        "单指比较",
+        "识人",
+        "方向感",
+        "脸盲",
+        "图像",
+        "审美",
+        "阅读",
+        "左小低",
+        "L5低",
+        "左侧低",
+        "低于个人均值",
+        "低值支持"
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "obsidian",
+          "path": "/Users/gyl0322gmail.com/AI-CEO-System/AI-CEO-Vault/知识库/宋老师天赋测评教学/落地应用-体觉听觉视觉三感官功能组合.md",
+          "locator": "视觉功能左右数值组合"
+        },
+        {
+          "sourceType": "report_library",
+          "path": "docs/aipiwen_report_system/05_language_library_话术库/AIPIWEN_ReportLibrary_V1.2_五大功能区独立知识卡.md",
+          "locator": "视觉功能 左侧单指低"
+        }
+      ],
+      "safeGrounding": "左小L5 数值低：色彩审美和内在画面不一定敏感，更适合语言、步骤、逻辑或动作辅助。",
+      "outputGuidance": "用于解释 左小 低于个人均值时的支持方式。表达为需要环境带动，不表达为没有能力。",
+      "doNotUse": [
+        "天生就是",
+        "决定未来",
+        "诊断",
+        "筛选淘汰",
+        "保证升学",
+        "保证职业",
+        "命定",
+        "没有能力"
+      ]
+    },
+    {
+      "id": "RKI-V1.2-VISUAL-R_GT_L",
+      "title": "视觉功能深度解释：右高左低（小指系统）",
+      "status": "auto_safe",
+      "modules": [
+        "视觉功能",
+        "五大功能区",
+        "单指比较",
+        "左右差异"
+      ],
+      "scenarios": [
+        "图像学习",
+        "审美",
+        "方向感",
+        "识人",
+        "脸盲",
+        "观察力",
+        "阅读",
+        "右高左低",
+        "右小",
+        "左小"
+      ],
+      "ageBands": [
+        "all"
+      ],
+      "retrievalKeywords": [
+        "视觉功能",
+        "小指",
+        "右小",
+        "左小",
+        "R5",
+        "L5",
+        "个人均值",
+        "单指比较",
+        "识人",
+        "方向感",
+        "脸盲",
+        "图像",
+        "审美",
+        "阅读",
+        "右小高左小低",
+        "右小明显高于左小",
+        "右高左低",
+        "左右差异",
+        "先从右侧进入"
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "obsidian",
+          "path": "/Users/gyl0322gmail.com/AI-CEO-System/AI-CEO-Vault/知识库/宋老师天赋测评教学/落地应用-体觉听觉视觉三感官功能组合.md",
+          "locator": "视觉功能左右数值组合"
+        },
+        {
+          "sourceType": "report_library",
+          "path": "docs/aipiwen_report_system/05_language_library_话术库/AIPIWEN_ReportLibrary_V1.2_五大功能区独立知识卡.md",
+          "locator": "视觉功能 右高左低"
+        }
+      ],
+      "safeGrounding": "右小明显高于左小：更会看外部现实线索、识人和环境，但不一定偏审美表达。",
+      "outputGuidance": "用于解释 视觉功能 右侧入口更先启动、左侧需要补结构或支持的情况。",
+      "doNotUse": [
+        "天生就是",
+        "决定未来",
+        "诊断",
+        "筛选淘汰",
+        "保证升学",
+        "保证职业",
+        "命定",
+        "没有能力"
+      ]
+    },
+    {
+      "id": "RKI-V1.2-VISUAL-L_GT_R",
+      "title": "视觉功能深度解释：左高右低（小指系统）",
+      "status": "auto_safe",
+      "modules": [
+        "视觉功能",
+        "五大功能区",
+        "单指比较",
+        "左右差异"
+      ],
+      "scenarios": [
+        "图像学习",
+        "审美",
+        "方向感",
+        "识人",
+        "脸盲",
+        "观察力",
+        "阅读",
+        "左高右低",
+        "右小",
+        "左小"
+      ],
+      "ageBands": [
+        "all"
+      ],
+      "retrievalKeywords": [
+        "视觉功能",
+        "小指",
+        "右小",
+        "左小",
+        "R5",
+        "L5",
+        "个人均值",
+        "单指比较",
+        "识人",
+        "方向感",
+        "脸盲",
+        "图像",
+        "审美",
+        "阅读",
+        "左小高右小低",
+        "左小明显高于右小",
+        "左高右低",
+        "左右差异",
+        "先从左侧进入"
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "obsidian",
+          "path": "/Users/gyl0322gmail.com/AI-CEO-System/AI-CEO-Vault/知识库/宋老师天赋测评教学/落地应用-体觉听觉视觉三感官功能组合.md",
+          "locator": "视觉功能左右数值组合"
+        },
+        {
+          "sourceType": "report_library",
+          "path": "docs/aipiwen_report_system/05_language_library_话术库/AIPIWEN_ReportLibrary_V1.2_五大功能区独立知识卡.md",
+          "locator": "视觉功能 左高右低"
+        }
+      ],
+      "safeGrounding": "左小明显高于右小：内在画面和审美强，但外部识人、方向感不一定同步强，可能会画图却不记路。",
+      "outputGuidance": "用于解释 视觉功能 左侧入口更先启动、右侧需要补表达、目标或外部化的情况。",
+      "doNotUse": [
+        "天生就是",
+        "决定未来",
+        "诊断",
+        "筛选淘汰",
+        "保证升学",
+        "保证职业",
+        "命定",
+        "没有能力"
+      ]
+    },
+    {
+      "id": "RKI-V1.2-VISUAL-BOTH_HIGH",
+      "title": "视觉功能深度解释：双高（小指系统）",
+      "status": "auto_safe",
+      "modules": [
+        "视觉功能",
+        "五大功能区",
+        "单指比较",
+        "左右差异"
+      ],
+      "scenarios": [
+        "图像学习",
+        "审美",
+        "方向感",
+        "识人",
+        "脸盲",
+        "观察力",
+        "阅读",
+        "双高",
+        "右小",
+        "左小"
+      ],
+      "ageBands": [
+        "all"
+      ],
+      "retrievalKeywords": [
+        "视觉功能",
+        "小指",
+        "右小",
+        "左小",
+        "R5",
+        "L5",
+        "个人均值",
+        "单指比较",
+        "识人",
+        "方向感",
+        "脸盲",
+        "图像",
+        "审美",
+        "阅读",
+        "右小左小都高",
+        "双高",
+        "两侧都高",
+        "双侧都高",
+        "过载风险"
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "obsidian",
+          "path": "/Users/gyl0322gmail.com/AI-CEO-System/AI-CEO-Vault/知识库/宋老师天赋测评教学/落地应用-体觉听觉视觉三感官功能组合.md",
+          "locator": "视觉功能左右数值组合"
+        },
+        {
+          "sourceType": "report_library",
+          "path": "docs/aipiwen_report_system/05_language_library_话术库/AIPIWEN_ReportLibrary_V1.2_五大功能区独立知识卡.md",
+          "locator": "视觉功能 双高"
+        }
+      ],
+      "safeGrounding": "右小与左小都高：外部辨识和内在图像都强，适合观察、图像学习、审美表达和细节比较。",
+      "outputGuidance": "用于解释 视觉功能 双侧都高时的优势、过载风险和应用建议。",
+      "doNotUse": [
+        "天生就是",
+        "决定未来",
+        "诊断",
+        "筛选淘汰",
+        "保证升学",
+        "保证职业",
+        "命定",
+        "没有能力"
+      ]
+    },
+    {
+      "id": "RKI-V1.2-VISUAL-BOTH_LOW",
+      "title": "视觉功能深度解释：双低（小指系统）",
+      "status": "auto_safe",
+      "modules": [
+        "视觉功能",
+        "五大功能区",
+        "单指比较",
+        "左右差异"
+      ],
+      "scenarios": [
+        "图像学习",
+        "审美",
+        "方向感",
+        "识人",
+        "脸盲",
+        "观察力",
+        "阅读",
+        "双低",
+        "右小",
+        "左小"
+      ],
+      "ageBands": [
+        "all"
+      ],
+      "retrievalKeywords": [
+        "视觉功能",
+        "小指",
+        "右小",
+        "左小",
+        "R5",
+        "L5",
+        "个人均值",
+        "单指比较",
+        "识人",
+        "方向感",
+        "脸盲",
+        "图像",
+        "审美",
+        "阅读",
+        "右小左小都低",
+        "双低",
+        "两侧都低",
+        "双侧都低",
+        "温和支持"
+      ],
+      "sourceRefs": [
+        {
+          "sourceType": "obsidian",
+          "path": "/Users/gyl0322gmail.com/AI-CEO-System/AI-CEO-Vault/知识库/宋老师天赋测评教学/落地应用-体觉听觉视觉三感官功能组合.md",
+          "locator": "视觉功能左右数值组合"
+        },
+        {
+          "sourceType": "report_library",
+          "path": "docs/aipiwen_report_system/05_language_library_话术库/AIPIWEN_ReportLibrary_V1.2_五大功能区独立知识卡.md",
+          "locator": "视觉功能 双低"
+        }
+      ],
+      "safeGrounding": "右小与左小都低：视觉入口不是最省力通道，学习要搭配听觉、体觉、步骤和明确提示，不要说没眼力见。",
+      "outputGuidance": "用于解释 视觉功能 双侧都低时的温和支持方式。不能表达为缺陷或没天赋。",
+      "doNotUse": [
+        "天生就是",
+        "决定未来",
+        "诊断",
+        "筛选淘汰",
+        "保证升学",
+        "保证职业",
+        "命定",
+        "没有能力"
+      ]
     }
   ]
 }
