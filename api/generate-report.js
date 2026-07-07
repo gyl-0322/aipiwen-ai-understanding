@@ -938,14 +938,29 @@ module.exports = async function handler(req, res) {
     });
     raw = text;
   } catch (err1) {
-    const d = await logErr('primary_fail', err1);
-    const code = err1?.status ? `DS${err1.status}` : (err1?.name || 'ERR');
-    return res.status(200).json({ ok:false, error:`AI 请求失败 [${code}]，请重试` });
+    await logErr('primary_fail', err1);
+    const sections = normalizeSections([], requiredMods, selectedIssues, engineResult);
+    return res.status(200).json({
+      ok: true,
+      degraded: true,
+      warning: 'AI生成较忙，已先生成基础版专属报告。',
+      sections,
+      raw: '',
+      requiredModules: requiredMods,
+    });
   }
 
   if (!raw) {
     console.error('[gen-report] empty reply after both attempts');
-    return res.status(200).json({ ok:false, error:'AI 未返回内容，请重试' });
+    const sections = normalizeSections([], requiredMods, selectedIssues, engineResult);
+    return res.status(200).json({
+      ok: true,
+      degraded: true,
+      warning: 'AI暂时没有返回完整内容，已先生成基础版专属报告。',
+      sections,
+      raw: '',
+      requiredModules: requiredMods,
+    });
   }
 
   const parsedSections = parseSections(raw, requiredMods, selectedIssues);
