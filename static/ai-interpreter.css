@@ -582,20 +582,26 @@ button.table-row {
 
 .finger-summary {
   display: grid;
-  gap: 8px;
+  gap: 9px;
 }
 
 .finger-row {
   display: grid;
-  grid-template-columns: 72px minmax(0, 1fr) minmax(0, 1fr);
-  align-items: stretch;
-  gap: 8px;
+  grid-template-columns: 76px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  padding: 9px;
+  border: 1px solid rgba(149, 173, 211, .12);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, .028);
 }
 
 .finger-row h3 {
   display: flex;
   align-items: center;
-  min-height: 38px;
+  justify-content: center;
+  align-self: stretch;
+  min-height: 54px;
   padding: 8px 9px;
   border-radius: 8px;
   background: rgba(82, 213, 232, .1);
@@ -629,37 +635,74 @@ button.table-row {
   background: rgba(242, 163, 74, .13);
 }
 
-.finger-hand {
+.finger-pair {
   display: grid;
-  grid-template-columns: 34px minmax(0, 1fr) 48px;
+  gap: 6px;
+  min-width: 0;
+}
+
+.finger-hand {
+  position: relative;
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) 52px;
   align-items: center;
   gap: 7px;
-  min-height: 38px;
-  padding: 7px 9px;
+  min-height: 28px;
+  padding: 5px 8px;
   border: 1px solid rgba(149, 173, 211, .14);
   border-radius: 8px;
   background: rgba(255, 255, 255, .035);
+  overflow: hidden;
+}
+
+.finger-hand::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: var(--value);
+  background: linear-gradient(90deg, rgba(82, 213, 232, .2), rgba(242, 163, 74, .22));
+  opacity: .95;
+}
+
+.finger-hand::after {
+  content: "";
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  bottom: 4px;
+  height: 2px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--cyan), var(--amber));
+  transform: scaleX(calc(var(--value) / 100%));
+  transform-origin: left center;
 }
 
 .finger-hand span {
+  position: relative;
   color: var(--faint);
   font-size: 11px;
   font-weight: 800;
 }
 
 .finger-hand strong {
+  position: relative;
   min-width: 0;
   color: var(--text);
-  font-size: 13px;
+  font-size: 12px;
   line-height: 1.35;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .finger-hand em {
+  position: relative;
   color: var(--amber);
-  font-size: 13px;
+  font-size: 12px;
   font-style: normal;
   font-weight: 900;
   text-align: right;
+  white-space: nowrap;
 }
 
 .bar-item {
