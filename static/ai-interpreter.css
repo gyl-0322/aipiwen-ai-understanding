@@ -1220,6 +1220,48 @@ button.table-row {
   background: linear-gradient(135deg, rgba(242, 163, 74, .11), rgba(82, 213, 232, .05));
 }
 
+body[data-page="advisor"] .public-shell {
+  padding-top: 12px;
+  padding-bottom: 34px;
+}
+
+body[data-page="advisor"] .public-nav {
+  margin-bottom: 14px;
+}
+
+body[data-page="advisor"] .public-hero {
+  min-height: 300px;
+  align-items: start;
+}
+
+body[data-page="advisor"] .public-hero h1 {
+  font-size: 40px;
+}
+
+body[data-page="advisor"] .hero-copy {
+  margin: 10px 0 8px;
+  font-size: 20px;
+}
+
+body[data-page="advisor"] .hero-actions {
+  margin-top: 14px;
+}
+
+body[data-page="advisor"] .public-hero-panel {
+  align-content: start;
+  gap: 12px;
+}
+
+body[data-page="advisor"] .value-grid {
+  gap: 10px;
+  margin-top: 12px;
+}
+
+body[data-page="advisor"] .value-card {
+  min-height: 132px;
+  padding: 14px;
+}
+
 .auth-shell {
   width: min(1120px, calc(100% - 48px));
 }
