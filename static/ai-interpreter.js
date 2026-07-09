@@ -310,8 +310,25 @@
     });
   }
 
+  function hasDryrunSession() {
+    if (!document.body.matches('[data-page="session"]')) return false;
+    try {
+      const raw = window.localStorage.getItem("AIPIWEN_DRYRUN_STATE_V1");
+      if (!raw) return false;
+      const state = JSON.parse(raw);
+      const params = new URLSearchParams(window.location.search);
+      const sessionId = params.get("sessionId") || state.activeSessionId;
+      return Boolean(sessionId)
+        && Array.isArray(state.interpretationSessions)
+        && state.interpretationSessions.some((item) => item.sessionId === sessionId);
+    } catch (error) {
+      return false;
+    }
+  }
+
   function initSession() {
     if (!document.body.matches('[data-page="session"]')) return;
+    if (hasDryrunSession()) return;
 
     $$(".step-card").forEach((button, index) => {
       button.addEventListener("click", () => updateStep(index));
@@ -422,6 +439,7 @@
 
   function initCreditModal() {
     if (!document.body.matches('[data-page="session"]')) return;
+    if (hasDryrunSession()) return;
 
     const openButton = document.getElementById("generate-plan");
     const modal = document.getElementById("credit-modal");

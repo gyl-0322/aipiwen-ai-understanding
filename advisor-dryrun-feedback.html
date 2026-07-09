@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AIPIWEN 指导师工作台 V2 内测反馈</title>
+  <meta name="description" content="AIPIWEN 指导师工作台 V2 Dry-run 内测反馈表">
+  <link rel="stylesheet" href="static/ai-interpreter.css">
+  <script src="static/dryrun-store.js" defer></script>
+  <script src="static/dryrun-feedback.js" defer></script>
+</head>
+<body data-page="advisor-dryrun-feedback">
+  <main class="public-shell dryrun-feedback" data-dryrun-feedback>
+    <nav class="public-nav" aria-label="V2 Dry-run 内测反馈导航">
+      <a class="brand" href="ai-interpreter-workbench.html" aria-label="AIPIWEN 指导师工作台">
+        <svg class="brand-flower" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <circle class="brand-flower-ring" cx="18" cy="18" r="15.5" stroke-width=".9" stroke-dasharray="2.5 6"/>
+          <g class="brand-flower-petals">
+            <ellipse cx="18" cy="12" rx="2.2" ry="6.5" transform="rotate(0 18 18)"/>
+            <ellipse cx="18" cy="12" rx="2.2" ry="6.5" transform="rotate(90 18 18)"/>
+            <ellipse cx="18" cy="12" rx="1.4" ry="5.5" transform="rotate(45 18 18)"/>
+            <ellipse cx="18" cy="12" rx="1.4" ry="5.5" transform="rotate(135 18 18)"/>
+          </g>
+          <circle class="brand-flower-center" cx="18" cy="18" r="3"/>
+        </svg>
+        <div>
+          <p class="brand-title">AIPIWEN指导师工作台</p>
+          <div class="brand-subtitle">V2 Dry-run 内测反馈</div>
+        </div>
+      </a>
+      <div class="top-actions">
+        <a class="btn ghost" href="ai-interpreter-workbench.html">返回工作台</a>
+      </div>
+    </nav>
+
+    <section class="public-hero dryrun-hero">
+      <div>
+        <p class="eyebrow">Dry-run Feedback</p>
+        <h1>AIPIWEN 指导师工作台 V2 内测反馈</h1>
+        <p class="hero-copy">当前为 V2 Dry-run 内测反馈，不涉及真实客户数据。请勿填写真实客户隐私。</p>
+      </div>
+      <aside class="module public-hero-panel boundary">
+        <span class="status pending">安全提示</span>
+        <h2>仅用于内测分析</h2>
+        <p>反馈只保存到当前浏览器 localStorage，不上传服务器，不连接真实账号。</p>
+      </aside>
+    </section>
+
+    <form class="module feedback-form" data-feedback-form>
+      <div class="card-header">
+        <div class="card-title">
+          <h2>内测反馈表</h2>
+          <small>共 10 项，提交后返回工作台</small>
+        </div>
+        <span class="status info">MockFeedback</span>
+      </div>
+
+      <fieldset>
+        <legend>1. 如果正式上线，你是否愿意在真实工作中使用这个工具？</legend>
+        <div class="rating-row" data-required-group="q1">
+          <label><input type="radio" name="q1" value="1"><span>1</span></label>
+          <label><input type="radio" name="q1" value="2"><span>2</span></label>
+          <label><input type="radio" name="q1" value="3"><span>3</span></label>
+          <label><input type="radio" name="q1" value="4"><span>4</span></label>
+          <label><input type="radio" name="q1" value="5"><span>5</span></label>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>2. 哪个页面/功能最有价值？</legend>
+        <div class="dryrun-check-grid" data-required-group="q2">
+          <label><input type="checkbox" name="q2" value="AI解读助手"><span>AI解读助手</span></label>
+          <label><input type="checkbox" name="q2" value="客户管理"><span>客户管理</span></label>
+          <label><input type="checkbox" name="q2" value="解读训练"><span>解读训练</span></label>
+          <label><input type="checkbox" name="q2" value="总部复核"><span>总部复核</span></label>
+          <label><input type="checkbox" name="q2" value="优秀案例沉淀"><span>优秀案例沉淀</span></label>
+          <label><input type="checkbox" name="q2" value="积分体系"><span>积分体系</span></label>
+          <label><input type="checkbox" name="q2" value="客户归属机制"><span>客户归属机制</span></label>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>3. AI 生成的话术是否能直接用于客户沟通？</legend>
+        <div class="rating-row" data-required-group="q3">
+          <label><input type="radio" name="q3" value="1"><span>1</span></label>
+          <label><input type="radio" name="q3" value="2"><span>2</span></label>
+          <label><input type="radio" name="q3" value="3"><span>3</span></label>
+          <label><input type="radio" name="q3" value="4"><span>4</span></label>
+          <label><input type="radio" name="q3" value="5"><span>5</span></label>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>4. 8 步解读流程是否太复杂？</legend>
+        <div class="rating-row" data-required-group="q4">
+          <label><input type="radio" name="q4" value="1"><span>1 太简单</span></label>
+          <label><input type="radio" name="q4" value="2"><span>2</span></label>
+          <label><input type="radio" name="q4" value="3"><span>3 刚好</span></label>
+          <label><input type="radio" name="q4" value="4"><span>4</span></label>
+          <label><input type="radio" name="q4" value="5"><span>5 太复杂</span></label>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>5. 积分消耗模型是否能接受？</legend>
+        <div class="dryrun-check-grid" data-required-group="q5">
+          <label><input type="radio" name="q5" value="可以接受"><span>可以接受</span></label>
+          <label><input type="radio" name="q5" value="偏贵"><span>偏贵</span></label>
+          <label><input type="radio" name="q5" value="偏便宜"><span>偏便宜</span></label>
+          <label><input type="radio" name="q5" value="还需要真实使用后判断"><span>还需要真实使用后判断</span></label>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>6. 如果收费，你是否愿意付费？</legend>
+        <div class="dryrun-check-grid" data-required-group="q6">
+          <label><input type="radio" name="q6" value="愿意"><span>愿意</span></label>
+          <label><input type="radio" name="q6" value="可能愿意"><span>可能愿意</span></label>
+          <label><input type="radio" name="q6" value="不确定"><span>不确定</span></label>
+          <label><input type="radio" name="q6" value="不愿意"><span>不愿意</span></label>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>7. 你更喜欢哪种付费方式？</legend>
+        <div class="dryrun-check-grid" data-required-group="q7">
+          <label><input type="radio" name="q7" value="按次"><span>按次</span></label>
+          <label><input type="radio" name="q7" value="包月"><span>包月</span></label>
+          <label><input type="radio" name="q7" value="套餐"><span>套餐</span></label>
+          <label><input type="radio" name="q7" value="与报告打包"><span>与报告打包</span></label>
+          <label><input type="radio" name="q7" value="机构年费"><span>机构年费</span></label>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>8. 最大不满意点是什么？</legend>
+        <textarea class="textarea" name="q8" rows="4" placeholder="自由填写，请勿包含真实客户隐私。"></textarea>
+      </fieldset>
+
+      <fieldset>
+        <legend>9. 最希望优先上线的功能是什么？</legend>
+        <textarea class="textarea" name="q9" rows="4" placeholder="自由填写，请勿包含真实客户隐私。"></textarea>
+      </fieldset>
+
+      <fieldset>
+        <legend>10. 是否愿意进入第一批真实账号内测？</legend>
+        <div class="dryrun-check-grid" data-required-group="q10">
+          <label><input type="radio" name="q10" value="愿意"><span>愿意</span></label>
+          <label><input type="radio" name="q10" value="可以考虑"><span>可以考虑</span></label>
+          <label><input type="radio" name="q10" value="暂时不愿意"><span>暂时不愿意</span></label>
+        </div>
+      </fieldset>
+
+      <p class="dryrun-error" data-feedback-error hidden></p>
+      <div class="top-actions feedback-actions">
+        <button class="btn primary" type="submit">提交内测反馈</button>
+        <a class="btn ghost" href="ai-interpreter-workbench.html">取消</a>
+      </div>
+    </form>
+  </main>
+</body>
+</html>

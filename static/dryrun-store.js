@@ -97,7 +97,8 @@ ATD：42°
       interpretationSessions: [],
       interpretationRecords: [],
       inviteRelations: [],
-      feedback: []
+      feedback: [],
+      scriptRatings: []
     };
   }
 
@@ -111,7 +112,8 @@ ATD：42°
       interpretationSessions: Array.isArray(state && state.interpretationSessions) ? state.interpretationSessions : [],
       interpretationRecords: Array.isArray(state && state.interpretationRecords) ? state.interpretationRecords : [],
       inviteRelations: Array.isArray(state && state.inviteRelations) ? state.inviteRelations : [],
-      feedback: Array.isArray(state && state.feedback) ? state.feedback : []
+      feedback: Array.isArray(state && state.feedback) ? state.feedback : [],
+      scriptRatings: Array.isArray(state && state.scriptRatings) ? state.scriptRatings : []
     };
   }
 
@@ -354,6 +356,146 @@ ATD：42°
     return nextRecord;
   }
 
+  function getFeedbackList() {
+    return getDryrunState().feedback;
+  }
+
+  function saveFeedback(feedback) {
+    const state = getDryrunState();
+    const existing = state.feedback.find((item) => item.feedbackId && item.feedbackId === feedback.feedbackId);
+    const timestamp = now();
+    const nextFeedback = {
+      feedbackType: "MockFeedback",
+      feedbackId: feedback.feedbackId || (existing && existing.feedbackId) || `mf_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
+      advisorId: feedback.advisorId || (state.user && state.user.userId) || null,
+      advisorNickname: feedback.advisorNickname || (state.user && state.user.nickname) || "",
+      advisorRole: feedback.advisorRole || (state.user && state.user.role) || "",
+      createdAt: feedback.createdAt || (existing && existing.createdAt) || timestamp,
+      ...feedback,
+      updatedAt: timestamp
+    };
+    const feedbackList = existing
+      ? state.feedback.map((item) => (item.feedbackId === nextFeedback.feedbackId ? nextFeedback : item))
+      : [...state.feedback, nextFeedback];
+    saveDryrunState({ ...state, feedback: feedbackList });
+    return nextFeedback;
+  }
+
+  function getScriptRatings() {
+    return getDryrunState().scriptRatings;
+  }
+
+  function sameScriptRating(left, right) {
+    if (left.feedbackId && right.feedbackId) return left.feedbackId === right.feedbackId;
+    return left.sessionId === right.sessionId
+      && left.stepIndex === right.stepIndex
+      && left.sectionType === right.sectionType
+      && left.scriptText === right.scriptText;
+  }
+
+  function upsertScriptRating(list, rating) {
+    const existing = list.find((item) => sameScriptRating(item, rating));
+    if (!existing) return [...list, rating];
+    return list.map((item) => (sameScriptRating(item, rating) ? { ...existing, ...rating, createdAt: existing.createdAt || rating.createdAt } : item));
+  }
+
+  function saveScriptRating(rating) {
+    const state = getDryrunState();
+    const timestamp = now();
+    const existing = state.scriptRatings.find((item) => sameScriptRating(item, rating));
+    const nextRating = {
+      feedbackId: rating.feedbackId || (existing && existing.feedbackId) || `sf_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
+      sessionId: rating.sessionId,
+      customerId: rating.customerId,
+      advisorId: rating.advisorId || (state.user && state.user.userId) || null,
+      stepIndex: Number(rating.stepIndex || 0),
+      sectionType: rating.sectionType,
+      scriptText: rating.scriptText,
+      rating: rating.rating,
+      note: rating.note || "",
+      createdAt: rating.createdAt || (existing && existing.createdAt) || timestamp,
+      ...rating,
+      updatedAt: timestamp
+    };
+    const scriptRatings = upsertScriptRating(state.scriptRatings, nextRating);
+    const interpretationSessions = state.interpretationSessions.map((session) => {
+      if (session.sessionId !== nextRating.sessionId) return session;
+      const sessionFeedback = session.sessionFeedback || {};
+      return {
+        ...session,
+        sessionFeedback: {
+          ...sessionFeedback,
+          scriptRatings: upsertScriptRating(Array.isArray(sessionFeedback.scriptRatings) ? sessionFeedback.scriptRatings : [], nextRating)
+        }
+      };
+    });
+    saveDryrunState({ ...state, scriptRatings, interpretationSessions });
+    return nextRating;
+  }
+
+  function countBy(items, getKey) {
+    return (items || []).reduce((counts, item) => {
+      const key = getKey(item) || "未填写";
+      counts[key] = (counts[key] || 0) + 1;
+      return counts;
+    }, {});
+  }
+
+  function latestTime(values) {
+    return values.reduce((latest, value) => {
+      if (!value) return latest;
+      const time = new Date(value).getTime();
+      if (Number.isNaN(time)) return latest;
+      return Math.max(latest, time);
+    }, 0);
+  }
+
+  function getDryrunSummary(inputState) {
+    const state = normalizeState(inputState || getDryrunState());
+    const completedSessionIds = new Set(
+      state.interpretationSessions
+        .filter((session) => session.status === "generated" || session.completedAt || session.generatedAt)
+        .map((session) => session.sessionId)
+    );
+    state.interpretationRecords.forEach((record) => {
+      if ((record.creditsSpent || 0) >= 50 || Array.isArray(record.fullRoute)) {
+        completedSessionIds.add(record.sessionId);
+      }
+    });
+    const totalCreditSpent = state.wallet && Number.isFinite(Number(state.wallet.totalSpent))
+      ? Number(state.wallet.totalSpent)
+      : state.creditLogs.reduce((sum, log) => (log.amount < 0 ? sum + Math.abs(log.amount) : sum), 0);
+    const lastActiveTime = latestTime([
+      state.updatedAt,
+      state.user && state.user.lastActiveAt,
+      ...state.customers.map((item) => item.createdAt),
+      ...state.interpretationSessions.map((item) => item.generatedAt || item.completedAt || item.startedAt),
+      ...state.interpretationRecords.map((item) => item.createdAt),
+      ...state.feedback.map((item) => item.createdAt),
+      ...state.scriptRatings.map((item) => item.updatedAt || item.createdAt)
+    ]);
+
+    return {
+      userNickname: state.user ? state.user.nickname : "-",
+      role: state.user ? roleLabel(state.user.role) : "-",
+      creditBalance: state.wallet ? state.wallet.creditBalance || 0 : 0,
+      customerCount: state.customers.length,
+      interpretationRecordCount: state.interpretationRecords.length,
+      feedbackCount: state.feedback.length,
+      scriptRatingCount: state.scriptRatings.length,
+      completedInterpretationCount: completedSessionIds.size,
+      totalCreditSpent,
+      lastActiveAt: lastActiveTime ? new Date(lastActiveTime).toISOString() : null,
+      sourceDistribution: countBy(state.customers, (customer) => sourceLabel(customer.sourceChannel)),
+      questionDistribution: countBy(
+        state.interpretationSessions.flatMap((session) => session.selectedQuestions || []),
+        (question) => question
+      ),
+      feedback: state.feedback,
+      scriptRatings: state.scriptRatings
+    };
+  }
+
   function updateInterpretationSession(sessionId, updates) {
     const state = getDryrunState();
     const interpretationSessions = state.interpretationSessions.map((session) => (
@@ -459,6 +601,8 @@ ATD：42°
     const state = getDryrunState();
     setText(panel, "[data-dryrun-customer-count]", String(state.customers.length));
     setText(panel, "[data-dryrun-record-count]", String(state.interpretationRecords.length));
+    setText(panel, "[data-dryrun-feedback-count]", String(state.feedback.length));
+    setText(panel, "[data-dryrun-script-rating-count]", String(state.scriptRatings.length));
   }
 
   function renderDryrunCustomers() {
@@ -604,6 +748,8 @@ ATD：42°
     setText(panel, "[data-dryrun-name]", state.user.nickname || "-");
     setText(panel, "[data-dryrun-role]", roleLabel(state.user.role));
     setText(panel, "[data-dryrun-balance]", String(wallet.creditBalance || 0));
+    setText(panel, "[data-dryrun-feedback-count]", String(state.feedback.length));
+    setText(panel, "[data-dryrun-script-rating-count]", String(state.scriptRatings.length));
     setText(panel, "[data-dryrun-invite-code]", state.user.inviteCode || "-");
     setText(panel, "[data-dryrun-invite-link]", state.profile && state.profile.inviteLink ? state.profile.inviteLink : "-");
     setText(panel, "[data-dryrun-bind-code]", state.profile && state.profile.bindCode ? state.profile.bindCode : "-");
@@ -618,6 +764,11 @@ ATD：42°
         ledger.appendChild(item);
       });
     }
+    setText(
+      panel,
+      "[data-dryrun-feedback-hint]",
+      state.interpretationRecords.length >= 1 ? "你已完成模拟解读，建议填写反馈。" : "建议先完成一次模拟解读后再填写反馈。"
+    );
     renderWorkbenchStats();
   }
 
@@ -655,6 +806,11 @@ ATD：42°
     setActiveSession,
     getActiveSessionBundle,
     saveInterpretationRecord,
+    getFeedbackList,
+    saveFeedback,
+    saveScriptRating,
+    getScriptRatings,
+    getDryrunSummary,
     updateInterpretationSession,
     markSessionGenerated,
     parseReportSummary,

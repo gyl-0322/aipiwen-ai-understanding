@@ -48,6 +48,14 @@
     if (node) node.innerHTML = listHtml(items);
   }
 
+  function ratingLabel(value) {
+    return {
+      usable: "可直接用",
+      needs_edit: "需要改",
+      unusable: "不适用"
+    }[value] || "";
+  }
+
   function generateInterpretationRoute() {
     return ROUTE.map((step, index) => ({
       ...step,
@@ -172,6 +180,60 @@
     let currentStep = session.currentStep || 0;
     let generatedScripts = route.map((step) => generateStepScript({ stepIndex: step.stepIndex, reportSummary, selectedQuestions: session.selectedQuestions }));
 
+    function getSavedScriptRating(sectionType, scriptText, scriptIndex) {
+      return dryStore.getScriptRatings().find((item) => (
+        item.sessionId === session.sessionId
+        && Number(item.stepIndex) === Number(currentStep)
+        && item.sectionType === sectionType
+        && (Number(item.scriptIndex) === Number(scriptIndex) || item.scriptText === scriptText)
+      ));
+    }
+
+    function setScriptList(id, items, sectionType) {
+      const node = document.getElementById(id);
+      if (!node) return;
+      node.innerHTML = (items || []).map((item, scriptIndex) => {
+        const savedRating = getSavedScriptRating(sectionType, item, scriptIndex);
+        const activeRating = savedRating ? savedRating.rating : "";
+        const savedNote = savedRating && savedRating.note ? `<small class="script-rating-note">备注：${escapeHtml(savedRating.note)}</small>` : "";
+        const status = activeRating ? `<small class="script-rating-current">已标记：${escapeHtml(ratingLabel(activeRating))}</small>` : "";
+        return `<li class="script-rating-item">
+          <span class="script-rating-text">${escapeHtml(item)}</span>
+          <span class="script-rating-actions" aria-label="话术可用度标记">
+            <button class="rating-btn ${activeRating === "usable" ? "active" : ""}" type="button" data-script-rating="usable" data-section-type="${sectionType}" data-script-index="${scriptIndex}">👍 可直接用</button>
+            <button class="rating-btn ${activeRating === "needs_edit" ? "active" : ""}" type="button" data-script-rating="needs_edit" data-section-type="${sectionType}" data-script-index="${scriptIndex}">✏️ 需要改</button>
+            <button class="rating-btn ${activeRating === "unusable" ? "active" : ""}" type="button" data-script-rating="unusable" data-section-type="${sectionType}" data-script-index="${scriptIndex}">👎 不适用</button>
+          </span>
+          ${status}${savedNote}
+        </li>`;
+      }).join("");
+      node.querySelectorAll("[data-script-rating]").forEach((button) => {
+        button.addEventListener("click", function () {
+          const section = button.dataset.sectionType;
+          const index = Number(button.dataset.scriptIndex);
+          const rating = button.dataset.scriptRating;
+          const scriptText = (generatedScripts[currentStep][section] || [])[index] || "";
+          let note = "";
+          if (rating === "needs_edit" || rating === "unusable") {
+            note = window.prompt("哪里需要调整？可选填写。", "") || "";
+          }
+          dryStore.saveScriptRating({
+            feedbackId: `sf_${session.sessionId}_${currentStep}_${section}_${index}`,
+            sessionId: session.sessionId,
+            customerId: session.customerId,
+            advisorId: session.advisorId,
+            stepIndex: currentStep,
+            sectionType: section,
+            scriptIndex: index,
+            scriptText,
+            rating,
+            note
+          });
+          renderStep(currentStep);
+        });
+      });
+    }
+
     setText(".topbar h1", `AI解读助手 · ${customer.nickname}`);
     setText(".topbar p:not(.eyebrow)", `${reportSummary.reportType} · V2 Dry-run 本地规则生成 · 当前模拟会话。`);
     const sideNote = document.querySelector(".sidebar-note");
@@ -224,10 +286,10 @@
         currentStep === 5 ? `本步重点回应：${questionText(session.selectedQuestions)}` : "遇到高敏问题时记录并人工确认。"
       ]);
       setList("ai-why", script.why);
-      setList("ai-say", script.say);
-      setList("ai-ask", script.ask);
+      setScriptList("ai-say", script.say, "say");
+      setScriptList("ai-ask", script.ask, "ask");
       setList("ai-no", script.no);
-      setList("ai-action", script.action);
+      setScriptList("ai-action", script.action, "action");
       setList("ai-risk", script.risk);
       const progress = document.getElementById("session-progress");
       if (progress) progress.style.width = `${((currentStep + 1) / route.length) * 100}%`;

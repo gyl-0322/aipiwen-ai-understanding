@@ -98,6 +98,14 @@
       "dest": "/advisor-dryrun-new-customer.html"
     },
     {
+      "src": "/advisor-dryrun-feedback.html",
+      "dest": "/advisor-dryrun-feedback.html"
+    },
+    {
+      "src": "/advisor-dryrun-admin.html",
+      "dest": "/advisor-dryrun-admin.html"
+    },
+    {
       "src": "/advisor-login.html",
       "dest": "/advisor-login.html"
     },

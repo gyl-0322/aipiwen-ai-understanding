@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Emma V2 Dry-run 内测看板</title>
+  <meta name="description" content="Emma V2 Dry-run 内测本地数据看板">
+  <link rel="stylesheet" href="static/ai-interpreter.css">
+  <script src="static/dryrun-store.js" defer></script>
+  <script src="static/dryrun-admin.js" defer></script>
+</head>
+<body data-page="advisor-dryrun-admin">
+  <main class="public-shell dryrun-admin" data-dryrun-admin>
+    <nav class="public-nav" aria-label="Emma V2 Dry-run 看板导航">
+      <a class="brand" href="ai-interpreter-workbench.html" aria-label="AIPIWEN 指导师工作台">
+        <svg class="brand-flower" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <circle class="brand-flower-ring" cx="18" cy="18" r="15.5" stroke-width=".9" stroke-dasharray="2.5 6"/>
+          <g class="brand-flower-petals">
+            <ellipse cx="18" cy="12" rx="2.2" ry="6.5" transform="rotate(0 18 18)"/>
+            <ellipse cx="18" cy="12" rx="2.2" ry="6.5" transform="rotate(90 18 18)"/>
+            <ellipse cx="18" cy="12" rx="1.4" ry="5.5" transform="rotate(45 18 18)"/>
+            <ellipse cx="18" cy="12" rx="1.4" ry="5.5" transform="rotate(135 18 18)"/>
+          </g>
+          <circle class="brand-flower-center" cx="18" cy="18" r="3"/>
+        </svg>
+        <div>
+          <p class="brand-title">AIPIWEN指导师工作台</p>
+          <div class="brand-subtitle">Emma V2 Dry-run 看板</div>
+        </div>
+      </a>
+      <div class="top-actions">
+        <a class="btn ghost" href="ai-interpreter-workbench.html">返回工作台</a>
+        <a class="btn" href="advisor-dryrun-feedback.html">内测反馈表</a>
+      </div>
+    </nav>
+
+    <section class="public-hero dryrun-hero">
+      <div>
+        <p class="eyebrow">Emma Admin</p>
+        <h1>Emma V2 Dry-run 内测看板</h1>
+        <p class="hero-copy">当前仅汇总本机 localStorage 与手动导入 JSON，不连接真实数据库、不请求后端、不调用模型 API。</p>
+      </div>
+      <aside class="module public-hero-panel boundary">
+        <span class="status info">Local only</span>
+        <h2>Dry-run 汇总</h2>
+        <p>导入文件只在当前浏览器临时汇总展示，可随时导出当前汇总 JSON。</p>
+      </aside>
+    </section>
+
+    <section class="module admin-panel-grid">
+      <div class="card-header">
+        <div class="card-title">
+          <h2>JSON 导入 / 导出</h2>
+          <small data-admin-import-status>当前只显示本机 dry-run 数据。</small>
+        </div>
+        <span class="status pending">不写服务器</span>
+      </div>
+      <div class="admin-import-row">
+        <input class="field" type="file" accept="application/json,.json" data-admin-import>
+        <button class="btn primary" type="button" data-admin-export>导出汇总 JSON</button>
+      </div>
+    </section>
+
+    <section class="module admin-panel-grid">
+      <div class="card-header">
+        <div class="card-title">
+          <h2>当前本机数据总览</h2>
+          <small>读取当前浏览器 localStorage</small>
+        </div>
+      </div>
+      <div class="dryrun-summary-grid">
+        <div><span>内测用户昵称</span><strong data-admin-local-user>-</strong></div>
+        <div><span>身份</span><strong data-admin-local-role>-</strong></div>
+        <div><span>当前积分</span><strong data-admin-local-credit>0</strong></div>
+        <div><span>模拟客户数</span><strong data-admin-local-customers>0</strong></div>
+        <div><span>解读记录数</span><strong data-admin-local-records>0</strong></div>
+        <div><span>反馈数</span><strong data-admin-local-feedback>0</strong></div>
+        <div><span>话术标记数</span><strong data-admin-local-ratings>0</strong></div>
+      </div>
+    </section>
+
+    <section class="layout-grid cols-aside" style="margin-top:16px">
+      <div class="module admin-panel-grid">
+        <div class="card-header">
+          <div class="card-title">
+            <h2>功能使用概览</h2>
+            <small>本机 + 已导入 JSON 临时汇总</small>
+          </div>
+          <span class="status info" data-admin-state-count>1 份数据</span>
+        </div>
+        <div class="admin-metric-grid">
+          <div class="source-item"><span>完整解读次数</span><strong data-admin-completed>0</strong></div>
+          <div class="source-item"><span>积分消耗总数</span><strong data-admin-spent>0</strong></div>
+          <div class="source-item"><span>最近一次活跃时间</span><strong data-admin-last-active>-</strong></div>
+          <div class="source-item"><span>导入反馈数</span><strong data-admin-total-feedback>0</strong></div>
+        </div>
+        <div class="layout-grid cols-2">
+          <div class="notice">
+            <strong>客户来源分布</strong>
+            <p data-admin-source-distribution>-</p>
+          </div>
+          <div class="notice">
+            <strong>关注问题分布</strong>
+            <p data-admin-question-distribution>-</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="module admin-panel-grid">
+        <div class="card-header">
+          <div class="card-title">
+            <h2>话术可用度汇总</h2>
+            <small>来自 session 右栏标记</small>
+          </div>
+        </div>
+        <div class="source-grid">
+          <div class="source-item"><span>可直接用</span><strong data-admin-rating-usable>0</strong></div>
+          <div class="source-item"><span>需要改</span><strong data-admin-rating-edit>0</strong></div>
+          <div class="source-item"><span>不适用</span><strong data-admin-rating-unusable>0</strong></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="module admin-panel-grid" style="margin-top:16px">
+      <div class="card-header">
+        <div class="card-title">
+          <h2>反馈汇总</h2>
+          <small>展示已提交 MockFeedback</small>
+        </div>
+      </div>
+      <div class="admin-metric-grid">
+        <div class="source-item"><span>使用意愿评分</span><strong data-admin-feedback-use>-</strong></div>
+        <div class="source-item"><span>话术可用评分</span><strong data-admin-feedback-script>-</strong></div>
+        <div class="source-item"><span>流程复杂度评分</span><strong data-admin-feedback-complexity>-</strong></div>
+        <div class="source-item"><span>付费意愿</span><strong data-admin-feedback-paid>-</strong></div>
+      </div>
+      <div class="layout-grid cols-2">
+        <div>
+          <h3>最大不满意点</h3>
+          <div class="admin-list" data-admin-dissatisfaction-list></div>
+        </div>
+        <div>
+          <h3>最希望优先上线功能</h3>
+          <div class="admin-list" data-admin-priority-list></div>
+        </div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>
