@@ -551,6 +551,28 @@ button.table-row {
   gap: 10px;
 }
 
+.finger-zone-list {
+  display: grid;
+  gap: 10px;
+}
+
+.finger-zone {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid rgba(149, 173, 211, .13);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, .032);
+}
+
+.finger-zone h3 {
+  color: var(--text);
+}
+
+.finger-zone p {
+  font-size: 13px;
+}
+
 .bar-item {
   display: grid;
   grid-template-columns: 70px 1fr 34px;
