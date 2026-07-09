@@ -78,6 +78,14 @@
       "dest": "/homepage.html"
     },
     {
+      "src": "/advisor.html",
+      "dest": "/advisor.html"
+    },
+    {
+      "src": "/advisor",
+      "dest": "/advisor.html"
+    },
+    {
       "src": "/behavior-input.html",
       "headers": {
         "Location": "/child-chat.html"

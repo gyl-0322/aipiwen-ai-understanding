@@ -62,6 +62,15 @@ body {
 .logo-svg    { width:36px; height:36px; flex-shrink:0; }
 .wordmark    { font-size:16px; font-weight:800; letter-spacing:.16em; text-transform:uppercase; color:var(--ink); line-height:1; }
 .wm-e        { color:var(--amber); }
+.header-side { display:flex; align-items:center; gap:12px; }
+.header-advisor-link {
+  display:inline-flex; align-items:center; justify-content:center;
+  min-height:34px; padding:7px 12px;
+  border:1px solid var(--ink-10); border-radius:999px;
+  background:rgba(255,255,255,.46); color:var(--ink-40);
+  font-size:12px; font-weight:600; text-decoration:none; white-space:nowrap;
+}
+.header-advisor-link:hover { color:var(--amber); border-color:rgba(194,105,42,.28); }
 
 /* 沐海星辰 印章 */
 .brand-seal {
@@ -370,8 +379,11 @@ body {
     </svg>
     <span class="wordmark">AIPIW<span class="wm-e">E</span>N</span>
   </a>
-  <div class="brand-seal" title="沐海星辰">
-    <span>沐</span><span>海</span><span>星</span><span>辰</span>
+  <div class="header-side">
+    <a class="header-advisor-link" href="/advisor.html">从业者入口</a>
+    <div class="brand-seal" title="沐海星辰">
+      <span>沐</span><span>海</span><span>星</span><span>辰</span>
+    </div>
   </div>
 </header>
 
@@ -623,10 +635,10 @@ body {
     <div style="font-size:13px; color:#C2692A; font-weight:600; letter-spacing:.05em; margin-bottom:8px;">家长教练 · 育儿顾问 · 心理老师</div>
     <div style="font-size:18px; font-weight:700; color:#1A1714; margin-bottom:8px;">30天免费体验计划</div>
     <div style="font-size:14px; color:#4A4540; line-height:1.7; margin-bottom:16px;">30个档案位 · 10次完整皮纹报告 · 专属转介链接<br>带学员一起体验，看看适不适合你的场景</div>
-    <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
-      <a href="/practitioner-demo" style="display:inline-block; background:#C2692A; color:#fff; border-radius:24px; padding:11px 28px; font-size:14px; font-weight:600; text-decoration:none;">查看体验手册 →</a>
-      <a href="/practitioner.html" style="display:inline-block; background:transparent; color:#C2692A; border:1.5px solid #C2692A; border-radius:24px; padding:11px 28px; font-size:14px; font-weight:600; text-decoration:none;">了解从业者计划</a>
-      <a href="/advisor.html" style="display:inline-block; background:transparent; color:#8C6A4D; border:1.5px solid rgba(140,106,77,.45); border-radius:24px; padding:11px 28px; font-size:14px; font-weight:600; text-decoration:none;">从业者入口</a>
+    <div style="display:flex; gap:8px; justify-content:center; flex-wrap:wrap;">
+      <a href="/practitioner-demo" style="display:inline-block; background:#C2692A; color:#fff; border-radius:24px; padding:10px 20px; font-size:13.5px; font-weight:600; text-decoration:none;">查看体验手册 →</a>
+      <a href="/practitioner.html" style="display:inline-block; background:transparent; color:#C2692A; border:1.5px solid #C2692A; border-radius:24px; padding:10px 20px; font-size:13.5px; font-weight:600; text-decoration:none;">了解从业者计划</a>
+      <a href="/advisor.html" style="display:inline-block; background:transparent; color:#8C6A4D; border:1.5px solid rgba(140,106,77,.45); border-radius:24px; padding:10px 20px; font-size:13.5px; font-weight:600; text-decoration:none;">从业者入口</a>
     </div>
   </div>
 </div>
