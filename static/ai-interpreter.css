@@ -371,6 +371,7 @@ p {
 
 .table-row {
   border-bottom: 1px solid rgba(149, 173, 211, .1);
+  background: rgba(8, 13, 21, .28);
   color: var(--muted);
 }
 
@@ -387,6 +388,9 @@ button.table-row {
   border-top: 0;
   border-right: 0;
   border-left: 0;
+  appearance: none;
+  background: rgba(8, 13, 21, .28);
+  color: var(--muted);
   text-align: left;
   cursor: pointer;
 }
