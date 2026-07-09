@@ -7,6 +7,7 @@
   <meta name="description" content="AIPIWEN AI解读师助手 V1.1 静态 Demo 客户列表">
   <link rel="stylesheet" href="static/ai-interpreter.css">
   <script src="static/ai-interpreter.js" defer></script>
+  <script src="static/dryrun-store.js" defer></script>
 </head>
 <body data-page="customers">
   <div class="app-shell">
@@ -49,7 +50,7 @@
         </div>
         <div class="top-actions">
           <button class="btn ghost" type="button">导出当前筛选</button>
-          <button class="btn primary" type="button">新建客户</button>
+          <a class="btn primary" href="advisor-dryrun-new-customer.html">新建模拟客户</a>
         </div>
       </header>
 
@@ -73,6 +74,20 @@
           <span class="tag">解读状态：全部</span>
           <span class="tag">日期范围：近 30 天</span>
         </div>
+      </section>
+
+      <section class="table-card customer-table" data-dryrun-customers-panel hidden style="margin-top:16px">
+        <div class="card-header" style="padding:16px 16px 0">
+          <div class="card-title">
+            <h2>V2 Dry-run 模拟客户</h2>
+            <small>当前本机已创建 <span data-dryrun-customers-count>0</span> 位模拟客户</small>
+          </div>
+          <a class="btn primary" href="advisor-dryrun-new-customer.html">新建模拟客户</a>
+        </div>
+        <div class="table-head">
+          <span>客户</span><span>来源</span><span>归属</span><span>绑定方式</span><span>报告摘要</span><span>解读状态</span><span>关注问题</span><span>操作</span>
+        </div>
+        <div data-dryrun-customers-list></div>
       </section>
 
       <section class="layout-grid cols-aside" style="margin-top:16px">

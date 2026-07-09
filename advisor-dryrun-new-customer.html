@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>新建模拟客户 · AIPIWEN 指导师工作台 V2 Dry-run</title>
+  <meta name="description" content="AIPIWEN 指导师工作台 V2 Dry-run 新建模拟客户">
+  <link rel="stylesheet" href="static/ai-interpreter.css">
+  <script src="static/dryrun-store.js" defer></script>
+  <script src="static/dryrun-credit.js" defer></script>
+</head>
+<body data-page="advisor-dryrun-new-customer">
+  <main class="public-shell dryrun-new-customer" data-dryrun-new-customer>
+    <nav class="public-nav" aria-label="V2 Dry-run 新建客户导航">
+      <a class="brand" href="ai-interpreter-workbench.html" aria-label="AIPIWEN 指导师工作台">
+        <svg class="brand-flower" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <circle class="brand-flower-ring" cx="18" cy="18" r="15.5" stroke-width=".9" stroke-dasharray="2.5 6"/>
+          <g class="brand-flower-petals">
+            <ellipse cx="18" cy="12" rx="2.2" ry="6.5" transform="rotate(0 18 18)"/>
+            <ellipse cx="18" cy="12" rx="2.2" ry="6.5" transform="rotate(90 18 18)"/>
+            <ellipse cx="18" cy="12" rx="1.4" ry="5.5" transform="rotate(45 18 18)"/>
+            <ellipse cx="18" cy="12" rx="1.4" ry="5.5" transform="rotate(135 18 18)"/>
+          </g>
+          <circle class="brand-flower-center" cx="18" cy="18" r="3"/>
+        </svg>
+        <div>
+          <p class="brand-title">AIPIWEN指导师工作台</p>
+          <div class="brand-subtitle">V2 Dry-run 内测</div>
+        </div>
+      </a>
+      <div class="top-actions">
+        <a class="btn ghost" href="ai-interpreter-workbench.html">返回工作台</a>
+        <a class="btn" href="ai-interpreter-customers.html">我的客户</a>
+      </div>
+    </nav>
+
+    <section class="public-hero dryrun-hero">
+      <div>
+        <p class="eyebrow">Mock Customer</p>
+        <h1>新建模拟客户</h1>
+        <p class="hero-copy">创建脱敏案例，进入 V2 Dry-run AI 解读助手三栏页。</p>
+      </div>
+      <aside class="module public-hero-panel boundary">
+        <span class="status pending">安全提示</span>
+        <h2>当前为 V2 Dry-run 内测环境</h2>
+        <p>请使用模拟客户或脱敏案例测试。请勿输入真实客户姓名、手机号、学校、身份证、家庭隐私等信息。</p>
+      </aside>
+    </section>
+
+    <section class="module" data-dryrun-gate hidden>
+      <div class="card-header">
+        <div class="card-title">
+          <h2>尚未进入 V2 Dry-run</h2>
+          <small>请先完成内测身份初始化</small>
+        </div>
+        <span class="status pending">未初始化</span>
+      </div>
+      <p>完成 onboarding 后，系统会在当前浏览器创建 mock 用户和 500 mock 积分钱包。</p>
+      <div class="top-actions" style="justify-content:flex-start; margin-top:14px">
+        <a class="btn primary" href="advisor-dryrun-onboarding.html">进入 V2 Dry-run 内测</a>
+      </div>
+    </section>
+
+    <section class="layout-grid cols-aside dryrun-new-customer-grid" data-new-customer-form>
+      <div class="module">
+        <div class="card-header">
+          <div class="card-title">
+            <h2>模拟客户信息</h2>
+            <small>只保存到本机 localStorage</small>
+          </div>
+          <span class="status info">Mock</span>
+        </div>
+        <div class="dryrun-form-grid">
+          <label>
+            <span>客户昵称</span>
+            <input class="field" type="text" data-customer-nickname placeholder="如：小明妈妈、模拟客户A">
+            <small>请使用“小明妈妈”“模拟客户A”等，不要输入真实姓名。</small>
+          </label>
+          <label>
+            <span>年龄范围</span>
+            <select class="select" data-age-range>
+              <option value="">请选择</option>
+              <option>3-6岁</option>
+              <option>6-8岁</option>
+              <option>9-12岁</option>
+              <option>13-15岁</option>
+              <option>成人</option>
+            </select>
+          </label>
+          <label>
+            <span>解读对象</span>
+            <select class="select" data-object-type>
+              <option value="">请选择</option>
+              <option value="parent_child">家长看孩子</option>
+              <option value="adult_self">成人自我理解</option>
+              <option value="agent_practice">代理练习案例</option>
+              <option value="center_case">采集中心案例</option>
+            </select>
+          </label>
+          <label>
+            <span>客户来源 / 归属方式</span>
+            <select class="select" data-source-channel>
+              <option value="">请选择</option>
+              <option value="invite_link">解读师邀请链接</option>
+              <option value="center_qr">采集中心二维码</option>
+              <option value="bind_code">报告绑定码</option>
+              <option value="public_pool">总部公海分配</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="card-header" style="margin-top:18px">
+          <div class="card-title">
+            <h2>客户关注问题</h2>
+            <small>至少选择一项，可补充一条自定义问题</small>
+          </div>
+        </div>
+        <div class="dryrun-check-grid">
+          <label><input type="checkbox" data-question-option value="上课注意力不集中"><span>上课注意力不集中</span></label>
+          <label><input type="checkbox" data-question-option value="数学成绩偏弱"><span>数学成绩偏弱</span></label>
+          <label><input type="checkbox" data-question-option value="写作业进入状态慢"><span>写作业进入状态慢</span></label>
+          <label><input type="checkbox" data-question-option value="学习动力不足"><span>学习动力不足</span></label>
+          <label><input type="checkbox" data-question-option value="开始顶嘴/叛逆"><span>开始顶嘴/叛逆</span></label>
+          <label><input type="checkbox" data-question-option value="不知道适合哪种学习方式"><span>不知道适合哪种学习方式</span></label>
+        </div>
+        <label class="dryrun-extra-field">
+          <span>补充关注问题</span>
+          <input class="field" type="text" data-extra-question placeholder="可选，继续使用脱敏表达">
+        </label>
+      </div>
+
+      <div class="module">
+        <div class="card-header">
+          <div class="card-title">
+            <h2>脱敏报告摘要</h2>
+            <small>手动输入，或使用示例报告数据</small>
+          </div>
+          <button class="btn ghost" type="button" data-fill-sample-report>使用示例报告数据</button>
+        </div>
+        <div class="notice dryrun-safety">
+          <strong>输入前确认</strong>
+          <p>这里只能输入脱敏摘要字段，不允许输入真实客户姓名、电话、学校、身份证或家庭隐私。</p>
+        </div>
+        <textarea class="textarea dryrun-report-input" data-report-summary placeholder="请粘贴脱敏报告摘要，需包含：报告类型、TRC、ATD、左右脑、学习风格、五大功能区摘要。"></textarea>
+        <p class="dryrun-error" data-customer-error hidden></p>
+        <div class="top-actions" style="justify-content:flex-start; margin-top:14px">
+          <button class="btn primary" type="button" data-create-customer>创建模拟客户并开始解读</button>
+          <a class="btn ghost" href="ai-interpreter-workbench.html">取消</a>
+        </div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

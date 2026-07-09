@@ -94,6 +94,10 @@
       "dest": "/advisor-dryrun-onboarding.html"
     },
     {
+      "src": "/advisor-dryrun-new-customer.html",
+      "dest": "/advisor-dryrun-new-customer.html"
+    },
+    {
       "src": "/advisor-login.html",
       "dest": "/advisor-login.html"
     },

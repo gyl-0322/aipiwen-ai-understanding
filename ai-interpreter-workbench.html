@@ -51,6 +51,7 @@
         </div>
         <div class="top-actions">
           <a class="btn ghost" href="advisor.html">官网接入页</a>
+          <a class="btn primary" href="advisor-dryrun-new-customer.html">新建模拟客户</a>
           <a class="btn primary" href="advisor-login.html">注册/登录 Mock</a>
         </div>
       </header>
@@ -98,6 +99,14 @@
               <span>初始体验额度</span>
               <strong>500</strong>
             </div>
+            <div>
+              <span>模拟客户数量</span>
+              <strong data-dryrun-customer-count>0</strong>
+            </div>
+            <div>
+              <span>已保存解读记录</span>
+              <strong data-dryrun-record-count>0</strong>
+            </div>
           </div>
           <div class="dryrun-info-grid">
             <div class="invite-link-box">
@@ -121,6 +130,7 @@
             <ul class="dryrun-ledger" data-dryrun-ledger></ul>
           </div>
           <div class="top-actions" style="justify-content:flex-start; margin-top:14px">
+            <a class="btn primary" href="advisor-dryrun-new-customer.html">新建模拟客户</a>
             <button class="btn primary" type="button" data-export-dryrun>导出内测数据 JSON</button>
             <button class="btn ghost" type="button" data-clear-dryrun>清空本机内测数据</button>
           </div>

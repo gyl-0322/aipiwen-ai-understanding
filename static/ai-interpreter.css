@@ -1433,6 +1433,11 @@ body[data-page="advisor"] .value-card {
   margin-top: 16px;
 }
 
+.dryrun-new-customer-grid {
+  margin-top: 16px;
+  align-items: start;
+}
+
 .dryrun-safety {
   border-color: rgba(242, 163, 74, .3);
   background: linear-gradient(135deg, rgba(242, 163, 74, .1), rgba(82, 213, 232, .045));
@@ -1480,6 +1485,46 @@ body[data-page="advisor"] .value-card {
   color: var(--faint);
 }
 
+.dryrun-check-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.dryrun-check-grid label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 38px;
+  padding: 8px 10px;
+  border: 1px solid rgba(149, 173, 211, .14);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, .035);
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.dryrun-check-grid input {
+  accent-color: var(--cyan);
+}
+
+.dryrun-extra-field {
+  display: grid;
+  gap: 7px;
+  margin-top: 12px;
+}
+
+.dryrun-extra-field > span {
+  color: var(--faint);
+  font-size: 12px;
+}
+
+.dryrun-report-input {
+  min-height: 390px;
+  margin-top: 12px;
+  line-height: 1.7;
+}
+
 .dryrun-error {
   margin-top: 12px;
   color: #ffc6c8;
@@ -1512,7 +1557,7 @@ body[data-page="advisor"] .value-card {
 }
 
 .dryrun-summary-grid {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(6, minmax(0, 1fr));
 }
 
 .dryrun-summary-grid div {
@@ -1616,6 +1661,7 @@ body[data-page="advisor"] .value-card {
   .dryrun-summary-grid,
   .dryrun-info-grid,
   .dryrun-ledger-wrap,
+  .dryrun-check-grid,
   .public-hero,
   .auth-grid,
   .value-grid,

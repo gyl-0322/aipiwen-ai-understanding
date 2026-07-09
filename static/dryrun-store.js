@@ -6,6 +6,59 @@
     center: "采集中心",
     emma: "Emma"
   };
+  const SOURCE_LABELS = {
+    invite_link: "解读师邀请链接",
+    center_qr: "采集中心二维码",
+    bind_code: "报告绑定码",
+    public_pool: "总部公海分配"
+  };
+  const OBJECT_LABELS = {
+    parent_child: "家长看孩子",
+    adult_self: "成人自我理解",
+    agent_practice: "代理练习案例",
+    center_case: "采集中心案例"
+  };
+  const DEFAULT_REPORT = {
+    reportType: "儿童天赋报告",
+    trc: 185,
+    atd: 42,
+    brainDominance: "左脑主导",
+    learningStyle: "听觉型（主）/ 体觉型（辅）",
+    fiveZones: [
+      { zone: "精神功能", right: ["沟通管理", "计划判断", 30, "Wt"], left: ["创造领导", "目标憧憬", 26, "Wc"] },
+      { zone: "思维功能", right: ["逻辑推理", "语言功能", 20, "Ws"], left: ["空间心像", "构思拟想", 25, "Wsc"] },
+      { zone: "听觉功能", right: ["听觉辨识", "语言理解", 18, "Lu"], left: ["听觉感受", "音乐欣赏", 20, "Lu"] },
+      { zone: "视觉功能", right: ["视觉辨识", "观察理解", 14, "Lu"], left: ["视觉感受", "图像欣赏", 13, "Lu"] },
+      { zone: "体觉功能", right: ["体觉辨识", "操作理解", 19, "Lu"], left: ["体觉感受", "艺术欣赏", 16, "Wl"] }
+    ]
+  };
+  const SAMPLE_REPORT_TEXT = `报告类型：儿童天赋报告
+TRC：185
+ATD：42°
+左右脑：左脑主导
+学习风格：听觉型（主）/ 体觉型（辅）
+
+五大功能区：
+
+精神功能：
+右手：沟通管理｜计划判断｜30｜Wt
+左手：创造领导｜目标憧憬｜26｜Wc
+
+思维功能：
+右手：逻辑推理｜语言功能｜20｜Ws
+左手：空间心像｜构思拟想｜25｜Wsc
+
+听觉功能：
+右手：听觉辨识｜语言理解｜18｜Lu
+左手：听觉感受｜音乐欣赏｜20｜Lu
+
+视觉功能：
+右手：视觉辨识｜观察理解｜14｜Lu
+左手：视觉感受｜图像欣赏｜13｜Lu
+
+体觉功能：
+右手：体觉辨识｜操作理解｜19｜Lu
+左手：体觉感受｜艺术欣赏｜16｜Wl`;
 
   function now() {
     return new Date().toISOString();
@@ -37,6 +90,7 @@
       user: null,
       profile: null,
       wallet: null,
+      activeSessionId: null,
       creditLogs: [],
       customers: [],
       reportSummaries: [],
@@ -160,6 +214,169 @@
     return ROLES[role] || role || "未选择";
   }
 
+  function sourceLabel(source) {
+    return SOURCE_LABELS[source] || source || "未选择";
+  }
+
+  function objectLabel(objectType) {
+    return OBJECT_LABELS[objectType] || objectType || "未选择";
+  }
+
+  function escapeHtml(value) {
+    return String(value || "").replace(/[&<>"']/g, (char) => ({
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#39;"
+    })[char]);
+  }
+
+  function hasSensitiveText(text) {
+    const value = String(text || "");
+    return /1[3-9]\d{9}/.test(value) || /(?:\d{3,4}[-\s]?)?\d{7,8}/.test(value) || /[1-9]\d{5}(?:18|19|20)\d{2}(?:0[1-9]|1[0-2])(?:0[1-9]|[12]\d|3[01])\d{3}[\dXx]/.test(value);
+  }
+
+  function parseReportSummary(rawText) {
+    const text = String(rawText || "");
+    const reportType = (text.match(/报告类型[:：]\s*([^\n]+)/) || [])[1] || DEFAULT_REPORT.reportType;
+    const trc = Number((text.match(/TRC[:：]\s*(\d+)/i) || [])[1]) || DEFAULT_REPORT.trc;
+    const atd = Number((text.match(/ATD[:：]\s*(\d+)/i) || [])[1]) || DEFAULT_REPORT.atd;
+    const brainDominance = (text.match(/左右脑[:：]\s*([^\n]+)/) || [])[1] || DEFAULT_REPORT.brainDominance;
+    const learningStyle = (text.match(/学习风格[:：]\s*([^\n]+)/) || [])[1] || DEFAULT_REPORT.learningStyle;
+
+    return {
+      reportType: reportType.trim(),
+      trc,
+      atd,
+      brainDominance: brainDominance.trim(),
+      learningStyle: learningStyle.trim(),
+      fiveZones: DEFAULT_REPORT.fiveZones.map((zone) => ({
+        zone: zone.zone,
+        right: [...zone.right],
+        left: [...zone.left]
+      })),
+      rawText: text.trim() || SAMPLE_REPORT_TEXT
+    };
+  }
+
+  function createMockCustomer({ nickname, childAgeRange, objectType, sourceChannel }) {
+    const state = getDryrunState();
+    if (!state.user) return null;
+    const timestamp = now();
+    const customer = {
+      customerId: `c_${Date.now()}`,
+      advisorId: state.user.userId,
+      nickname: nickname.trim(),
+      childAgeRange,
+      childGrade: "",
+      relationship: objectLabel(objectType),
+      objectType,
+      sourceChannel,
+      bindingMethod: sourceChannel,
+      bindingCode: state.user.inviteCode || (state.profile && state.profile.bindCode) || "",
+      bindingAt: timestamp,
+      createdAt: timestamp,
+      status: "pending_interpretation"
+    };
+    saveDryrunState({ ...state, customers: [...state.customers, customer] });
+    return customer;
+  }
+
+  function createReportSummary({ customerId, rawText }) {
+    const state = getDryrunState();
+    if (!state.user || !customerId) return null;
+    const summary = {
+      summaryId: `rs_${Date.now()}`,
+      customerId,
+      advisorId: state.user.userId,
+      ...parseReportSummary(rawText),
+      isMock: true,
+      createdAt: now()
+    };
+    saveDryrunState({ ...state, reportSummaries: [...state.reportSummaries, summary] });
+    return summary;
+  }
+
+  function createInterpretationSession({ customerId, summaryId, selectedQuestions }) {
+    const state = getDryrunState();
+    if (!state.user || !customerId || !summaryId) return null;
+    const session = {
+      sessionId: `is_${Date.now()}`,
+      advisorId: state.user.userId,
+      customerId,
+      summaryId,
+      selectedQuestions: selectedQuestions || [],
+      currentStep: 0,
+      stepsCompleted: [],
+      status: "in_progress",
+      startedAt: now(),
+      completedAt: null,
+      creditsSpent: 0,
+      generatedAt: null
+    };
+    saveDryrunState({
+      ...state,
+      activeSessionId: session.sessionId,
+      interpretationSessions: [...state.interpretationSessions, session]
+    });
+    return session;
+  }
+
+  function setActiveSession(sessionId) {
+    const state = getDryrunState();
+    saveDryrunState({ ...state, activeSessionId: sessionId });
+  }
+
+  function getActiveSessionBundle() {
+    const state = getDryrunState();
+    const params = new URLSearchParams(window.location.search);
+    const sessionId = params.get("sessionId") || state.activeSessionId;
+    const session = state.interpretationSessions.find((item) => item.sessionId === sessionId);
+    if (!session) return null;
+    return {
+      state,
+      session,
+      customer: state.customers.find((item) => item.customerId === session.customerId) || null,
+      reportSummary: state.reportSummaries.find((item) => item.summaryId === session.summaryId) || null,
+      records: state.interpretationRecords.filter((item) => item.sessionId === session.sessionId)
+    };
+  }
+
+  function saveInterpretationRecord(record) {
+    const state = getDryrunState();
+    const nextRecord = {
+      recordId: record.recordId || `ir_${Date.now()}`,
+      createdAt: record.createdAt || now(),
+      ...record
+    };
+    saveDryrunState({ ...state, interpretationRecords: [...state.interpretationRecords, nextRecord] });
+    return nextRecord;
+  }
+
+  function updateInterpretationSession(sessionId, updates) {
+    const state = getDryrunState();
+    const interpretationSessions = state.interpretationSessions.map((session) => (
+      session.sessionId === sessionId ? { ...session, ...updates } : session
+    ));
+    saveDryrunState({ ...state, interpretationSessions });
+  }
+
+  function markSessionGenerated(sessionId, creditsSpent) {
+    const state = getDryrunState();
+    const session = state.interpretationSessions.find((item) => item.sessionId === sessionId);
+    if (!session) return;
+    const interpretationSessions = state.interpretationSessions.map((item) => (
+      item.sessionId === sessionId
+        ? { ...item, status: "generated", creditsSpent: (item.creditsSpent || 0) + creditsSpent, generatedAt: now() }
+        : item
+    ));
+    const customers = state.customers.map((customer) => (
+      customer.customerId === session.customerId ? { ...customer, status: "generated" } : customer
+    ));
+    saveDryrunState({ ...state, interpretationSessions, customers });
+  }
+
   function formatDateTime(value) {
     if (!value) return "-";
     const date = new Date(value);
@@ -170,6 +387,109 @@
   function setText(root, selector, value) {
     const node = root.querySelector(selector);
     if (node) node.textContent = value;
+  }
+
+  function initNewCustomerPage() {
+    const page = document.querySelector("[data-dryrun-new-customer]");
+    if (!page) return;
+    if (page.dataset.dryrunInitialized === "true") return;
+    page.dataset.dryrunInitialized = "true";
+
+    const form = page.querySelector("[data-new-customer-form]");
+    const sampleButton = page.querySelector("[data-fill-sample-report]");
+    const summaryInput = page.querySelector("[data-report-summary]");
+    const errorNode = page.querySelector("[data-customer-error]");
+    const submitButton = page.querySelector("[data-create-customer]");
+    const state = getDryrunState();
+
+    if (!state.user) {
+      const gate = page.querySelector("[data-dryrun-gate]");
+      if (gate) gate.hidden = false;
+      if (form) form.hidden = true;
+      return;
+    }
+
+    function showError(message) {
+      if (!errorNode) return;
+      errorNode.textContent = message;
+      errorNode.hidden = !message;
+    }
+
+    if (sampleButton && summaryInput) {
+      sampleButton.addEventListener("click", function () {
+        summaryInput.value = SAMPLE_REPORT_TEXT;
+        summaryInput.dispatchEvent(new Event("input", { bubbles: true }));
+        showError("");
+      });
+    }
+
+    submitButton && submitButton.addEventListener("click", function () {
+      const nickname = page.querySelector("[data-customer-nickname]").value.trim();
+      const childAgeRange = page.querySelector("[data-age-range]").value;
+      const objectType = page.querySelector("[data-object-type]").value;
+      const sourceChannel = page.querySelector("[data-source-channel]").value;
+      const rawText = summaryInput.value.trim();
+      const selectedQuestions = Array.from(page.querySelectorAll("[data-question-option]:checked")).map((input) => input.value);
+      const extraQuestion = page.querySelector("[data-extra-question]").value.trim();
+      if (extraQuestion) selectedQuestions.push(extraQuestion);
+
+      if (!nickname || !childAgeRange || !objectType || !sourceChannel || !rawText || selectedQuestions.length === 0) {
+        showError("请补全模拟客户信息、脱敏报告摘要，并至少选择一个关注问题。");
+        return;
+      }
+      if (hasSensitiveText(`${nickname}\n${rawText}\n${extraQuestion}`)) {
+        showError("检测到可能包含真实隐私信息。V2 Dry-run 不允许输入真实客户姓名、手机号、身份证、学校或家庭隐私。请使用模拟客户或脱敏案例。");
+        return;
+      }
+
+      const customer = createMockCustomer({ nickname, childAgeRange, objectType, sourceChannel });
+      const summary = createReportSummary({ customerId: customer.customerId, rawText });
+      const session = createInterpretationSession({
+        customerId: customer.customerId,
+        summaryId: summary.summaryId,
+        selectedQuestions
+      });
+      window.location.href = `ai-interpreter-session.html?sessionId=${encodeURIComponent(session.sessionId)}`;
+    });
+  }
+
+  function renderWorkbenchStats() {
+    const panel = document.querySelector("[data-dryrun-workbench]");
+    if (!panel) return;
+    const state = getDryrunState();
+    setText(panel, "[data-dryrun-customer-count]", String(state.customers.length));
+    setText(panel, "[data-dryrun-record-count]", String(state.interpretationRecords.length));
+  }
+
+  function renderDryrunCustomers() {
+    const panel = document.querySelector("[data-dryrun-customers-panel]");
+    if (!panel) return;
+    const list = panel.querySelector("[data-dryrun-customers-list]");
+    const countNode = panel.querySelector("[data-dryrun-customers-count]");
+    const state = getDryrunState();
+    if (countNode) countNode.textContent = String(state.customers.length);
+    if (!list) return;
+    list.innerHTML = "";
+    if (!state.customers.length) {
+      panel.hidden = true;
+      return;
+    }
+    panel.hidden = false;
+    state.customers.forEach((customer) => {
+      const session = state.interpretationSessions.find((item) => item.customerId === customer.customerId);
+      const summary = state.reportSummaries.find((item) => item.customerId === customer.customerId);
+      const row = document.createElement("button");
+      row.className = "table-row";
+      row.type = "button";
+      row.innerHTML = `<strong>${escapeHtml(customer.nickname)}</strong><span>${escapeHtml(sourceLabel(customer.sourceChannel))}</span><span>${escapeHtml(state.user ? state.user.nickname : "-")}</span><span>${escapeHtml(sourceLabel(customer.bindingMethod))}</span><span>${escapeHtml(summary ? summary.reportType : "未填写")}</span><span class="status ${session && session.status === "generated" ? "done" : "info"}">${session && session.status === "generated" ? "已生成解读方案" : "解读中"}</span><span>${escapeHtml((session && session.selectedQuestions || []).slice(0, 2).join(" / ") || "-")}</span><span>进入</span>`;
+      row.addEventListener("click", function () {
+        if (session) {
+          setActiveSession(session.sessionId);
+          window.location.href = `ai-interpreter-session.html?sessionId=${encodeURIComponent(session.sessionId)}`;
+        }
+      });
+      list.appendChild(row);
+    });
   }
 
   function initOnboardingPage() {
@@ -298,6 +618,7 @@
         ledger.appendChild(item);
       });
     }
+    renderWorkbenchStats();
   }
 
   function initWorkbenchPage() {
@@ -328,6 +649,20 @@
     exportDryrunState,
     createMockUser,
     createAdvisorProfile,
+    createMockCustomer,
+    createReportSummary,
+    createInterpretationSession,
+    setActiveSession,
+    getActiveSessionBundle,
+    saveInterpretationRecord,
+    updateInterpretationSession,
+    markSessionGenerated,
+    parseReportSummary,
+    hasSensitiveText,
+    sourceLabel,
+    objectLabel,
+    SAMPLE_REPORT_TEXT,
+    DEFAULT_REPORT,
     generateInviteCode,
     generateBindCode,
     hasDryrunUser,
@@ -336,7 +671,9 @@
 
   function initDryrunPages() {
     initOnboardingPage();
+    initNewCustomerPage();
     initWorkbenchPage();
+    renderDryrunCustomers();
   }
 
   if (document.readyState === "loading") {
