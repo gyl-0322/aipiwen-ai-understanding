@@ -455,6 +455,35 @@ button.table-row {
   gap: 12px;
 }
 
+.source-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.source-item {
+  min-height: 88px;
+  display: grid;
+  align-content: space-between;
+  gap: 12px;
+  padding: 13px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, .035);
+}
+
+.source-item span {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.source-item strong {
+  color: var(--cyan);
+  font-size: 28px;
+  line-height: 1;
+}
+
 .quick-link {
   display: grid;
   gap: 8px;
@@ -551,26 +580,86 @@ button.table-row {
   gap: 10px;
 }
 
-.finger-zone-list {
-  display: grid;
-  gap: 10px;
-}
-
-.finger-zone {
+.finger-summary {
   display: grid;
   gap: 8px;
-  padding: 12px;
-  border: 1px solid rgba(149, 173, 211, .13);
+}
+
+.finger-row {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr) minmax(0, 1fr);
+  align-items: stretch;
+  gap: 8px;
+}
+
+.finger-row h3 {
+  display: flex;
+  align-items: center;
+  min-height: 38px;
+  padding: 8px 9px;
   border-radius: 8px;
-  background: rgba(255, 255, 255, .032);
-}
-
-.finger-zone h3 {
-  color: var(--text);
-}
-
-.finger-zone p {
+  background: rgba(82, 213, 232, .1);
+  color: var(--cyan);
   font-size: 13px;
+  line-height: 1.35;
+}
+
+.finger-row:nth-child(1) h3 {
+  color: #ffd0d0;
+  background: rgba(255, 111, 115, .13);
+}
+
+.finger-row:nth-child(2) h3 {
+  color: #bfe0ff;
+  background: rgba(106, 168, 255, .13);
+}
+
+.finger-row:nth-child(3) h3 {
+  color: #caffdf;
+  background: rgba(101, 212, 154, .13);
+}
+
+.finger-row:nth-child(4) h3 {
+  color: #c8f8ff;
+  background: rgba(82, 213, 232, .13);
+}
+
+.finger-row:nth-child(5) h3 {
+  color: #ffe0ae;
+  background: rgba(242, 163, 74, .13);
+}
+
+.finger-hand {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) 48px;
+  align-items: center;
+  gap: 7px;
+  min-height: 38px;
+  padding: 7px 9px;
+  border: 1px solid rgba(149, 173, 211, .14);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, .035);
+}
+
+.finger-hand span {
+  color: var(--faint);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.finger-hand strong {
+  min-width: 0;
+  color: var(--text);
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.finger-hand em {
+  color: var(--amber);
+  font-size: 13px;
+  font-style: normal;
+  font-weight: 900;
+  text-align: right;
 }
 
 .bar-item {
@@ -847,6 +936,7 @@ button.table-row {
   .cols-2,
   .cols-aside,
   .quick-grid,
+  .source-grid,
   .timeline,
   .mini-grid {
     grid-template-columns: 1fr;
