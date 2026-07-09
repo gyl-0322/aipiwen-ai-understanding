@@ -90,6 +90,46 @@
       "dest": "/advisor.html"
     },
     {
+      "src": "/advisor-dryrun-onboarding.html",
+      "dest": "/advisor-dryrun-onboarding.html"
+    },
+    {
+      "src": "/advisor-login.html",
+      "dest": "/advisor-login.html"
+    },
+    {
+      "src": "/advisor-invite.html",
+      "dest": "/advisor-invite.html"
+    },
+    {
+      "src": "/advisor-center-entry.html",
+      "dest": "/advisor-center-entry.html"
+    },
+    {
+      "src": "/ai-interpreter-workbench.html",
+      "dest": "/ai-interpreter-workbench.html"
+    },
+    {
+      "src": "/ai-interpreter-customers.html",
+      "dest": "/ai-interpreter-customers.html"
+    },
+    {
+      "src": "/ai-interpreter-session.html",
+      "dest": "/ai-interpreter-session.html"
+    },
+    {
+      "src": "/ai-interpreter-training.html",
+      "dest": "/ai-interpreter-training.html"
+    },
+    {
+      "src": "/ai-interpreter-review.html",
+      "dest": "/ai-interpreter-review.html"
+    },
+    {
+      "src": "/ai-interpreter-cases.html",
+      "dest": "/ai-interpreter-cases.html"
+    },
+    {
       "src": "/behavior-input.html",
       "headers": {
         "Location": "/child-chat.html"
