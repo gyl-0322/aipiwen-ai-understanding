@@ -175,6 +175,8 @@
   function initOnboardingPage() {
     const page = document.querySelector("[data-dryrun-onboarding]");
     if (!page) return;
+    if (page.dataset.dryrunInitialized === "true") return;
+    page.dataset.dryrunInitialized = "true";
 
     const existingPanel = page.querySelector("[data-existing-dryrun]");
     const formPanel = page.querySelector("[data-onboarding-form]");
@@ -301,6 +303,8 @@
   function initWorkbenchPage() {
     const panel = document.querySelector("[data-dryrun-workbench]");
     if (!panel) return;
+    if (panel.dataset.dryrunInitialized === "true") return;
+    panel.dataset.dryrunInitialized = "true";
 
     const exportButton = panel.querySelector("[data-export-dryrun]");
     const clearButton = panel.querySelector("[data-clear-dryrun]");
@@ -330,8 +334,14 @@
     roleLabel
   };
 
-  document.addEventListener("DOMContentLoaded", function () {
+  function initDryrunPages() {
     initOnboardingPage();
     initWorkbenchPage();
-  });
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initDryrunPages, { once: true });
+  } else {
+    initDryrunPages();
+  }
 })();
