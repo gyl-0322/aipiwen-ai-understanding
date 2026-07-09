@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AIPIWEN 指导师工作台 V2 Dry-run 内测</title>
+  <meta name="description" content="AIPIWEN 指导师工作台 V2 Dry-run 内测入口">
+  <link rel="stylesheet" href="static/ai-interpreter.css">
+  <script src="static/dryrun-store.js" defer></script>
+  <script src="static/dryrun-credit.js" defer></script>
+</head>
+<body data-page="advisor-dryrun-onboarding">
+  <main class="public-shell dryrun-onboarding" data-dryrun-onboarding>
+    <nav class="public-nav" aria-label="V2 Dry-run 内测导航">
+      <a class="brand" href="advisor.html" aria-label="AIPIWEN 指导师工作台">
+        <svg class="brand-flower" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <circle class="brand-flower-ring" cx="18" cy="18" r="15.5" stroke-width=".9" stroke-dasharray="2.5 6"/>
+          <g class="brand-flower-petals">
+            <ellipse cx="18" cy="12" rx="2.2" ry="6.5" transform="rotate(0 18 18)"/>
+            <ellipse cx="18" cy="12" rx="2.2" ry="6.5" transform="rotate(90 18 18)"/>
+            <ellipse cx="18" cy="12" rx="1.4" ry="5.5" transform="rotate(45 18 18)"/>
+            <ellipse cx="18" cy="12" rx="1.4" ry="5.5" transform="rotate(135 18 18)"/>
+          </g>
+          <circle class="brand-flower-center" cx="18" cy="18" r="3"/>
+        </svg>
+        <div>
+          <p class="brand-title">AIPIWEN指导师工作台</p>
+          <div class="brand-subtitle">V2 Dry-run 内测</div>
+        </div>
+      </a>
+      <div class="top-actions">
+        <a class="btn ghost" href="advisor.html">返回介绍页</a>
+      </div>
+    </nav>
+
+    <section class="public-hero dryrun-hero">
+      <div>
+        <p class="eyebrow">V2 Dry-run Beta</p>
+        <h1>AIPIWEN 指导师工作台 V2 Dry-run 内测</h1>
+        <p class="hero-copy">用于模拟体验指导师工作台，不接真实客户数据，不代表正式系统。</p>
+      </div>
+      <aside class="module public-hero-panel boundary">
+        <span class="status pending">Preview 内测</span>
+        <h2>只用模拟数据</h2>
+        <p>本阶段只验证 localStorage、mock 积分、内测身份和邀请信息，不做 AI 生成，不接真实后端。</p>
+      </aside>
+    </section>
+
+    <section class="layout-grid cols-aside dryrun-onboarding-grid">
+      <div class="module">
+        <div class="card-header">
+          <div class="card-title">
+            <h2>安全须知</h2>
+            <small>进入内测前必须确认</small>
+          </div>
+          <span class="status info">Dry-run</span>
+        </div>
+        <div class="notice dryrun-safety">
+          <strong>当前为 V2 Dry-run 内测环境。</strong>
+          <ol class="rules-list">
+            <li>请使用模拟客户或脱敏案例测试。</li>
+            <li>请勿输入真实客户姓名、手机号、学校、身份证、详细家庭隐私等信息。</li>
+            <li>所有积分均为 mock 虚拟点数，不代表真实资产，不可提现，不可转让。</li>
+            <li>内测结束后所有数据可能清零，如需保留请导出。</li>
+            <li>真实账号、真实积分、真实客户数据将在后续正式系统中逐步开放。</li>
+          </ol>
+        </div>
+      </div>
+
+      <div class="module" data-existing-dryrun hidden>
+        <div class="card-header">
+          <div class="card-title">
+            <h2>已检测到本机已有内测身份</h2>
+            <small>可以继续进入，或清空后重新开始</small>
+          </div>
+          <span class="status done">已初始化</span>
+        </div>
+        <div class="dryrun-profile-mini">
+          <div>
+            <span>内测昵称</span>
+            <strong data-detected-name>-</strong>
+          </div>
+          <div>
+            <span>身份</span>
+            <strong data-detected-role>-</strong>
+          </div>
+        </div>
+        <div class="top-actions" style="justify-content:flex-start; margin-top:14px">
+          <button class="btn primary" type="button" data-continue-dryrun>继续进入工作台</button>
+          <button class="btn ghost" type="button" data-reset-dryrun>清空并重新开始</button>
+        </div>
+      </div>
+
+      <div class="module" data-onboarding-form>
+        <div class="card-header">
+          <div class="card-title">
+            <h2>创建内测身份</h2>
+            <small>仅保存在当前浏览器 localStorage</small>
+          </div>
+          <span class="status pending">500 mock 积分</span>
+        </div>
+
+        <label class="dryrun-check">
+          <input type="checkbox" data-dryrun-agree>
+          <span>我已了解以上说明，并确认不会输入真实客户隐私数据。</span>
+        </label>
+
+        <div class="dryrun-form-grid">
+          <label>
+            <span>内测昵称</span>
+            <input class="field" type="text" data-dryrun-nickname placeholder="如：张老师、西安采集中心A">
+            <small>请勿输入真实客户姓名；可以使用“张老师”“西安采集中心A”等昵称。</small>
+          </label>
+          <label>
+            <span>身份选择</span>
+            <select class="select" data-dryrun-role>
+              <option value="">请选择身份</option>
+              <option value="interpreter">解读师</option>
+              <option value="agent">代理</option>
+              <option value="center">采集中心</option>
+              <option value="emma">Emma</option>
+            </select>
+          </label>
+        </div>
+
+        <p class="dryrun-error" data-dryrun-error hidden></p>
+        <div class="top-actions" style="justify-content:flex-start; margin-top:14px">
+          <button class="btn primary" type="button" data-enter-dryrun disabled>进入内测</button>
+          <a class="btn ghost" href="advisor.html">暂不进入</a>
+        </div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

@@ -7,6 +7,8 @@
   <meta name="description" content="AIPIWEN AI解读师助手 V1.1 静态 Demo 工作台首页">
   <link rel="stylesheet" href="static/ai-interpreter.css">
   <script src="static/ai-interpreter.js" defer></script>
+  <script src="static/dryrun-store.js" defer></script>
+  <script src="static/dryrun-credit.js" defer></script>
 </head>
 <body data-page="workbench">
   <div class="app-shell">
@@ -52,6 +54,78 @@
           <a class="btn primary" href="advisor-login.html">注册/登录 Mock</a>
         </div>
       </header>
+
+      <section class="module dryrun-workbench-panel" data-dryrun-workbench aria-label="V2 Dry-run 内测状态">
+        <div data-dryrun-empty>
+          <div class="card-header">
+            <div class="card-title">
+              <h2>V2 Dry-run 内测</h2>
+              <small>你尚未进入 V2 Dry-run 内测。</small>
+            </div>
+            <span class="status pending">未初始化</span>
+          </div>
+          <p>当前页面仍为 V1.1 静态 Demo。进入 V2 Dry-run 后，本机浏览器会保存模拟身份、mock 积分和邀请信息。</p>
+          <div class="top-actions" style="justify-content:flex-start; margin-top:14px">
+            <a class="btn primary" href="advisor-dryrun-onboarding.html">进入 V2 Dry-run 内测</a>
+          </div>
+        </div>
+
+        <div data-dryrun-active hidden>
+          <div class="dryrun-banner">
+            当前为 V2 Dry-run 内测环境，请勿输入真实客户隐私数据。积分为 mock 虚拟点数，不代表真实资产。
+          </div>
+          <div class="card-header">
+            <div class="card-title">
+              <h2>当前内测身份</h2>
+              <small>数据仅保存在当前浏览器 localStorage</small>
+            </div>
+            <span class="status info">V2 Dry-run</span>
+          </div>
+          <div class="dryrun-summary-grid">
+            <div>
+              <span>昵称</span>
+              <strong data-dryrun-name>-</strong>
+            </div>
+            <div>
+              <span>身份</span>
+              <strong data-dryrun-role>-</strong>
+            </div>
+            <div>
+              <span>当前积分余额</span>
+              <strong data-dryrun-balance>0</strong>
+            </div>
+            <div>
+              <span>初始体验额度</span>
+              <strong>500</strong>
+            </div>
+          </div>
+          <div class="dryrun-info-grid">
+            <div class="invite-link-box">
+              <span>我的 mock 邀请码</span>
+              <code data-dryrun-invite-code>-</code>
+            </div>
+            <div class="invite-link-box">
+              <span>我的 mock 邀请链接</span>
+              <code data-dryrun-invite-link>-</code>
+            </div>
+            <div class="invite-link-box">
+              <span>我的 mock 报告绑定码</span>
+              <code data-dryrun-bind-code>-</code>
+            </div>
+          </div>
+          <div class="dryrun-ledger-wrap">
+            <div>
+              <strong>最近积分流水</strong>
+              <p>所有积分均为 mock 虚拟点数，不可提现，不可转让，内测结束后可能清零。</p>
+            </div>
+            <ul class="dryrun-ledger" data-dryrun-ledger></ul>
+          </div>
+          <div class="top-actions" style="justify-content:flex-start; margin-top:14px">
+            <button class="btn primary" type="button" data-export-dryrun>导出内测数据 JSON</button>
+            <button class="btn ghost" type="button" data-clear-dryrun>清空本机内测数据</button>
+          </div>
+        </div>
+      </section>
 
       <section class="layout-grid cols-3" aria-label="今日概览">
         <div class="card metric cyan">

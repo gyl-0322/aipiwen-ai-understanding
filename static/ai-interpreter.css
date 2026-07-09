@@ -1411,6 +1411,182 @@ body[data-page="advisor"] .value-card {
   display: block;
 }
 
+[hidden] {
+  display: none !important;
+}
+
+.btn:disabled {
+  opacity: .48;
+  cursor: not-allowed;
+}
+
+.dryrun-muted-link {
+  color: var(--cyan);
+  font-weight: 800;
+}
+
+.dryrun-hero {
+  align-items: stretch;
+}
+
+.dryrun-onboarding-grid {
+  margin-top: 16px;
+}
+
+.dryrun-safety {
+  border-color: rgba(242, 163, 74, .3);
+  background: linear-gradient(135deg, rgba(242, 163, 74, .1), rgba(82, 213, 232, .045));
+}
+
+.dryrun-check {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid rgba(82, 213, 232, .28);
+  border-radius: 8px;
+  background: rgba(82, 213, 232, .065);
+  color: var(--text);
+  font-weight: 800;
+}
+
+.dryrun-check input {
+  margin-top: 3px;
+  accent-color: var(--cyan);
+}
+
+.dryrun-form-grid,
+.dryrun-profile-mini {
+  display: grid;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.dryrun-form-grid label,
+.dryrun-profile-mini div {
+  display: grid;
+  gap: 7px;
+}
+
+.dryrun-form-grid label > span,
+.dryrun-profile-mini span,
+.dryrun-summary-grid span,
+.dryrun-ledger small {
+  color: var(--faint);
+  font-size: 12px;
+}
+
+.dryrun-form-grid small {
+  color: var(--faint);
+}
+
+.dryrun-error {
+  margin-top: 12px;
+  color: #ffc6c8;
+  font-weight: 800;
+}
+
+.dryrun-workbench-panel {
+  margin-bottom: 16px;
+  border-color: rgba(82, 213, 232, .22);
+  background:
+    radial-gradient(circle at 8% 0%, rgba(82, 213, 232, .11), transparent 36%),
+    radial-gradient(circle at 92% 100%, rgba(242, 163, 74, .1), transparent 36%),
+    var(--panel);
+}
+
+.dryrun-banner {
+  margin-bottom: 14px;
+  padding: 10px 12px;
+  border: 1px solid rgba(242, 163, 74, .3);
+  border-radius: 8px;
+  background: rgba(242, 163, 74, .09);
+  color: #ffe0ae;
+  font-weight: 800;
+}
+
+.dryrun-summary-grid,
+.dryrun-info-grid {
+  display: grid;
+  gap: 10px;
+}
+
+.dryrun-summary-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.dryrun-summary-grid div {
+  min-height: 74px;
+  display: grid;
+  align-content: space-between;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid rgba(149, 173, 211, .14);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, .035);
+}
+
+.dryrun-summary-grid strong {
+  color: var(--text);
+  font-size: 22px;
+  line-height: 1.1;
+}
+
+.dryrun-info-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-top: 10px;
+}
+
+.dryrun-info-grid .invite-link-box {
+  min-width: 0;
+}
+
+.dryrun-info-grid code {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dryrun-ledger-wrap {
+  display: grid;
+  grid-template-columns: minmax(220px, .55fr) minmax(0, 1fr);
+  gap: 12px;
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid rgba(149, 173, 211, .14);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, .03);
+}
+
+.dryrun-ledger-wrap p {
+  color: var(--faint);
+  font-size: 12px;
+}
+
+.dryrun-ledger {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.dryrun-ledger li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 72px 126px;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 10px;
+  border: 1px solid rgba(149, 173, 211, .12);
+  border-radius: 8px;
+  background: rgba(8, 13, 21, .28);
+}
+
+.dryrun-ledger strong {
+  color: var(--amber);
+  text-align: right;
+}
+
 @media (max-width: 1320px) {
   .session-grid {
     grid-template-columns: 1fr;
@@ -1437,6 +1613,9 @@ body[data-page="advisor"] .value-card {
   .quick-grid,
   .source-grid,
   .credit-overview,
+  .dryrun-summary-grid,
+  .dryrun-info-grid,
+  .dryrun-ledger-wrap,
   .public-hero,
   .auth-grid,
   .value-grid,
