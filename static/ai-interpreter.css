@@ -71,32 +71,80 @@ textarea {
 .brand {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   padding: 6px 8px 22px;
 }
 
-.brand-mark {
-  width: 38px;
-  height: 38px;
-  display: grid;
-  place-items: center;
-  border: 1px solid rgba(82, 213, 232, .38);
+.brand-flower {
+  width: 40px;
+  height: 40px;
+  flex: 0 0 40px;
+  overflow: visible;
+  padding: 3px;
+  border: 1px solid rgba(82, 213, 232, .24);
   border-radius: 8px;
-  background: linear-gradient(135deg, rgba(82,213,232,.16), rgba(242,163,74,.16));
-  color: var(--cyan);
-  font-weight: 900;
+  background: linear-gradient(135deg, rgba(82,213,232,.08), rgba(242,163,74,.06));
+  box-shadow: 0 0 24px rgba(82, 213, 232, .10);
+}
+
+.brand-flower-ring,
+.brand-flower-petals,
+.brand-flower-center {
+  transform-origin: 18px 18px;
+}
+
+.brand-flower-ring {
+  stroke: rgba(82, 213, 232, .56);
+  opacity: .5;
+  animation: brand-flower-spin 22s linear infinite;
+}
+
+.brand-flower-petals {
+  fill: rgba(82, 213, 232, .62);
+  animation: brand-flower-spin-reverse 16s linear infinite;
+}
+
+.brand-flower-petals ellipse:nth-child(2) {
+  fill: rgba(242, 163, 74, .46);
+}
+
+.brand-flower-petals ellipse:nth-child(3),
+.brand-flower-petals ellipse:nth-child(4) {
+  fill: rgba(106, 168, 255, .38);
+}
+
+.brand-flower-center {
+  fill: rgba(242, 163, 74, .78);
+  animation: brand-flower-breathe 3.6s ease-in-out infinite;
 }
 
 .brand-title {
   margin: 0;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 800;
+  line-height: 1.25;
+  white-space: nowrap;
 }
 
 .brand-subtitle {
   margin-top: 3px;
   color: var(--faint);
   font-size: 12px;
+}
+
+@keyframes brand-flower-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes brand-flower-spin-reverse {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(-360deg); }
+}
+
+@keyframes brand-flower-breathe {
+  0%, 100% { opacity: .72; transform: scale(1); }
+  50% { opacity: .96; transform: scale(1.05); }
 }
 
 .nav {
