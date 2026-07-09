@@ -47,6 +47,10 @@
           <h1>AIPIWEN指导师工作台</h1>
           <p>把一份报告转化为客户听得懂、用得上、风险可控的专业解读。</p>
         </div>
+        <div class="top-actions">
+          <a class="btn ghost" href="advisor.html">官网接入页</a>
+          <a class="btn primary" href="advisor-login.html">注册/登录 Mock</a>
+        </div>
       </header>
 
       <section class="layout-grid cols-3" aria-label="今日概览">
@@ -64,6 +68,59 @@
           <div class="metric-value">2</div>
           <div class="metric-label">本周待完成训练</div>
           <p>含 V1.1 新增“数值解释安全度”评分项。</p>
+        </div>
+      </section>
+
+      <section class="layout-grid cols-aside" style="margin-top:16px">
+        <div class="module credit-card">
+          <div class="card-header">
+            <div class="card-title">
+              <h2>积分账户</h2>
+              <small>静态 mock：前端变量展示，不接真实钱包</small>
+            </div>
+            <span class="status info">体验额度</span>
+          </div>
+          <div class="credit-overview">
+            <div>
+              <span>当前积分</span>
+              <strong data-credit-balance>500</strong>
+            </div>
+            <div>
+              <span>体验额度有效期</span>
+              <strong>90天</strong>
+            </div>
+            <div>
+              <span>今日消耗</span>
+              <strong>50</strong>
+            </div>
+            <div>
+              <span>邀请获得</span>
+              <strong>100</strong>
+            </div>
+          </div>
+          <div class="invite-link-box">
+            <span>我的邀请链接</span>
+            <code>/r/ZHANGWEI01</code>
+          </div>
+          <div class="top-actions" style="justify-content:flex-start; margin-top:14px">
+            <button class="btn primary" type="button" data-copy-invite>复制邀请链接</button>
+            <button class="btn ghost" type="button" data-show-ledger>查看积分流水</button>
+          </div>
+        </div>
+
+        <div class="module invite-rule-card">
+          <div class="card-header">
+            <div class="card-title">
+              <h2>邀请奖励规则</h2>
+              <small>奖励有效邀请，不奖励刷号</small>
+            </div>
+          </div>
+          <div class="reward-steps">
+            <div><span>1</span><strong>邀请新解读师注册</strong><em>+100 积分</em></div>
+            <div><span>2</span><strong>被邀请人完成首次 AI 解读</strong><em>再 +100 积分</em></div>
+            <div><span>3</span><strong>被邀请人完成认证或正式开通</strong><em>再 +300 积分</em></div>
+          </div>
+          <p class="footer-note">邀请奖励分阶段发放，并可由 Emma 撤销异常积分；V1 只做页面展示。</p>
         </div>
       </section>
 

@@ -356,10 +356,128 @@
     });
   }
 
+  const CREDIT_KEY = "aipiwen_interpreter_demo_credit_balance";
+  const INVITE_LINK = "/r/ZHANGWEI01";
+  const FULL_PLAN_COST = 50;
+
+  function getCreditBalance() {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("lowCredit") === "1") return 10;
+
+    const stored = Number(window.localStorage.getItem(CREDIT_KEY));
+    return Number.isFinite(stored) && stored >= 0 ? stored : 500;
+  }
+
+  function setCreditBalance(value) {
+    window.localStorage.setItem(CREDIT_KEY, String(value));
+    renderCreditBalance(value);
+  }
+
+  function renderCreditBalance(value) {
+    $$("[data-credit-balance]").forEach((node) => {
+      node.textContent = String(value);
+    });
+  }
+
+  function copyInviteLink() {
+    const fullLink = `${window.location.origin}${window.location.pathname.replace(/[^/]+$/, "")}advisor-invite.html`;
+    const text = `${INVITE_LINK}（静态 Demo：${fullLink}）`;
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).catch(() => {});
+    }
+
+    window.alert(`已复制邀请链接 Mock：${INVITE_LINK}`);
+  }
+
+  function initCreditDemo() {
+    const balance = getCreditBalance();
+    renderCreditBalance(balance);
+
+    $$("[data-copy-invite]").forEach((button) => {
+      button.addEventListener("click", copyInviteLink);
+    });
+
+    const ledger = $("[data-show-ledger]");
+    if (ledger) {
+      ledger.addEventListener("click", () => {
+        window.alert("积分流水 Mock：注册赠送 +500；生成完整 AI 解读方案 -50；邀请注册 +100。");
+      });
+    }
+  }
+
+  function initRegisterMock() {
+    if (!document.body.matches('[data-page="advisor-login"]')) return;
+
+    const button = document.getElementById("mock-register");
+    const success = document.getElementById("register-success");
+    if (!button || !success) return;
+
+    button.addEventListener("click", () => {
+      setCreditBalance(500);
+      success.classList.add("show");
+      success.scrollIntoView({ behavior: "smooth", block: "center" });
+    });
+  }
+
+  function initCreditModal() {
+    if (!document.body.matches('[data-page="session"]')) return;
+
+    const openButton = document.getElementById("generate-plan");
+    const modal = document.getElementById("credit-modal");
+    const modalCard = modal ? $(".modal-card", modal) : null;
+    const confirmButton = document.getElementById("confirm-credit-cost");
+    if (!openButton || !modal || !modalCard || !confirmButton) return;
+
+    function closeModal() {
+      modal.classList.remove("open");
+      modal.setAttribute("aria-hidden", "true");
+    }
+
+    function openModal() {
+      const current = getCreditBalance();
+      const insufficient = current < FULL_PLAN_COST;
+      modalCard.classList.toggle("is-insufficient", insufficient);
+
+      const currentNode = $("[data-modal-current]");
+      const afterNode = $("[data-modal-after]");
+      const lowNode = $("[data-modal-low]");
+      if (currentNode) currentNode.textContent = String(current);
+      if (afterNode) afterNode.textContent = String(Math.max(0, current - FULL_PLAN_COST));
+      if (lowNode) lowNode.textContent = String(current);
+
+      modal.classList.add("open");
+      modal.setAttribute("aria-hidden", "false");
+    }
+
+    openButton.addEventListener("click", openModal);
+    confirmButton.addEventListener("click", () => {
+      const current = getCreditBalance();
+      if (current < FULL_PLAN_COST) {
+        modalCard.classList.add("is-insufficient");
+        return;
+      }
+      setCreditBalance(current - FULL_PLAN_COST);
+      closeModal();
+      window.alert("已 mock 消耗 50 积分，完整 AI 解读方案已生成。");
+    });
+
+    $$("[data-close-credit-modal]", modal).forEach((button) => {
+      button.addEventListener("click", closeModal);
+    });
+
+    modal.addEventListener("click", (event) => {
+      if (event.target === modal) closeModal();
+    });
+  }
+
   document.addEventListener("DOMContentLoaded", () => {
     initNavigation();
     initSession();
     initCustomerRows();
     initReviewDemo();
+    initCreditDemo();
+    initRegisterMock();
+    initCreditModal();
   });
 })();

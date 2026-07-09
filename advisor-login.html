@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>从业者注册 / 登录 · AIPIWEN 指导师工作台</title>
+  <meta name="description" content="AIPIWEN 指导师工作台注册登录静态 Mock">
+  <link rel="stylesheet" href="static/ai-interpreter.css">
+  <script src="static/ai-interpreter.js" defer></script>
+</head>
+<body data-page="advisor-login">
+  <main class="public-shell auth-shell">
+    <nav class="public-nav" aria-label="从业者注册导航">
+      <a class="brand" href="advisor.html">
+        <svg class="brand-flower" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <circle class="brand-flower-ring" cx="18" cy="18" r="15.5" stroke-width=".9" stroke-dasharray="2.5 6"/>
+          <g class="brand-flower-petals">
+            <ellipse cx="18" cy="12" rx="2.2" ry="6.5" transform="rotate(0 18 18)"/>
+            <ellipse cx="18" cy="12" rx="2.2" ry="6.5" transform="rotate(90 18 18)"/>
+            <ellipse cx="18" cy="12" rx="1.4" ry="5.5" transform="rotate(45 18 18)"/>
+            <ellipse cx="18" cy="12" rx="1.4" ry="5.5" transform="rotate(135 18 18)"/>
+          </g>
+          <circle class="brand-flower-center" cx="18" cy="18" r="3"/>
+        </svg>
+        <div>
+          <p class="brand-title">AIPIWEN指导师工作台</p>
+          <div class="brand-subtitle">注册 / 登录 Mock</div>
+        </div>
+      </a>
+      <a class="btn ghost" href="advisor.html">返回介绍页</a>
+    </nav>
+
+    <section class="auth-grid">
+      <div class="module auth-card">
+        <p class="eyebrow">Mock Register</p>
+        <h1>从业者注册 / 登录</h1>
+        <p>本页仅做前端静态演示，不接真实短信、微信 OAuth、登录态或数据库。</p>
+
+        <div class="form-grid" style="margin-top:18px">
+          <label>手机号<input class="field" type="tel" placeholder="请输入 11 位手机号"></label>
+          <label>验证码<span class="code-row"><input class="field" type="text" placeholder="6 位验证码"><button class="btn ghost" type="button">获取验证码</button></span></label>
+          <button class="wechat-mock" type="button">微信绑定入口 Mock</button>
+          <fieldset class="identity-group">
+            <legend>身份选择</legend>
+            <label><input type="radio" name="role" checked> 解读师</label>
+            <label><input type="radio" name="role"> 代理</label>
+            <label><input type="radio" name="role"> 采集中心</label>
+          </fieldset>
+          <label>邀请码（可选）<input class="field" type="text" value="ZHANGWEI01"></label>
+          <label class="check-line"><input type="checkbox" checked> 我已阅读并同意从业者协议和四条规则</label>
+          <button class="btn primary" id="mock-register" type="button">完成注册，领取500积分</button>
+        </div>
+      </div>
+
+      <aside class="module auth-success" id="register-success">
+        <span class="status done">注册成功状态</span>
+        <h2>🎉 注册成功，已获得 500 积分体验额度</h2>
+        <div class="data-list">
+          <div class="data-item"><span>当前积分</span><strong data-credit-balance>500</strong></div>
+          <div class="data-item"><span>我的邀请码</span><strong>ZHANGWEI01</strong></div>
+          <div class="data-item"><span>我的邀请链接</span><strong>/r/ZHANGWEI01</strong></div>
+        </div>
+        <p>500 积分可支持约 5-8 次真实解读场景，其中包含完整解读、问题话术重生成、训练评分、安全边界测试等组合消耗。</p>
+        <a class="btn primary" href="ai-interpreter-workbench.html">进入工作台</a>
+      </aside>
+
+      <aside class="module safety-card">
+        <div class="card-header">
+          <div class="card-title">
+            <h2>防刷机制展示</h2>
+            <small>仅展示产品机制，不做真实逻辑</small>
+          </div>
+        </div>
+        <div class="tag-row">
+          <span class="tag">手机号验证</span>
+          <span class="tag">微信绑定</span>
+          <span class="tag">同设备异常提醒</span>
+          <span class="tag">同IP异常提醒</span>
+          <span class="tag">邀请奖励分阶段发放</span>
+          <span class="tag">Emma 可撤销异常积分</span>
+        </div>
+        <p class="footer-note">奖励有效邀请，不奖励刷号。邀请注册节点只给 100，真正使用后继续发放后续奖励。</p>
+      </aside>
+    </section>
+  </main>
+</body>
+</html>

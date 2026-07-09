@@ -48,6 +48,7 @@
           <p>儿童天赋报告 · 入口态 / 进行中模拟 · 当前展示第 ④ 步。</p>
         </div>
         <div class="top-actions">
+          <button class="btn primary" id="generate-plan" type="button">生成完整 AI 解读方案</button>
           <button class="btn" type="button">保存进度</button>
           <a class="btn warn" href="ai-interpreter-review.html">提交总部复核</a>
         </div>
@@ -309,6 +310,44 @@
         </aside>
       </section>
     </main>
+  </div>
+
+  <div class="modal-layer" id="credit-modal" aria-hidden="true">
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="credit-modal-title">
+      <div class="card-header">
+        <div class="card-title">
+          <h2 id="credit-modal-title">确认消耗积分</h2>
+          <small id="credit-modal-subtitle">静态 mock 扣减，不接真实积分账户</small>
+        </div>
+        <button class="icon-btn" type="button" data-close-credit-modal aria-label="关闭">×</button>
+      </div>
+      <div class="credit-confirm" id="credit-confirm">
+        <div class="data-list">
+          <div class="data-item"><span>操作</span><strong>生成完整 AI 解读方案</strong></div>
+          <div class="data-item"><span>消耗</span><strong>50 积分</strong></div>
+          <div class="data-item"><span>当前余额</span><strong><span data-modal-current>500</span> 积分</strong></div>
+          <div class="data-item"><span>消耗后余额</span><strong><span data-modal-after>450</span> 积分</strong></div>
+        </div>
+        <div class="top-actions" style="margin-top:16px">
+          <button class="btn ghost" type="button" data-close-credit-modal>取消</button>
+          <button class="btn primary" type="button" id="confirm-credit-cost">确认消耗</button>
+        </div>
+      </div>
+      <div class="credit-insufficient" id="credit-insufficient">
+        <div class="notice">
+          <strong>积分不足</strong>
+          <p>此操作需要 50 积分。当前余额：<span data-modal-low>10</span> 积分。你可以邀请同行注册获得积分。</p>
+        </div>
+        <div class="invite-link-box" style="margin-top:12px">
+          <span>我的邀请链接</span>
+          <code>/r/ZHANGWEI01</code>
+        </div>
+        <div class="top-actions" style="margin-top:16px">
+          <button class="btn primary" type="button" data-copy-invite>复制邀请链接</button>
+          <button class="btn ghost" type="button" data-close-credit-modal>我知道了</button>
+        </div>
+      </div>
+    </div>
   </div>
 </body>
 </html>
