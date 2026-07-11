@@ -1441,6 +1441,44 @@ function issueBody(body, titleTxt, issueTitle) {
   return cleaned || issueFallback(titleTxt, issueTitle);
 }
 
+function getIssueAnswerCards(sec) {
+  const serverCards = Array.isArray(sec?.answerCards)
+    ? sec.answerCards.filter(card => card && String(card.title || '').trim() && String(card.body || '').trim())
+    : [];
+  if (serverCards.length) return serverCards;
+
+  const title = String(sec?.title || '');
+  const has = (...words) => words.some(word => title.includes(word));
+  const combine = (...values) => values.filter(Boolean).join('\n\n');
+  let cards;
+  if (has('文理', '选科', '偏科', '学习方法', '阅读', '记忆', '学习方式', '科目')) {
+    cards = [['先别急着定方向', sec.why], ['接下来观察并试这几步', combine(sec.how, sec.future)]];
+  } else if (has('升学', '名校', '志愿', '专业', '保证成功')) {
+    cards = [['报告能帮你看什么', sec.why], ['把决定拆成小验证', sec.how], ['还要一起考虑什么', sec.future]];
+  } else if (has('父母', '三观', '亲子', '顶嘴', '叛逆', '沟通', '相处')) {
+    cards = [['先把“对错”换成具体场景', sec.why], ['双方可能各自在守什么', sec.future], ['下一次对话可以这样开始', sec.how]];
+  } else if (has('伴侣', '婚姻', '分手', '在一起', '关系去留')) {
+    cards = [['先不急着判断去留', sec.why], ['回到一次具体冲突', sec.how], ['真正值得继续观察的事', sec.future]];
+  } else if (has('主动', '内驱', '拖拉', '磨蹭', '作业', '不想学', '手机', '游戏', '不启动')) {
+    cards = [['这不只是“不想做”', sec.why], ['先从第一个小动作开始', sec.how], ['被看见后会长成的力量', sec.future]];
+  } else if (has('ADHD', '多动症', '抑郁', '焦虑症', '心理疾病', '精神问题', '诊断')) {
+    cards = [['这个问题不能由报告判断', sec.why], ['建议先整理这些具体情况', sec.how]];
+  } else if (has('录用', '淘汰', '分班', '筛选', '分层')) {
+    cards = [['报告不能替代筛选决定', sec.why], ['可以安全参考的范围', sec.how]];
+  } else if (has('焦虑', '情绪', '生气', '输不起', '压力', '崩溃', '害怕', '哭')) {
+    cards = [['先看情绪在提醒什么', sec.why], ['当下可以怎样接住', combine(sec.how, sec.future)]];
+  } else if (has('朋友', '人际', '同学', '老师', '课堂', '社交')) {
+    cards = [['先定位卡住的场景', sec.why], ['给自己一个低压力入口', combine(sec.how, sec.future)]];
+  } else if (has('职业', '工作', '转型', '事业', '创业')) {
+    cards = [['先看什么在消耗你', sec.why], ['做一次低成本验证', sec.how], ['把优势组合看完整', sec.future]];
+  } else {
+    cards = [['你可能卡在这里', sec.why], ['先试一个低风险动作', combine(sec.how, sec.future)]];
+  }
+  return cards
+    .filter(([, body]) => String(body || '').trim())
+    .map(([cardTitle, body]) => ({ title: cardTitle, body: String(body).trim() }));
+}
+
 function cleanRequiredModuleScaffold(text) {
   return String(text || '')
     .replace(/(^|\n)\s*[①1][\s.、-]*(是什么|这个板块是什么|指标是什么)[：:]\s*/g, '$1')
@@ -1543,23 +1581,16 @@ function buildReportFlipBook(sections) {
     if (sec.type === 'issue') {
       const icon = cfg.icon.issue;
       const eyebrow = `${icon} 专项解读 · ${secNum}`;
+      const answerCards = getIssueAnswerCards(sec);
       slide.dataset.sub = '家长关注';
       slide.innerHTML = `
         <div class="sec-eyebrow">${eyebrow}</div>
         <div class="sec-h">${sec.title}</div>
         <div class="fp-parts">
-          <div class="fp-part">
-            <div class="fp-badge"><div class="fp-badge-n">1</div><div class="fp-badge-t">为什么会这样</div></div>
-            <div class="fp-text">${formatContent(issueBody(sec.why, '为什么会这样', sec.title))}</div>
-          </div>
-          <div class="fp-part">
-            <div class="fp-badge"><div class="fp-badge-n">2</div><div class="fp-badge-t">怎么应对</div></div>
-            <div class="fp-text">${formatContent(issueBody(sec.how, '怎么应对', sec.title))}</div>
-          </div>
-          <div class="fp-part">
-            <div class="fp-badge"><div class="fp-badge-n">3</div><div class="fp-badge-t">未来可期</div></div>
-            <div class="fp-text">${formatContent(issueBody(sec.future, '未来可期', sec.title))}</div>
-          </div>
+          ${answerCards.map((card, cardIndex) => `<div class="fp-part">
+            <div class="fp-badge"><div class="fp-badge-n">${cardIndex + 1}</div><div class="fp-badge-t">${card.title}</div></div>
+            <div class="fp-text">${formatContent(card.body)}</div>
+          </div>`).join('')}
           <button class="fp-cta-btn" onclick="window.location='/child-chat.html'">
             <span>💬 ${sec.cta || '还想深聊？继续问我'}</span>
           </button>
@@ -1938,9 +1969,7 @@ async function generateReportPDF(btnEl) {
       </div>`;
     }
     const bodyHTML = isIssue
-      ? `${issueCard(1, '为什么会这样', sec.why)}
-          ${issueCard(2, '怎么应对', sec.how)}
-          ${issueCard(3, '未来可期', sec.future)}`
+      ? getIssueAnswerCards(sec).map((card, index) => issueCard(index + 1, card.title, card.body)).join('')
       : fmtPDF(sec.content || '', th, bf);
     return wrap(`
       ${pHdr(n)}

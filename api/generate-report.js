@@ -712,7 +712,7 @@ function buildUserMessage(engineResult, age, name, requiredModules, selectedIssu
 ③积极意义：（这个方向如果被合适支持，长期可能长成什么价值；不做保证）
 ④继续观察：（一句自然承接，指向最值得继续补充的真实场景或追问）`;
         }
-        return `===issue:${issue}===\n①机制解释：（基于具体手指/类型/通道/ATD解释背后的可能机制，2-3句；先讲场景，不要像系统规则）\n②具体做法：（给明天就能做的具体动作，2-4条；低风险、可执行）\n③积极意义：（说明这个特质被看见和支持后，可以发展成什么优势；不预测、不保证）\n④继续观察：（一句自然承接，建议观察一个具体场景、补充信息或人工一起看）`;
+        return `===issue:${issue}===\n${issuePromptGuide(issue)}`;
       }).join('\n\n')
     : '';
 
@@ -973,6 +973,165 @@ function coreModuleFallback(title, engineResult, tier = 'adult', fingers = null)
   return stripRequiredModuleScaffold(Array.isArray(fallbackContent) ? fallbackContent.join('\n\n') : fallbackContent);
 }
 
+function classifyIssueType(issueTitle) {
+  const text = String(issueTitle || '');
+  const has = (...words) => words.some(word => text.includes(word));
+
+  if (has('ADHD', '多动症', '抑郁', '焦虑症', '心理疾病', '精神问题', '诊断')) return 'high_risk_diagnosis';
+  if (has('录用', '淘汰', '分班', '筛选', '分层')) return 'screening_decision';
+  if (has('升学', '名校', '志愿', '专业', '保证成功')) return 'education_decision';
+  if (has('伴侣', '婚姻', '分手', '在一起', '关系去留')) return 'relationship_decision';
+  if (has('父母', '三观', '亲子', '顶嘴', '叛逆', '沟通', '相处')) return 'parent_child_communication';
+  if (has('文理', '选科', '偏科', '学习方法', '阅读', '记忆', '学习方式', '科目')) return 'learning_method';
+  if (has('主动', '内驱', '拖拉', '磨蹭', '作业', '不想学', '手机', '游戏', '不启动')) return 'homework_dragging';
+  if (has('焦虑', '情绪', '生气', '输不起', '压力', '崩溃', '害怕', '哭')) return 'emotion_regulation';
+  if (has('朋友', '人际', '同学', '老师', '课堂', '社交')) return 'social_relationship';
+  if (has('职业', '工作', '转型', '事业', '创业')) return 'career_direction';
+  return 'self_understanding';
+}
+
+function issuePromptGuide(issueTitle) {
+  const type = classifyIssueType(issueTitle);
+  const guides = {
+    learning_method: '①学习入口：（结合学习通道、左右脑或功能区，说明真正可能卡在哪里）\n②观察与试法：（给观察清单和可执行的学习方法，不直接定文理方向）\n③校正线索：（说明如何用真实学习反馈校正报告线索，不硬写励志结论）\n④继续观察：（指出最值得补充的一次作业、考试或课堂场景）',
+    homework_dragging: '①行为翻译：（说明这不只是懒或不听话，结合年龄和启动节奏）\n②第一个动作：（给1-3个足够小、明天能做的动作）\n③可发展的力量：（说明谨慎、怕错或想做好如何被正确支持）\n④继续观察：（指出要观察的具体任务场景）',
+    emotion_regulation: '①情绪信号：（说明情绪可能在提醒什么，不诊断、不贴标签）\n②当下承接：（给降速、确认感受和下一步动作）\n③后续观察：（只说明持续时间、触发场景和影响范围，不轻率包装成优势）\n④支持边界：（如持续影响生活，温和建议人工或专业支持）',
+    parent_child_communication: '①具体场景：（把对错判断还原成一次真实冲突）\n②双方在守什么：（说明边界、尊重、安全感或自主需要）\n③对话入口：（给下一次可以直接使用的开场和一个具体请求）\n④继续观察：（建议从最典型的一次冲突继续拆）',
+    relationship_decision: '①边界说明：（不判断关系去留，说明报告能看什么、不能看什么）\n②冲突拆解：（回到一次具体冲突，看双方需求和表达）\n③观察维度：（说明现实边界、尊重和沟通是否可调整）\n④人工承接：（重大关系决定建议人工复核）',
+    education_decision: '①参考边界：（不保证升学，不替用户做决定）\n②可用线索：（结合学习入口、承压节奏和现实成绩）\n③小型验证：（把选择拆成课程、访谈或体验等低风险试法）\n④人工承接：（指出还需补充的成绩、资源和候选方向）',
+    career_direction: '①现实卡点：（结合当前人生阶段说明耗能和发挥场景）\n②低成本试错：（给副项目、访谈或任务模拟等验证方式）\n③能力组合：（说明优势组合，不保证职业结果）\n④继续观察：（建议补充当前工作和候选方向）',
+    social_relationship: '①场景定位：（区分表达慢、敏感、边界或不知道如何开始）\n②低压力入口：（给一个可以实际练习的社交动作）\n③现实反馈：（说明如何观察动作是否有效，不要求立刻变外向）\n④继续观察：（建议补充一个具体人际场景）',
+    high_risk_diagnosis: '①安全边界：（明确报告不能判断心理、医学或疾病）\n②情况整理：（只整理表现、持续时间、频率和影响范围）\n③专业支持：（如持续影响生活，建议寻求合适专业支持；不要写积极意义）\n④人工承接：（不得输出诊断结论）',
+    screening_decision: '①安全边界：（明确报告不能用于录用、淘汰、分班或筛选）\n②可参考范围：（仅讨论已授权情况下的协作或学习支持方式）\n③禁止结论：（不输出人员处置建议）\n④人工承接：（高风险场景转人工复核）',
+    self_understanding: '①共鸣入口：（贴住用户原话，说明可能卡在哪里）\n②低风险动作：（给一个现实中能验证的小动作）\n③校正线索：（提醒这不是定型，要用现实反馈校正）\n④继续观察：（建议补充最典型的一次场景）',
+  };
+  return guides[type] || guides.self_understanding;
+}
+
+function buildIssuePresentation(issueTitle, parts) {
+  const type = classifyIssueType(issueTitle);
+  const combine = (...values) => values.filter(Boolean).join('\n\n');
+  const configs = {
+    learning_method: {
+      mode: 'learning_diagnosis',
+      cards: [
+        ['先别急着定方向', parts.why],
+        ['接下来观察并试这几步', combine(parts.how, parts.future)],
+      ],
+    },
+    homework_dragging: {
+      mode: 'behavior_breakdown',
+      cards: [
+        ['这不只是“不想做”', parts.why],
+        ['先从第一个小动作开始', parts.how],
+        ['被看见后会长成的力量', parts.future],
+      ],
+    },
+    emotion_regulation: {
+      mode: 'emotion_support',
+      cards: [
+        ['先看情绪在提醒什么', parts.why],
+        ['当下可以怎样接住', combine(parts.how, parts.future)],
+      ],
+    },
+    parent_child_communication: {
+      mode: 'relationship_communication',
+      cards: [
+        ['先把“对错”换成具体场景', parts.why],
+        ['双方可能各自在守什么', parts.future],
+        ['下一次对话可以这样开始', parts.how],
+      ],
+    },
+    relationship_decision: {
+      mode: 'relationship_boundary',
+      cards: [
+        ['先不急着判断去留', parts.why],
+        ['回到一次具体冲突', parts.how],
+        ['真正值得继续观察的事', parts.future],
+      ],
+    },
+    education_decision: {
+      mode: 'decision_boundary',
+      cards: [
+        ['报告能帮你看什么', parts.why],
+        ['把决定拆成小验证', parts.how],
+        ['还要一起考虑什么', parts.future],
+      ],
+    },
+    career_direction: {
+      mode: 'career_exploration',
+      cards: [
+        ['先看什么在消耗你', parts.why],
+        ['做一次低成本验证', parts.how],
+        ['把优势组合看完整', parts.future],
+      ],
+    },
+    social_relationship: {
+      mode: 'social_scene',
+      cards: [
+        ['先定位卡住的场景', parts.why],
+        ['给自己一个低压力入口', combine(parts.how, parts.future)],
+      ],
+    },
+    high_risk_diagnosis: {
+      mode: 'professional_support',
+      cards: [
+        ['这个问题不能由报告判断', parts.why],
+        ['建议先整理这些具体情况', parts.how],
+      ],
+    },
+    screening_decision: {
+      mode: 'screening_boundary',
+      cards: [
+        ['报告不能替代筛选决定', parts.why],
+        ['可以安全参考的范围', parts.how],
+      ],
+    },
+    self_understanding: {
+      mode: 'self_understanding',
+      cards: [
+        ['你可能卡在这里', parts.why],
+        ['先试一个低风险动作', combine(parts.how, parts.future)],
+      ],
+    },
+  };
+  const config = configs[type] || configs.self_understanding;
+  return {
+    issueType: type,
+    answerMode: config.mode,
+    answerCards: config.cards
+      .filter(([, body]) => String(body || '').trim())
+      .map(([title, body]) => ({ title, body: String(body).trim() })),
+  };
+}
+
+function issueContentSimilarity(a, b) {
+  const normalize = value => String(value || '')
+    .replace(/「[^」]*」/g, '')
+    .replace(/[\s\p{P}\p{S}]/gu, '');
+  const grams = value => {
+    const text = normalize(value);
+    const set = new Set();
+    for (let i = 0; i < text.length - 2; i += 1) set.add(text.slice(i, i + 3));
+    return set;
+  };
+  const left = grams(a);
+  const right = grams(b);
+  if (!left.size || !right.size) return 0;
+  let overlap = 0;
+  left.forEach(item => { if (right.has(item)) overlap += 1; });
+  return (2 * overlap) / (left.size + right.size);
+}
+
+function isGenericIssueContent(parts) {
+  const text = `${parts?.why || ''}\n${parts?.how || ''}\n${parts?.future || ''}`;
+  return [
+    '不能只看表面行为，需要放回',
+    '先从一个低风险、能马上执行的小动作开始',
+    '这个问题背后通常也藏着一部分优势',
+  ].filter(phrase => text.includes(phrase)).length >= 2;
+}
+
 function issueFallback(issueTitle, tier = 'adult') {
   const subject = issueTitle || '这个问题';
   const text = String(subject);
@@ -1176,24 +1335,36 @@ function normalizeSections(sections, requiredModules, selectedIssues, engineResu
   });
 
   const includedIssues = new Set();
+  const issueFingerprints = [];
   for (const sec of sections) {
     if (!sec?.title || requiredModules.includes(sec.title)) continue;
     if (sec.type !== 'issue') continue;
     const fallback = issueFallback(sec.title, tier);
-    normalized.push({
-      ...sec,
-      type: 'issue',
+    let parts = {
       why: (sec.why || '').trim() || fallback.why,
       how: (sec.how || '').trim() || fallback.how,
       future: (sec.future || '').trim() || fallback.future,
       cta: (sec.cta || '').trim() || fallback.cta,
+    };
+    const fingerprint = `${parts.why}\n${parts.how}\n${parts.future}`;
+    if (isGenericIssueContent(parts)
+      || issueFingerprints.some(previous => issueContentSimilarity(previous, fingerprint) >= 0.72)) {
+      parts = fallback;
+    }
+    issueFingerprints.push(`${parts.why}\n${parts.how}\n${parts.future}`);
+    normalized.push({
+      ...sec,
+      type: 'issue',
+      ...parts,
+      ...buildIssuePresentation(sec.title, parts),
     });
     includedIssues.add(sec.title);
   }
 
   for (const title of selectedIssues) {
     if (!title || requiredModules.includes(title) || includedIssues.has(title)) continue;
-    normalized.push({ title, type: 'issue', ...issueFallback(title, tier) });
+    const parts = issueFallback(title, tier);
+    normalized.push({ title, type: 'issue', ...parts, ...buildIssuePresentation(title, parts) });
     includedIssues.add(title);
   }
 
