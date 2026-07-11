@@ -30,6 +30,10 @@ assert(guestSource.includes('检索失败时静默回退现有提示词'), '知�
 assert(chatPageSource.includes("context:         isReportDeepChat ? 'report' : _for"), '报告深聊没有切换到 report context');
 assert(chatPageSource.includes('reportSummary:   isReportDeepChat ? sessionPrevContext : null'), '报告摘要没有传给深聊接口');
 assert(reportPageSource.includes('onclick="openDeepChat()"'), '报告问题页或末页没有通过 openDeepChat 传递上下文');
+assert(reportPageSource.includes('十指单值：${fingerSummary}'), '报告深聊摘要没有携带十根手指单值');
+assert(reportPageSource.includes('只作总览，禁止与个人单指均值比较'), '报告深聊摘要没有标明功能区合计边界');
+assert(guestSource.includes('学习通道占比与五大功能区是两套不同数据'), '报告深聊没有防止学习通道与视觉功能混淆');
+assert(guestSource.includes('禁止拿两根手指合计值和个人单指均值比较'), '报告深聊没有执行单指比较规则');
 
 const plainHits = searchReportKnowledge('小学 写作业拖拉 家长 一催就炸', {
   topK: 3,

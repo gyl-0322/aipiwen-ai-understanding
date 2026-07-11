@@ -2330,6 +2330,20 @@ function openDeepChat() {
   const bm      = E.行为模式 || {};
   const lr      = E.左右脑   || {};
   const atd     = E.ATD      || {};
+  const fingerLabels = {
+    R1:'右拇', L1:'左拇', R2:'右食', L2:'左食', R3:'右中', L3:'左中',
+    R4:'右无名', L4:'左无名', R5:'右小', L5:'左小',
+  };
+  const fingerSummary = Object.entries(fingerLabels)
+    .map(([position, label]) => {
+      const value = Number(ST.fingers?.[position]?.trc);
+      return Number.isFinite(value) ? `${label}${value}` : '';
+    })
+    .filter(Boolean)
+    .join(' ');
+  const channelSummary = Object.entries(chan.占比 || {})
+    .map(([channel, value]) => `${channel}${value}%`)
+    .join(' / ');
 
   // 构建报告摘要，含性格类型关键词 → guest-chat.js 自动注入完整 TRC 知识库
   const summary = [
@@ -2337,12 +2351,13 @@ function openDeepChat() {
     name  ? `姓名：${name}` : '',
     age   ? `年龄：${age}岁` : '',
     type  ? `性格主类型：${type}${E.叠加特质?.逆向思维R ? '（含逆向思维叠加）' : ''}` : '',
-    chan.主通道              ? `学习通道：${chan.主通道}` : '',
+    chan.主通道              ? `学习通道：${chan.主通道}${channelSummary ? `（${channelSummary}）` : ''}` : '',
     bm.结论                  ? `行为模式：${bm.结论}` : '',
     lr.结论                  ? `左右脑：${lr.结论}，左脑占比${lr.左脑占比}%` : '',
-    fn.总TRC                 ? `TRC总分：${fn.总TRC}，均值：${fn.个人均值}` : '',
+    fn.总TRC                 ? `TRC总分：${fn.总TRC}，个人单指均值：${fn.个人均值}` : '',
+    fingerSummary            ? `十指单值：${fingerSummary}` : '',
     atd.值                   ? `ATD：${atd.值}°（${atd.分区}）` : '',
-    (fn.精神 || fn.思维)     ? `五功能区——精神:${fn.精神} 思维:${fn.思维} 体觉:${fn.体觉} 听觉:${fn.听觉} 视觉:${fn.视觉}` : '',
+    (fn.精神 || fn.思维)     ? `五功能区合计（只作总览，禁止与个人单指均值比较）——精神:${fn.精神} 思维:${fn.思维} 体觉:${fn.体觉} 听觉:${fn.听觉} 视觉:${fn.视觉}` : '',
     `（用户刚看完以上皮纹报告，希望继续追问深入了解天赋特征）`,
   ].filter(Boolean).join('\n');
 
