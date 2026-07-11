@@ -1297,6 +1297,7 @@ qs('#gen-btn').addEventListener('click', async () => {
         age: ST.age,
         name: ST.name,
         selectedIssues: selectedIssuesForRequest,
+        customUserQuestion: issueNote,
         refToken: _refToken,   // 邀请来源 token（服务端积分，去重安全）
       }),
     });
@@ -1593,7 +1594,7 @@ function buildReportFlipBook(sections) {
             <div class="fp-badge"><div class="fp-badge-n">${cardIndex + 1}</div><div class="fp-badge-t">${card.title}</div></div>
             <div class="fp-text">${formatContent(card.body)}</div>
           </div>`).join('')}
-          <button class="fp-cta-btn" onclick="window.location='/child-chat.html'">
+          <button class="fp-cta-btn" onclick="openDeepChat()">
             <span>💬 ${sec.cta || '还想深聊？继续问我'}</span>
           </button>
         </div>`;

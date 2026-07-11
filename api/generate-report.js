@@ -703,16 +703,21 @@ function buildUserMessage(engineResult, age, name, requiredModules, selectedIssu
   // 用 dedupedIssues（已去掉与必给重复项），避免 AI 收到冗余格式指令
   const issueFormatGuide = dedupedIssues.length > 0
     ? `\n【问题模块格式（每个 issue 使用四要素自然表达）】\n` + dedupedIssues.map(issue => {
+        const issueKnowledge = knowledgeContext.issueKnowledgeContexts?.[issue] || {};
+        const issueGrounding = [issueKnowledge.knowledgeBlock, issueKnowledge.riskBlock]
+          .filter(Boolean)
+          .join('\n\n');
         if (兴趣班板块Names.has(issue)) {
           // 职业/能力类延伸问题：必须在必给模块2结论基础上展开，禁止重新判断高低
           return `===issue:${issue}===
+${issueGrounding ? `${issueGrounding}\n` : ''}
 ⚠️ 此板块是上方五个功能板块与「TRC（认知结构）」的延伸决策——直接基于已给出的能力结构，聚焦「${issue}」这个具体问题，禁止重新做高低判断，数据用上方 RULE-F04 已修正结果。
 ①机制解释：（在能力结构结论基础上，点明此决策的关键数据依据，1-2句；不要写成系统分析）
 ②具体做法：（针对"${issue}"给出3-4条具体可选路径，引用官方职业/方向映射，今天就能落地）
 ③积极意义：（这个方向如果被合适支持，长期可能长成什么价值；不做保证）
 ④继续观察：（一句自然承接，指向最值得继续补充的真实场景或追问）`;
         }
-        return `===issue:${issue}===\n${issuePromptGuide(issue)}`;
+        return `===issue:${issue}===\n${issueGrounding ? `${issueGrounding}\n` : ''}${issuePromptGuide(issue)}`;
       }).join('\n\n')
     : '';
 

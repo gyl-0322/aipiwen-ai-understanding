@@ -12,6 +12,10 @@ const { getGlobalPatterns, redisSet, redisGet, creditReferral, callClaude, MODEL
 // ★ 免费对话轮数上限（超过提示升级，既控成本又软付费触发）
 const MAX_FREE_ROUNDS = 10;
 const { buildTypeReferenceForPrompt } = require('../lib/trc-knowledge-adapter');
+const {
+  searchReportKnowledge,
+  buildReportGroundingBlock,
+} = require('../lib/report-knowledge-index');
 
 // ── log-session 处理器（merged from log-session.js）────────────────────────
 async function handleLogSession(req, res) {
@@ -228,6 +232,9 @@ module.exports = async function handler(req, res) {
     return null;
   }
   const ageTier = getAgeTier(subjectAge);
+  const reportContextText = `${reportSummary || ''}\n${previousContext || ''}`;
+  const isReportContext = context === 'report'
+    && /皮纹天赋报告数据|AIPIWEN_DATA|性格主类型|TRC总分|五功能区/.test(reportContextText);
 
   const AGE_CONTEXT = {
     preschool: `【被测者年龄：学前期（0-6岁）】
@@ -348,10 +355,15 @@ module.exports = async function handler(req, res) {
     ? `\n【该用户的历史记录（此前几次对话的核心发现，了解其行为模式）】\n${previousContext}\n`
     : '';
 
-  // TRC注入策略：previousContext 含类型关键词 或 对话已≥4轮 → 完整 TRC_SECTION
-  // 否则注入精简 TRC_HINT，节省约1200 tokens（首次对话时AI无需完整类型库）
-  const TRC_TYPE_KEYWORDS = ['认知型','模仿型','开放型','逆思型','整合型','双视型','超级认知型','超级模仿型','弘拓模仿型','弘拓整合','智业集','花茂美','完美型'];
-  const hasTRCContext = TRC_TYPE_KEYWORDS.some(kw => previousContext.includes(kw)) || history.length >= 4;
+  const PLAIN_LANGUAGE_BOUNDARY = `
+【普通行为理解的术语边界】
+当前用户没有提供皮纹报告数据。TRC、ATD、左右脑数值、手指功能区和性格类型只能作为内部知识背景，不能出现在用户可见回答中，也不能根据行为反推这些指标。
+只用家长或普通用户听得懂的生活语言：具体行为、可能感受、现实需求、发生场景和一个可执行动作。不要主动解释TRC或ATD，不要让用户先学术语才能听懂回答。`;
+
+  const REPORT_LANGUAGE_RULE = `
+【报告深聊表达规则】
+只有这里可以结合用户已经上传的报告数据。先把数值翻译成生活中的表现，再在确有必要时提到指标名称；首次出现TRC、ATD等术语必须紧跟一句通俗解释。
+不得只念数值，不得用术语代替回答。用户问的是具体问题，就先回答具体问题，再说明哪一条报告线索支持这种理解。`;
 
   // 五步路径说明（所有场景共用，内嵌在各自提示词中）
   const FIVE_STEPS = `
@@ -567,8 +579,9 @@ ${TRC_LEARNING_CHANNEL}
 【天赋认知类型（TRC）参考】指纹与大脑神经系统在胎儿第13-19周同期形成，天赋先天写定、终生不变。当描述的行为模式与某类型高度吻合时可自然引入（勿强行匹配）。17种类型：认知型·模仿型·开放型·逆思型·整合型·双视型·超级认知型A/B/C·超级模仿型·弘拓模仿型·弘拓整合开拓型·智业集道结型·智业集开拓型·花茂美逻辑型·花茂美开拓型·完美型。
 ${WU_DA_GONG_NENG}`;
 
-  // hasTRCContext=true → 完整知识库（复访用户/长对话）；false → 精简提示（首次/短对话）
-  const trcContent = hasTRCContext ? TRC_SECTION : TRC_HINT;
+  // 只有从正式报告跳转且带有报告摘要时，才允许注入完整报告术语知识。
+  // 普通行为理解即使聊很多轮，也不能仅凭行为反推 TRC / ATD。
+  const trcContent = isReportContext ? TRC_SECTION : '';
 
   // ── Task 1B: 报告定制模板（仅注入用户请求的那一个，节省约2000 tokens）──────
   const REPORT_TEMPLATES = {
@@ -673,47 +686,52 @@ ${WU_DA_GONG_NENG}`;
   const SYSTEM = {
     child: `你是AIPIWEN的亲子关系顾问。你的核心信念：孩子每一个"问题行为"，都是孩子在用他能找到的唯一方式，向父母传递一个还没被接收到的信号——不是叛逆，是呼唤。
 ${ageContextNote}${patternsSection}${memSection}
+${PLAIN_LANGUAGE_BOUNDARY}
 行为解读链路（内化于心，不要逐条列出）：
 行为表象 → 行为背后的情绪 → 这个情绪指向什么未被满足的需求（安全感？连接感？自主权？被看见？）→ 什么样的家庭互动方式让这个信号没有被接到 → 孩子真正想对父母说的那句话是什么
 ${FIVE_STEPS}
 ${trcContent}
 回复语气：像一个真正懂孩子的朋友在轻声说话，不评判，不说教，让家长感到"你说到我心里了"
-字数：200字以内，每一句都要让家长感到被看见。如果识别出TRC类型，用1-2句自然引入，帮家长换一个全新视角看孩子。
+字数：200字以内，每一句都要让家长感到被看见。只回答当前行为和场景，不根据行为猜测任何报告类型或指标。
 ${NO_FILLER}`,
 
     self: `你是AIPIWEN的自我理解顾问。你的核心信念：一个人当下反复出现的行为模式，几乎都是过去某个艰难时期里最聪明的应对策略——它曾经保护过你，但现在可能在消耗你。你不需要被"修复"，你需要被理解。
 ${selfStageNote}${memSection}
+${PLAIN_LANGUAGE_BOUNDARY}
 行为解读链路（内化于心，不要逐条列出）：
 行为表象 → 这个行为在调节什么情绪或回避什么感受 → 这个情绪/恐惧在什么样的成长或关系环境中形成 → 这个模式当时保护了什么、现在的代价是什么 → 如果这个模式"会说话"，它在问你：我还需要继续保护你吗？
 ${FIVE_STEPS}
 ${trcContent}
 回复语气：像真正懂你的人陪你看清自己，温柔而精准，不评判，不说教
-字数：200字以内。如果识别出与某TRC类型高度吻合的认知天赋特质，自然引入，帮助用户从"我有什么问题"转变为"我有什么天赋特质"。
+字数：200字以内。帮助用户从"我有什么问题"转向"这个模式曾经怎样保护我、现在可以怎样调整"，不根据行为猜测报告类型或指标。
 ${NO_FILLER}`,
 
     partner: `你是AIPIWEN的亲密关系理解顾问。你的核心信念：伴侣令人费解的行为，几乎从不是"针对你"的——它更多是伴侣在用他/她唯一学会的方式，表达一种深层的需求或恐惧。真正理解它，才能真正回应它。
 ${relationStageNote}${memSection}
+${PLAIN_LANGUAGE_BOUNDARY}
 行为解读链路（内化于心，不要逐条列出）：
 行为表象 → 伴侣内心真实的情绪（不是表演出来的那个）→ 这个情绪指向什么深层需求（被看见？安全感？被尊重？不被抛弃？）→ 伴侣在原生家庭或过去的关系中，学到了什么"安全感获取方式"？这个行为是不是这种方式的呈现 → 这个行为其实在用什么方式呼唤什么
 ${FIVE_STEPS}
 ${trcContent}
 回复语气：温柔理性，不站队，不评判任何一方，让用户感到"原来是这样"
-字数：200字以内。如果伴侣的行为模式高度匹配某TRC类型，可以引入："你伴侣的这种方式，很像是【XX型】的人……这不是对你的攻击，而是他们天生的……"
+字数：200字以内。只根据用户描述的具体关系场景回答，不根据行为猜测伴侣的报告类型或指标。
 ${NO_FILLER}`,
 
     business: `你是AIPIWEN的合伙关系理解顾问。你的核心信念：合伙人难以理解的行为，几乎都有一套在他自己眼中完全合理的内在逻辑——理解这个逻辑，才能找到真正的合作杠杆点，而不是陷入无效博弈。
 ${memSection}
+${PLAIN_LANGUAGE_BOUNDARY}
 行为解读链路（内化于心，不要逐条列出）：
 行为表象 → 这个行为背后的核心驱动力（控制感？规避风险？争取认可？保住已有成果？）→ 他/她过往的哪些经历让这个驱动力如此强烈 → 这个行为在他自己的逻辑里是"理性的自我保护"还是"对某种恐惧的回应" → 真正的分歧点在哪里、合作的杠杆点在哪里
 ${FIVE_STEPS}
 ${trcContent}
 回复语气：商业洞察与人性理解并重，不评判，着眼于找到真正的解法
-字数：200字以内。如果合伙人行为匹配某TRC类型，可以引入类型视角来解释其决策逻辑："从天赋认知角度看，你的合伙人可能是【XX型】——他们天生……这解释了为什么他……"
+字数：200字以内。只根据用户描述的合作场景解释决策逻辑，不根据行为猜测合伙人的报告类型或指标。
 ${NO_FILLER}`,
 
     // ── 报告解读追问模式（非vision，用户已上传报告后的后续对话）─────────────
     report: `你是AIPIWEN的指纹天赋报告解读专家。用户已上传TRC指纹测评报告，当前正在追问解读内容。
 ${ageContextNote}${reportSummarySection}
+${REPORT_LANGUAGE_RULE}
 ${reportSingleTemplate
   ? `【解读方向：${reportRequestedType}】\n${reportSingleTemplate}`
   : `【默认解读格式】
@@ -767,32 +785,30 @@ X值：是"还没被点燃的潜力"，不是缺陷，要让你感到是机会�
 如果用户请求其他方向（如职业/高考/学习方法等），结合读取到的数据针对性输出，语气规范同上。
 ${NO_FILLER}`;
 
-  // ── 知识库检索注入（grounding）：拿用户输入去 knowledge 检索，取前3条作为底座 ──
-  // 失败/超时一律静默跳过，绝不影响对话主流程。仅普通对话注入（vision 模式不注入）。
+  // ── Report Knowledge Index 检索注入 ────────────────────────────────────
+  // 索引由 Report OS / Obsidian 来源资料审核后生成；检索失败时静默回退现有提示词。
   let kbInjection = '';
   if (!isVisionMode && content && content.trim()) {
     try {
-      const host  = req.headers['x-forwarded-host'] || req.headers.host;
-      const proto = req.headers['x-forwarded-proto'] || 'https';
-      const q     = encodeURIComponent(content.trim().slice(0, 80));
-      const kbRes = await fetch(`${proto}://${host}/api/knowledge?action=search&q=${q}`, {
-        signal: AbortSignal.timeout(4000),
+      const query = [
+        ageTier || subjectAge || '',
+        context,
+        content.trim(),
+        isReportContext ? reportContextText : '',
+      ].filter(Boolean).join(' ');
+      const hits = searchReportKnowledge(query, {
+        topK: 3,
+        allowedStatuses: ['auto_safe', 'rewrite_required'],
       });
-      if (kbRes.ok) {
-        const kbData = await kbRes.json();
-        const top = (kbData.chunks || []).slice(0, 3).filter(c => c && c.text);
-        if (top.length) {
-          kbInjection =
-            '\n\n【检索到的专业知识·仅作你的事实底座】\n' +
-            top.map(c => '· ' + c.text).join('\n') +
-            '\n（用法：把上面的事实用 AIPIWEN 的语气自然融进你的回答，落到用户的具体场景；' +
-            '不要照搬原文、不要罗列、不要报来源、不要堆术语。与你已有的知识冲突时以上面为准。）';
-        }
+      if (hits.length) {
+        kbInjection = '\n\n' + buildReportGroundingBlock(hits, { maxItems: 3 })
+          + '\n（回答时只提炼与当前问题有关的内容。普通行为理解必须翻译成家长听得懂的话；报告深聊可以结合报告数据，但仍先讲生活表现。）';
       }
     } catch (e) { /* 检索失败不影响主流程 */ }
   }
 
-  const systemPrompt = (isVisionMode ? VISION_SYSTEM : (SYSTEM[context] || SYSTEM.child)) + kbInjection;
+  const selectedSystem = isReportContext ? SYSTEM.report : (SYSTEM[context] || SYSTEM.child);
+  const systemPrompt = (isVisionMode ? VISION_SYSTEM : selectedSystem) + kbInjection;
 
   // ── 构建消息结构 ──────────────────────────────────────────────────────────────
   const messages = [{ role: 'system', content: systemPrompt }];
@@ -826,7 +842,6 @@ ${NO_FILLER}`;
   }
 
   // ── 免费对话轮数检查（超 MAX_FREE_ROUNDS 轮提示升级/解锁）──────────────
-  const isReportContext = context === 'report';
   if (!isVisionMode && !isReportContext) {
     const userTurns = history.filter(m => m.role === 'user').length;
     if (userTurns >= MAX_FREE_ROUNDS) {

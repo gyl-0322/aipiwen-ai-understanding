@@ -833,11 +833,13 @@ async function sendChat() {
 }
 
 async function callAPI(content) {
+  const isReportDeepChat = _mode === 'report' && Boolean(sessionPrevContext);
   const body = {
     content,
     history:         chatHistory.slice(-8),
-    context:         _for,
+    context:         isReportDeepChat ? 'report' : _for,
     previousContext: sessionPrevContext,
+    reportSummary:   isReportDeepChat ? sessionPrevContext : null,
     sessionId:       _sessionId,
     subjectAge:      _subjectAge,        // 年龄分层：AI 自动调整解读语气
     refToken:        _refToken,          // 邀请来源 token（服务端积分，去重安全）

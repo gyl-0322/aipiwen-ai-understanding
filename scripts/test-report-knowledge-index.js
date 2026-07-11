@@ -227,6 +227,13 @@ assert.strictEqual(promptContext.mode, 'v1.5_dry_run_context');
 assert(promptContext.reportKnowledgeBlock.includes('Report Knowledge Index 命中内容'), 'V1.5 prompt context should include report grounding block');
 assert(promptContext.retrievalSummary.uniqueHitIds.includes('RKI-V1.3-JUNIOR-BOUNDARY'), 'V1.5 context should include age-stage hit id');
 assert(promptContext.retrievalSummary.uniqueHitIds.includes('RKI-V1.2-SPIRIT-R_HIGH'), 'V1.5 context should include five-function hit id');
+assert(promptContext.issueKnowledgeContexts['开始顶嘴/叛逆，怎么沟通不炸']?.knowledgeBlock, 'first selected issue should have its own knowledge block');
+assert(promptContext.issueKnowledgeContexts['考试焦虑/输不起怎么疏导']?.knowledgeBlock, 'second selected issue should have its own knowledge block');
+assert(
+  JSON.stringify(promptContext.retrievalSummary.issueHitIds['开始顶嘴/叛逆，怎么沟通不炸'])
+    !== JSON.stringify(promptContext.retrievalSummary.issueHitIds['考试焦虑/输不起怎么疏导']),
+  'different selected issues should not share an identical retrieval result set'
+);
 assert(!promptContext.reportKnowledgeBlock.includes('/Users/'), 'V1.5 report grounding must not expose local paths');
 assert(!promptContext.reportKnowledgeBlock.includes('teacher_report_reading_001'), 'V1.5 report grounding must not expose raw source filenames');
 
@@ -243,6 +250,25 @@ assert(riskyPromptContext.riskKnowledgeBlock.includes('安全边界命中'), 'V1
 assert(riskyPromptContext.retrievalSummary.guardrailHitCount > 0, 'V1.5 risky context should count guardrail hits');
 assert(!riskyPromptContext.riskKnowledgeBlock.includes('/Users/'), 'V1.5 risk grounding must not expose local paths');
 
+const fourIssueContext = buildReportKnowledgePromptContext({
+  ageBand: '高中16-18岁',
+  userIdentity: 'parent',
+  reportSubject: 'child',
+  selectedIssues: [
+    '文理/选科，天赋更偏哪边',
+    '偏科/学习方法怎么调',
+    '升学决策：冲名校还是选适合专业',
+    '他和父母的三观差怎么相处',
+  ],
+  personalityType: '认知型',
+  learningChannel: '视觉',
+  behaviorPattern: '思考后行动',
+  trc: '个人均值26.4 总TRC264',
+  atd: '适中',
+});
+assert(fourIssueContext.issueKnowledgeContexts['偏科/学习方法怎么调'].knowledgeBlock.includes('学习类不必硬凑三段'), '偏科问题没有命中学习方法差异化知识卡');
+assert(fourIssueContext.issueKnowledgeContexts['他和父母的三观差怎么相处'].knowledgeBlock.includes('亲子三观差'), '亲子三观问题没有命中对应场景知识卡');
+
 console.log(JSON.stringify({
   ok: true,
   totalEntries: index.entries.length,
@@ -250,4 +276,5 @@ console.log(JSON.stringify({
   dryRunStages: juniorDryRun.summary.stageCount,
   dryRunUniqueHits: juniorDryRun.uniqueHitIds.length,
   promptContextHits: promptContext.retrievalSummary.uniqueHitIds.length,
+  issueKnowledgeContexts: Object.keys(promptContext.issueKnowledgeContexts).length,
 }, null, 2));
