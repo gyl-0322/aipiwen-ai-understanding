@@ -1171,15 +1171,42 @@ qs('#s2-confirm-btn').addEventListener('click', () => {
 });
 
 /// ─── SCREEN 3: ISSUES ────────────────────────────────────────────────────
-// 必给模块：来源 00i 规则1（按人生阶段定制，模块2随阶段换主题）
+// 必给模块与 /api/generate-report.js 的固定骨架保持一致。
+// 选择页把五大功能合并为一行展示，生成时仍保留五个独立模块。
+const CORE_REQUIRED_MODULES = [
+  '严正申明四原则',
+  'TRC（认知结构）',
+  'ATD（感受/反应节奏）',
+  '左右脑（信息处理风格）',
+  '性格类型（核心行为外显模块）',
+  '学习通道（学习输入系统）',
+  '行为模式（行为解释系统）',
+  '精神功能（拇指系统）',
+  '思维功能（食指系统）',
+  '体觉功能（中指系统）',
+  '听觉功能（无名指系统）',
+  '视觉功能（小指系统）',
+];
+
+const REQUIRED_MODULES_DISPLAY = [
+  '严正申明四原则',
+  'TRC（认知结构）',
+  'ATD（感受/反应节奏）',
+  '左右脑（信息处理风格）',
+  '性格类型（核心行为外显）',
+  '学习通道（学习输入系统）',
+  '行为模式（行为解释系统）',
+  '五大功能（能力结构地图）',
+];
+
 const REQUIRED_BY_STAGE = {
-  preschool:    ['天赋底色','兴趣启蒙与潜能','性格养育引导'],
-  school:       ['天赋底色','学科潜能与兴趣特长','成长引导'],
-  junior_teen:  ['天赋底色','选科与升学/专业方向','成长引导'],
-  senior_teen:  ['天赋底色','选科与升学/专业方向','成长引导'],
-  young_adult:  ['天赋底色','职业起步方向','自我成长'],
-  adult:        ['天赋底色','职业优势与发展','自我成长'],
-  mature_adult: ['天赋底色','职业价值与二次发展','自我成长'],
+  preschool:    CORE_REQUIRED_MODULES,
+  school:       CORE_REQUIRED_MODULES,
+  junior_teen:  CORE_REQUIRED_MODULES,
+  senior_teen:  CORE_REQUIRED_MODULES,
+  young_adult:  CORE_REQUIRED_MODULES,
+  adult:        CORE_REQUIRED_MODULES,
+  mature_adult: CORE_REQUIRED_MODULES,
 };
 
 function buildIssuesScreen() {
@@ -1190,7 +1217,7 @@ function buildIssuesScreen() {
   // must-list
   const mustList = qs('#must-list');
   mustList.innerHTML = '';
-  ST.requiredMods.forEach(m => {
+  REQUIRED_MODULES_DISPLAY.forEach(m => {
     const item = el('div', 'must-item', m);
     mustList.appendChild(item);
   });
@@ -1405,9 +1432,16 @@ function issueBody(body, titleTxt, issueTitle) {
   return cleaned || issueFallback(titleTxt, issueTitle);
 }
 
+function cleanRequiredModuleScaffold(text) {
+  return String(text || '')
+    .replace(/(^|\n)\s*[①1][\s.、-]*(是什么|这个板块是什么|指标是什么)[：:]\s*/g, '$1')
+    .replace(/(^|\n)\s*[②2][\s.、-]*(对当前用户意味着什么|对你意味着什么|意味着什么|放到你这里)[：:]\s*/g, '$1')
+    .replace(/(^|\n)\s*[③3][\s.、-]*(怎么应用|如何应用|可以怎么用)[：:]\s*/g, '$1');
+}
+
 // ── 正文内容格式化（加高亮块） ─────────────────────────────────────────
 function formatContent(text) {
-  text = cleanSourceTraces(text || '');
+  text = cleanRequiredModuleScaffold(cleanSourceTraces(text || ''));
   if (!text) return '';
   // 处理 **粗体** 和 *斜体*
   let html = text
@@ -1643,6 +1677,7 @@ function getPDFTheme(ageTier) {
 // 规则：**关键词** → 橙色高亮；*斜体* → 橙色；▸ 开头行 → 单独动作行；正文近白(.92)；行距 2.0
 function fmtPDF(text, th, bf) {
   if (!text) return '';
+  text = cleanRequiredModuleScaffold(cleanSourceTraces(text));
   // 先处理 ▸ 动作行（单独成行，橙色标记）
   const lines0 = text.split('\n');
   const processedLines = lines0.map(line => {
@@ -1690,10 +1725,33 @@ async function generateReportPDF(btnEl) {
   ST.displayReportId = reportId;
   const sections = RV.sections || [];
   const bf = `-apple-system,'PingFang SC','Noto Sans SC',sans-serif`; // body font
+  const PDF_PAGE_WIDTH_PX = 390;
+  const PDF_PAGE_HEIGHT_PX = Math.floor(PDF_PAGE_WIDTH_PX * 210 / 148);
+  const subjectName = String(ST.name || '').trim();
+  const reportOwnerText = subjectName ? `${subjectName}的皮纹测评专属报告` : '皮纹测评专属报告';
+  let siteQrDataUrl = '';
 
   const renderDiv = document.createElement('div');
-  Object.assign(renderDiv.style, { position:'fixed', left:'-9999px', top:'0', width:'390px', overflow:'visible', zIndex:'-999' });
+  Object.assign(renderDiv.style, { position:'fixed', left:'-9999px', top:'0', width:`${PDF_PAGE_WIDTH_PX}px`, overflow:'visible', zIndex:'-999' });
   document.body.appendChild(renderDiv);
+
+  async function makePDFQRCodeDataUrl(text) {
+    if (typeof QRCode === 'undefined') return '';
+    const box = document.createElement('div');
+    box.style.cssText = 'position:fixed;left:-9999px;top:0;width:96px;height:96px;background:#fff;';
+    document.body.appendChild(box);
+    try {
+      new QRCode(box, { text, width:96, height:96, colorDark:'#1A1714', colorLight:'#FFFFFF' });
+      await new Promise(resolve => setTimeout(resolve, 80));
+      const canvas = box.querySelector('canvas');
+      if (canvas) return canvas.toDataURL('image/png');
+      return box.querySelector('img')?.src || '';
+    } catch (_) {
+      return '';
+    } finally {
+      document.body.removeChild(box);
+    }
+  }
 
   // ── 共用页头/页尾 ─────────────────────────────────────────────────────────
   function pHdr(n) {
@@ -1702,16 +1760,16 @@ async function generateReportPDF(btnEl) {
         <div style="width:18px;height:1.5px;background:${th.acc};border-radius:1px;"></div>
         <div style="font-size:9px;letter-spacing:.24em;color:${th.acc};font-weight:700;text-transform:uppercase;font-family:${bf};">AIPIWEN</div>
       </div>
-      <div style="font-size:9.5px;color:${th.faint};font-family:${bf};">${n}</div>
+      <div data-pdf-page-number style="font-size:9.5px;color:${th.faint};font-family:${bf};">${n}</div>
     </div>`;
   }
   function pFtr() {
     return `<div style="padding:9px 24px 11px;border-top:1px solid ${th.border};text-align:center;">
-      <div style="font-size:8.5px;color:${th.faint};letter-spacing:.1em;font-family:${bf};">皮纹测评专属报告 · AIPIWEN.CN</div>
+      <div style="font-size:8.5px;color:${th.faint};letter-spacing:.1em;font-family:${bf};">${reportOwnerText} · AIPIWEN.CN</div>
     </div>`;
   }
   function wrap(inner) {
-    return `<div style="width:390px;background:${th.bg};font-family:${bf};color:${th.text};overflow:hidden;display:flex;flex-direction:column;">${inner}</div>`;
+    return `<div data-pdf-page-root style="width:${PDF_PAGE_WIDTH_PX}px;height:${PDF_PAGE_HEIGHT_PX}px;box-sizing:border-box;background:${th.bg};font-family:${bf};color:${th.text};overflow:hidden;display:flex;flex-direction:column;">${inner}</div>`;
   }
 
   // ── 封面（Slide 0）──────────────────────────────────────────────────────────
@@ -1722,7 +1780,7 @@ async function generateReportPDF(btnEl) {
     const traitStr = traits.join(' · ');
     const deco = cfg?.deco ? `<div style="font-size:22px;letter-spacing:8px;text-align:center;margin-bottom:10px;">${cfg.deco}</div>` : '';
     return wrap(`
-      <div style="flex:1;display:flex;flex-direction:column;align-items:center;padding:30px 28px 22px;">
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;position:relative;padding:30px 28px 22px;">
         ${deco}
         <div style="font-size:9px;letter-spacing:.24em;color:${th.acc};font-weight:700;text-transform:uppercase;margin-bottom:18px;align-self:flex-start;font-family:${bf};">AIPIWEN · 专属报告</div>
         <div style="border:1px solid ${th.border};border-radius:20px;padding:4px 16px;font-size:9.5px;letter-spacing:.15em;color:${th.acc};text-transform:uppercase;margin-bottom:20px;font-family:${bf};">${th.badge}</div>
@@ -1733,7 +1791,7 @@ async function generateReportPDF(btnEl) {
         </div>
         <div style="font-family:${th.serif};font-size:36px;font-weight:700;color:${th.text};text-align:center;margin-bottom:7px;line-height:1.2;">${type}</div>
         <div style="width:36px;height:2px;background:${th.acc};border-radius:1px;margin:0 auto 13px;"></div>
-        <div style="font-size:12.5px;color:${th.dim};text-align:center;margin-bottom:16px;line-height:1.7;">${ST.name?`<strong style="color:${th.text};">${ST.name}</strong> · `:''} ${ST.age}岁 · 专属皮纹报告</div>
+        <div style="font-size:12.5px;color:${th.dim};text-align:center;margin-bottom:16px;line-height:1.7;">${subjectName?`<strong style="color:${th.text};">${subjectName}</strong> · `:''}${ST.age||'—'}岁 · 专属皮纹报告</div>
         <div style="display:flex;flex-wrap:wrap;gap:7px;justify-content:center;margin-bottom:18px;">
           ${[E?.学习通道?.主通道,E?.行为模式?.结论,E?.ATD?.分区].filter(Boolean).map(t=>
             `<div style="border:1px solid ${th.border};border-radius:20px;padding:4px 12px;font-size:10.5px;color:${th.acc};background:${th.card};">${t}</div>`
@@ -1757,6 +1815,10 @@ async function generateReportPDF(btnEl) {
         <div style="font-size:9.5px;color:${th.faint};text-align:center;line-height:1.9;">
           报告编号 <span style="color:${th.acc};">${reportId}</span>&nbsp;·&nbsp;${new Date().toLocaleDateString('zh-CN')}
         </div>
+        ${siteQrDataUrl ? `<div style="position:absolute;right:22px;top:26px;text-align:center;">
+          <img src="${siteQrDataUrl}" style="width:54px;height:54px;border-radius:7px;background:#fff;padding:3px;display:block;margin:0 auto 5px;" alt="">
+          <div style="font-size:8.2px;color:${th.faint};line-height:1.35;">扫码进入<br>AIPIWEN.CN</div>
+        </div>` : ''}
       </div>
     `);
   }
@@ -1858,24 +1920,22 @@ async function generateReportPDF(btnEl) {
         .replace(/\*\*(.+?)\*\*/g, `<strong style="color:${th.acc};font-weight:700;">$1</strong>`)
         .replace(/▸\s*(.+)/g, `<div style="display:flex;align-items:flex-start;gap:7px;padding:4px 0;"><span style="color:${th.acc};font-weight:700;flex-shrink:0;">▸</span><span>$1</span></div>`)
         .replace(/\n/g, '<br>');
-      return `<div style="background:${th.card};border:1px solid ${th.border};border-radius:${th.r};padding:13px 15px;">
+      return `<div data-pdf-issue-card style="background:${th.card};border:1px solid ${th.border};border-radius:${th.r};padding:13px 15px;break-inside:avoid;">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:9px;">
           <div style="width:22px;height:22px;background:${th.acc};color:${th.bg};border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;">${num}</div>
-          <div style="font-size:10px;font-weight:700;color:${th.acc};letter-spacing:.1em;text-transform:uppercase;">${titleTxt}</div>
+          <div data-pdf-card-title style="font-size:10px;font-weight:700;color:${th.acc};letter-spacing:.1em;text-transform:uppercase;">${titleTxt}</div>
         </div>
-        <div style="font-size:13px;color:rgba(253,252,248,.92);line-height:2.0;">${bodyHtml}</div>
+        <div data-pdf-card-body style="font-size:13px;color:rgba(253,252,248,.92);line-height:2.0;">${bodyHtml}</div>
       </div>`;
     }
     const bodyHTML = isIssue
-      ? `<div style="display:flex;flex-direction:column;gap:9px;">
-          ${issueCard(1, '为什么会这样', sec.why)}
+      ? `${issueCard(1, '为什么会这样', sec.why)}
           ${issueCard(2, '怎么应对', sec.how)}
-          ${issueCard(3, '未来可期', sec.future)}
-        </div>`
+          ${issueCard(3, '未来可期', sec.future)}`
       : fmtPDF(sec.content || '', th, bf);
     return wrap(`
       ${pHdr(n)}
-      <div style="flex:1;padding:16px 24px 14px;display:flex;flex-direction:column;">
+      <div style="flex:1;min-height:0;padding:16px 24px 14px;display:flex;flex-direction:column;">
         <!-- eyebrow（对应 web .sec-eyebrow::before 装饰线） -->
         <div style="display:flex;align-items:center;gap:8px;font-size:9.5px;letter-spacing:.15em;color:${th.acc};text-transform:uppercase;font-weight:700;margin-bottom:11px;">
           <div style="width:18px;height:1.5px;background:${th.acc};border-radius:1px;flex-shrink:0;"></div>
@@ -1885,8 +1945,7 @@ async function generateReportPDF(btnEl) {
         <div style="font-family:${th.serif};font-size:21px;font-weight:700;color:${th.text};margin-bottom:10px;line-height:1.3;">${sec.title}</div>
         <!-- 分隔线 -->
         <div style="width:100%;height:1px;background:${th.border};margin-bottom:12px;"></div>
-        ${kwHTML}
-        <div style="flex:1;">${bodyHTML}</div>
+        <div data-pdf-flow style="flex:1;min-height:0;overflow:hidden;${isIssue ? 'display:flex;flex-direction:column;gap:9px;' : ''}">${kwHTML}${bodyHTML}</div>
       </div>
       ${pFtr()}
     `);
@@ -1934,6 +1993,7 @@ async function generateReportPDF(btnEl) {
     const { jsPDF } = window.jspdf;
     const PW = 148, PH = 210; // A5 mm
     const pdf = new jsPDF({ unit:'mm', format:[PW,PH] });
+    siteQrDataUrl = await makePDFQRCodeDataUrl('https://aipiwen.cn');
 
     // 组装各页 HTML（有 engineResult 才出数据页）
     const pages = [buildCover()];
@@ -1950,55 +2010,142 @@ async function generateReportPDF(btnEl) {
       hasPdfPage = true;
     };
 
-    function addCanvasToPdfPages(canvas) {
-      const pagePxH = Math.floor(canvas.width * PH / PW);
-      if (canvas.height <= pagePxH) {
-        addPdfPage();
-        const imgH_mm = (canvas.height / canvas.width) * PW;
-        const yOff = Math.max(0, (PH - imgH_mm) / 2);
-        pdf.addImage(canvas.toDataURL('image/jpeg',0.92),'JPEG', 0,yOff, PW, imgH_mm);
-        return;
-      }
-
-      let y = 0;
-      const continuationTopPad = Math.round(canvas.width * 10 / PW);
-      while (y < canvas.height) {
-        const topPad = y === 0 ? 0 : continuationTopPad;
-        const sliceH = Math.min(pagePxH - topPad, canvas.height - y);
-        const slice = document.createElement('canvas');
-        slice.width = canvas.width;
-        slice.height = topPad + sliceH;
-        const ctx = slice.getContext('2d');
-        ctx.fillStyle = th.bg;
-        ctx.fillRect(0, 0, slice.width, slice.height);
-        ctx.drawImage(canvas, 0, y, canvas.width, sliceH, 0, topPad, canvas.width, sliceH);
-
-        addPdfPage();
-        const imgH_mm = (sliceH / canvas.width) * PW;
-        pdf.addImage(slice.toDataURL('image/jpeg',0.92),'JPEG', 0,0, PW, imgH_mm);
-        y += sliceH;
-      }
+    function waitForPdfAssets(container) {
+      const images = [...container.querySelectorAll('img')];
+      const imageReady = images.map(img => {
+        if (img.complete) return img.decode ? img.decode().catch(() => {}) : Promise.resolve();
+        return new Promise(resolve => { img.onload = resolve; img.onerror = resolve; });
+      });
+      const fontReady = document.fonts?.ready || Promise.resolve();
+      return Promise.all([fontReady, ...imageReady]);
     }
 
-    for (let i = 0; i < pages.length; i++) {
-      renderDiv.innerHTML = pages[i];
-      // 等待图片加载完再截图
-      await Promise.all([...renderDiv.querySelectorAll('img')].map(img =>
-        img.complete ? Promise.resolve()
-                     : new Promise(r => { img.onload=r; img.onerror=r; })
-      ));
-      await new Promise(r => setTimeout(r, 80));
-      const canvas = await html2canvas(renderDiv, {
-        backgroundColor: th.bg, scale:2, useCORS:true, logging:false, width:390
+    function splitPdfText(text, maxLength) {
+      const units = text.match(/[^。！？；.!?;]+[。！？；.!?;]?/g) || [text];
+      const chunks = [];
+      let current = '';
+      units.forEach(unit => {
+        let rest = unit.trim();
+        while (rest.length > maxLength) {
+          if (current) { chunks.push(current); current = ''; }
+          chunks.push(rest.slice(0, maxLength));
+          rest = rest.slice(maxLength);
+        }
+        if (!rest) return;
+        if (current && current.length + rest.length > maxLength) {
+          chunks.push(current);
+          current = rest;
+        } else {
+          current += rest;
+        }
       });
-      addCanvasToPdfPages(canvas);
+      if (current) chunks.push(current);
+      return chunks;
+    }
+
+    function splitOversizePdfBlock(block) {
+      const cardBody = block.querySelector('[data-pdf-card-body]');
+      const source = cardBody || block;
+      const text = (source.textContent || '').trim();
+      const chunks = splitPdfText(text, cardBody ? 170 : 190);
+      if (chunks.length < 2) return [block];
+      return chunks.map((chunk, index) => {
+        const clone = block.cloneNode(true);
+        const target = clone.querySelector('[data-pdf-card-body]') || clone;
+        target.textContent = chunk;
+        if (index > 0) {
+          const title = clone.querySelector('[data-pdf-card-title]');
+          if (title) title.textContent = `${title.textContent}（续）`;
+        }
+        return clone;
+      });
+    }
+
+    function paginatePdfDomPage(pageHtml) {
+      renderDiv.innerHTML = pageHtml;
+      const template = renderDiv.querySelector('[data-pdf-page-root]');
+      const sourceFlow = template?.querySelector('[data-pdf-flow]');
+      if (!template || !sourceFlow) return [template?.outerHTML || pageHtml];
+
+      const queue = [...sourceFlow.children].map(node => node.cloneNode(true));
+      const output = [];
+      const newPage = () => {
+        const page = template.cloneNode(true);
+        page.querySelector('[data-pdf-flow]').innerHTML = '';
+        renderDiv.replaceChildren(page);
+        return page;
+      };
+      const overflows = page => {
+        const flow = page.querySelector('[data-pdf-flow]');
+        return flow.scrollHeight > flow.clientHeight + 1;
+      };
+
+      let page = newPage();
+      let flow = page.querySelector('[data-pdf-flow]');
+      while (queue.length) {
+        const block = queue.shift();
+        flow.appendChild(block);
+        if (!overflows(page)) continue;
+
+        flow.removeChild(block);
+        if (flow.children.length) {
+          output.push(page.outerHTML);
+          page = newPage();
+          flow = page.querySelector('[data-pdf-flow]');
+          queue.unshift(block);
+          continue;
+        }
+
+        const pieces = splitOversizePdfBlock(block);
+        if (pieces.length > 1) {
+          queue.unshift(...pieces);
+          continue;
+        }
+        block.style.fontSize = '12px';
+        block.style.lineHeight = '1.75';
+        flow.appendChild(block);
+        if (overflows(page)) throw new Error('报告中存在无法安全分页的超长内容块');
+      }
+      if (flow.children.length || !output.length) output.push(page.outerHTML);
+      return output;
+    }
+
+    await (document.fonts?.ready || Promise.resolve());
+    const physicalPages = pages.flatMap(paginatePdfDomPage);
+    const bg = th.bg.match(/[a-f\d]{2}/gi).map(value => parseInt(value, 16));
+
+    for (let i = 0; i < physicalPages.length; i++) {
+      renderDiv.innerHTML = physicalPages[i];
+      const pageRoot = renderDiv.querySelector('[data-pdf-page-root]');
+      if (!pageRoot) throw new Error('PDF 页面结构缺失');
+      const pageNumber = pageRoot.querySelector('[data-pdf-page-number]');
+      if (pageNumber) pageNumber.textContent = String(i + 1).padStart(2, '0');
+      await waitForPdfAssets(pageRoot);
+      await new Promise(resolve => setTimeout(resolve, 80));
+      const canvas = await html2canvas(pageRoot, {
+        backgroundColor: th.bg,
+        scale:2,
+        useCORS:true,
+        logging:false,
+        width:PDF_PAGE_WIDTH_PX,
+        height:PDF_PAGE_HEIGHT_PX,
+        windowWidth:PDF_PAGE_WIDTH_PX,
+        windowHeight:PDF_PAGE_HEIGHT_PX,
+        scrollX:0,
+        scrollY:0
+      });
+      addPdfPage();
+      pdf.setFillColor(bg[0], bg[1], bg[2]);
+      pdf.rect(0, 0, PW, PH, 'F');
+      const imgH_mm = Math.min(PH, (canvas.height / canvas.width) * PW);
+      pdf.addImage(canvas.toDataURL('image/jpeg',0.92), 'JPEG', 0,0, PW,imgH_mm, `aipiwen-page-${i + 1}`);
     }
 
     // 手机浏览器 blob URL 会导致页面跳转，用 <a download> 触发
     const _blob = pdf.output('blob');
     const _url  = URL.createObjectURL(_blob);
     const _a    = document.createElement('a');
-    _a.href = _url; _a.download = 'aipiwen-皮纹报告.pdf';
+    _a.href = _url; _a.download = `aipiwen-${subjectName || '皮纹'}-皮纹报告.pdf`;
     _a.style.cssText = 'position:fixed;left:-9999px;top:0;visibility:hidden;';
     document.body.appendChild(_a); _a.click();
     setTimeout(() => { document.body.removeChild(_a); URL.revokeObjectURL(_url); }, 5000);

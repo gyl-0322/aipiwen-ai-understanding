@@ -1075,6 +1075,56 @@ function issueFallback(issueTitle, tier = 'adult') {
   };
 }
 
+const FUNCTION_MODULE_FINGER_REQUIREMENTS = {
+  '精神功能（拇指系统）': ['右拇', '左拇'],
+  '思维功能（食指系统）': ['右食', '左食'],
+  '体觉功能（中指系统）': ['右中', '左中'],
+  '听觉功能（无名指系统）': ['右无名', '左无名'],
+  '视觉功能（小指系统）': ['右小', '左小'],
+};
+
+function isRequiredModuleComplete(title, content) {
+  const text = stripRequiredModuleScaffold(content).replace(/\s+/g, ' ').trim();
+  const compactLength = text.replace(/[\s*_#>-]/g, '').length;
+  const minimumLength = title === '性格类型（核心行为外显模块）' ? 300
+    : title === '严正申明四原则' ? 260
+      : FUNCTION_MODULE_FINGER_REQUIREMENTS[title] ? 260
+        : 220;
+
+  if (compactLength < minimumLength) return false;
+
+  if (title === '严正申明四原则') {
+    return ['数值', '预测', '均值', '标签'].filter(term => text.includes(term)).length >= 3;
+  }
+  if (title === 'TRC（认知结构）') {
+    return text.includes('TRC') && /个人均值|总TRC/.test(text);
+  }
+  if (title === 'ATD（感受/反应节奏）') {
+    return text.includes('ATD') && /节奏|反应|启动/.test(text);
+  }
+  if (title === '左右脑（信息处理风格）') {
+    return text.includes('左脑') && text.includes('右脑') && /信息|逻辑|画面|感受|决策/.test(text);
+  }
+
+  const fingerNames = FUNCTION_MODULE_FINGER_REQUIREMENTS[title];
+  if (!fingerNames) return true;
+
+  const [rightName, leftName] = fingerNames;
+  const invalidPairAverage = /(?:两根|两指|左右).{0,20}(?:相加|合计|总和).{0,40}(?:高于|低于|接近).{0,8}个人均值|(?:功能|合计)\s*(?:为|是|数值为)?\s*\d+(?:\.\d+)?.{0,30}(?:高于|低于|接近).{0,8}个人均值/;
+  if (invalidPairAverage.test(text)) return false;
+
+  const averageState = '(?:明显|略)?(?:高于|低于|接近)个人均值';
+  const rightCompared = new RegExp(`${rightName}.{0,160}${averageState}`).test(text);
+  const leftCompared = new RegExp(`${leftName}.{0,160}${averageState}`).test(text);
+  const pairCompared = /(?:右侧|左侧|左右|两侧).{0,100}(?:更高|偏高|高于|低于|差值|接近|先被调动|更容易)/.test(text);
+
+  return text.includes(rightName)
+    && text.includes(leftName)
+    && rightCompared
+    && leftCompared
+    && pairCompared;
+}
+
 function normalizeSections(sections, requiredModules, selectedIssues, engineResult, tier = 'adult', fingers = null) {
   const byTitle = new Map();
   for (const sec of sections) {
@@ -1085,10 +1135,13 @@ function normalizeSections(sections, requiredModules, selectedIssues, engineResu
   const normalized = requiredModules.map(title => {
     const sec = byTitle.get(title);
     const content = (sec?.content || '').trim();
+    const completeContent = isRequiredModuleComplete(title, content)
+      ? stripRequiredModuleScaffold(content)
+      : coreModuleFallback(title, engineResult, tier, fingers);
     return {
       title,
       type: title === '性格类型（核心行为外显模块）' ? 'foundation' : 'required',
-      content: content || coreModuleFallback(title, engineResult, tier, fingers),
+      content: completeContent,
     };
   });
 
