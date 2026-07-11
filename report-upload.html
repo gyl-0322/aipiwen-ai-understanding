@@ -235,11 +235,11 @@ html,body{height:100%;overflow:hidden;background:#060810;
 .dv-brain-fill-l{height:100%;border-radius:6px 0 0 6px;background:var(--th-p);transition:width .8s ease;}
 .dv-brain-fill-r{height:100%;border-radius:0 6px 6px 0;float:right;background:var(--th-p2);transition:width .8s ease;}
 .dv-func-list{display:flex;flex-direction:column;gap:18px;flex:1;margin-bottom:24px;}
-.dv-func-row{display:grid;grid-template-columns:62px 1fr 42px;align-items:center;gap:12px;}
+.dv-func-row{display:grid;grid-template-columns:62px 1fr 78px;align-items:center;gap:12px;}
 .dv-func-name{font-size:13px;color:var(--th-dim);}
 .dv-func-bar-wrap{height:12px;background:rgba(255,255,255,.07);border-radius:6px;overflow:hidden;}
 .dv-func-bar{height:100%;border-radius:6px;background:var(--th-p);transition:width .9s ease;}
-.dv-func-val{font-size:15px;color:var(--th-p);font-weight:700;text-align:right;}
+.dv-func-val{font-size:13px;color:var(--th-p);font-weight:700;text-align:right;white-space:nowrap;}
 .dv-badges{display:flex;flex-wrap:wrap;gap:10px;}
 .dv-badge{display:flex;flex-direction:column;gap:6px;background:var(--th-card);
   border:1px solid var(--th-border);border-radius:var(--th-radius);
@@ -1363,56 +1363,75 @@ function getThemeConfig(ageTier) {
 }
 
 // ── 五功能区 → SVG 条形图 HTML ─────────────────────────────────────────
+const FIVE_FUNCTION_ROWS = [
+  ['精神功能', '精神'],
+  ['思维功能', '思维'],
+  ['体觉功能', '体觉'],
+  ['听觉功能', '听觉'],
+  ['视觉功能', '视觉'],
+];
+
+function getFiveFunctionDistribution(functionAreas) {
+  const chartScaleMax = 50;
+  const values = FIVE_FUNCTION_ROWS.map(([name, key]) => ({
+    name,
+    key,
+    value: Math.max(0, Number(functionAreas?.[key]) || 0),
+  }));
+  const total = values.reduce((sum, item) => sum + item.value, 0);
+  return {
+    total,
+    rows: values.map(item => ({
+      ...item,
+      share: total > 0 ? (item.value / total) * 100 : 0,
+      barWidth: total > 0 ? Math.min((item.value / total) * 100 / chartScaleMax * 100, 100) : 0,
+    })),
+  };
+}
+
 function buildDataVizSlide(E) {
   if (!E) return null;
   const func5 = E.五功能区 || {};
-  const maxTRC = Math.max(func5.精神||0, func5.思维||0, func5.体觉||0, func5.听觉||0, func5.视觉||0, 1);
-  const avgTRC = func5.个人均值 || 0;
-  const funcRows = [
-    { name:'精神功能', key:'精神', color:'var(--th-p)' },
-    { name:'思维功能', key:'思维', color:'var(--th-p2)' },
-    { name:'体觉功能', key:'体觉', color:'var(--th-p)' },
-    { name:'听觉功能', key:'听觉', color:'var(--th-p2)' },
-    { name:'视觉功能', key:'视觉', color:'var(--th-p)' },
-  ];
+  const distribution = getFiveFunctionDistribution(func5);
   const brainL = E.左右脑?.左脑占比 || 50;
   const brainR = (100 - brainL).toFixed(1);
   const brainConclusion = E.左右脑?.结论 || '';
   const chanPct = E.学习通道?.占比 || {};
+  const brainLeftColor = '#55C7F3';
+  const brainRightColor = '#FF8A4C';
 
   return `
     <div class="dv-wrap">
       <div class="dv-title">数据总览 · DATA OVERVIEW</div>
       <div class="dv-brain">
-        <div class="dv-brain-label" style="text-align:right">左脑<br><b style="color:var(--th-p)">${brainL}%</b></div>
+        <div class="dv-brain-label" style="text-align:right">左脑<br><b style="color:${brainLeftColor}">${brainL}%</b></div>
         <div style="flex:1">
           <div style="position:relative;height:12px;background:rgba(255,255,255,.08);border-radius:6px;overflow:hidden;">
-            <div style="position:absolute;left:0;top:0;height:100%;width:${brainL}%;background:var(--th-p);border-radius:6px 0 0 6px;"></div>
-            <div style="position:absolute;right:0;top:0;height:100%;width:${brainR}%;background:var(--th-p2);opacity:.7;border-radius:0 6px 6px 0;"></div>
+            <div style="position:absolute;left:0;top:0;height:100%;width:${brainL}%;background:${brainLeftColor};border-radius:6px 0 0 6px;"></div>
+            <div style="position:absolute;right:0;top:0;height:100%;width:${brainR}%;background:${brainRightColor};opacity:.72;border-radius:0 6px 6px 0;"></div>
           </div>
           <div style="text-align:center;font-size:12px;color:var(--th-dim);margin-top:7px;">${brainConclusion}</div>
         </div>
-        <div class="dv-brain-label">右脑<br><b style="color:var(--th-p2)">${brainR}%</b></div>
+        <div class="dv-brain-label">右脑<br><b style="color:${brainRightColor}">${brainR}%</b></div>
       </div>
       <div class="dv-func-list">
-        ${funcRows.map(f => {
-          const val = func5[f.key] || 0;
-          const pct = Math.round(val / maxTRC * 100);
-          const isAbove = val >= avgTRC;
+        ${distribution.rows.map(f => {
+          const pctLabel = f.share.toFixed(1);
           return `<div class="dv-func-row">
             <div class="dv-func-name">${f.name}</div>
             <div class="dv-func-bar-wrap">
-              <div class="dv-func-bar" style="width:${pct}%;background:${isAbove ? 'var(--th-p)' : 'var(--th-p2)'};opacity:${isAbove ? 1 : 0.55};"></div>
+              <div class="dv-func-bar" style="width:${f.barWidth}%;background:var(--th-p);"></div>
             </div>
-            <div class="dv-func-val">${val}</div>
+            <div class="dv-func-val">${f.value} · ${pctLabel}%</div>
           </div>`;
         }).join('')}
+        <div style="font-size:10px;color:var(--th-faint);line-height:1.6;">百分比为真实份额，进度条以50%份额为满格。</div>
       </div>
       <div class="dv-badges">
         <div class="dv-badge"><div class="dv-badge-label">学习通道</div><div class="dv-badge-val">${E.学习通道?.主通道 || '—'}</div></div>
         <div class="dv-badge"><div class="dv-badge-label">行为模式</div><div class="dv-badge-val">${E.行为模式?.结论 || '—'}</div></div>
         <div class="dv-badge"><div class="dv-badge-label">ATD 角度</div><div class="dv-badge-val">${E.ATD?.分区 || '—'}${ST.atd ? ' · ' + ST.atd + '°' : ''}</div></div>
-        <div class="dv-badge"><div class="dv-badge-label">个人均值</div><div class="dv-badge-val">${avgTRC} TRC</div></div>
+        <div class="dv-badge"><div class="dv-badge-label">十指总数</div><div class="dv-badge-val">${distribution.total} TRC</div></div>
       </div>
     </div>`;
 }
@@ -1867,17 +1886,16 @@ async function generateReportPDF(btnEl) {
   }
 
   // ── 数据总览（Slide 1）────────────────────────────────────────────────────
-  // 条形图规则：全橙色填充；强势区(≥均值)=th.acc 满透明度；发展区(<均值)=th.acc 28%透明度
-  // 均值线：白色竖线标在均值位置；图例在底部
+  // 条形图规则：每项宽度表示该功能合计占十指 TRC 总数的份额。
   function buildData() {
     if (!E) return null;
     const f5  = E.五功能区 || {};
-    const mx  = Math.max(f5.精神||0, f5.思维||0, f5.体觉||0, f5.听觉||0, f5.视觉||0, 1);
+    const distribution = getFiveFunctionDistribution(f5);
     const avg = f5.个人均值 || 0;
-    const avgPct = Math.round(avg / mx * 100);
     const bL  = E.左右脑?.左脑占比 || 50;
     const bR  = (100 - bL).toFixed(1);
-    const rows = [['精神功能','精神'],['思维功能','思维'],['体觉功能','体觉'],['听觉功能','听觉'],['视觉功能','视觉']];
+    const brainLeftColor = '#55C7F3';
+    const brainRightColor = '#FF8A4C';
     return wrap(`
       ${pHdr('02')}
       <div style="flex:1;padding:18px 24px 14px;display:flex;flex-direction:column;gap:13px;">
@@ -1886,49 +1904,35 @@ async function generateReportPDF(btnEl) {
         <!-- 左右脑 -->
         <div style="background:${th.card};border:1px solid ${th.border};border-radius:${th.r};padding:13px 16px;">
           <div style="display:flex;align-items:center;gap:12px;">
-            <div style="font-size:11px;color:rgba(253,252,248,.9);width:44px;text-align:right;flex-shrink:0;line-height:1.7;">左脑<br><strong style="color:${th.acc};font-size:16px;">${bL}%</strong></div>
+            <div style="font-size:11px;color:rgba(253,252,248,.9);width:44px;text-align:right;flex-shrink:0;line-height:1.7;">左脑<br><strong style="color:${brainLeftColor};font-size:16px;">${bL}%</strong></div>
             <div style="flex:1;">
               <div style="height:12px;background:rgba(255,255,255,.08);border-radius:6px;overflow:hidden;display:flex;">
-                <div style="width:${bL}%;background:${th.acc};height:100%;border-radius:6px 0 0 6px;"></div>
-                <div style="width:${bR}%;background:${th.acc};height:100%;opacity:.28;border-radius:0 6px 6px 0;"></div>
+                <div style="width:${bL}%;background:${brainLeftColor};height:100%;border-radius:6px 0 0 6px;"></div>
+                <div style="width:${bR}%;background:${brainRightColor};height:100%;opacity:.72;border-radius:0 6px 6px 0;"></div>
               </div>
               <div style="text-align:center;font-size:10px;color:${th.faint};margin-top:5px;">${E.左右脑?.结论||''}</div>
             </div>
-            <div style="font-size:11px;color:rgba(253,252,248,.9);width:44px;text-align:left;flex-shrink:0;line-height:1.7;">右脑<br><strong style="color:${th.acc};font-size:16px;opacity:.6;">${bR}%</strong></div>
+            <div style="font-size:11px;color:rgba(253,252,248,.9);width:44px;text-align:left;flex-shrink:0;line-height:1.7;">右脑<br><strong style="color:${brainRightColor};font-size:16px;">${bR}%</strong></div>
           </div>
         </div>
 
         <!-- 五功能区条形图 -->
         <div style="background:${th.card};border:1px solid ${th.border};border-radius:${th.r};padding:14px 16px;display:flex;flex-direction:column;gap:12px;">
-          <div style="font-size:9px;letter-spacing:.12em;color:${th.faint};text-transform:uppercase;">五功能区  均值 ${avg} TRC</div>
-          ${rows.map(([name, key]) => {
-            const v = f5[key] || 0;
-            const pct = Math.round(v / mx * 100);
-            const above = v >= avg;
-            return `<div style="display:grid;grid-template-columns:68px 1fr 32px;align-items:center;gap:10px;">
-              <div style="font-size:11.5px;color:rgba(253,252,248,.9);">${name}</div>
+          <div style="font-size:9px;letter-spacing:.12em;color:${th.faint};text-transform:uppercase;">五功能区 · 十指总数 ${distribution.total} TRC</div>
+          ${distribution.rows.map(item => {
+            const pctLabel = item.share.toFixed(1);
+            return `<div style="display:grid;grid-template-columns:68px 1fr 66px;align-items:center;gap:10px;">
+              <div style="font-size:11.5px;color:rgba(253,252,248,.9);">${item.name}</div>
               <div style="position:relative;height:14px;">
                 <div style="position:absolute;inset:0;background:rgba(255,255,255,.06);border-radius:7px;overflow:hidden;">
-                  <div style="width:${pct}%;height:100%;background:${th.acc};opacity:${above ? 1 : 0.28};border-radius:7px;"></div>
+                  <div style="width:${item.barWidth}%;height:100%;background:${th.acc};border-radius:7px;"></div>
                 </div>
-                <div style="position:absolute;left:${avgPct}%;top:-2px;bottom:-2px;width:2px;background:rgba(253,252,248,.32);border-radius:1px;"></div>
               </div>
-              <div style="font-size:13px;color:${above ? th.acc : 'rgba(253,252,248,.4)'};font-weight:700;text-align:right;">${v}</div>
+              <div style="font-size:11.5px;color:${th.acc};font-weight:700;text-align:right;white-space:nowrap;">${item.value} · ${pctLabel}%</div>
             </div>`;
           }).join('')}
           <!-- 图例 -->
-          <div style="display:flex;align-items:center;gap:14px;font-size:9.5px;color:${th.faint};margin-top:2px;flex-wrap:wrap;">
-            <div style="display:flex;align-items:center;gap:5px;">
-              <div style="width:2px;height:13px;background:rgba(253,252,248,.32);border-radius:1px;"></div>均值线 ${avg}
-            </div>
-            <div style="display:flex;align-items:center;gap:5px;">
-              <div style="width:16px;height:4px;background:${th.acc};border-radius:2px;"></div>
-              <span style="color:${th.acc};">强势区</span>
-            </div>
-            <div style="display:flex;align-items:center;gap:5px;">
-              <div style="width:16px;height:4px;background:${th.acc};opacity:.28;border-radius:2px;"></div>发展区
-            </div>
-          </div>
+          <div style="font-size:9.5px;color:${th.faint};margin-top:2px;line-height:1.6;">百分比表示该功能在十指总数中的真实份额；进度条以50%份额为满格。数值为对应两根手指的合计。</div>
         </div>
 
         <!-- 4 stat cards -->

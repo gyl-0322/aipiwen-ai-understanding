@@ -59,6 +59,11 @@ assertArray(extractArray(pageSource, 'REQUIRED_MODULES_DISPLAY'), expectedDispla
 assert(pageSource.includes('REQUIRED_MODULES_DISPLAY.forEach'), '选择页没有使用分组后的 8 项展示列表');
 assert(pageSource.includes('ST.requiredMods = REQUIRED_BY_STAGE'), '页面没有把完整固定模块提交给报告接口');
 assert(pageSource.includes('cleanRequiredModuleScaffold'), '页面没有清理机械三段式标题');
+assert(pageSource.includes('function getFiveFunctionDistribution(functionAreas)'), '数据总览缺少五大功能占十指总数的统一计算');
+assert(pageSource.includes('item.value / total'), '五大功能占比没有按功能合计除以十指总数计算');
+assert(pageSource.includes('十指总数'), '数据总览没有向用户说明十指总数口径');
+assert(pageSource.includes("const brainLeftColor = '#55C7F3'"), '左右脑没有使用高区分度的左脑颜色');
+assert(pageSource.includes("const brainRightColor = '#FF8A4C'"), '左右脑没有使用高区分度的右脑颜色');
 
 assert(apiSource.includes('FUNCTION_MODULE_FINGER_REQUIREMENTS'), 'API 缺少五大功能单指完整性要求');
 assert(apiSource.includes('isRequiredModuleComplete(title, content, fingers, engineResult)'), 'API 没有用原始十指数据检查固定模块完整性');
@@ -112,6 +117,17 @@ const engineResult = classify(engineFingers, { age:10, atd:34 });
 assert(engineResult.五功能区.精神 === 56, '精神功能合计必须等于右拇26 + 左拇30');
 assert(engineResult.五功能区.个人均值 === 26.4, '个人均值必须等于总TRC264 ÷ 10');
 assert(engineFingers.R1.trc === 26 && engineFingers.L1.trc === 30, '引擎不得用精神功能合计覆盖单指数据');
+
+const distributionStart = pageSource.indexOf('const FIVE_FUNCTION_ROWS');
+const distributionEnd = pageSource.indexOf('function buildDataVizSlide', distributionStart);
+assert(distributionStart >= 0 && distributionEnd > distributionStart, '无法提取五大功能占比计算器');
+const distributionSandbox = {};
+vm.runInNewContext(`${pageSource.slice(distributionStart, distributionEnd)}\nthis.getFiveFunctionDistribution = getFiveFunctionDistribution;`, distributionSandbox);
+const distribution = distributionSandbox.getFiveFunctionDistribution({ 精神:56, 思维:45, 体觉:35, 听觉:38, 视觉:27 });
+assert(distribution.total === 201, '十指总数必须等于五个功能合计之和');
+assert(distribution.rows[0].share.toFixed(1) === '27.9', '精神功能占比必须等于56÷201');
+assert(distribution.rows[0].barWidth.toFixed(1) === '55.7', '精神功能进度条必须按50%份额为满格缩放');
+assert(Math.abs(distribution.rows.reduce((sum, item) => sum + item.share, 0) - 100) < 0.0001, '五大功能占比合计必须为100%');
 
 const numericGuardStart = apiSource.indexOf('function validateReportNumericConsistency');
 const numericGuardEnd = apiSource.indexOf('// ── 主 Handler', numericGuardStart);
