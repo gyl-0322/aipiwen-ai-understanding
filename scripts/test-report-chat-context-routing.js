@@ -13,6 +13,7 @@ const root = path.resolve(__dirname, '..');
 const guestSource = fs.readFileSync(path.join(root, 'api/guest-chat.js'), 'utf8');
 const chatPageSource = fs.readFileSync(path.join(root, 'child-chat.html'), 'utf8');
 const reportPageSource = fs.readFileSync(path.join(root, 'report-upload.html'), 'utf8');
+const vm = require('vm');
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
@@ -36,6 +37,17 @@ assert(guestSource.includes('学习通道占比与五大功能区是两套不同
 assert(guestSource.includes('禁止拿两根手指合计值和个人单指均值比较'), '报告深聊没有执行单指比较规则');
 assert(guestSource.includes('当前正式五大功能映射'), '报告深聊没有注入当前五大功能映射');
 assert(guestSource.includes('不得把中指解释成监控管理'), '报告深聊没有禁用旧五区映射');
+assert(reportPageSource.includes('略高于') && reportPageSource.includes('略低于'), '报告摘要没有预计算单指高低方向');
+
+const validatorStart = guestSource.indexOf('const REPORT_FINGER_ALIASES');
+const validatorEnd = guestSource.indexOf('// ── 对话日志', validatorStart);
+assert(validatorStart >= 0 && validatorEnd > validatorStart, '无法提取报告深聊数值校验器');
+const validatorSandbox = {};
+vm.runInNewContext(`${guestSource.slice(validatorStart, validatorEnd)}\nthis.validateReportDeepChatNumericClaims = validateReportDeepChatNumericClaims;`, validatorSandbox);
+const reportContext = '个人单指均值：26.4\\n十指单值：右食28（略高于个人单指均值，差值+1.6） 左拇30（略高于个人单指均值，差值+3.6）';
+assert(!validatorSandbox.validateReportDeepChatNumericClaims('右食指高于个人均值，左拇高于个人均值。', reportContext).length, '正确单指方向被误拦截');
+assert(validatorSandbox.validateReportDeepChatNumericClaims('左拇低于个人均值。', reportContext).length === 1, '说反的单指方向没有被拦截');
+assert(validatorSandbox.validateReportDeepChatNumericClaims('中指对应监控管理。', reportContext).includes('使用了旧五区名称'), '旧五区名称没有被拦截');
 
 const plainHits = searchReportKnowledge('小学 写作业拖拉 家长 一催就炸', {
   topK: 3,

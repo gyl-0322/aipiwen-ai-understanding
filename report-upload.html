@@ -2334,10 +2334,19 @@ function openDeepChat() {
     R1:'右拇', L1:'左拇', R2:'右食', L2:'左食', R3:'右中', L3:'左中',
     R4:'右无名', L4:'左无名', R5:'右小', L5:'左小',
   };
+  const personalFingerAvg = Number(fn.个人均值);
   const fingerSummary = Object.entries(fingerLabels)
     .map(([position, label]) => {
       const value = Number(ST.fingers?.[position]?.trc);
-      return Number.isFinite(value) ? `${label}${value}` : '';
+      if (!Number.isFinite(value)) return '';
+      if (!Number.isFinite(personalFingerAvg)) return `${label}${value}`;
+      const diff = +(value - personalFingerAvg).toFixed(1);
+      const level = diff >= 5 ? '明显高于'
+        : diff >= 2 ? '略高于'
+          : diff <= -5 ? '明显低于'
+            : diff <= -2 ? '略低于'
+              : '接近';
+      return `${label}${value}（${level}个人单指均值，差值${diff >= 0 ? '+' : ''}${diff}）`;
     })
     .filter(Boolean)
     .join(' ');

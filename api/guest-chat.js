@@ -72,6 +72,44 @@ async function handleLogSession(req, res) {
 // TRC类型参考框架（仅生成一次，复用）
 const TRC_REFERENCE = buildTypeReferenceForPrompt();
 
+const REPORT_FINGER_ALIASES = {
+  右拇: ['右拇', '右拇指', 'R1'], 左拇: ['左拇', '左拇指', 'L1'],
+  右食: ['右食', '右食指', 'R2'], 左食: ['左食', '左食指', 'L2'],
+  右中: ['右中', '右中指', 'R3'], 左中: ['左中', '左中指', 'L3'],
+  右无名: ['右无名', '右无名指', 'R4'], 左无名: ['左无名', '左无名指', 'L4'],
+  右小: ['右小', '右小指', 'R5'], 左小: ['左小', '左小指', 'L5'],
+};
+
+function expectedFingerDirections(reportContextText) {
+  const directions = {};
+  for (const label of Object.keys(REPORT_FINGER_ALIASES)) {
+    const match = String(reportContextText || '').match(
+      new RegExp(`${label}\\d+(?:\\.\\d+)?（(明显高于|略高于|明显低于|略低于|接近)个人单指均值`)
+    );
+    if (!match) continue;
+    directions[label] = match[1].includes('高于') ? '高于'
+      : match[1].includes('低于') ? '低于'
+        : '接近';
+  }
+  return directions;
+}
+
+function validateReportDeepChatNumericClaims(reply, reportContextText) {
+  const text = String(reply || '');
+  const expected = expectedFingerDirections(reportContextText);
+  const errors = [];
+  for (const [label, direction] of Object.entries(expected)) {
+    const aliases = REPORT_FINGER_ALIASES[label].join('|');
+    const claim = text.match(new RegExp(`(?:${aliases})[^。；；\\n]{0,80}?(高于|低于|接近)(?:个人)?(?:单指)?均值`, 'i'));
+    if (claim && claim[1] !== direction) errors.push(`${label}应为${direction}个人单指均值，不是${claim[1]}`);
+  }
+  if (/沟通管理|空间心像|监控管理|记忆活化/.test(text)) errors.push('使用了旧五区名称');
+  if (/(?:精神|思维|体觉|听觉|视觉)(?:功能)?(?:合计)?\\s*(?:为|是|[:：])?\\s*\\d+(?:\\.\\d+)?[^。\\n]{0,40}(?:高于|低于).*个人(?:单指)?均值/.test(text)) {
+    errors.push('把功能区合计与个人单指均值进行了比较');
+  }
+  return errors;
+}
+
 // ── 对话日志：保存每次对话到 Redis，供管理员查看 ──────────────────────────────
 async function logConversation(sessionId, context, userMsg, aiReply, ip) {
   if (!sessionId) return;
@@ -886,6 +924,36 @@ ${NO_FILLER}`;
       model, ts: new Date().toISOString(),
     }, 86400).catch(() => {});
     return res.status(200).json({ ok: false, reply: `解读遇到了问题 [${code}]，请重试。` });
+  }
+
+  if (isReportContext && reply) {
+    const numericErrors = validateReportDeepChatNumericClaims(reply, reportContextText);
+    if (numericErrors.length) {
+      try {
+        const correctionMessages = [
+          ...messages,
+          { role: 'assistant', content: reply },
+          {
+            role: 'user',
+            content: `上一版没有通过报告数值校验：${numericErrors.join('；')}。请重新回答原问题。必须逐根使用摘要中已经给出的高于/低于/接近结论，不得自行改判，不得使用旧五区名称。`,
+          },
+        ];
+        const { text: corrected } = await callClaude({
+          model,
+          messages: correctionMessages,
+          maxTokens,
+          cache: false,
+          timeoutMs: 18000,
+        });
+        if (corrected && !validateReportDeepChatNumericClaims(corrected, reportContextText).length) {
+          reply = corrected;
+        } else {
+          reply = '这次追问涉及报告数值，但生成内容没有通过一致性校验。为了避免把高低方向讲反，我先不输出这段数值结论。请重新提交一次，我会按十指单值逐项核对后再回答。';
+        }
+      } catch (error) {
+        reply = '这次追问涉及报告数值，但生成内容没有通过一致性校验。为了避免把高低方向讲反，我先不输出这段数值结论。请重新提交一次，我会按十指单值逐项核对后再回答。';
+      }
+    }
   }
 
   // Task 2: 从 vision 回复中提取 AIPIWEN_DATA 摘要行（供前端缓存，后续追问直接用）
