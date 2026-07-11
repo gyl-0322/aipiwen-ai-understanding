@@ -1,7 +1,7 @@
 /**
  * api/generate-report.js — 专属皮纹报告 AI 生成接口 + 报告存储（merged report-store.js）
  *
- * POST /api/generate-report  { engineResult, age, name, selectedIssues }  → 生成报告
+ * POST /api/generate-report  { engineResult, fingers, age, name, selectedIssues }  → 生成报告
  * POST /api/report-store     { sections, engineResult, fingers?, name?, age? } → 保存报告（merged）
  * GET  /api/report-store?id=xxx                                           → 读取报告（merged）
  *
@@ -1083,7 +1083,15 @@ const FUNCTION_MODULE_FINGER_REQUIREMENTS = {
   '视觉功能（小指系统）': ['右小', '左小'],
 };
 
-function isRequiredModuleComplete(title, content) {
+const FUNCTION_MODULE_FINGER_POSITIONS = {
+  '精神功能（拇指系统）': ['R1', 'L1'],
+  '思维功能（食指系统）': ['R2', 'L2'],
+  '体觉功能（中指系统）': ['R3', 'L3'],
+  '听觉功能（无名指系统）': ['R4', 'L4'],
+  '视觉功能（小指系统）': ['R5', 'L5'],
+};
+
+function isRequiredModuleComplete(title, content, fingers = null, engineResult = null) {
   const text = stripRequiredModuleScaffold(content).replace(/\s+/g, ' ').trim();
   const compactLength = text.replace(/[\s*_#>-]/g, '').length;
   const minimumLength = title === '性格类型（核心行为外显模块）' ? 300
@@ -1110,8 +1118,30 @@ function isRequiredModuleComplete(title, content) {
   if (!fingerNames) return true;
 
   const [rightName, leftName] = fingerNames;
-  const invalidPairAverage = /(?:两根|两指|左右).{0,20}(?:相加|合计|总和).{0,40}(?:高于|低于|接近).{0,8}个人均值|(?:功能|合计)\s*(?:为|是|数值为)?\s*\d+(?:\.\d+)?.{0,30}(?:高于|低于|接近).{0,8}个人均值/;
+  const [rightPos, leftPos] = FUNCTION_MODULE_FINGER_POSITIONS[title];
+  const invalidPairAverage = /(?:两根|两指|左右).{0,20}(?:相加|总和).{0,20}(?:为|是|得到|得出)\s*\d+(?:\.\d+)?.{0,30}(?:高于|低于|接近).{0,8}个人均值|(?:功能|合计)\s*(?:为|是|数值为)?\s*\d+(?:\.\d+)?.{0,30}(?:高于|低于|接近).{0,8}个人均值/;
   if (invalidPairAverage.test(text)) return false;
+
+  const matchesExpectedValue = (fingerName, position) => {
+    const expected = Number(fingers?.[position]?.trc);
+    if (!Number.isFinite(expected)) return false;
+    const escapedName = fingerName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const valuePattern = new RegExp(
+      `${escapedName}(?:指)?\\s*(?:[（(]?${position}[)）]?)?[^。；;\\n]{0,80}?(?:数值(?:为|是)?|TRC(?:为|是|=)?|[=:：]|为)\\s*(\\d+(?:\\.\\d+)?)`,
+      'g'
+    );
+    return [...text.matchAll(valuePattern)]
+      .some(match => Math.abs(Number(match[1]) - expected) < 0.05);
+  };
+
+  const expectedAverage = Number(engineResult?.['五功能区']?.['个人均值']);
+  const averageValues = [...text.matchAll(/个人均值\s*(?:为|是|=|:|：)?\s*(\d+(?:\.\d+)?)/g)]
+    .map(match => Number(match[1]));
+  const averageMatches = Number.isFinite(expectedAverage)
+    && averageValues.some(value => Math.abs(value - expectedAverage) < 0.05);
+  if (!matchesExpectedValue(rightName, rightPos)
+      || !matchesExpectedValue(leftName, leftPos)
+      || !averageMatches) return false;
 
   const averageState = '(?:明显|略)?(?:高于|低于|接近)个人均值';
   const rightCompared = new RegExp(`${rightName}.{0,160}${averageState}`).test(text);
@@ -1135,7 +1165,7 @@ function normalizeSections(sections, requiredModules, selectedIssues, engineResu
   const normalized = requiredModules.map(title => {
     const sec = byTitle.get(title);
     const content = (sec?.content || '').trim();
-    const completeContent = isRequiredModuleComplete(title, content)
+    const completeContent = isRequiredModuleComplete(title, content, fingers, engineResult)
       ? stripRequiredModuleScaffold(content)
       : coreModuleFallback(title, engineResult, tier, fingers);
     return {
@@ -1331,6 +1361,47 @@ async function handleReportStore(req, res) {
   return res.status(405).json({ ok: false, error: 'Method not allowed' });
 }
 
+function validateReportNumericConsistency(fingers, engineResult) {
+  const labels = {
+    R1:'右拇', L1:'左拇', R2:'右食', L2:'左食', R3:'右中', L3:'左中',
+    R4:'右无名', L4:'左无名', R5:'右小', L5:'左小',
+  };
+  const positions = Object.keys(labels);
+  if (!fingers || typeof fingers !== 'object') return '缺少十指 TRC 数据';
+
+  for (const position of positions) {
+    const value = Number(fingers?.[position]?.trc);
+    if (!Number.isFinite(value) || value < 0 || value > 40) {
+      return `${labels[position]}单指 TRC 超出 0-40 范围`;
+    }
+  }
+
+  const functionAreas = {
+    精神:['R1', 'L1'], 思维:['R2', 'L2'], 体觉:['R3', 'L3'],
+    听觉:['R4', 'L4'], 视觉:['R5', 'L5'],
+  };
+  const totals = {};
+  for (const [area, [rightPos, leftPos]] of Object.entries(functionAreas)) {
+    totals[area] = Number(fingers[rightPos].trc) + Number(fingers[leftPos].trc);
+    const engineTotal = Number(engineResult?.['五功能区']?.[area]);
+    if (!Number.isFinite(engineTotal) || Math.abs(engineTotal - totals[area]) > 0.05) {
+      return `${area}功能合计与两根手指原始数值不一致`;
+    }
+  }
+
+  const totalTRC = Object.values(totals).reduce((sum, value) => sum + value, 0);
+  const average = +(totalTRC / 10).toFixed(1);
+  const engineTotalTRC = Number(engineResult?.['五功能区']?.['总TRC']);
+  const engineAverage = Number(engineResult?.['五功能区']?.['个人均值']);
+  if (!Number.isFinite(engineTotalTRC)
+      || !Number.isFinite(engineAverage)
+      || Math.abs(engineTotalTRC - totalTRC) > 0.05
+      || Math.abs(engineAverage - average) > 0.05) {
+    return '总 TRC 或个人均值与十指原始数值不一致';
+  }
+  return null;
+}
+
 // ── 主 Handler ───────────────────────────────────────────────────────────
 module.exports = async function handler(req, res) {
   // 路由分发：/api/report-store → handleReportStore
@@ -1367,6 +1438,8 @@ module.exports = async function handler(req, res) {
 
   const { engineResult, age, name, selectedIssues = [], refToken = null, fingers = null } = payload;
   if (!engineResult) return res.status(400).json({ ok:false, error:'缺少 engineResult' });
+  const numericError = validateReportNumericConsistency(fingers, engineResult);
+  if (numericError) return res.status(400).json({ ok:false, error:`报告数值校验失败：${numericError}` });
 
   // 邀请积分（异步，不阻塞主流程）
   if (refToken) creditReferral(ip, refToken, 'report').catch(() => {});

@@ -1141,15 +1141,24 @@ qs('#s2-back').addEventListener('click', () => goScreen('s1'));
 qs('#s2-confirm-btn').addEventListener('click', () => {
   // read form
   const fingers = {};
-  let valid = true;
+  const invalidFingerValues = [];
   FINGER_KEYS.forEach(key => {
     const sym = qs('#sym-' + key)?.value || 'Lu';
-    const trc = parseInt(qs('#trc-' + key)?.value) || 0;
+    const rawValue = Number(qs('#trc-' + key)?.value);
+    const trc = Number.isFinite(rawValue) ? Math.round(rawValue) : NaN;
+    if (!Number.isFinite(trc) || trc < 0 || trc > 40) {
+      invalidFingerValues.push(FINGER_LABELS[key]);
+    }
     fingers[key] = { sym, trc };
   });
   const age  = parseInt(qs('#conf-age').value) || null;
   const atd  = parseFloat(qs('#conf-atd').value) || null;
   const name = qs('#conf-name').value.trim() || null;
+
+  if (invalidFingerValues.length) {
+    alert(`${invalidFingerValues.join('、')}的单指 TRC 不在 0-40 范围内，请对照原报告核对后再生成。`);
+    return;
+  }
 
   if (!age) {
     alert('请填写年龄，用于匹配解读模块');
