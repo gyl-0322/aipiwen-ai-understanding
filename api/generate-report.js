@@ -982,7 +982,8 @@ function classifyIssueType(issueTitle) {
   if (has('升学', '名校', '志愿', '专业', '保证成功')) return 'education_decision';
   if (has('伴侣', '婚姻', '分手', '在一起', '关系去留')) return 'relationship_decision';
   if (has('父母', '三观', '亲子', '顶嘴', '叛逆', '沟通', '相处')) return 'parent_child_communication';
-  if (has('文理', '选科', '偏科', '学习方法', '阅读', '记忆', '学习方式', '科目')) return 'learning_method';
+  if (has('文理', '选科', '天赋更偏')) return 'learning_direction';
+  if (has('偏科', '学习方法', '阅读', '记忆', '学习方式', '科目')) return 'learning_method';
   if (has('主动', '内驱', '拖拉', '磨蹭', '作业', '不想学', '手机', '游戏', '不启动')) return 'homework_dragging';
   if (has('焦虑', '情绪', '生气', '输不起', '压力', '崩溃', '害怕', '哭')) return 'emotion_regulation';
   if (has('朋友', '人际', '同学', '老师', '课堂', '社交')) return 'social_relationship';
@@ -993,6 +994,7 @@ function classifyIssueType(issueTitle) {
 function issuePromptGuide(issueTitle) {
   const type = classifyIssueType(issueTitle);
   const guides = {
+    learning_direction: '①学习入口：（结合学习通道、左右脑或功能区，说明哪些信息入口更顺）\n②现实验证：（对照不同科目的听课、做题和持续投入表现）\n③试法建议：（给一个两周内可完成的小型学习验证，不直接定文理方向）\n④继续观察：（指出最值得补充的一次科目表现）',
     learning_method: '①学习入口：（结合学习通道、左右脑或功能区，说明真正可能卡在哪里）\n②观察与试法：（给观察清单和可执行的学习方法，不直接定文理方向）\n③校正线索：（说明如何用真实学习反馈校正报告线索，不硬写励志结论）\n④继续观察：（指出最值得补充的一次作业、考试或课堂场景）',
     homework_dragging: '①行为翻译：（说明这不只是懒或不听话，结合年龄和启动节奏）\n②第一个动作：（给1-3个足够小、明天能做的动作）\n③可发展的力量：（说明谨慎、怕错或想做好如何被正确支持）\n④继续观察：（指出要观察的具体任务场景）',
     emotion_regulation: '①情绪信号：（说明情绪可能在提醒什么，不诊断、不贴标签）\n②当下承接：（给降速、确认感受和下一步动作）\n③后续观察：（只说明持续时间、触发场景和影响范围，不轻率包装成优势）\n④支持边界：（如持续影响生活，温和建议人工或专业支持）',
@@ -1012,11 +1014,19 @@ function buildIssuePresentation(issueTitle, parts) {
   const type = classifyIssueType(issueTitle);
   const combine = (...values) => values.filter(Boolean).join('\n\n');
   const configs = {
+    learning_direction: {
+      mode: 'learning_direction',
+      cards: [
+        ['先看哪种学习入口更顺', parts.why],
+        ['用真实科目表现来验证', combine(parts.how, parts.future)],
+      ],
+    },
     learning_method: {
       mode: 'learning_diagnosis',
       cards: [
-        ['先别急着定方向', parts.why],
-        ['接下来观察并试这几步', combine(parts.how, parts.future)],
+        ['先找真正卡住的环节', parts.why],
+        ['换一种入口试一周', parts.how],
+        ['用变化校正方法', parts.future],
       ],
     },
     homework_dragging: {

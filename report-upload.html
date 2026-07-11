@@ -1451,8 +1451,10 @@ function getIssueAnswerCards(sec) {
   const has = (...words) => words.some(word => title.includes(word));
   const combine = (...values) => values.filter(Boolean).join('\n\n');
   let cards;
-  if (has('文理', '选科', '偏科', '学习方法', '阅读', '记忆', '学习方式', '科目')) {
-    cards = [['先别急着定方向', sec.why], ['接下来观察并试这几步', combine(sec.how, sec.future)]];
+  if (has('文理', '选科', '天赋更偏')) {
+    cards = [['先看哪种学习入口更顺', sec.why], ['用真实科目表现来验证', combine(sec.how, sec.future)]];
+  } else if (has('偏科', '学习方法', '阅读', '记忆', '学习方式', '科目')) {
+    cards = [['先找真正卡住的环节', sec.why], ['换一种入口试一周', sec.how], ['用变化校正方法', sec.future]];
   } else if (has('升学', '名校', '志愿', '专业', '保证成功')) {
     cards = [['报告能帮你看什么', sec.why], ['把决定拆成小验证', sec.how], ['还要一起考虑什么', sec.future]];
   } else if (has('父母', '三观', '亲子', '顶嘴', '叛逆', '沟通', '相处')) {
