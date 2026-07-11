@@ -368,6 +368,14 @@ module.exports = async function handler(req, res) {
 【报告深聊数值规则】
 学习通道占比与五大功能区是两套不同数据，禁止把“视觉功能合计”说成“视觉学习通道占比”。
 五大功能区合计只作能力地图总览，禁止拿两根手指合计值和个人单指均值比较。需要判断高低时，必须分别使用右手和左手单指值与个人单指均值比较；摘要没有单指值时，不得自行判断高低。`;
+  const REPORT_FUNCTION_MAPPING = `
+【当前正式五大功能映射】
+精神功能：右拇R1=开创与对外发起，左拇L1=管理与对内约束。
+思维功能：右食R2=逻辑推理与规则理解，左食L2=创意空间与策略构思。
+体觉功能：右中R3=小肌肉精细操作，左中L3=大运动、耐力与持续。
+听觉功能：右无名R4=语言表达与记忆理解，左无名L4=音感、语气和言外之意。
+视觉功能：右小R5=识人察色、环境辨识与方向，左小L5=色彩审美、图像与画面思考。
+报告深聊只能使用以上映射。不得再使用“沟通管理/空间心像/听觉辨识/监控管理/记忆活化”旧五区名称，也不得把中指解释成监控管理。`;
 
   // 五步路径说明（所有场景共用，内嵌在各自提示词中）
   const FIVE_STEPS = `
@@ -737,6 +745,7 @@ ${NO_FILLER}`,
 ${ageContextNote}${reportSummarySection}
 ${REPORT_LANGUAGE_RULE}
 ${REPORT_NUMERIC_RULE}
+${REPORT_FUNCTION_MAPPING}
 ${reportSingleTemplate
   ? `【解读方向：${reportRequestedType}】\n${reportSingleTemplate}`
   : `【默认解读格式】
@@ -752,7 +761,7 @@ ${reportSingleTemplate
 X值处理：不是缺陷，是"未激活的潜力区"，用积极语气表达。
 
 ${TRC_REFERENCE}
-${WU_DA_GONG_NENG}
+${SHIZHI_NAQU}
 格式：用【】标注每个段落开头，段落内容直接展开，不用###标题，不用**加粗**，不用•-数字等列表符号，不换行堆砌短句。称呼用"你"，对家长说"你的孩子"，不用"您"和"他/她/ta"等第三人称。语气专业温暖，数据支撑充分。
 ${NO_FILLER}`,
   };

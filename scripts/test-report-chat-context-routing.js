@@ -34,6 +34,8 @@ assert(reportPageSource.includes('十指单值：${fingerSummary}'), '报告深�
 assert(reportPageSource.includes('只作总览，禁止与个人单指均值比较'), '报告深聊摘要没有标明功能区合计边界');
 assert(guestSource.includes('学习通道占比与五大功能区是两套不同数据'), '报告深聊没有防止学习通道与视觉功能混淆');
 assert(guestSource.includes('禁止拿两根手指合计值和个人单指均值比较'), '报告深聊没有执行单指比较规则');
+assert(guestSource.includes('当前正式五大功能映射'), '报告深聊没有注入当前五大功能映射');
+assert(guestSource.includes('不得把中指解释成监控管理'), '报告深聊没有禁用旧五区映射');
 
 const plainHits = searchReportKnowledge('小学 写作业拖拉 家长 一催就炸', {
   topK: 3,
