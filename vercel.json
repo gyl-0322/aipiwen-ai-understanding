@@ -1,5 +1,6 @@
 {
   "version": 2,
+  "ignoreCommand": "node scripts/test-advisor-page-contract.js --vercel-ignore-command",
   "routes": [
     {
       "src": "/api/growth",
