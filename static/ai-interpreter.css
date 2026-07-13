@@ -1337,6 +1337,54 @@ body[data-page="advisor"] .value-card {
   opacity: .72;
 }
 
+.demo-account-card {
+  border-color: rgba(82, 213, 232, .3);
+  background: linear-gradient(135deg, rgba(82, 213, 232, .1), rgba(106, 168, 255, .06));
+}
+
+.demo-session-notice {
+  margin-top: 12px;
+  border-color: rgba(101, 212, 154, .28);
+}
+
+.demo-code-output {
+  display: block;
+  padding: 14px;
+  border: 1px solid rgba(82, 213, 232, .34);
+  border-radius: 8px;
+  background: rgba(82, 213, 232, .08);
+  color: var(--text);
+  font-weight: 800;
+  letter-spacing: .02em;
+}
+
+.demo-code-output[hidden] {
+  display: none;
+}
+
+.demo-form-message {
+  min-height: 24px;
+  font-size: 13px;
+}
+
+.demo-form-message[data-tone="error"] {
+  color: var(--red);
+}
+
+.demo-form-message[data-tone="success"] {
+  color: var(--green);
+}
+
+.preview-demo-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 16px;
+  border-color: rgba(242, 163, 74, .34);
+  background: linear-gradient(135deg, rgba(242, 163, 74, .1), rgba(82, 213, 232, .06));
+}
+
 .safety-card {
   align-self: start;
 }
@@ -1463,6 +1511,11 @@ body[data-page="advisor"] .value-card {
   }
 
   .topbar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .preview-demo-banner {
     align-items: flex-start;
     flex-direction: column;
   }

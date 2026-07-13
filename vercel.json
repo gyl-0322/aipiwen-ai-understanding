@@ -91,6 +91,42 @@
       "dest": "/advisor.html"
     },
     {
+      "src": "/login.html",
+      "dest": "/login.html"
+    },
+    {
+      "src": "/login",
+      "dest": "/login.html"
+    },
+    {
+      "src": "/ai-interpreter-workbench.html",
+      "dest": "/ai-interpreter-workbench.html"
+    },
+    {
+      "src": "/ai-interpreter-workbench",
+      "dest": "/ai-interpreter-workbench.html"
+    },
+    {
+      "src": "/ai-interpreter-customers.html",
+      "dest": "/ai-interpreter-customers.html"
+    },
+    {
+      "src": "/ai-interpreter-session.html",
+      "dest": "/ai-interpreter-session.html"
+    },
+    {
+      "src": "/ai-interpreter-training.html",
+      "dest": "/ai-interpreter-training.html"
+    },
+    {
+      "src": "/ai-interpreter-review.html",
+      "dest": "/ai-interpreter-review.html"
+    },
+    {
+      "src": "/ai-interpreter-cases.html",
+      "dest": "/ai-interpreter-cases.html"
+    },
+    {
       "src": "/behavior-input.html",
       "headers": {
         "Location": "/child-chat.html"

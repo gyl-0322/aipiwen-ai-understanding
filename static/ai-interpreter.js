@@ -356,7 +356,7 @@
     });
   }
 
-  const CREDIT_KEY = "aipiwen_interpreter_demo_credit_balance";
+  const CREDIT_KEY = "aipiwen.previewDemoCreditBalance.v1";
   const INVITE_LINK = "/r/ZHANGWEI01";
   const FULL_PLAN_COST = 50;
 
@@ -364,12 +364,15 @@
     const params = new URLSearchParams(window.location.search);
     if (params.get("lowCredit") === "1") return 10;
 
-    const stored = Number(window.localStorage.getItem(CREDIT_KEY));
+    const storedValue = window.sessionStorage.getItem(CREDIT_KEY);
+    if (storedValue === null) return 500;
+
+    const stored = Number(storedValue);
     return Number.isFinite(stored) && stored >= 0 ? stored : 500;
   }
 
   function setCreditBalance(value) {
-    window.localStorage.setItem(CREDIT_KEY, String(value));
+    window.sessionStorage.setItem(CREDIT_KEY, String(value));
     renderCreditBalance(value);
   }
 
@@ -381,13 +384,13 @@
 
   function copyInviteLink() {
     const fullLink = `${window.location.origin}${window.location.pathname.replace(/[^/]+$/, "")}advisor-invite.html`;
-    const text = `${INVITE_LINK}（静态 Demo：${fullLink}）`;
+    const text = `${INVITE_LINK}（Preview 演示：${fullLink}）`;
 
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(text).catch(() => {});
     }
 
-    window.alert(`已复制邀请链接 Mock：${INVITE_LINK}`);
+    window.alert(`已复制演示邀请链接：${INVITE_LINK}`);
   }
 
   function initCreditDemo() {
@@ -401,23 +404,9 @@
     const ledger = $("[data-show-ledger]");
     if (ledger) {
       ledger.addEventListener("click", () => {
-        window.alert("积分流水 Mock：注册赠送 +500；生成完整 AI 解读方案 -50；邀请注册 +100。");
+        window.alert("模拟额度流水：账号开通体验 +500；生成完整 AI 解读方案 -50；有效邀请 +100。");
       });
     }
-  }
-
-  function initRegisterMock() {
-    if (!document.body.matches('[data-page="advisor-login"]')) return;
-
-    const button = document.getElementById("mock-register");
-    const success = document.getElementById("register-success");
-    if (!button || !success) return;
-
-    button.addEventListener("click", () => {
-      setCreditBalance(500);
-      success.classList.add("show");
-      success.scrollIntoView({ behavior: "smooth", block: "center" });
-    });
   }
 
   function initCreditModal() {
@@ -459,7 +448,7 @@
       }
       setCreditBalance(current - FULL_PLAN_COST);
       closeModal();
-      window.alert("已 mock 消耗 50 积分，完整 AI 解读方案已生成。");
+      window.alert("已模拟消耗 50 点额度，完整 AI 解读方案已生成。");
     });
 
     $$("[data-close-credit-modal]", modal).forEach((button) => {
@@ -477,7 +466,6 @@
     initCustomerRows();
     initReviewDemo();
     initCreditDemo();
-    initRegisterMock();
     initCreditModal();
   });
 })();

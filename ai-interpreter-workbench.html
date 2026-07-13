@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AIPIWEN 指导师工作台 · Preview 演示版</title>
+  <meta name="description" content="AIPIWEN 指导师工作台 Preview 演示版首页">
+  <link rel="stylesheet" href="static/ai-interpreter.css">
+  <script src="static/ai-interpreter.js" defer></script>
+  <script src="static/preview-demo-auth.js" defer></script>
+</head>
+<body data-page="workbench" data-preview-demo-auth="required" hidden>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <a class="brand" href="ai-interpreter-workbench.html" aria-label="AIPIWEN指导师工作台">
+        <svg class="brand-flower" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <circle class="brand-flower-ring" cx="18" cy="18" r="15.5" stroke-width=".9" stroke-dasharray="2.5 6"/>
+          <g class="brand-flower-petals">
+            <ellipse cx="18" cy="12" rx="2.2" ry="6.5" transform="rotate(0 18 18)"/>
+            <ellipse cx="18" cy="12" rx="2.2" ry="6.5" transform="rotate(90 18 18)"/>
+            <ellipse cx="18" cy="12" rx="1.4" ry="5.5" transform="rotate(45 18 18)"/>
+            <ellipse cx="18" cy="12" rx="1.4" ry="5.5" transform="rotate(135 18 18)"/>
+          </g>
+          <circle class="brand-flower-center" cx="18" cy="18" r="3"/>
+        </svg>
+        <div>
+          <p class="brand-title">AIPIWEN指导师工作台</p>
+          <div class="brand-subtitle">Preview 演示模式</div>
+        </div>
+      </a>
+      <nav class="nav" aria-label="主导航">
+        <a class="nav-link" data-page="workbench" href="ai-interpreter-workbench.html"><span>⌂</span><span>工作台首页</span></a>
+        <a class="nav-link" data-page="customers" href="ai-interpreter-customers.html"><span>◎</span><span>我的客户</span></a>
+        <a class="nav-link" data-page="session" href="ai-interpreter-session.html"><span>◈</span><span>AI解读助手</span></a>
+        <a class="nav-link" data-page="training" href="ai-interpreter-training.html"><span>▣</span><span>解读训练</span></a>
+        <a class="nav-link" data-page="review" href="ai-interpreter-review.html"><span>◇</span><span>总部复核 / 规范</span></a>
+        <a class="nav-link" data-page="cases" href="ai-interpreter-cases.html"><span>✦</span><span>优秀案例沉淀</span></a>
+      </nav>
+      <div class="sidebar-note">
+        Preview 演示：不发送短信，不连接真实账号、数据库或 Report OS；所有客户与业务数据均为模拟。
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Workbench Overview</p>
+          <h1>AIPIWEN指导师工作台</h1>
+          <p>把一份报告转化为客户听得懂、用得上、风险可控的专业解读。</p>
+        </div>
+        <div class="top-actions">
+          <a class="btn ghost" href="advisor.html">工作台介绍</a>
+        </div>
+      </header>
+
+      <section class="layout-grid cols-3" aria-label="今日概览">
+        <div class="card metric cyan">
+          <div class="metric-value">3</div>
+          <div class="metric-label">今日待解读客户</div>
+          <p>2 位儿童天赋报告，1 位成人发展规划。</p>
+        </div>
+        <div class="card metric amber">
+          <div class="metric-value">1</div>
+          <div class="metric-label">待提交或等待复核</div>
+          <p>含“注意力不集中 / 数学成绩偏弱”敏感关注点。</p>
+        </div>
+        <div class="card metric blue">
+          <div class="metric-value">2</div>
+          <div class="metric-label">本周待完成训练</div>
+          <p>含“数值解释安全度”评分项。</p>
+        </div>
+      </section>
+
+      <section class="layout-grid cols-aside" style="margin-top:16px">
+        <div class="module credit-card">
+          <div class="card-header">
+            <div class="card-title">
+              <h2>积分账户</h2>
+              <small>模拟额度：仅用于展示，不接真实钱包</small>
+            </div>
+            <span class="status info">体验额度</span>
+          </div>
+          <div class="credit-overview">
+            <div>
+              <span>当前积分</span>
+              <strong data-credit-balance>500</strong>
+            </div>
+            <div>
+              <span>体验额度有效期</span>
+              <strong>90天</strong>
+            </div>
+            <div>
+              <span>今日消耗</span>
+              <strong>50</strong>
+            </div>
+            <div>
+              <span>邀请获得</span>
+              <strong>100</strong>
+            </div>
+          </div>
+          <div class="invite-link-box">
+            <span>我的邀请链接</span>
+            <code>/r/ZHANGWEI01</code>
+          </div>
+          <div class="top-actions" style="justify-content:flex-start; margin-top:14px">
+            <button class="btn primary" type="button" data-copy-invite>复制邀请链接</button>
+            <button class="btn ghost" type="button" data-show-ledger>查看积分流水</button>
+          </div>
+        </div>
+
+        <div class="module invite-rule-card">
+          <div class="card-header">
+            <div class="card-title">
+              <h2>邀请奖励规则</h2>
+              <small>奖励有效邀请，不奖励刷号</small>
+            </div>
+          </div>
+          <div class="reward-steps">
+            <div><span>1</span><strong>邀请新指导师完成开通</strong><em>+100 积分</em></div>
+            <div><span>2</span><strong>被邀请人完成首次 AI 解读</strong><em>再 +100 积分</em></div>
+            <div><span>3</span><strong>被邀请人完成授权开通</strong><em>再 +300 积分</em></div>
+          </div>
+          <p class="footer-note">邀请奖励分阶段发放，并可由 AIPIWEN 总部撤销异常积分；当前 Preview 只做页面展示。</p>
+        </div>
+      </section>
+
+      <section class="layout-grid cols-aside" style="margin-top:16px">
+        <div class="module">
+          <div class="card-header">
+            <div class="card-title">
+              <h2>客户归属概览</h2>
+              <small>客户如何进入我的工作台</small>
+            </div>
+          </div>
+          <div class="source-grid">
+            <div class="source-item">
+              <span>邀请链接新增客户</span>
+              <strong>3</strong>
+            </div>
+            <div class="source-item">
+              <span>采集中心二维码新增客户</span>
+              <strong>5</strong>
+            </div>
+            <div class="source-item">
+              <span>总部公海待分配</span>
+              <strong>2</strong>
+            </div>
+            <div class="source-item">
+              <span>手动绑定客户</span>
+              <strong>1</strong>
+            </div>
+          </div>
+          <div class="notice" style="margin-top:14px">
+            <strong>客户如何进入我的工作台</strong>
+            <p>客户可通过解读师邀请链接、采集中心二维码、总部公海分配或手动绑定进入当前解读师名下；本 Demo 仅展示归属来源，不接真实 CRM。</p>
+          </div>
+        </div>
+
+        <div class="module boundary">
+          <div class="card-header">
+            <div class="card-title">
+              <h2>Report OS 只读边界</h2>
+              <small>当前 Preview 仅使用模拟报告数据</small>
+            </div>
+            <span class="status info">只读</span>
+          </div>
+          <p>当前演示不读写 Report OS；正式接入将在报告上传、报告生成与首页入口完成后按阶段连接。</p>
+          <div class="tag-row" style="margin-top:12px">
+            <span class="tag">当前不接 API</span>
+            <span class="tag">当前不写 Report OS</span>
+            <span class="tag">保留正式接入</span>
+            <span class="tag">演示数据</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="layout-grid cols-aside" style="margin-top:16px">
+        <div class="table-card recent-table">
+          <div class="card-header" style="padding:16px 16px 0">
+            <div class="card-title">
+              <h2>最近解读记录</h2>
+              <small>模拟数据，点击客户可进入详情页</small>
+            </div>
+            <a class="btn ghost" href="ai-interpreter-customers.html">查看全部</a>
+          </div>
+          <div class="table-head">
+            <span>客户</span><span>报告类型</span><span>解读时间</span><span>状态</span><span>操作</span>
+          </div>
+          <a class="table-row" href="ai-interpreter-session.html">
+            <strong>王小明的妈妈</strong><span>儿童天赋报告</span><span>2026-07-08 10:30</span><span class="status done">已完成</span><span>进入</span>
+          </a>
+          <a class="table-row" href="ai-interpreter-session.html">
+            <strong>李大伟</strong><span>成人发展规划</span><span>2026-07-07 14:20</span><span class="status pending">待复核</span><span>进入</span>
+          </a>
+          <a class="table-row" href="ai-interpreter-session.html">
+            <strong>陈小芳</strong><span>学习通道评估</span><span>2026-07-07 09:15</span><span class="status done">已完成</span><span>进入</span>
+          </a>
+          <a class="table-row" href="ai-interpreter-session.html">
+            <strong>张小花</strong><span>全脑开发报告</span><span>2026-07-05 16:40</span><span class="status info">待解读</span><span>进入</span>
+          </a>
+        </div>
+
+        <div class="module announcement">
+          <div class="card-header">
+            <div class="card-title">
+              <h2>总部公告</h2>
+              <small>规范更新与训练提醒</small>
+            </div>
+          </div>
+          <div class="notice">
+            <strong>标准解读流程已更新</strong>
+            <p>标准流程调整为 8 步，新增 TRC / ATD / 左右脑独立步骤，右栏新增“为什么这样讲”。</p>
+          </div>
+          <div class="notice">
+            <strong>新版四条规则已统一</strong>
+            <ol class="rules-list">
+              <li>数值没有好坏，高有高的特长，低有低的特长</li>
+              <li>不做未来预测，只解释天赋底色 + 后天环境 + 教育培养共同作用</li>
+              <li>不贴标签，不定义“孩子就是一个什么样的人”</li>
+              <li>不与他人比较，只与自己的平均值比较</li>
+            </ol>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+</body>
+</html>

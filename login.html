@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>登录指导师工作台 · AIPIWEN</title>
+  <meta name="description" content="AIPIWEN 统一登录页 Preview 演示">
+  <link rel="stylesheet" href="static/ai-interpreter.css">
+  <script src="static/preview-demo-auth.js" defer></script>
+</head>
+<body data-page="preview-login" data-preview-demo-page="login">
+  <main class="public-shell auth-shell">
+    <nav class="public-nav" aria-label="指导师登录导航">
+      <a class="brand" href="advisor.html" aria-label="AIPIWEN 指导师工作台">
+        <svg class="brand-flower" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <circle class="brand-flower-ring" cx="18" cy="18" r="15.5" stroke-width=".9" stroke-dasharray="2.5 6"/>
+          <g class="brand-flower-petals">
+            <ellipse cx="18" cy="12" rx="2.2" ry="6.5" transform="rotate(0 18 18)"/>
+            <ellipse cx="18" cy="12" rx="2.2" ry="6.5" transform="rotate(90 18 18)"/>
+            <ellipse cx="18" cy="12" rx="1.4" ry="5.5" transform="rotate(45 18 18)"/>
+            <ellipse cx="18" cy="12" rx="1.4" ry="5.5" transform="rotate(135 18 18)"/>
+          </g>
+          <circle class="brand-flower-center" cx="18" cy="18" r="3"/>
+        </svg>
+        <div>
+          <p class="brand-title">AIPIWEN指导师工作台</p>
+          <div class="brand-subtitle">统一登录 · Preview 演示</div>
+        </div>
+      </a>
+      <a class="btn ghost" href="advisor.html">返回工作台介绍</a>
+    </nav>
+
+    <section class="auth-grid">
+      <div class="module auth-card">
+        <span class="status info">Preview 演示模式</span>
+        <p class="eyebrow" style="margin-top:14px">Unified Login</p>
+        <h1>手机号登录</h1>
+        <p>短信服务尚未接通，本页用一次性模拟验证码带你走完登录流程。不会发送短信，也不会创建真实账号。</p>
+
+        <div class="notice demo-account-card" style="margin-top:18px">
+          <strong>AIPIWEN 演示指导师</strong>
+          <p>模拟手机号：138 **** 0000</p>
+        </div>
+
+        <div class="notice demo-session-notice" id="existing-demo-session" hidden>
+          <strong>当前浏览器已有有效的演示登录状态</strong>
+          <p>你可以直接进入工作台，也可以退出后重新体验验证码流程。</p>
+          <div class="top-actions" style="justify-content:flex-start; margin-top:10px">
+            <a class="btn primary" href="ai-interpreter-workbench.html">直接进入工作台</a>
+            <button class="btn ghost" type="button" data-preview-demo-logout>退出演示</button>
+          </div>
+        </div>
+
+        <form class="form-grid" id="preview-demo-login-form" style="margin-top:18px" novalidate>
+          <label>
+            模拟验证码
+            <span class="code-row">
+              <input class="field" id="preview-demo-code-input" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" placeholder="请输入下方 6 位模拟验证码" required>
+              <button class="btn ghost" id="preview-demo-code-button" type="button">获取模拟码</button>
+            </span>
+          </label>
+
+          <output class="demo-code-output" id="preview-demo-code-output" aria-live="polite" hidden></output>
+          <p class="demo-form-message" id="preview-demo-form-message" role="status" aria-live="polite"></p>
+          <button class="btn primary" type="submit">登录并进入工作台</button>
+        </form>
+      </div>
+
+      <aside class="module safety-card">
+        <div class="card-header">
+          <div class="card-title">
+            <h2>本次体验不会做什么</h2>
+            <small>与真实账号系统完全隔离</small>
+          </div>
+        </div>
+        <div class="tag-row">
+          <span class="tag">不发送短信</span>
+          <span class="tag">不连接 Supabase</span>
+          <span class="tag">不创建用户</span>
+          <span class="tag">不写数据库</span>
+          <span class="tag">不保存手机号</span>
+          <span class="tag">不修改生产站</span>
+        </div>
+        <p class="footer-note">验证码由当前页面临时生成，10 分钟后失效；登录状态只保存在这个浏览器标签页中，关闭标签页后自动消失。</p>
+      </aside>
+
+      <aside class="module">
+        <div class="card-header">
+          <div class="card-title">
+            <h2>正式登录保持统一入口</h2>
+            <small>未来仍使用 login.html</small>
+          </div>
+        </div>
+        <p>真实短信接通后，手机号验证码会在这一个统一登录页内替换模拟步骤，不会再创建独立手机号登录页面。</p>
+      </aside>
+    </section>
+  </main>
+</body>
+</html>
