@@ -357,6 +357,7 @@
   }
 
   const CREDIT_KEY = "aipiwen.previewDemoCreditBalance.v1";
+  const REPORT_INTAKE_STATE_KEY = "aipiwen.previewReportIntakeState.v1";
   const INVITE_LINK = "/r/ZHANGWEI01";
   const FULL_PLAN_COST = 50;
 
@@ -460,6 +461,64 @@
     });
   }
 
+  function initReportIntakeContext() {
+    let state;
+
+    try {
+      state = JSON.parse(window.sessionStorage.getItem(REPORT_INTAKE_STATE_KEY) || "null");
+    } catch (_error) {
+      state = null;
+    }
+
+    if (!state || state.mode !== "preview-demo") return;
+
+    const sessionStatuses = ["normalized", "output-ready", "review-submitted", "completed"];
+    const reviewStatuses = ["review-submitted", "completed"];
+    const showSessionContext = sessionStatuses.includes(state.status);
+    const showReviewContext = reviewStatuses.includes(state.status);
+
+    $$('[data-report-intake-context="session"]').forEach((node) => {
+      node.hidden = !showSessionContext;
+    });
+
+    $$('[data-report-intake-context="review"]').forEach((node) => {
+      node.hidden = !showReviewContext;
+    });
+
+    const submitReviewLink = document.getElementById("submit-report-intake-review");
+    if (submitReviewLink && showSessionContext) {
+      submitReviewLink.addEventListener("click", (event) => {
+        event.preventDefault();
+        window.sessionStorage.setItem(REPORT_INTAKE_STATE_KEY, JSON.stringify({
+          mode: "preview-demo",
+          status: "review-submitted"
+        }));
+        window.location.href = "ai-interpreter-review.html?from=report-intake";
+      });
+    }
+
+    const completeButton = document.getElementById("complete-report-intake-demo");
+    const completeMessage = document.getElementById("report-intake-complete");
+    if (completeButton && completeMessage && showReviewContext) {
+      if (state.status === "completed") {
+        completeButton.disabled = true;
+        completeButton.textContent = "演示已完成";
+        completeMessage.hidden = false;
+        return;
+      }
+
+      completeButton.addEventListener("click", () => {
+        window.sessionStorage.setItem(REPORT_INTAKE_STATE_KEY, JSON.stringify({
+          mode: "preview-demo",
+          status: "completed"
+        }));
+        completeButton.disabled = true;
+        completeButton.textContent = "演示已完成";
+        completeMessage.hidden = false;
+      });
+    }
+  }
+
   document.addEventListener("DOMContentLoaded", () => {
     initNavigation();
     initSession();
@@ -467,5 +526,6 @@
     initReviewDemo();
     initCreditDemo();
     initCreditModal();
+    initReportIntakeContext();
   });
 })();

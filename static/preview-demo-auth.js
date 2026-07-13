@@ -2,6 +2,7 @@
   'use strict';
 
   const SESSION_KEY = 'aipiwen.previewDemoSession.v1';
+  const REPORT_STATE_KEY = 'aipiwen.previewReportIntakeState.v1';
   const SESSION_TTL_MS = 2 * 60 * 60 * 1000;
   const CODE_TTL_MS = 10 * 60 * 1000;
   const DEMO_NAME = 'AIPIWEN 演示指导师';
@@ -9,6 +10,7 @@
 
   function clearSession() {
     sessionStorage.removeItem(SESSION_KEY);
+    sessionStorage.removeItem(REPORT_STATE_KEY);
   }
 
   function readSession() {
@@ -96,6 +98,12 @@
   }
 
   function enterProtectedPage() {
+    if (PRODUCTION_HOSTS.has(window.location.hostname)) {
+      clearSession();
+      window.location.replace('/homepage.html');
+      return;
+    }
+
     const session = readSession();
     if (!session) {
       window.location.replace('/login.html?expired=1');

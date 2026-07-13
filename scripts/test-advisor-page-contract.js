@@ -29,6 +29,7 @@ try {
   const protectedPages = [
     'ai-interpreter-workbench.html',
     'ai-interpreter-customers.html',
+    'ai-interpreter-report-intake.html',
     'ai-interpreter-session.html',
     'ai-interpreter-training.html',
     'ai-interpreter-review.html',
@@ -64,6 +65,7 @@ try {
   assert(!/XMLHttpRequest|WebSocket|EventSource/.test(demoAuth), '演示登录脚本不得建立远程连接');
   assert(!/createClient\s*\(|supabase\s*\./i.test(demoAuth), '演示登录脚本不得创建 Supabase 客户端');
   assert(!/["']\d{6}["']/.test(demoAuth), '演示登录脚本不得内置固定六位验证码');
+  assert(demoAuth.includes("sessionStorage.removeItem(REPORT_STATE_KEY)"), '退出演示必须同时清除报告接入状态');
   assert(!interpreterDemo.includes('localStorage'), '模拟业务额度不得跨浏览器会话持久化');
   assert(!interpreterDemo.includes('mock-register'), '旧的“注册即赠积分”处理不得恢复');
 
@@ -84,6 +86,8 @@ try {
     '/login',
     '/ai-interpreter-workbench.html',
     '/ai-interpreter-customers.html',
+    '/ai-interpreter-report-intake.html',
+    '/ai-interpreter-report-intake',
     '/ai-interpreter-session.html',
     '/ai-interpreter-training.html',
     '/ai-interpreter-review.html',

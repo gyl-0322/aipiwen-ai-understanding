@@ -111,6 +111,14 @@
       "dest": "/ai-interpreter-customers.html"
     },
     {
+      "src": "/ai-interpreter-report-intake.html",
+      "dest": "/ai-interpreter-report-intake.html"
+    },
+    {
+      "src": "/ai-interpreter-report-intake",
+      "dest": "/ai-interpreter-report-intake.html"
+    },
+    {
       "src": "/ai-interpreter-session.html",
       "dest": "/ai-interpreter-session.html"
     },

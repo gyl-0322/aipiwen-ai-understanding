@@ -31,6 +31,7 @@
       <nav class="nav" aria-label="主导航">
         <a class="nav-link" data-page="workbench" href="ai-interpreter-workbench.html"><span>⌂</span><span>工作台首页</span></a>
         <a class="nav-link" data-page="customers" href="ai-interpreter-customers.html"><span>◎</span><span>我的客户</span></a>
+        <a class="nav-link" data-page="report-intake" href="ai-interpreter-report-intake.html"><span>⇄</span><span>报告接入</span></a>
         <a class="nav-link" data-page="session" href="ai-interpreter-session.html"><span>◈</span><span>AI解读助手</span></a>
         <a class="nav-link" data-page="training" href="ai-interpreter-training.html"><span>▣</span><span>解读训练</span></a>
         <a class="nav-link" data-page="review" href="ai-interpreter-review.html"><span>◇</span><span>总部复核 / 规范</span></a>
@@ -54,7 +55,37 @@
         </div>
       </header>
 
-      <section class="layout-grid cols-aside">
+      <section class="module aipiwen-output-review" data-report-intake-context="review" hidden>
+        <div class="card-header">
+          <div class="card-title">
+            <h2>AIPIWEN 统一输出检查</h2>
+            <small>报告接入演示的交付前检查</small>
+          </div>
+          <span class="status done">6 项通过</span>
+        </div>
+        <div class="review-check-grid">
+          <div><span>✓</span><strong>只使用 AIPIWEN 表达</strong></div>
+          <div><span>✓</span><strong>未显示第三方名称或术语</strong></div>
+          <div><span>✓</span><strong>依据不足内容未进入结论</strong></div>
+          <div><span>✓</span><strong>未作诊断、预测或定性</strong></div>
+          <div><span>✓</span><strong>未默认展示原始报告</strong></div>
+          <div><span>✓</span><strong>客户预览已通过安全检查</strong></div>
+        </div>
+        <div class="top-actions" style="justify-content:flex-start; margin-top:14px">
+          <button class="btn primary" id="complete-report-intake-demo" type="button">完成演示</button>
+          <a class="btn ghost" href="ai-interpreter-session.html?from=report-intake">返回修改</a>
+        </div>
+        <div class="notice report-intake-complete" id="report-intake-complete" role="status" aria-live="polite" hidden>
+          <strong>完整体验已完成</strong>
+          <p>本次只完成本地模拟复核，没有保存来源、创建报告或写入总部任务。客户可见内容始终只使用 AIPIWEN 语言。</p>
+          <div class="top-actions" style="justify-content:flex-start; margin-top:12px">
+            <a class="btn primary" href="ai-interpreter-workbench.html">返回工作台</a>
+            <a class="btn ghost" href="ai-interpreter-report-intake.html">重新体验</a>
+          </div>
+        </div>
+      </section>
+
+      <section class="layout-grid cols-aside" style="margin-top:16px">
         <div class="module">
           <div class="card-header">
             <div class="card-title">

@@ -1,0 +1,328 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>报告接入 · AIPIWEN指导师工作台</title>
+  <meta name="description" content="AIPIWEN 跨体系报告统一接入 Preview 演示">
+  <link rel="stylesheet" href="static/ai-interpreter.css">
+  <script src="static/ai-interpreter.js" defer></script>
+  <script src="static/preview-demo-auth.js" defer></script>
+  <script src="static/preview-report-intake.js" defer></script>
+</head>
+<body data-page="report-intake" data-preview-demo-auth="required" hidden>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <a class="brand" href="ai-interpreter-workbench.html" aria-label="AIPIWEN指导师工作台">
+        <svg class="brand-flower" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <circle class="brand-flower-ring" cx="18" cy="18" r="15.5" stroke-width=".9" stroke-dasharray="2.5 6"/>
+          <g class="brand-flower-petals">
+            <ellipse cx="18" cy="12" rx="2.2" ry="6.5" transform="rotate(0 18 18)"/>
+            <ellipse cx="18" cy="12" rx="2.2" ry="6.5" transform="rotate(90 18 18)"/>
+            <ellipse cx="18" cy="12" rx="1.4" ry="5.5" transform="rotate(45 18 18)"/>
+            <ellipse cx="18" cy="12" rx="1.4" ry="5.5" transform="rotate(135 18 18)"/>
+          </g>
+          <circle class="brand-flower-center" cx="18" cy="18" r="3"/>
+        </svg>
+        <div>
+          <p class="brand-title">AIPIWEN指导师工作台</p>
+          <div class="brand-subtitle">Preview 演示模式</div>
+        </div>
+      </a>
+      <nav class="nav" aria-label="主导航">
+        <a class="nav-link" data-page="workbench" href="ai-interpreter-workbench.html"><span>⌂</span><span>工作台首页</span></a>
+        <a class="nav-link" data-page="customers" href="ai-interpreter-customers.html"><span>◎</span><span>我的客户</span></a>
+        <a class="nav-link" data-page="report-intake" href="ai-interpreter-report-intake.html"><span>⇄</span><span>报告接入</span></a>
+        <a class="nav-link" data-page="session" href="ai-interpreter-session.html"><span>◈</span><span>AI解读助手</span></a>
+        <a class="nav-link" data-page="training" href="ai-interpreter-training.html"><span>▣</span><span>解读训练</span></a>
+        <a class="nav-link" data-page="review" href="ai-interpreter-review.html"><span>◇</span><span>总部复核 / 规范</span></a>
+        <a class="nav-link" data-page="cases" href="ai-interpreter-cases.html"><span>✦</span><span>优秀案例沉淀</span></a>
+      </nav>
+      <div class="sidebar-note">
+        本页只使用内置脱敏样本，不读取真实文件、不调用真实映射、AI、数据库或 Report OS。
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Private Intake · AIPIWEN Output</p>
+          <h1>报告接入</h1>
+          <p>把不同来源的报告安全纳入同一流程，证据不足就拦下，最终只形成 AIPIWEN 统一表达。</p>
+        </div>
+        <div class="top-actions">
+          <button class="btn ghost" id="reset-intake" type="button">重新体验</button>
+          <a class="btn" href="ai-interpreter-workbench.html">返回工作台</a>
+        </div>
+      </header>
+
+      <section class="notice intake-safety-note">
+        <div>
+          <strong>Preview 全流程演示</strong>
+          <p>不上传真实文件、不保存客户资料，不连接 Report OS、真实体系映射、AI 模型或数据库。</p>
+        </div>
+        <span class="status pending">零远程写入</span>
+      </section>
+
+      <ol class="intake-progress" aria-label="报告接入进度">
+        <li class="active" data-intake-marker="1"><span>1</span><strong>选择样本</strong><small>内置脱敏报告</small></li>
+        <li data-intake-marker="2"><span>2</span><strong>确认来源</strong><small>内部私密字段</small></li>
+        <li data-intake-marker="3"><span>3</span><strong>统一处理</strong><small>不确定内容拦截</small></li>
+        <li data-intake-marker="4"><span>4</span><strong>AIPIWEN结果</strong><small>客户可见预览</small></li>
+      </ol>
+
+      <section class="intake-panel module" id="intake-step-1" data-intake-step="1">
+        <div class="card-header">
+          <div class="card-title">
+            <p class="eyebrow">STEP 1</p>
+            <h2>选择演示报告</h2>
+            <small>本轮不开放真实文件选择，避免误传客户资料</small>
+          </div>
+          <span class="status info">演示样本</span>
+        </div>
+
+        <div class="demo-report-card">
+          <div class="demo-file-icon" aria-hidden="true">PDF</div>
+          <div>
+            <h3>儿童成长理解报告（脱敏演示）</h3>
+            <p>对象：王小明 · 8 岁　页数：12 页　原始身份信息：已脱敏</p>
+            <div class="tag-row" style="margin-top:10px">
+              <span class="tag">仅供流程演示</span>
+              <span class="tag">不读取本地文件</span>
+              <span class="tag">不上传云端</span>
+            </div>
+          </div>
+          <button class="btn primary" id="use-demo-report" type="button">使用这份演示报告</button>
+        </div>
+
+        <div class="notice" style="margin-top:16px">
+          <strong>未来真实接入</strong>
+          <p>正式版本会先建立受控上传会话，再由 Report OS 保存原件并返回不可变报告制品；工作台不复制第二份报告正文。</p>
+        </div>
+      </section>
+
+      <section class="intake-panel module" id="intake-step-2" data-intake-step="2" hidden>
+        <div class="card-header">
+          <div class="card-title">
+            <p class="eyebrow">STEP 2 · PRIVATE</p>
+            <h2>私密确认报告来源</h2>
+            <small>第三方名称只允许在这个授权确认步骤出现</small>
+          </div>
+          <span class="status risk">仅指导师与总部可见</span>
+        </div>
+
+        <div class="layout-grid cols-aside">
+          <form class="form-grid" id="source-confirmation-form" novalidate>
+            <label>
+              报告原件明确显示的来源
+              <select class="select" id="report-source" required>
+                <option value="">请选择，不要凭个人印象推断</option>
+                <option value="moren_mima">魔纹密码</option>
+                <option value="system_359">359</option>
+                <option value="aierfa">艾尔发</option>
+                <option value="yifuyihan">一赋一涵</option>
+                <option value="zhai_guijun">翟氏</option>
+                <option value="zhu_shi">朱氏</option>
+                <option value="other">其他</option>
+                <option value="unknown">无法确认</option>
+              </select>
+            </label>
+
+            <label id="other-source-field" hidden>
+              原件显示的其他来源名称（仅本页临时使用）
+              <input class="field" id="other-source-name" type="text" maxlength="60" autocomplete="off" placeholder="请按报告原件填写">
+            </label>
+
+            <fieldset class="identity-group source-evidence-group">
+              <legend>确认依据</legend>
+              <label><input type="radio" name="source-evidence" value="report" checked> 报告原件明确标注</label>
+              <label><input type="radio" name="source-evidence" value="headquarters"> 经总部授权复核确认</label>
+              <label><input type="radio" name="source-evidence" value="not_confirmable"> 原件未明确，当前无法确认</label>
+            </fieldset>
+
+            <label class="check-line private-confirmation-line">
+              <input id="source-confirmation-check" type="checkbox" required>
+              <span>我确认只依据原件或总部复核信息选择，没有根据指导师背景、邀请关系或个人印象推断。</span>
+            </label>
+
+            <p class="demo-form-message" id="source-form-message" role="status" aria-live="polite"></p>
+            <div class="top-actions intake-actions">
+              <button class="btn ghost" type="button" data-go-step="1">返回</button>
+              <button class="btn primary" type="submit">确认来源并继续</button>
+            </div>
+          </form>
+
+          <aside class="module private-zone-card">
+            <span class="status risk">内部私密区</span>
+            <h3>来源不是客户标签</h3>
+            <p>这里记录的是报告原件来源，只用于内部处理路由和审计。它不表示平台认证，也不会出现在客户页面、解读内容、PDF、分享页或通知中。</p>
+            <ul class="compact-list">
+              <li>不根据指导师培训背景推断报告来源</li>
+              <li>不向客户展示第三方术语对照</li>
+              <li>不把合作关系写进解读结论</li>
+              <li>本演示不代表任何真实映射已经通过审核</li>
+            </ul>
+          </aside>
+        </div>
+      </section>
+
+      <section class="intake-panel module" id="intake-step-3" data-intake-step="3" hidden>
+        <div class="card-header">
+          <div class="card-title">
+            <p class="eyebrow">STEP 3 · NORMALIZE</p>
+            <h2>统一处理</h2>
+            <small>离开私密确认页后，不再显示第三方来源名称</small>
+          </div>
+          <span class="status info" id="normalization-status">等待开始</span>
+        </div>
+
+        <div id="normalization-standard">
+          <div class="normalization-pipeline" aria-label="模拟统一处理阶段">
+            <div data-pipeline-item="1"><span>1</span><strong>文件完整性检查</strong><small>等待</small></div>
+            <div data-pipeline-item="2"><span>2</span><strong>私密来源记录</strong><small>等待</small></div>
+            <div data-pipeline-item="3"><span>3</span><strong>可用信息识别</strong><small>等待</small></div>
+            <div data-pipeline-item="4"><span>4</span><strong>AIPIWEN统一表达</strong><small>等待</small></div>
+            <div data-pipeline-item="5"><span>5</span><strong>安全边界检查</strong><small>等待</small></div>
+          </div>
+
+          <div class="notice" style="margin-top:16px">
+            <strong>这一步是流程模拟</strong>
+            <p>不会调用真实解析器、体系映射或 AI 模型；展示结果不代表任何具体来源已经取得运行资格。</p>
+          </div>
+
+          <div class="top-actions intake-actions" id="normalization-start-actions">
+            <button class="btn ghost" type="button" data-go-step="2">返回来源确认</button>
+            <button class="btn primary" id="run-normalization" type="button">开始统一处理</button>
+          </div>
+
+          <div id="normalization-result" hidden>
+            <div class="layout-grid cols-3 normalization-metrics">
+              <div class="card metric green"><div class="metric-value">8</div><div class="metric-label">演示：已纳入统一结构</div><p>有证据支持，可进入 AIPIWEN 表达。</p></div>
+              <div class="card metric amber"><div class="metric-value">2</div><div class="metric-label">演示：需总部确认</div><p>保留为内部待确认项，不写入客户结论。</p></div>
+              <div class="card metric blue"><div class="metric-value">1</div><div class="metric-label">演示：暂不纳入</div><p>依据不足，不做强制转换。</p></div>
+            </div>
+
+            <div class="normalization-result-list">
+              <div><span class="status done">已归一化</span><strong>主体信息与报告结构</strong><p>转换为统一字段，不改变原始事实。</p></div>
+              <div><span class="status done">已归一化</span><strong>可观察的行为线索</strong><p>只保留能转化为观察问题的信息。</p></div>
+              <div><span class="status pending">需总部确认</span><strong>证据不完整的解释项</strong><p>不进入本次客户结果。</p></div>
+              <div><span class="status risk">暂不支持</span><strong>依赖外部专属规则的结论</strong><p>保持原件不变，不做硬翻译。</p></div>
+            </div>
+
+            <div class="top-actions intake-actions">
+              <button class="btn ghost" type="button" data-go-step="2">返回来源确认</button>
+              <button class="btn primary" id="show-aipiwen-output" type="button">查看 AIPIWEN 结果</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="intake-blocker" id="source-needs-review" hidden>
+          <span class="status pending">需总部确认</span>
+          <h2>暂不能确认报告来源</h2>
+          <p>当前无法依据原件确认来源。为了避免错误归类，本次不生成完整解读，也不会猜测最接近的体系。</p>
+          <div class="top-actions intake-actions">
+            <button class="btn ghost" type="button" data-go-step="2">返回重新确认</button>
+            <button class="btn primary" type="button" data-demo-headquarters-submit>提交总部确认</button>
+          </div>
+          <p class="demo-form-message" data-blocker-message role="status" aria-live="polite"></p>
+          <div class="notice blocker-complete" data-blocker-complete hidden>
+            <strong>本次演示已结束</strong>
+            <p>这里只模拟提交状态；没有保存来源，也没有创建真实总部任务。本分支不能进入 AI 解读。</p>
+            <div class="top-actions" style="justify-content:flex-start; margin-top:12px">
+              <a class="btn primary" href="ai-interpreter-workbench.html">返回工作台</a>
+              <button class="btn ghost" type="button" data-reset-intake>重新体验</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="intake-blocker" id="source-unsupported" hidden>
+          <span class="status risk">暂不支持自动处理</span>
+          <h2>当前来源尚不能安全归一化</h2>
+          <p>这份样本无法形成足够的 AIPIWEN 公共信息结构。原始文件保持不变，平台不会为了完成流程而强制转换。</p>
+          <div class="top-actions intake-actions">
+            <button class="btn ghost" type="button" data-go-step="2">返回重新确认</button>
+            <button class="btn primary" type="button" data-demo-headquarters-submit>提交总部人工评估</button>
+          </div>
+          <p class="demo-form-message" data-blocker-message role="status" aria-live="polite"></p>
+          <div class="notice blocker-complete" data-blocker-complete hidden>
+            <strong>本次演示已结束</strong>
+            <p>这里只模拟提交状态；没有保存来源，也没有创建真实总部任务。本分支不能进入 AI 解读。</p>
+            <div class="top-actions" style="justify-content:flex-start; margin-top:12px">
+              <a class="btn primary" href="ai-interpreter-workbench.html">返回工作台</a>
+              <button class="btn ghost" type="button" data-reset-intake>重新体验</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="intake-panel" id="intake-step-4" data-intake-step="4" hidden>
+        <div class="module output-ready-card">
+          <div class="card-header">
+            <div class="card-title">
+              <p class="eyebrow">STEP 4 · CUSTOMER PREVIEW</p>
+              <h2>统一处理完成</h2>
+              <small>来源仅在当前标签页内完成私密模拟确认；以下预览不包含来源名称或第三方话术</small>
+            </div>
+            <span class="status done">可进入解读</span>
+          </div>
+
+          <article class="customer-output-preview" id="customer-output-preview">
+            <div class="customer-preview-head">
+              <div>
+                <p class="eyebrow">AIPIWEN · 理解一个人，不是定义一个人</p>
+                <h2>王小明的成长观察建议</h2>
+              </div>
+              <span class="status info">AIPIWEN统一表达</span>
+            </div>
+
+            <p class="output-lead">小明在面对较长任务时，可能更适合先明确目标，再把过程拆成较短回合。可以继续观察他在口头说明、亲手操作和图示辅助三种支持方式下，哪一种更容易帮助他进入状态。这里描述的是可观察倾向，不代表能力高低，也不代表未来结果。</p>
+
+            <div class="layout-grid cols-3 output-action-grid">
+              <div class="mini-card"><span>观察点</span><strong>任务开始前，他需要怎样的提示更容易进入状态？</strong></div>
+              <div class="mini-card"><span>支持方式</span><strong>一次给出一个清晰目标，完成后再进入下一步。</strong></div>
+              <div class="mini-card"><span>沟通提醒</span><strong>描述具体行为，不使用“你就是不专心”等标签。</strong></div>
+            </div>
+
+            <div class="output-boundary">
+              <strong>本次表达边界</strong>
+              <p>不诊断、不预测、不贴标签、不与他人比较。依据不足的信息没有进入这份结果。</p>
+            </div>
+          </article>
+        </div>
+
+        <div class="layout-grid cols-aside" style="margin-top:16px">
+          <div class="module">
+            <div class="card-header">
+              <div class="card-title">
+                <h2>继续完成指导师流程</h2>
+                <small>统一结果进入现有解读与总部复核链路</small>
+              </div>
+            </div>
+            <div class="top-actions intake-actions">
+              <a class="btn primary" href="ai-interpreter-session.html?from=report-intake">进入 AI解读助手</a>
+              <button class="btn ghost" type="button" data-go-step="3">查看处理边界</button>
+            </div>
+          </div>
+
+          <aside class="module">
+            <div class="card-header">
+              <div class="card-title">
+                <h2>内部处理摘要</h2>
+                <small>客户不可见</small>
+              </div>
+              <span class="status info">演示</span>
+            </div>
+            <div class="data-list">
+              <div class="data-item"><span>来源确认</span><strong>当前标签页内已完成</strong></div>
+              <div class="data-item"><span>统一处理</span><strong>已完成</strong></div>
+              <div class="data-item"><span>输出语言</span><strong>AIPIWEN统一表达</strong></div>
+              <div class="data-item"><span>待确认内容</span><strong>未进入客户结果</strong></div>
+              <div class="data-item"><span>运行方式</span><strong>Preview 流程模拟</strong></div>
+            </div>
+          </aside>
+        </div>
+      </section>
+    </main>
+  </div>
+</body>
+</html>
