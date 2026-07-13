@@ -62,6 +62,10 @@
       "dest": "/patterns/$1"
     },
     {
+      "src": "/static/(.*)",
+      "dest": "/static/$1"
+    },
+    {
       "src": "/admin.html",
       "dest": "/admin.html"
     },
@@ -76,6 +80,14 @@
     {
       "src": "/homepage.html",
       "dest": "/homepage.html"
+    },
+    {
+      "src": "/advisor.html",
+      "dest": "/advisor.html"
+    },
+    {
+      "src": "/advisor",
+      "dest": "/advisor.html"
     },
     {
       "src": "/behavior-input.html",
