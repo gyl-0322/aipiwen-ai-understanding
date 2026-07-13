@@ -242,7 +242,7 @@ const DS_API = 'https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completio
  * 统一 AI 调用入口（DashScope OpenAI-compatible）
  * 调用签名与原 callClaude 完全一致，上层代码无需修改
  */
-async function callClaude({ model, system, messages, maxTokens = 600, cache = false, timeoutMs = 25000 }) {
+async function callClaude({ model, system, messages, maxTokens = 600, cache = false, timeoutMs = 25000, retries = 0 }) {
   const apiKey = process.env.DASHSCOPE_API_KEY || '';
 
   // 合并 system 提示（DashScope 走 role:system message）
@@ -266,26 +266,35 @@ async function callClaude({ model, system, messages, maxTokens = 600, cache = fa
     'Content-Type':  'application/json',
   };
 
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
-  try {
-    const res = await fetch(DS_API, { method: 'POST', headers, body: JSON.stringify(body), signal: controller.signal });
-    clearTimeout(timer);
-    const rawText = await res.text();
-    if (!res.ok) {
-      const err = Object.assign(new Error(`DS ${res.status}`), { status: res.status, body: rawText.slice(0, 300) });
-      console.error('[DashScope]', err.message, err.body);
-      throw err;
+  const maxAttempts = Math.max(1, 1 + Number(retries || 0));
+  let lastError = null;
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      const res = await fetch(DS_API, { method: 'POST', headers, body: JSON.stringify(body), signal: controller.signal });
+      clearTimeout(timer);
+      const rawText = await res.text();
+      if (!res.ok) {
+        const err = Object.assign(new Error(`DS ${res.status}`), { status: res.status, body: rawText.slice(0, 300) });
+        console.error('[DashScope]', err.message, err.body);
+        throw err;
+      }
+      const data = JSON.parse(rawText);
+      // OpenAI-compatible 响应格式
+      const text = data.choices?.[0]?.message?.content?.trim() || null;
+      trackApiSpend(model, data.usage?.prompt_tokens || 0, data.usage?.completion_tokens || 0).catch(() => {});
+      return { text, usage: data.usage || {} };
+    } catch (e) {
+      clearTimeout(timer);
+      lastError = e;
+      const retriableStatus = e.status === 429 || (e.status >= 500 && e.status < 600);
+      const retriableNetwork = !e.status || e.name === 'AbortError' || /fetch failed|network|timeout|aborted/i.test(e.message || '');
+      if (attempt >= maxAttempts || (!retriableStatus && !retriableNetwork)) throw e;
+      await new Promise(resolve => setTimeout(resolve, 500 * attempt));
     }
-    const data = JSON.parse(rawText);
-    // OpenAI-compatible 响应格式
-    const text = data.choices?.[0]?.message?.content?.trim() || null;
-    trackApiSpend(model, data.usage?.prompt_tokens || 0, data.usage?.completion_tokens || 0).catch(() => {});
-    return { text, usage: data.usage || {} };
-  } catch (e) {
-    clearTimeout(timer);
-    throw e;
   }
+  throw lastError;
 }
 
 // ─── 每日 API Spend 追踪（DashScope 人民币计费） ──────────────────────────────

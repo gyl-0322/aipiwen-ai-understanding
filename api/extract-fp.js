@@ -270,7 +270,7 @@ module.exports = async function handler(req, res) {
 
   let visionRaw = null;
   try {
-    const { text } = await callClaude({ model: MODEL_DEEP, messages, maxTokens: 800, timeoutMs: 55000 });
+    const { text } = await callClaude({ model: MODEL_DEEP, messages, maxTokens: 800, timeoutMs: 55000, retries: 1 });
     visionRaw = text;
     if (!visionRaw) {
       console.error('[extract-fp] empty vision reply');
@@ -391,6 +391,7 @@ module.exports = async function handler(req, res) {
           model: MODEL_DEEP,
           maxTokens: 800,
           timeoutMs: 30000,
+          retries: 1,
           messages: [{
             role: 'user',
             content: [
