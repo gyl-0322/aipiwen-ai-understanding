@@ -21,6 +21,7 @@ try {
   const advisor = read('advisor.html');
   const homepage = read('homepage.html');
   const login = read('login.html');
+  const session = read('ai-interpreter-session.html');
   const demoAuth = read('static/preview-demo-auth.js');
   const interpreterDemo = read('static/ai-interpreter.js');
   const vercel = JSON.parse(read('vercel.json'));
@@ -70,6 +71,12 @@ try {
   assert(demoAuth.includes("sessionStorage.removeItem(REPORT_STATE_KEY)"), '退出演示必须同时清除报告接入状态');
   assert(!interpreterDemo.includes('localStorage'), '模拟业务额度不得跨浏览器会话持久化');
   assert(!interpreterDemo.includes('mock-register'), '旧的“注册即赠积分”处理不得恢复');
+
+  assert(session.includes('class="finger-column-headings"'), '五大功能区必须使用统一左右手列标题');
+  assert(count(session, />右手</g) === 1, '“右手”只能作为列标题出现一次');
+  assert(count(session, />左手</g) === 1, '“左手”只能作为列标题出现一次');
+  assert(count(session, /class="finger-row"/g) === 5, '五大功能区必须保留五个功能行');
+  assert(count(session, /class="finger-hand"/g) === 10, '五大功能区必须保留十个左右手数据单元');
 
   protectedPages.forEach((pagePath) => {
     const page = read(pagePath);

@@ -743,11 +743,31 @@ button.table-row {
   gap: 6px;
 }
 
+.finger-column-headings,
 .finger-row {
   display: grid;
   grid-template-columns: 52px minmax(0, 1fr) minmax(0, 1fr);
-  align-items: stretch;
   gap: 5px;
+}
+
+.finger-column-headings {
+  align-items: center;
+  margin-bottom: 6px;
+  color: var(--faint);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .06em;
+  text-align: center;
+}
+
+.finger-column-headings strong {
+  color: var(--muted);
+  font-size: 11px;
+  letter-spacing: .14em;
+}
+
+.finger-row {
+  align-items: stretch;
 }
 
 .finger-row h3 {
@@ -807,9 +827,9 @@ button.table-row {
 .finger-hand {
   position: relative;
   display: grid;
-  grid-template-columns: 22px minmax(0, 1fr) 38px;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
   min-height: 48px;
   padding: 6px;
   border: 1px solid rgba(149, 173, 211, .12);
@@ -843,16 +863,6 @@ button.table-row {
   background: linear-gradient(90deg, var(--cyan), var(--amber));
   transform: scaleX(calc(var(--value, 50%) / 100%));
   transform-origin: left center;
-}
-
-.finger-hand span {
-  position: relative;
-  color: var(--faint);
-  font-size: 9px;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  z-index: 1;
 }
 
 .finger-hand strong {
