@@ -90,9 +90,9 @@ try {
   );
   assert(!Object.hasOwn(vercel, 'functions'), 'Preview 静态部署不得声明 Serverless Functions');
   assert(!Object.hasOwn(vercel, 'crons'), 'Preview 静态部署不得声明定时任务');
-  assert(vercelIgnore.split(/\r?\n/)[0] === '*', '.vercelignore 必须默认排除全部文件');
-  assert(vercelIgnore.includes('!static/**'), '.vercelignore 必须显式放行演示静态资源');
-  assert(!/^!api(?:\/|$)/m.test(vercelIgnore), '.vercelignore 不得放行 api 目录');
+  assert(/^api\/$/m.test(vercelIgnore), '.vercelignore 必须排除 api 目录');
+  assert(/^lib\/$/m.test(vercelIgnore), '.vercelignore 必须排除服务端 lib 目录');
+  assert(!/^static(?:\/|$)/m.test(vercelIgnore), '.vercelignore 不得排除演示静态资源');
   [
     '/login.html',
     '/login',
