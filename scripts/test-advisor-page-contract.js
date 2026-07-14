@@ -51,6 +51,7 @@ try {
   assert(heroActions[1].includes('href="#advisor-contact">联系总部开通账号</a>'), '联系总部按钮必须位于主操作区并指向账号开通方式');
   assert(count(advisor, /id="advisor-contact"/g) === 1, '页面必须且只能有一个账号开通锚点');
   assert(!advisorVisibleCopy.includes('申请开通内测'), '用户可见内容不得恢复“申请开通内测”');
+  assert(!advisorVisibleCopy.includes('解读师'), '指导师介绍页不得恢复“解读师”旧称');
 
   assert(login.includes('data-preview-demo-page="login"'), '统一登录页缺少 Preview 演示标识');
   assert(login.includes('static/preview-demo-auth.js'), '统一登录页必须加载本地模拟登录脚本');
@@ -77,6 +78,7 @@ try {
     assert(/<body[^>]+hidden/.test(page), `${pagePath} 必须在会话确认前隐藏内容`);
     assert(!page.includes('static/v3a-auth.js'), `${pagePath} 不得加载真实 Supabase 认证脚本`);
     assert(!/Emma|V1\.1|静态 Demo|\bMock\b/.test(visiblePage), `${pagePath} 含有过时或内部演示用语`);
+    assert(!visiblePage.includes('解读师'), `${pagePath} 不得出现“解读师”旧称`);
   });
 
   const routeSources = vercel.routes.map((route) => route.src);
