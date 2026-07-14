@@ -3,80 +3,8 @@
   "ignoreCommand": "node scripts/test-advisor-page-contract.js --vercel-ignore-command",
   "routes": [
     {
-      "src": "/api/growth",
-      "dest": "/api/admin-convs"
-    },
-    {
-      "src": "/api/stats",
-      "dest": "/api/admin-convs"
-    },
-    {
-      "src": "/api/log-session",
-      "dest": "/api/guest-chat"
-    },
-    {
-      "src": "/api/wechat",
-      "dest": "/api/auth"
-    },
-    {
-      "src": "/api/error-log",
-      "dest": "/api/admin-convs"
-    },
-    {
-      "src": "/api/invite",
-      "dest": "/api/auth"
-    },
-    {
-      "src": "/api/synthesize",
-      "dest": "/api/guest-chat"
-    },
-    {
-      "src": "/api/track",
-      "dest": "/api/admin-convs"
-    },
-    {
-      "src": "/api/knowledge",
-      "dest": "/api/admin-convs"
-    },
-    {
-      "src": "/api/report-store",
-      "dest": "/api/generate-report"
-    },
-    {
-      "src": "/api/(.*)",
-      "dest": "/api/$1"
-    },
-    {
-      "src": "/js/(.*)",
-      "dest": "/js/$1"
-    },
-    {
-      "src": "/lib/(.*)",
-      "dest": "/lib/$1"
-    },
-    {
-      "src": "/assets/(.*)",
-      "dest": "/assets/$1"
-    },
-    {
-      "src": "/patterns/(.*)",
-      "dest": "/patterns/$1"
-    },
-    {
       "src": "/static/(.*)",
       "dest": "/static/$1"
-    },
-    {
-      "src": "/admin.html",
-      "dest": "/admin.html"
-    },
-    {
-      "src": "/admin-convs.html",
-      "dest": "/admin-convs.html"
-    },
-    {
-      "src": "/admin-convs",
-      "dest": "/admin-convs.html"
     },
     {
       "src": "/homepage.html",
@@ -135,95 +63,12 @@
       "dest": "/ai-interpreter-cases.html"
     },
     {
-      "src": "/behavior-input.html",
-      "headers": {
-        "Location": "/child-chat.html"
-      },
-      "status": 301
-    },
-    {
-      "src": "/light-report.html",
-      "dest": "/light-report.html"
-    },
-    {
-      "src": "/full-report.html",
-      "dest": "/full-report.html"
-    },
-    {
-      "src": "/fingerprint-v2-wizard.html",
-      "dest": "/fingerprint-v2-wizard.html"
-    },
-    {
-      "src": "/child-chat.html",
-      "dest": "/child-chat.html"
-    },
-    {
-      "src": "/chat",
-      "dest": "/child-chat.html"
-    },
-    {
-      "src": "/privacy",
-      "dest": "/privacy.html"
-    },
-    {
       "src": "/privacy.html",
       "dest": "/privacy.html"
     },
     {
-      "src": "/personality",
-      "dest": "/personality.html"
-    },
-    {
-      "src": "/personality.html",
-      "dest": "/personality.html"
-    },
-    {
-      "src": "/synthesis.html",
-      "dest": "/synthesis.html"
-    },
-    {
-      "src": "/synthesis",
-      "dest": "/synthesis.html"
-    },
-    {
-      "src": "/report-upload.html",
-      "dest": "/report-upload.html"
-    },
-    {
-      "src": "/report-upload",
-      "dest": "/report-upload.html"
-    },
-    {
-      "src": "/report-viewer.html",
-      "dest": "/report-viewer.html"
-    },
-    {
-      "src": "/report-viewer",
-      "dest": "/report-viewer.html"
-    },
-    {
-      "src": "/api/generate-report",
-      "dest": "/api/generate-report.js"
-    },
-    {
-      "src": "/practitioner.html",
-      "dest": "/practitioner.html"
-    },
-    {
-      "src": "/practitioner",
-      "dest": "/practitioner.html"
-    },
-    {
-      "src": "/practitioner-demo",
-      "dest": "/practitioner-demo.html"
-    },
-    {
-      "src": "/practitioner-demo.html",
-      "dest": "/practitioner-demo.html"
-    },
-    {
-      "src": "/share/(.*)",
-      "dest": "/share/$1"
+      "src": "/privacy",
+      "dest": "/privacy.html"
     },
     {
       "src": "/",
@@ -232,48 +77,6 @@
     {
       "src": "/(.*)",
       "dest": "/homepage.html"
-    }
-  ],
-  "functions": {
-    "api/auth.js": {
-      "maxDuration": 10
-    },
-    "api/children.js": {
-      "maxDuration": 15
-    },
-    "api/guest-chat.js": {
-      "maxDuration": 60
-    },
-    "api/digest.js": {
-      "maxDuration": 60
-    },
-    "api/admin-convs.js": {
-      "maxDuration": 30
-    },
-    "api/extract-fp.js": {
-      "maxDuration": 60
-    },
-    "api/generate-report.js": {
-      "maxDuration": 60,
-      "regions": ["iad1"]
-    }
-  },
-  "crons": [
-    {
-      "path": "/api/digest?action=portrait_all",
-      "schedule": "0 18 * * *"
-    },
-    {
-      "path": "/api/digest?action=patterns",
-      "schedule": "0 19 * * 0"
-    },
-    {
-      "path": "/api/digest?action=weekly",
-      "schedule": "0 20 * * 0"
-    },
-    {
-      "path": "/api/digest?action=analyze_convs",
-      "schedule": "0 19 * * 1"
     }
   ]
 }

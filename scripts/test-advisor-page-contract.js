@@ -24,6 +24,7 @@ try {
   const demoAuth = read('static/preview-demo-auth.js');
   const interpreterDemo = read('static/ai-interpreter.js');
   const vercel = JSON.parse(read('vercel.json'));
+  const vercelIgnore = read('.vercelignore');
   const advisorVisibleCopy = advisor.replace(/<!--[\s\S]*?-->/g, '');
   const heroActions = advisor.match(/<div class="hero-actions">([\s\S]*?)<\/div>/);
   const protectedPages = [
@@ -83,6 +84,15 @@ try {
 
   const routeSources = vercel.routes.map((route) => route.src);
   const catchAllIndex = routeSources.indexOf('/(.*)');
+  assert(
+    vercel.routes.every((route) => !route.src.startsWith('/api') && !route.dest.startsWith('/api')),
+    'Preview 静态部署不得保留 API 路由'
+  );
+  assert(!Object.hasOwn(vercel, 'functions'), 'Preview 静态部署不得声明 Serverless Functions');
+  assert(!Object.hasOwn(vercel, 'crons'), 'Preview 静态部署不得声明定时任务');
+  assert(vercelIgnore.split(/\r?\n/)[0] === '*', '.vercelignore 必须默认排除全部文件');
+  assert(vercelIgnore.includes('!static/**'), '.vercelignore 必须显式放行演示静态资源');
+  assert(!/^!api(?:\/|$)/m.test(vercelIgnore), '.vercelignore 不得放行 api 目录');
   [
     '/login.html',
     '/login',

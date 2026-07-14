@@ -1,0 +1,17 @@
+*
+!vercel.json
+!homepage.html
+!advisor.html
+!login.html
+!ai-interpreter-workbench.html
+!ai-interpreter-customers.html
+!ai-interpreter-report-intake.html
+!ai-interpreter-session.html
+!ai-interpreter-training.html
+!ai-interpreter-review.html
+!ai-interpreter-cases.html
+!privacy.html
+!static/
+!static/**
+!scripts/
+!scripts/test-advisor-page-contract.js
