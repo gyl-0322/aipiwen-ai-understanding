@@ -110,6 +110,47 @@ body {
 .progress-dot.done { background: var(--amber); }
 .progress-dot.active { background: rgba(194,105,42,.5); }
 
+/* ─── 快速测评工具卡片 ─── */
+.tools-grid{display:flex;flex-direction:column;gap:12px;padding:0 20px 10px;}
+.tool-card{background:#fff;border:1.5px solid var(--ink-10);border-radius:16px;transition:border-color .2s,box-shadow .2s;text-decoration:none;color:inherit;}
+.tool-card:active{border-color:var(--amber);box-shadow:0 2px 12px rgba(194,105,42,.08);}
+.tool-card-inner{display:flex;align-items:flex-start;gap:14px;padding:20px 18px;cursor:pointer;}
+.tool-card .tool-icon{font-size:28px;flex-shrink:0;line-height:1;margin-top:2px;}
+.tool-card .tool-body{flex:1;min-width:0;}
+.tool-card .tool-title{font-size:15px;font-weight:700;color:var(--ink);margin-bottom:3px;}
+.tool-card .tool-desc{font-size:12px;color:var(--ink-40);line-height:1.55;}
+.tool-card .tool-badge{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.05em;padding:2px 8px;border-radius:10px;margin-top:6px;}
+.tool-badge.check{background:rgba(194,105,42,.12);color:var(--amber);}
+.tool-badge.fp{background:rgba(58,125,94,.12);color:var(--ok);}
+.tool-done-check{display:none;color:var(--ok);font-size:14px;font-weight:600;margin-top:4px;}
+.tool-done-check.show{display:block;}
+.tool-panel{display:none;background:#fff;border-top:1px solid var(--ink-10);padding:20px;}
+.tool-panel.active{display:block;}
+.tool-panel-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+.tool-panel-title{font-size:16px;font-weight:700;color:var(--ink);}
+.tool-panel-close{width:30px;height:30px;border-radius:50%;border:1px solid var(--ink-10);background:#fff;font-size:15px;color:var(--ink-40);cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.mood-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:14px;}
+.mood-btn{padding:14px 4px;border:1.5px solid var(--ink-10);border-radius:14px;background:#fff;cursor:pointer;text-align:center;transition:.15s;font-size:28px;line-height:1.2;font-family:inherit;}
+.mood-btn .mood-label{font-size:10px;color:var(--ink-40);display:block;margin-top:4px;}
+.mood-btn.selected{border-color:var(--amber);background:var(--amber-soft);transform:scale(1.05);}
+.style-pair,.vark-pair{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}
+.style-option,.vark-option{padding:16px 14px;border:1.5px solid var(--ink-10);border-radius:14px;background:#fff;cursor:pointer;text-align:center;transition:.15s;font-size:13px;color:var(--ink-70);line-height:1.5;}
+.style-option .style-icon,.vark-option .vark-icon{font-size:24px;display:block;margin-bottom:6px;}
+.style-option.selected,.vark-option.selected{border-color:var(--amber);background:var(--amber-soft);}
+.style-result,.vark-result{background:var(--cream-deep);border-radius:14px;padding:18px;font-size:13px;line-height:1.7;color:var(--ink-70);text-align:center;display:none;}
+.style-result.show,.vark-result.show{display:block;}
+.style-result strong,.vark-result strong{color:var(--amber);}
+.history-item{display:flex;gap:10px;padding:10px 0;border-bottom:1px solid var(--ink-10);font-size:13px;line-height:1.5;}
+.history-item:last-child{border-bottom:none;}
+.history-date{color:var(--ink-40);font-size:11px;white-space:nowrap;flex-shrink:0;min-width:70px;}
+.history-insight{color:var(--ink-70);flex:1;}
+.history-trigger{color:var(--amber);font-size:12px;font-weight:600;}
+.vark-bars{margin:14px 0;}
+.vark-bar-row{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
+.vark-bar-label{font-size:12px;color:var(--ink-70);text-align:right;width:40px;flex-shrink:0;}
+.vark-bar-track{flex:1;height:8px;background:var(--ink-10);border-radius:4px;overflow:hidden;}
+.vark-bar-fill{height:100%;background:var(--amber);border-radius:4px;transition:width .5s ease;}
+
 /* ─── STEP SCREEN ─── */
 .step-screen { display: none; padding: 0 20px 28px; }
 .step-screen.active { display: block; }
@@ -1015,8 +1056,96 @@ body {
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
       返回
     </a>
-    <h1>AI 皮纹天<em>赋</em>速测</h1>
+    <h1>AI 天赋<em>速测</em></h1>
     <p>指尖携带的遗传密码 · 揭示与生俱来的天赋图谱</p>
+
+  </div>
+
+  <!-- ═══════════════════════════════
+       测评工具箱
+  ═══════════════════════════════ -->
+  <div class="tools-grid" id="toolsGrid">
+
+    <!-- 1. 情绪温度计 -->
+    <div class="tool-card" id="tool-mood-card">
+      <div class="tool-card-inner" onclick="openTool('mood')">
+        <div class="tool-icon">🌡️</div>
+        <div class="tool-body">
+          <div class="tool-title">情绪温度计</div>
+          <div class="tool-desc">现在感觉怎么样？记录当下情绪。30秒。</div>
+          <div class="tool-badge check">当下状态</div>
+          <div class="tool-done-check" id="tool-mood-done">今天已记录 ✓</div>
+        </div>
+      </div>
+      <div class="tool-panel" id="panel-mood">
+        <div class="tool-panel-header">
+          <div class="tool-panel-title">🌡️ 现在感觉怎么样？</div>
+          <button class="tool-panel-close" onclick="closeTool('mood')">✕</button>
+        </div>
+        <p style="font-size:13px;color:var(--ink-40);margin-bottom:14px;">选一个最接近此刻感受的</p>
+        <div class="mood-grid" id="moodGrid">
+          <button class="mood-btn" onclick="pickMood(this,'激动','😆')">😆<span class="mood-label">激动</span></button>
+          <button class="mood-btn" onclick="pickMood(this,'开心','😊')">😊<span class="mood-label">开心</span></button>
+          <button class="mood-btn" onclick="pickMood(this,'平静','😐')">😐<span class="mood-label">平静</span></button>
+          <button class="mood-btn" onclick="pickMood(this,'低落','😔')">😔<span class="mood-label">低落</span></button>
+          <button class="mood-btn" onclick="pickMood(this,'烦躁','😤')">😤<span class="mood-label">烦躁</span></button>
+          <button class="mood-btn" onclick="pickMood(this,'疲惫','😴')">😴<span class="mood-label">疲惫</span></button>
+          <button class="mood-btn" onclick="pickMood(this,'焦虑','😰')">😰<span class="mood-label">焦虑</span></button>
+          <button class="mood-btn" onclick="pickMood(this,'期待','🤩')">🤩<span class="mood-label">期待</span></button>
+          <button class="mood-btn" onclick="pickMood(this,'感恩','🥹')">🥹<span class="mood-label">感恩</span></button>
+          <button class="mood-btn" onclick="pickMood(this,'孤独','🥺')">🥺<span class="mood-label">孤独</span></button>
+        </div>
+        <div id="moodSelected" style="display:none;text-align:center;padding:12px 0;">
+          <div style="font-size:36px;margin-bottom:6px" id="moodEmoji"></div>
+          <div style="font-size:15px;font-weight:600;color:var(--amber);margin-bottom:4px" id="moodLabel"></div>
+          <div style="font-size:12px;color:var(--ink-40)">已记录</div>
+          <div id="moodStreak" style="display:none;margin-top:8px;padding:6px 12px;background:rgba(58,125,94,.08);border-radius:10px;font-size:12px;color:var(--ok)"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. 沟通风格快问 -->
+    <div class="tool-card" id="tool-style-card">
+      <div class="tool-card-inner" onclick="openTool('style')">
+        <div class="tool-icon">💬</div>
+        <div class="tool-body">
+          <div class="tool-title">沟通风格快问</div>
+          <div class="tool-desc">6道题·2分钟。你说事实还是说感受？主动开口还是先听再想？</div>
+          <div class="tool-badge check">当下状态</div>
+          <div class="tool-done-check" id="tool-style-done">已完成 ✓</div>
+        </div>
+      </div>
+      <div class="tool-panel" id="panel-style">
+        <div class="tool-panel-header">
+          <div class="tool-panel-title">💬 沟通风格快问</div>
+          <button class="tool-panel-close" onclick="closeTool('style')">✕</button>
+        </div>
+        <div id="styleQuiz">
+          <p style="font-size:13px;color:var(--ink-40);margin-bottom:14px" id="styleQNum">第 1 / 6 题</p>
+          <div style="font-size:15px;font-weight:600;color:var(--ink);margin-bottom:14px" id="styleQText"></div>
+          <div class="style-pair" id="stylePair"></div>
+        </div>
+        <div class="style-result" id="styleResult"></div>
+      </div>
+    </div>
+
+    <!-- 3. 天赋底色速测 — 面板里是完整7步向导 -->
+    <div class="tool-card" id="tool-fp-card">
+      <div class="tool-card-inner" onclick="openTool('fingerprint')">
+        <div class="tool-icon">🌀</div>
+        <div class="tool-body">
+          <div class="tool-title">天赋底色速测</div>
+          <div class="tool-desc">十指纹型对应大脑功能区。约10分钟。</div>
+          <div class="tool-badge fp">先天基线</div>
+          <div class="tool-done-check" id="tool-fp-done">已完成 ✓</div>
+        </div>
+      </div>
+      <div class="tool-panel" id="panel-fingerprint">
+        <div class="tool-panel-header">
+          <div class="tool-panel-title">🌀 天赋底色速测</div>
+          <button class="tool-panel-close" onclick="closeTool('fingerprint')">✕</button>
+        </div>
+
   </div>
 
   <!-- PROGRESS — 7 dots -->
@@ -1049,7 +1178,7 @@ body {
         <button class="age-chip-inline" onclick="setWizardAge(this,'初中 13-15岁')">初中 13-15岁</button>
         <button class="age-chip-inline" onclick="setWizardAge(this,'高中 16-18岁')">高中 16-18岁</button>
         <button class="age-chip-inline" onclick="setWizardAge(this,'大学+ 18岁以上')">大学+</button>
-        <button class="age-chip-inline" onclick="setWizardAge(this,'职场成人')">职场</button>
+        <button class="age-chip-inline" onclick="setWizardAge(this,'成年子女')">成年</button>
       </div>
     </div>
 
@@ -1546,6 +1675,61 @@ body {
     </div>
   </div>
 
+
+      </div>
+    </div>
+
+
+    <!-- 4. VARK 学习风格 -->
+    <div class="tool-card" id="tool-vark-card">
+      <div class="tool-card-inner" onclick="openTool('vark')">
+        <div class="tool-icon">📚</div>
+        <div class="tool-body">
+          <div class="tool-title">VARK 学习风格</div>
+          <div class="tool-desc">8道题·3分钟。全球最普及的学习风格模型。视觉、听觉、读写还是动手？</div>
+          <div class="tool-badge check">当下状态</div>
+          <div class="tool-done-check" id="tool-vark-done">已完成 ✓</div>
+        </div>
+      </div>
+      <div class="tool-panel" id="panel-vark">
+        <div class="tool-panel-header">
+          <div class="tool-panel-title">📚 VARK 学习风格评估</div>
+          <button class="tool-panel-close" onclick="closeTool('vark')">✕</button>
+        </div>
+        <div id="varkQuiz">
+          <p style="font-size:13px;color:var(--ink-40);margin-bottom:14px" id="varkQNum">第 1 / 8 题</p>
+          <div style="font-size:15px;font-weight:600;color:var(--ink);margin-bottom:14px" id="varkQText"></div>
+          <div class="vark-pair" id="varkPair"></div>
+        </div>
+        <div class="vark-result" id="varkResult"></div>
+      </div>
+    </div>
+
+    <!-- 5. 行为模式回顾 -->
+    <div class="tool-card" id="tool-history-card">
+      <div class="tool-card-inner" onclick="openTool('history')">
+        <div class="tool-icon">📊</div>
+        <div class="tool-body">
+          <div class="tool-title">行为模式回顾</div>
+          <div class="tool-desc">你记录过的行为模式，AI帮你找共同点。</div>
+          <div class="tool-badge check">长期观察</div>
+        </div>
+      </div>
+      <div class="tool-panel" id="panel-history">
+        <div class="tool-panel-header">
+          <div class="tool-panel-title">📊 行为模式回顾</div>
+          <button class="tool-panel-close" onclick="closeTool('history')">✕</button>
+        </div>
+        <div id="historyContent"></div>
+        <div id="historyEmpty" style="text-align:center;color:var(--ink-40);padding:20px;font-size:13px">
+          还没有记录。去<a href="/child-chat.html?for=child" style="color:var(--amber);font-weight:600;">「行为理解」</a>聊聊孩子、自己或伴侣，回来就能看到你的模式回顾。
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
 </div><!-- /.container -->
 
 <!-- ZOOM MODAL -->
@@ -1653,7 +1837,13 @@ function showScreen(id) {
     else if (i === info.step) dot.className = 'progress-dot active';
     else dot.className = 'progress-dot';
   }
-  window.scrollTo(0, 0);
+  const fpPanel = document.getElementById('panel-fingerprint');
+  if (fpPanel && fpPanel.classList.contains('active')) {
+    requestAnimationFrame(() => {
+      const target = document.querySelector('#panel-fingerprint .progress-wrap') || fpPanel;
+      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  }
 }
 
 function goBack(to) { showScreen(to); }
@@ -2226,6 +2416,7 @@ function showResult() {
           if (dot) dot.className = 'progress-dot done';
         }
         if (window.GT) GT.track('result_view', { type: result.key });
+        document.getElementById('tool-fp-done').classList.add('show');
         _logFingerprintSession(result);
       }, 400);
       return;
@@ -2564,6 +2755,63 @@ if (window.GT) GT.track('page_open');
     card.appendChild(btn);
   });
 })();
+</script>
+<script>
+/* ══════ 测评工具箱 JS ══════ */
+function openTool(id){
+  if(id==='fingerprint'){
+    var p=document.getElementById('panel-fingerprint');if(!p)return;
+    if(p.classList.contains('active')){p.classList.remove('active');return}
+    document.querySelectorAll('.tool-panel').forEach(function(x){x.classList.remove('active')});
+    p.classList.add('active');p.scrollIntoView({behavior:'smooth',block:'start'});return
+  }
+  var p=document.getElementById('panel-'+id);if(!p)return;
+  if(p.classList.contains('active')){p.classList.remove('active');return}
+  document.querySelectorAll('.tool-panel').forEach(function(x){x.classList.remove('active')});
+  p.classList.add('active');p.scrollIntoView({behavior:'smooth',block:'start'});
+  if(id==='mood')showTodayMoodIfAny();
+  if(id==='style'&&!(document.getElementById('styleQText').dataset.loaded))initStyleQuiz();
+  if(id==='vark'&&!(document.getElementById('varkQText').dataset.loaded))initVarkQuiz()
+}
+function closeTool(id){document.getElementById('panel-'+id).classList.remove('active')}
+
+function pickMood(btn,label,emoji){
+  document.querySelectorAll('#moodGrid .mood-btn').forEach(function(b){b.classList.remove('selected')});
+  btn.classList.add('selected');
+  var today=new Date().toISOString().slice(0,10);
+  document.getElementById('moodSelected').style.display='block';
+  document.getElementById('moodEmoji').textContent=emoji;
+  document.getElementById('moodLabel').textContent=label;
+  try{
+    var moods=JSON.parse(localStorage.getItem('aipiwen_moods')||'{}');
+    moods[today]={label:label,emoji:emoji,time:new Date().toISOString()};
+    localStorage.setItem('aipiwen_moods',JSON.stringify(moods));
+    var dates=Object.keys(moods).sort().reverse(),d2=new Date(today),streak=1;
+    for(var si=1;si<dates.length;si++){d2.setDate(d2.getDate()-1);if(moods[d2.toISOString().slice(0,10)])streak++;else break}
+    var se=document.getElementById('moodStreak');
+    if(streak>1){se.style.display='inline-block';se.textContent=streak+' 天连续记录'}else{se.style.display='none'}
+  }catch(e){}
+  document.getElementById('tool-mood-done').classList.add('show')
+}
+function showTodayMoodIfAny(){
+  try{var t=new Date().toISOString().slice(0,10);var m=JSON.parse(localStorage.getItem('aipiwen_moods')||'{}');if(m[t]){document.getElementById('moodSelected').style.display='block';document.getElementById('moodEmoji').textContent=m[t].emoji;document.getElementById('moodLabel').textContent=m[t].label}}catch(e){}
+}
+
+var STYLE_QS=[{q:'小组讨论时，你通常？',a:{icon:'🗣️',t:'先开口说'},b:{icon:'👂',t:'先听再想'},dim:'initiate'},{q:'遇到难题，你？',a:{icon:'🗺️',t:'先搞清楚原因'},b:{icon:'🔧',t:'先解决掉'},dim:'reason'},{q:'有分歧时你先说？',a:{icon:'📋',t:'说事实'},b:{icon:'💗',t:'说感受'},dim:'express'},{q:'空闲时你？',a:{icon:'🏃',t:'出去转转'},b:{icon:'📖',t:'一个人待着'},dim:'energy'},{q:'做决定时？',a:{icon:'🎯',t:'很快有倾向'},b:{icon:'⚖️',t:'来回权衡'},dim:'decide'},{q:'被误解了？',a:{icon:'✋',t:'马上解释'},b:{icon:'🤐',t:'先沉默'},dim:'react'}];
+var ss={},sq=0;
+function initStyleQuiz(){ss={};sq=0;document.getElementById('styleQText').dataset.loaded='1';document.getElementById('styleQuiz').style.display='';document.getElementById('styleResult').classList.remove('show');renderStyleQ()}
+function renderStyleQ(){if(sq>=STYLE_QS.length){showStyleResult();return}var q=STYLE_QS[sq];document.getElementById('styleQNum').textContent='第 '+(sq+1)+' / 6 题';document.getElementById('styleQText').textContent=q.q;var pair=document.getElementById('stylePair');pair.innerHTML='';['a','b'].forEach(function(o){var x=q[o];var d=document.createElement('div');d.className='style-option';d.innerHTML='<span class="style-icon">'+x.icon+'</span>'+x.t;d.onclick=function(){document.querySelectorAll('#stylePair .style-option').forEach(function(e){e.classList.remove('selected')});d.classList.add('selected');ss[q.dim]=(o==='a'?1:-1);setTimeout(function(){sq++;renderStyleQ()},300)};pair.appendChild(d)})}
+function showStyleResult(){document.getElementById('styleQuiz').style.display='none';var r=document.getElementById('styleResult');r.innerHTML='<div style="font-size:14px;font-weight:600;color:var(--amber);margin-bottom:8px">你的沟通倾向</div><p><strong>'+(ss.initiate>0?'你先开口说，边想边说':'你先听再想，想好再说')+'</strong></p><p style="margin-top:6px">'+(ss.express>0?'说事实':'说感受')+'<br>'+(ss.react>0?'被误解时直接澄清':'被误解时先沉默')+'</p><p style="margin-top:8px;font-size:11px;color:var(--ink-40)">这是倾向，不是人格类型。</p>';r.classList.add('show');r.scrollIntoView({behavior:'smooth'});try{localStorage.setItem('aipiwen_style_result',JSON.stringify({date:new Date().toISOString(),scores:ss}))}catch(e){}document.getElementById('tool-style-done').classList.add('show')}
+
+var VARK_QS=[{q:'学新东西时你喜欢？',a:{icon:'👁️',t:'看图表演示'},b:{icon:'👂',t:'听讲解讨论'},c:{icon:'📝',t:'读文字材料'},d:{icon:'🔧',t:'动手试一遍'},dims:['V','A','R','K']},{q:'记东西时你偏向？',a:{icon:'🧠',t:'脑海里看画面'},b:{icon:'🗣️',t:'听声音说出来'},c:{icon:'✍️',t:'写下来'},d:{icon:'🤲',t:'边做边记'},dims:['V','A','R','K']},{q:'看地图找路？',a:{icon:'🗺️',t:'看地图就懂了'},b:{icon:'📢',t:'别人告诉怎么走'},c:{icon:'📋',t:'把路线写下来'},d:{icon:'🚶',t:'边走边试'},dims:['V','A','R','K']},{q:'和人交流注意？',a:{icon:'👀',t:'表情肢体语言'},b:{icon:'🎧',t:'语气说话方式'},c:{icon:'💬',t:'具体说了什么'},d:{icon:'🤝',t:'当时的氛围'},dims:['V','A','R','K']},{q:'遇技术问题？',a:{icon:'📺',t:'看视频教程'},b:{icon:'📞',t:'问人打电话'},c:{icon:'📖',t:'查说明书'},d:{icon:'🛠️',t:'自己动手试'},dims:['V','A','R','K']},{q:'空闲享受？',a:{icon:'🎨',t:'看展拍照电影'},b:{icon:'🎵',t:'音乐播客'},c:{icon:'📚',t:'读书写字'},d:{icon:'⚽',t:'运动手工'},dims:['V','A','R','K']},{q:'做决定前？',a:{icon:'📊',t:'看数据图表'},b:{icon:'💭',t:'聊完再定'},c:{icon:'📝',t:'列优缺点'},d:{icon:'💡',t:'凭直觉体验'},dims:['V','A','R','K']},{q:'别人说你？',a:{icon:'🖼️',t:'观察力强'},b:{icon:'🗨️',t:'善于表达'},c:{icon:'📑',t:'有条理'},d:{icon:'🏗️',t:'动手能力强'},dims:['V','A','R','K']}];
+var vs={},vq=0;
+function initVarkQuiz(){vs={V:0,A:0,R:0,K:0};vq=0;document.getElementById('varkQText').dataset.loaded='1';document.getElementById('varkQuiz').style.display='';document.getElementById('varkResult').classList.remove('show');renderVarkQ()}
+function renderVarkQ(){if(vq>=VARK_QS.length){showVarkResult();return}var q=VARK_QS[vq];document.getElementById('varkQNum').textContent='第 '+(vq+1)+' / 8 题';document.getElementById('varkQText').textContent=q.q;var pair=document.getElementById('varkPair');pair.innerHTML='';pair.style.gridTemplateColumns='1fr 1fr';['a','b','c','d'].forEach(function(o){var x=q[o];var d=document.createElement('div');d.className='vark-option';d.innerHTML='<span class="vark-icon">'+x.icon+'</span>'+x.t;d.onclick=function(){document.querySelectorAll('#varkPair .vark-option').forEach(function(e){e.classList.remove('selected')});d.classList.add('selected');q.dims.forEach(function(dm,i){if(['a','b','c','d'][i]===o)vs[dm]=(vs[dm]||0)+1});setTimeout(function(){vq++;renderVarkQ()},300)};pair.appendChild(d)})}
+function showVarkResult(){document.getElementById('varkQuiz').style.display='none';var r=document.getElementById('varkResult');var t=vs.V+vs.A+vs.R+vs.K||1;var types=[{k:'V',l:'视觉型',p:Math.round(vs.V/t*100),d:'看图、图表、演示时最容易吸收'},{k:'A',l:'听觉型',p:Math.round(vs.A/t*100),d:'听讲、讨论、播客效果最好'},{k:'R',l:'读写型',p:Math.round(vs.R/t*100),d:'写下来、阅读文字最有效'},{k:'K',l:'动手型',p:Math.round(vs.K/t*100),d:'上手做、边体验边学'}];types.sort(function(a,b){return b.p-a.p});var top=types[0];r.innerHTML='<div style="font-size:14px;font-weight:600;color:var(--amber);margin-bottom:10px">VARK 学习风格</div><div style="font-size:16px;font-weight:700;color:var(--ink);margin-bottom:4px">以'+top.l+'为主</div><p style="margin-bottom:12px">'+top.d+'</p><div class="vark-bars">'+types.map(function(t){return'<div class="vark-bar-row"><div class="vark-bar-label">'+t.l+'</div><div class="vark-bar-track"><div class="vark-bar-fill" style="width:'+t.p+'%"></div></div><div style="font-size:11px;color:var(--ink-40);width:35px">'+t.p+'%</div></div>'}).join('')+'</div><p style="font-size:11px;color:var(--ink-40)">VARK 模型由 Neil Fleming 在 1987 年提出，是全球使用最广泛的学习风格框架之一。</p>';r.classList.add('show');r.scrollIntoView({behavior:'smooth'});try{localStorage.setItem('aipiwen_vark_result',JSON.stringify({date:new Date().toISOString(),scores:vs}))}catch(e){}document.getElementById('tool-vark-done').classList.add('show')}
+
+(function(){var ctxs=[{k:'child',l:'孩子'},{k:'self',l:'自己'},{k:'partner',l:'伴侣'},{k:'business',l:'伙伴'}];var all=[];ctxs.forEach(function(cx){try{var m=JSON.parse(localStorage.getItem('aipiwen_mem_'+cx.k)||'[]');m.forEach(function(x){x.context=cx.l;all.push(x)})}catch(e){}});if(!all.length){document.getElementById('historyEmpty').style.display='';return;}document.getElementById('tool-history-card').style.display='';all.sort(function(a,b){return(a.date||'')<(b.date||'')?1:-1});var recent=all.slice(0,10);var words={};recent.forEach(function(r){(r.behavior||'').replace(/[，。！？、]/g,' ').split(' ').forEach(function(w){if(w.length>=2)words[w]=(words[w]||0)+1})});var top=Object.entries(words).sort(function(a,b){return b[1]-a[1]}).slice(0,5).map(function(x){return x[0]});var h='';if(top.length)h+='<div style="font-size:12px;color:var(--amber);margin-bottom:10px;font-weight:600">最近 '+recent.length+' 次的共同触发词：'+top.map(function(w){return'"'+w+'"'}).join('、')+'</div>';recent.forEach(function(r){var b=(r.behavior||'').slice(0,40);var ins=(r.insight||'').replace(/<br>/g,' ').slice(0,60);h+='<div class="history-item"><div class="history-date">'+r.date+'<br><span style="color:var(--amber)">'+(r.context||'')+'</span></div><div class="history-insight"><span class="history-trigger">'+b+'</span>'+(ins?' — '+ins+'…':'')+'</div></div>'});document.getElementById('historyContent').innerHTML=h})();
+
+(function(){try{var t=new Date().toISOString().slice(0,10);if(JSON.parse(localStorage.getItem('aipiwen_moods')||'{}')[t])document.getElementById('tool-mood-done').classList.add('show');if(localStorage.getItem('aipiwen_style_result'))document.getElementById('tool-style-done').classList.add('show');if(localStorage.getItem('aipiwen_vark_result'))document.getElementById('tool-vark-done').classList.add('show')}catch(e){}})();
 </script>
 </body>
 </html>

@@ -338,7 +338,7 @@ body.chat-mode { height:100vh; overflow:hidden; }
       👉 <span id="cta-text">生成AI理解报告</span>
     </button>
     <div class="cta-note">免费生成 · 2分钟内看到结果</div>
-    <div class="privacy-bar">你的描述仅用于本次分析，不会被存储或分享给第三方</div>
+    <div class="privacy-bar">你的描述仅用于本次理解与后续对话承接，不会用于广告或公开展示。AI 分析会调用模型服务处理，详情见<a href="/privacy" style="color:var(--amber);text-decoration:none;">隐私政策</a></div>
   </div>
 </div>
 
@@ -415,6 +415,12 @@ function setAge(btn, age) {
   _subjectAge = age;
   document.querySelectorAll('.age-chip').forEach(b => b.classList.remove('selected'));
   btn.classList.add('selected');
+  // 孩子场景：年龄变化时刷新推荐问题
+  if (_for === 'child') { updateExampleChips(); }
+  updateSubmitBtn();
+  _subjectAge = age;
+  document.querySelectorAll('.age-chip').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
   updateSubmitBtn();
 }
 
@@ -461,11 +467,92 @@ const CONTEXTS = {
   },
 };
 
+// ═══ 按场景+年龄/阶段的问题推荐库 ═══
+const CHIPS_BY_AGE = {
+  child: {
+    '幼儿3-6岁': ['怎么说都不听，脾气说来就来', '总说害怕，不知在怕什么', '家里家外两个人，完全不一样', '跟弟弟妹妹抢东西抢到哭', '一件事重复问，好像没听见'],
+    '小学7-12岁': ['一催作业就崩溃发脾气', '手机停不下来，怎么说都不听', '放学回来什么都不说，沉默关门', '在学校跟同学起冲突', '半夜睡不着，总是很焦虑'],
+    '初中13-15岁': ['天天锁门，叫他不理', '情绪像过山车，一点就炸', '对学习突然没了兴趣', '跟同学起冲突，想法极端', '总觉得自己不够好'],
+    '高中16-18岁': ['跟我说不必管他了，很难受', '焦虑到失眠，担心考不好', '对未来完全没有方向', '说不想活了，我不知道怎么接', '沉迷游戏拒绝面对面沟通'],
+    '大学+': ['不主动联系，只有有事才找', '成绩突然下滑，不愿说原因', '感觉他离我越来越远', '对未来迷茫，跟我吵职业', '一个人闷很久，见面没话说'],
+    '成年子女': ['从不聊心里话，像外人', '我关心他被他嫌烦', '三十出头还不稳定，我干着急', '想让帮忙非不让帮', '跟我的婚姻模式越来越像'],
+  },
+  self: {
+    '学生或刚毕业阶段': ['道理都懂，就是一直拖', '忍不住反复担心，停不下来', '总想让别人满意，很难拒绝', '一遇到压力就想逃开', '情绪波动很大，自己也控制不住', '总觉得自己不够好'],
+    '职场打拼阶段': ['道理都懂，做事前却反复纠结', '明明有能力，被夸了会下意识否认', '所有事自己扛，不敢让人看到弱的一面', '总觉得别人在背后议论', '高强度推进后突然崩溃'],
+    '成家育儿阶段': ['总觉得自己不够好，尤其当妈后', '所有事自己扛，忘了还有自己', '对孩子发了脾气，之后又后悔', '很久没有为自己花时间', '不知道这样做对不对，没人可说'],
+    '人生中场阶段': ['习惯做的一切突然没动力了', '前半生没为自己活过', '该放松了反而更紧绷', '空闲下来不知道该做什么', '突然想弄清楚自己到底是谁'],
+  },
+  partner: {
+    '恋爱阶段': ['一不开心就沉默，说没事', '遇到冲突就回避，绕着走', '情绪来得很猛，又平复很快', '控制欲强，事事要过问', '总说累了，但不说哪里累', '对我忽冷忽热，摸不准'],
+    '新婚或结婚3年内': ['习惯和观念天天冲撞', '感觉他婚前婚后不一样', '吵架后冷战好几天', '都觉得对方不够关心', '金钱观差异越来越明显'],
+    '结婚3到10年': ['很久没有好好聊天了', '宁可刷手机也不看我一眼', '家庭责任分工感觉不公平', '教育孩子的想法完全相反', '感觉他不再欣赏我了'],
+    '结婚10年以上': ['好像习惯把你当室友', '提亲密就是他有需求，我需要配合', '年轻时的问题又回来了', '退休想象完全不同', '没什么可聊的，除了孩子和父母'],
+  },
+  business: {
+    '同事协作': ['分工模糊，交叉重复', '有不同意见时不知道怎么说', '功劳被拿走，锅要自己背'],
+    '项目合伙人': ['嘴上同意，行动一直拖', '有想法没耐心执行', '分歧时情绪化，上升到个人', '对细节纠结，影响整体进度', '什么都自己扛，不愿意分工'],
+    '上下级关系': ['总是催不动，说了又怕伤关系', '下属不服管，当面点头背后不动', '我不在时一切停摆'],
+    '创业伙伴': ['压力来了就退缩，推不动决策', '有没有未来，越来越不确定', '分工越来越模糊，情绪越来越大'],
+    '客户/甲方': ['需求变来变去，沟通全靠猜', '口头答应，合同不签', '什么都答应，但预算卡死'],
+    '团队成员协作': ['会议一遍遍开，永远定不下来', '信息不透明，各自闷头干活', '推不动，都在等别人先动'],
+  },
+};
+// Fallback: 没有选年龄时用默认问题
+function getChipsForContext(context, age) {
+  const pool = CHIPS_BY_AGE[context] || null;
+  if (!pool) {
+    // 没有分年龄的池子（如 child 选年龄前），用默认
+    const DEFAULTS = {
+      child: ['一催作业就崩溃发脾气', '情绪突然失控，一点小事就哭闹', '手机停不下来，怎么说都不听', '放学回来什么都不说，沉默关门', '在学校跟同学起冲突', '半夜睡不着，总是很焦虑'],
+      self: ['道理都懂，就是一直拖', '忍不住反复担心，停不下来', '总想让别人满意，很难拒绝', '一遇到压力就想逃开', '情绪波动很大，自己也控制不住', '总觉得自己不够好'],
+      partner: ['一不开心就沉默，说没事', '遇到冲突就回避，绕着走', '情绪来得很猛，又平复很快', '控制欲强，事事要过问', '总说累了，但不说哪里累', '对我忽冷忽热，摸不准'],
+      business: ['压力来了就退缩，推不动决策', '嘴上同意，行动一直拖', '有想法没耐心执行', '分歧时情绪化，上升到个人', '对细节纠结，影响整体进度', '什么都自己扛，不愿意分工'],
+    };
+    return DEFAULTS[context] || DEFAULTS.child;
+  }
+  // child 场景按年龄匹配
+  if (context === 'child') {
+    for (var k in pool) {
+      if (pool.hasOwnProperty(k) && (age || '').indexOf(k) >= 0) {
+        var found = pool[k]; if (found) return found;
+      }
+    }
+  }
+  // self/partner/business 按阶段标签匹配
+  if (age) {
+    for (var mk in pool) {
+      if (pool.hasOwnProperty(mk) && (age || '').indexOf(mk) >= 0) {
+        var mf = pool[mk]; if (mf) return mf;
+      }
+    }
+  }
+  // 没匹配上，返回该场景第一个条目
+  var keys = Object.keys(pool);
+  return keys.length > 0 ? pool[keys[0]] : ['道理都懂，就是一直拖'];
+}
+
+function updateExampleChips() {
+  var chipsEl2 = document.getElementById('example-chips');
+  if (!chipsEl2) return;
+  var newChips = getChipsForContext(_for, _subjectAge);
+  chipsEl2.innerHTML = '';
+  newChips.forEach(function(txt) {
+    var d = document.createElement('div');
+    d.className = 'example-chip'; d.textContent = txt;
+    d.onclick = function() { fillExample(txt, d); };
+    chipsEl2.appendChild(d);
+  });
+}
+
 const CTX = CONTEXTS[_for] || CONTEXTS.child;
 document.title = CTX.pageTitle;
 document.getElementById('form-eyebrow').textContent  = CTX.eyebrow;
 document.getElementById('form-title').innerHTML      = CTX.title;
 document.getElementById('form-sub').textContent      = CTX.sub;
+
+// init chips (uses getChipsForContext with age if already set)
+updateExampleChips();
 
 // 年龄/阶段选择：根据 context 调整标签和芯片
 (function setupAgeRow() {
@@ -488,7 +575,7 @@ document.getElementById('form-sub').textContent      = CTX.sub;
 
   if (_for === 'child') {
     ageLabel.textContent = '孩子几岁？（必选）';
-    renderChips([['幼儿3-6岁','幼儿3-6岁'],['小学7-12岁','小学7-12岁'],['初中13-15岁','初中13-15岁'],['高中16-18岁','高中16-18岁'],['大学+','大学+'],['职场成人','职场成人']]);
+    renderChips([['幼儿3-6岁','幼儿3-6岁'],['小学7-12岁','小学7-12岁'],['初中13-15岁','初中13-15岁'],['高中16-18岁','高中16-18岁'],['大学+','大学+'],['成年子女','成年子女（已工作）']]);
   } else if (_for === 'self') {
     ageLabel.textContent = '你现在处于？（必选）';
     renderChips([
@@ -505,6 +592,16 @@ document.getElementById('form-sub').textContent      = CTX.sub;
       ['结婚3-10年','结婚3到10年'],
       ['结婚10年以上','结婚10年以上'],
     ]);
+  } else if (_for === 'business') {
+    ageLabel.textContent = '你们是什么合作关系？（必选）';
+    renderChips([
+      ['同事协作','同事协作'],
+      ['项目合伙人','项目合伙人'],
+      ['上下级关系','上下级关系'],
+      ['创业伙伴','创业伙伴'],
+      ['客户/甲方','客户/甲方'],
+      ['团队内部','团队成员协作'],
+    ]);
   } else {
     ageRow.style.display = 'none';
   }
@@ -513,21 +610,14 @@ document.getElementById('form-label').textContent    = CTX.label;
 document.getElementById('behavior-input').placeholder = CTX.placeholder;
 document.getElementById('cta-text').textContent      = CTX.ctaText;
 
-// render chips
-const chipsEl = document.getElementById('example-chips');
-CTX.chips.forEach(txt => {
-  const d = document.createElement('div');
-  d.className = 'example-chip'; d.textContent = txt;
-  d.onclick = () => fillExample(txt, d);
-  chipsEl.appendChild(d);
-});
+// chips now rendered dynamically via updateExampleChips() (age-aware)
 
 // ── Form state ───────────────────────────────────────────────
 const selectedChips = new Set();
 
 function updateSubmitBtn() {
   const hasText = document.getElementById('behavior-input').value.trim().length >= 4;
-  const needsAge = _for === 'child' || _for === 'self' || _for === 'partner';
+  const needsAge = _for === 'child' || _for === 'self' || _for === 'partner' || _for === 'business';
   const hasAge = _subjectAge !== null;
   document.getElementById('submit-btn').disabled = !hasText || (needsAge && !hasAge);
 }
@@ -703,7 +793,7 @@ async function submitBehavior() {
   let cardData = null;
   if (_for === 'child') {
     try {
-      const analysis = AIPIWEN.AnalysisEngine.analyze(behavior, []);
+      const analysis = AIPIWEN.AnalysisEngine.analyze(behavior, [], _subjectAge);
       const content  = AIPIWEN.ContentLibrary.lightReport(analysis);
       cardData = {
         insight:   content.shareSummary || content.insight || '',
@@ -732,6 +822,13 @@ async function submitBehavior() {
 
   // 显示记忆提示（非亲子）
   showMemoryNotice();
+
+  // ── 轻提示：不诊断、不贴标签 ──
+  var disc = document.createElement('div');
+  disc.style.cssText = 'margin:8px 0 4px;padding:8px 14px;background:rgba(194,105,42,.04);border-left:3px solid rgba(194,105,42,.25);border-radius:6px;font-size:11px;color:var(--ink-40);line-height:1.6;';
+  disc.innerHTML = '<span style="color:var(--amber);font-weight:600;">温馨提示</span>&#160;行为理解基于你描述的场景给出可能的视角，不诊断，不贴标签，不预测未来。如需进一步校准，可试试<a href="/fingerprint-v2-wizard.html" style="color:var(--amber);font-weight:600;text-decoration:none;">天赋底色速测</a>或<a href="/report-upload.html" style="color:var(--amber);font-weight:600;text-decoration:none;">上传已有皮纹报告</a>。';
+  chatArea().appendChild(disc);
+  scrollBottom();
 
   // AI follow-up
   const t2 = appendThinking();
@@ -789,6 +886,14 @@ async function sendChat() {
 }
 
 async function callAPI(content) {
+  // 判断用户当前是否有报告/速测数据（控制 AI 证据层级）
+  var hasReportData = false;
+  try {
+    var rdc = sessionStorage.getItem('aipiwen_report_deepchat');
+    var fpData = localStorage.getItem('aipiwen_fp_uid');
+    hasReportData = !!(rdc || fpData);
+  } catch(e) { hasReportData = false; }
+
   const body = {
     content,
     history:         chatHistory.slice(-8),
@@ -797,6 +902,7 @@ async function callAPI(content) {
     sessionId:       _sessionId,
     subjectAge:      _subjectAge,        // 年龄分层：AI 自动调整解读语气
     refToken:        _refToken,          // 邀请来源 token（服务端积分，去重安全）
+    evidenceLevel:   hasReportData ? 'with_data' : 'behavior_only',  // 证据边界：无报告数据时后端不得断言 ATD/TRC/学习通道
   };
   const headers = { 'Content-Type': 'application/json' };
   const _vip = localStorage.getItem('aipiwen_vip') || '';
@@ -902,10 +1008,10 @@ function checkAndShowSynthesisNudge() {
     cursor:pointer;
   `;
   nudge.innerHTML = `
-    <span style="font-size:20px;flex-shrink:0">🔮</span>
+    <span style="font-size:20px;flex-shrink:0">🔗</span>
     <div style="flex:1;min-width:0">
-      <div style="font-size:12px;font-weight:600;color:var(--amber);margin-bottom:2px">你已分析了 ${filled.length} 段关系（${labelStr}）</div>
-      <div style="font-size:11px;color:var(--ink-40);line-height:1.4">点击查看跨场景综合分析，AI 找出它们之间的联系 →</div>
+      <div style="font-size:12px;font-weight:600;color:var(--amber);margin-bottom:3px">你分别尝试了-${labelStr}-的视角</div>
+      <div style="font-size:11px;color:var(--ink-40);line-height:1.5">当你同时看过几种不同类型的关系，系统可以帮你整理一份关系互动总览，让你看见行为模式之间的关联</div>
     </div>
   `;
   nudge.onclick = () => { window.location.href = 'synthesis.html'; };

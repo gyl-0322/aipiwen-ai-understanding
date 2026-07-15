@@ -62,15 +62,6 @@ body {
 .logo-svg    { width:36px; height:36px; flex-shrink:0; }
 .wordmark    { font-size:16px; font-weight:800; letter-spacing:.16em; text-transform:uppercase; color:var(--ink); line-height:1; }
 .wm-e        { color:var(--amber); }
-.header-side { display:flex; align-items:center; gap:12px; }
-.header-advisor-link {
-  display:inline-flex; align-items:center; justify-content:center;
-  min-height:34px; padding:7px 12px;
-  border:1px solid var(--ink-10); border-radius:999px;
-  background:rgba(255,255,255,.46); color:var(--ink-40);
-  font-size:12px; font-weight:600; text-decoration:none; white-space:nowrap;
-}
-.header-advisor-link:hover { color:var(--amber); border-color:rgba(194,105,42,.28); }
 
 /* 沐海星辰 印章 */
 .brand-seal {
@@ -376,11 +367,8 @@ body {
     </svg>
     <span class="wordmark">AIPIW<span class="wm-e">E</span>N</span>
   </a>
-  <div class="header-side">
-    <a class="header-advisor-link" href="/advisor.html">指导师工作台</a>
-    <div class="brand-seal" title="沐海星辰">
-      <span>沐</span><span>海</span><span>星</span><span>辰</span>
-    </div>
+  <div class="brand-seal" title="沐海星辰">
+    <span>沐</span><span>海</span><span>星</span><span>辰</span>
   </div>
 </header>
 
@@ -519,6 +507,9 @@ body {
 
 <!-- ── PRODUCT CARDS ── -->
 <div class="section-divider"><span class="section-divider-label">AI 工具</span></div>
+<div style="font-size:12px;line-height:1.7;color:var(--ink-40);text-align:center;margin:-10px 0 18px;">
+  建议路径：先读懂一个行为 → 再做天赋底色速测 → 最后上传已有报告深度解读
+</div>
 
 <div class="products">
 
@@ -526,7 +517,7 @@ body {
   <a class="product-card" id="fingerprint" href="fingerprint-v2-wizard.html" style="scroll-margin-top:64px">
     <div class="product-card-badge">
       <span class="product-card-badge-dot" style="background:#6B7A8D"></span>
-      <span class="product-card-badge-text" style="color:#6B7A8D">先天天赋 · 皮纹科学</span>
+      <span class="product-card-badge-text" style="color:#6B7A8D">先天天赋 · 多元测评工具箱</span>
     </div>
     <h2 class="product-card-title">天赋底色速测</h2>
     <p class="product-card-desc">
