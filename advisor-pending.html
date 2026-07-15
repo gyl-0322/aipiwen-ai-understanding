@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>等待总部审核 · AIPIWEN</title>
+  <meta name="description" content="AIPIWEN 指导师账号申请状态">
+  <link rel="stylesheet" href="static/ai-interpreter.css">
+  <script src="static/v3a-auth.js" defer></script>
+</head>
+<body data-v3a-auth-page="pending">
+  <main class="public-shell auth-shell">
+    <nav class="public-nav" aria-label="申请状态导航">
+      <a class="brand" href="advisor.html">
+        <svg class="brand-flower" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <circle class="brand-flower-ring" cx="18" cy="18" r="15.5" stroke-width=".9" stroke-dasharray="2.5 6"/>
+          <g class="brand-flower-petals">
+            <ellipse cx="18" cy="12" rx="2.2" ry="6.5" transform="rotate(0 18 18)"/>
+            <ellipse cx="18" cy="12" rx="2.2" ry="6.5" transform="rotate(90 18 18)"/>
+            <ellipse cx="18" cy="12" rx="1.4" ry="5.5" transform="rotate(45 18 18)"/>
+            <ellipse cx="18" cy="12" rx="1.4" ry="5.5" transform="rotate(135 18 18)"/>
+          </g>
+          <circle class="brand-flower-center" cx="18" cy="18" r="3"/>
+        </svg>
+        <div>
+          <p class="brand-title">AIPIWEN指导师工作台</p>
+          <div class="brand-subtitle">申请审核状态</div>
+        </div>
+      </a>
+      <button class="btn ghost" id="v3a-logout-button" type="button">退出登录</button>
+    </nav>
+
+    <section class="auth-grid">
+      <div class="module auth-card">
+        <p class="eyebrow">Application Status</p>
+        <h1>申请已提交，等待总部审核</h1>
+        <p>审核通过后，账号才会激活并进入工作台。</p>
+        <div class="data-list" style="margin-top:18px">
+          <div class="data-item"><span>申请身份</span><strong id="v3a-current-role">读取中</strong></div>
+          <div class="data-item"><span>申请状态</span><strong id="v3a-current-status">pending</strong></div>
+          <div class="data-item"><span>提交时间</span><strong id="v3a-submitted-at">读取中</strong></div>
+          <div class="data-item"><span>审核说明</span><strong id="v3a-review-note">总部审核后更新</strong></div>
+        </div>
+        <p class="dryrun-error" id="v3a-pending-message" role="status" aria-live="polite" hidden></p>
+      </div>
+
+      <aside class="module safety-card">
+        <span class="status pending">总部审核中</span>
+        <h2>当前不会产生业务数据</h2>
+        <p>审核通过前不发放积分、不进入工作台、不接客户报告，也不会自动创建任何其他账号。</p>
+      </aside>
+    </section>
+  </main>
+</body>
+</html>

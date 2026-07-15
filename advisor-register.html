@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>提交指导师申请 · AIPIWEN</title>
+  <meta name="description" content="AIPIWEN 指导师工作台申请资料">
+  <link rel="stylesheet" href="static/ai-interpreter.css">
+  <script src="static/v3a-auth.js" defer></script>
+</head>
+<body data-v3a-auth-page="register">
+  <main class="public-shell auth-shell">
+    <nav class="public-nav" aria-label="指导师申请导航">
+      <a class="brand" href="advisor.html">
+        <svg class="brand-flower" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <circle class="brand-flower-ring" cx="18" cy="18" r="15.5" stroke-width=".9" stroke-dasharray="2.5 6"/>
+          <g class="brand-flower-petals">
+            <ellipse cx="18" cy="12" rx="2.2" ry="6.5" transform="rotate(0 18 18)"/>
+            <ellipse cx="18" cy="12" rx="2.2" ry="6.5" transform="rotate(90 18 18)"/>
+            <ellipse cx="18" cy="12" rx="1.4" ry="5.5" transform="rotate(45 18 18)"/>
+            <ellipse cx="18" cy="12" rx="1.4" ry="5.5" transform="rotate(135 18 18)"/>
+          </g>
+          <circle class="brand-flower-center" cx="18" cy="18" r="3"/>
+        </svg>
+        <div>
+          <p class="brand-title">AIPIWEN指导师工作台</p>
+          <div class="brand-subtitle">申请资料</div>
+        </div>
+      </a>
+      <a class="btn ghost" href="login.html">返回统一登录</a>
+    </nav>
+
+    <section class="auth-grid">
+      <div class="module auth-card">
+        <p class="eyebrow">Advisor Application</p>
+        <h1>填写账号申请资料</h1>
+        <p>当前已验证身份：<strong id="v3a-verified-phone">正在核对</strong>。提交后进入 AIPIWEN 总部审核队列。</p>
+
+        <form class="form-grid" id="v3a-register-form" style="margin-top:18px">
+          <label>昵称 / 从业名
+            <input class="field" name="displayName" type="text" required minlength="2" maxlength="80" placeholder="用于审核与工作台展示">
+          </label>
+          <label>城市
+            <input class="field" name="city" type="text" required maxlength="80" placeholder="例如：上海">
+          </label>
+          <label>申请身份
+            <select class="field" name="role" required>
+              <option value="advisor">指导师</option>
+              <option value="agent">代理</option>
+              <option value="center">采集中心</option>
+            </select>
+          </label>
+          <label>从业类型
+            <select class="field" name="practitionerType" required>
+              <option value="independent">独立从业者</option>
+              <option value="organization">机构从业者</option>
+              <option value="agent">代理</option>
+              <option value="center">采集中心</option>
+              <option value="other">其他</option>
+            </select>
+          </label>
+          <label>邀请码（可选）
+            <input class="field" name="inviteCode" type="text" maxlength="40" placeholder="如有邀请码可填写">
+          </label>
+
+          <div class="notice">
+            <strong>四条规则</strong>
+            <ol class="rules-list">
+              <li>数值没有好坏，高有高的特长，低有低的特长</li>
+              <li>不做未来预测，只解释天赋底色、后天环境与教育培养的共同作用</li>
+              <li>不贴标签，不定义“一个人就是怎样的人”</li>
+              <li>不与他人比较，只与自己的平均值比较</li>
+            </ol>
+          </div>
+          <label class="check-line">
+            <input name="acceptedRules" type="checkbox" required>
+            我已阅读并同意从业者协议和四条规则
+          </label>
+          <p class="dryrun-error" id="v3a-register-message" role="status" aria-live="polite" hidden></p>
+          <button class="btn primary" type="submit">提交申请</button>
+        </form>
+      </div>
+
+      <aside class="module safety-card">
+        <span class="status pending">等待总部审核</span>
+        <h2>提交后不会立即进入工作台</h2>
+        <p>系统只创建 pending 申请。总部审核通过后才激活账号、创建钱包并发放当前规则下的体验额度。</p>
+      </aside>
+    </section>
+  </main>
+</body>
+</html>
