@@ -256,6 +256,9 @@
     "api/v3a-session.js": {
       "maxDuration": 15
     },
+    "api/v3a-send-sms-hook.js": {
+      "maxDuration": 5
+    },
     "api/v3a-admin.js": {
       "maxDuration": 30
     }

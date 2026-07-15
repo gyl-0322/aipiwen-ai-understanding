@@ -1,0 +1,12 @@
+{
+  "name": "aipiwen-advisor-workbench",
+  "private": true,
+  "scripts": {
+    "test:v3a-sms-hook": "node scripts/test-v3a-send-sms-hook.js"
+  },
+  "dependencies": {
+    "@alicloud/dysmsapi20170525": "4.6.0",
+    "@alicloud/openapi-core": "1.0.8",
+    "standardwebhooks": "1.0.0"
+  }
+}

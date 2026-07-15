@@ -74,3 +74,15 @@ Phone OTP 登录未来集成到统一 `login.html` 中，不创建独立手机�
 - 由 32 字节随机数生成并以 Base64 保存的 `V3A_SESSION_ENCRYPTION_KEY`
 - 默认关闭的 `V3A_PHONE_OTP_ENABLED`
 - 仅总部审核 API 使用的 `V3A_SUPABASE_SERVICE_ROLE_KEY` 与默认关闭的 `V3A_ADMIN_REVIEW_WRITES_ENABLED`
+
+## Send SMS Hook 本地实现合同（2026-07-15）
+
+- 新增单一 `api/v3a-send-sms-hook.js`，仅接受 Supabase Auth 的 HTTPS POST 回调；不接受浏览器同源请求作为发送依据。
+- Hook 读取原始请求体并验证 Standard Webhooks 的 id、timestamp、signature；只接受 `+86` 中国大陆手机号和 6 位 OTP。
+- 验签通过后只把去掉 `+86` 的 11 位号码与当前 OTP 交给阿里云 `SendSms`；只有阿里云返回 `Code = OK` 才视为已受理。
+- KV 幂等 key 和状态只保存 HMAC 摘要，不保存原始 webhook id、手机号或 OTP。阿里云结果不明时保留短期 claim，禁止盲目重发。
+- Hook 同时要求 Preview Project Ref、Vercel 系统的 `VERCEL_ENV=preview` 与 `VERCEL_TARGET_ENV=preview`，并由 `V3A_SEND_SMS_HOOK_ENABLED` 显式控制，默认关闭。它与 `V3A_PHONE_OTP_ENABLED` 是两道独立门禁；Production 部署即使误配业务变量也必须拒绝发送。
+- KV 调用使用短超时，阿里云 SDK 禁止自动重试并限制连接/读取时间，整条 Hook 在 Supabase HTTP Hook 的 5 秒窗口前留出响应余量；错误响应遵守 Supabase Auth Hook 的 `error.http_code` / `error.message` 合同。
+- 运行时还需要 `V3A_SEND_SMS_HOOK_SECRET`、`ALIYUN_SMS_ACCESS_KEY_ID`、`ALIYUN_SMS_ACCESS_KEY_SECRET`、`ALIYUN_SMS_SIGN_NAME`、`ALIYUN_SMS_TEMPLATE_CODE`、`ALIYUN_SMS_TEMPLATE_PARAM_KEY`；只允许配置在 Vercel Preview，不得写入仓库或文档。
+
+本节只确认本地实现和自动测试合同。当前不代表已部署 Hook、已修改 Supabase Auth、已打开任何发送开关或已发送短信。
