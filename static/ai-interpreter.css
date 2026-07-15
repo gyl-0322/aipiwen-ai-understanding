@@ -152,6 +152,10 @@ textarea {
   gap: 7px;
 }
 
+.mobile-nav-toggle {
+  display: none;
+}
+
 .nav-link {
   display: grid;
   grid-template-columns: 24px 1fr;
@@ -349,6 +353,29 @@ p {
 .metric-label {
   color: var(--muted);
   font-size: 13px;
+}
+
+.account-value {
+  margin-top: 10px;
+  overflow-wrap: anywhere;
+  color: var(--text);
+  font-size: 20px;
+  font-weight: 800;
+}
+
+.workbench-module-grid {
+  margin-top: 14px;
+}
+
+.feature-locked {
+  display: grid;
+  align-content: start;
+  gap: 10px;
+  box-shadow: none;
+}
+
+.feature-locked .status {
+  justify-self: start;
 }
 
 .metric.cyan .metric-value,
@@ -1427,8 +1454,93 @@ body[data-page="advisor"] .value-card {
   }
 
   .sidebar {
-    position: static;
+    position: sticky;
+    z-index: 50;
+    top: 0;
     height: auto;
+    padding: 10px 12px;
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .sidebar > .brand {
+    min-height: 44px;
+    padding: 0 58px 0 0;
+  }
+
+  .sidebar > .brand .brand-flower {
+    width: 34px;
+    height: 34px;
+    flex-basis: 34px;
+  }
+
+  .sidebar > .brand .brand-subtitle {
+    display: none;
+  }
+
+  .mobile-nav-toggle {
+    position: absolute;
+    top: 10px;
+    right: 12px;
+    display: inline-flex;
+    min-width: 44px;
+    min-height: 44px;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    padding: 8px 10px;
+    border: 1px solid var(--line-strong);
+    border-radius: 8px;
+    color: var(--text);
+    background: rgba(18, 25, 37, .96);
+    cursor: pointer;
+  }
+
+  .mobile-nav-toggle:focus-visible {
+    outline: 2px solid var(--cyan);
+    outline-offset: 2px;
+  }
+
+  .mobile-nav-icon {
+    display: grid;
+    width: 18px;
+    gap: 4px;
+  }
+
+  .mobile-nav-icon span {
+    display: block;
+    width: 18px;
+    height: 2px;
+    border-radius: 2px;
+    background: currentColor;
+    transition: transform .16s ease, opacity .16s ease;
+  }
+
+  .sidebar.mobile-nav-ready:not(.is-open) .nav,
+  .sidebar.mobile-nav-ready:not(.is-open) .sidebar-note {
+    display: none;
+  }
+
+  .sidebar.mobile-nav-ready.is-open .nav {
+    display: grid;
+    margin-top: 10px;
+  }
+
+  .sidebar.mobile-nav-ready.is-open .sidebar-note {
+    display: block;
+    margin-top: 12px;
+  }
+
+  .sidebar.is-open .mobile-nav-icon span:nth-child(1) {
+    transform: translateY(6px) rotate(45deg);
+  }
+
+  .sidebar.is-open .mobile-nav-icon span:nth-child(2) {
+    opacity: 0;
+  }
+
+  .sidebar.is-open .mobile-nav-icon span:nth-child(3) {
+    transform: translateY(-6px) rotate(-45deg);
   }
 
   .cols-3,

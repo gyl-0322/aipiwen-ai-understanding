@@ -40,15 +40,17 @@ try {
   assert(count(advisor, /class="top-actions"/g) === 0, '指导师入口导航栏不得出现重复操作按钮');
   assert(count(advisor, /class="hero-actions"/g) === 1, '指导师入口必须且只能有一组主操作按钮');
   assert(heroActions, '未找到指导师入口主操作区域');
+  assert(count(advisor, />登录指导师工作台<\/a>/g) === 1, '真实登录按钮必须且只能出现一次');
+  assert(heroActions[1].includes('href="/login.html">登录指导师工作台</a>'), '真实登录按钮必须指向统一 login.html');
   assert(count(advisor, />联系总部开通账号<\/a>/g) === 1, '账号开通按钮必须且只能出现一次');
   assert(heroActions[1].includes('href="#advisor-contact">联系总部开通账号</a>'), '账号开通按钮必须指向总部人工开通区域');
   assert(count(advisor, /id="advisor-contact"/g) === 1, '页面必须且只能有一个账号开通锚点');
-  ['申请开通内测', '解读师', 'Emma', '登录指导师工作台', 'Preview 演示'].forEach((forbiddenCopy) => {
+  assert(!advisor.includes('static/ai-interpreter.js'), '正式入口不得加载包含模拟积分逻辑的演示脚本');
+  ['申请开通内测', '解读师', 'Emma', 'Preview 演示'].forEach((forbiddenCopy) => {
     assert(!advisorVisibleCopy.includes(forbiddenCopy), `Production 指导师入口不得出现：${forbiddenCopy}`);
   });
 
   [
-    'ai-interpreter-workbench.html',
     'ai-interpreter-customers.html',
     'ai-interpreter-report-intake.html',
     'ai-interpreter-session.html',
@@ -56,10 +58,21 @@ try {
     'ai-interpreter-review.html',
     'ai-interpreter-cases.html',
     'static/preview-demo-auth.js',
-    'static/preview-report-intake.js',
-    '.vercelignore'
+    'static/preview-report-intake.js'
   ].forEach((previewOnlyPath) => {
     assert(!exists(previewOnlyPath), `Production 包不得包含 Preview 演示文件：${previewOnlyPath}`);
+  });
+
+  assert(exists('ai-interpreter-workbench.html'), '正式 active 指导师必须有真实工作台落地页');
+  const workbench = read('ai-interpreter-workbench.html');
+  assert(workbench.includes('data-v3a-auth-page="workbench" hidden'), '工作台必须先完成真实 Session 校验再显示');
+  assert(workbench.includes('static/v3a-auth.js') && !workbench.includes('static/ai-interpreter.js'),
+    '正式工作台只能加载真实 V3a 认证脚本，不得加载演示业务脚本');
+  [
+    'preview-demo-auth', 'preview-report-intake', 'sessionStorage', 'localStorage',
+    '模拟客户', '模拟积分', '模拟报告', 'ZHANGWEI01', '王小明', '500'
+  ].forEach((forbiddenCopy) => {
+    assert(!workbench.includes(forbiddenCopy), `正式工作台不得包含模拟资产或数据：${forbiddenCopy}`);
   });
 
   assert(exists('api/v3a-session.js'), 'HttpOnly Session 服务端路由必须存在');
@@ -114,17 +127,25 @@ try {
     '/static/(.*)',
     '/share/(.*)',
     '/advisor.html',
-    '/advisor'
+    '/advisor',
+    '/login.html',
+    '/login',
+    '/advisor-register.html',
+    '/advisor-register',
+    '/advisor-pending.html',
+    '/advisor-pending',
+    '/ai-interpreter-workbench.html',
+    '/ai-interpreter-workbench',
+    '/admin-applications.html',
+    '/admin-applications'
   ].forEach((requiredRoute) => {
     const routeIndex = routeSources.indexOf(requiredRoute);
     assert(routeIndex >= 0, `Production 路由缺失：${requiredRoute}`);
     assert(routeIndex < catchAllIndex, `Production 路由必须位于首页 catch-all 之前：${requiredRoute}`);
   });
 
-  assert(!routeSources.some((route) => route.startsWith('/login') || route.startsWith('/ai-interpreter')),
-    'Production 不得发布真实登录或工作台 Preview 路由');
   assert(!routeSources.includes('/api/v3a-session'),
-    'Production 路由表不得显式暴露 V3a 真实登录 Session 路由');
+    'V3a Session 继续由通用同源 API route 接收，不得增加额外公开别名');
   assert(vercel.functions && typeof vercel.functions === 'object', 'Production 必须保留 Serverless Functions 配置');
   [
     'api/auth.js',
@@ -133,13 +154,15 @@ try {
     'api/digest.js',
     'api/admin-convs.js',
     'api/extract-fp.js',
-    'api/generate-report.js'
+    'api/generate-report.js',
+    'api/v3a-session.js',
+    'api/v3a-admin.js'
   ].forEach((requiredFunction) => {
     assert(Object.hasOwn(vercel.functions, requiredFunction), `Production Function 配置缺失：${requiredFunction}`);
   });
   assert(Array.isArray(vercel.crons) && vercel.crons.length === 4, 'Production 必须保留四项定时任务');
 
-  console.log('PASS: production advisor entry preserves backend routes and excludes Preview demo assets; real login remains unrouted.');
+  console.log('PASS: formal advisor entry, real login/workbench routes, backend functions, and zero-mock boundary');
   if (isVercelIgnoreCommand) process.exitCode = 1;
 } catch (error) {
   console.error(`BLOCKED: ${error.message}`);

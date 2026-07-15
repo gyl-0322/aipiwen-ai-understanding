@@ -278,6 +278,58 @@
     }
   }
 
+  function initMobileNavigation() {
+    const sidebar = $('.sidebar');
+    const nav = sidebar?.querySelector('.nav');
+    if (!sidebar || !nav || sidebar.querySelector('.mobile-nav-toggle')) return;
+
+    nav.id = nav.id || 'advisor-primary-nav';
+    const toggle = document.createElement('button');
+    toggle.type = 'button';
+    toggle.className = 'mobile-nav-toggle';
+    toggle.setAttribute('aria-controls', nav.id);
+    toggle.innerHTML = '<span class="mobile-nav-icon" aria-hidden="true"><span></span><span></span><span></span></span><span>菜单</span>';
+
+    function setOpen(open) {
+      sidebar.classList.toggle('is-open', open);
+      toggle.setAttribute('aria-expanded', String(open));
+      toggle.setAttribute('aria-label', open ? '关闭工作台导航' : '打开工作台导航');
+    }
+
+    setOpen(false);
+    sidebar.classList.add('mobile-nav-ready');
+    sidebar.insertBefore(toggle, nav);
+    toggle.addEventListener('click', () => setOpen(!sidebar.classList.contains('is-open')));
+    nav.addEventListener('click', () => setOpen(false));
+    document.addEventListener('keydown', (event) => {
+      if (event.key !== 'Escape' || !sidebar.classList.contains('is-open')) return;
+      setOpen(false);
+      toggle.focus();
+    });
+  }
+
+  async function initWorkbench() {
+    const messageSelector = '#v3a-workbench-message';
+    $('#v3a-workbench-logout')?.addEventListener('click', () => logout(messageSelector));
+    try {
+      const current = await requestSession('me');
+      const me = current.me;
+      if (me?.user?.status !== 'active' || !validRoles.has(me.user.role)) {
+        routeByStatus(me, messageSelector);
+        return;
+      }
+      setText('#v3a-workbench-name', me.profile?.nickname || me.user.displayName, '已验证账号');
+      setText('#v3a-workbench-city', me.profile?.city || me.user.city, '未设置');
+      setText('#v3a-workbench-status', me.user.status, 'active');
+      setText('#v3a-workbench-role', roleLabels[me.user.role] || me.user.role, '已激活');
+      initMobileNavigation();
+      document.body.hidden = false;
+    } catch (error) {
+      if (error.status === 401) window.location.href = '/login.html';
+      else window.location.replace('/login.html?service_unavailable=1');
+    }
+  }
+
   async function initPending() {
     const messageSelector = '#v3a-pending-message';
     try {
@@ -304,4 +356,5 @@
   if (page === 'login') initLogin();
   if (page === 'register') initRegister();
   if (page === 'pending') initPending();
+  if (page === 'workbench') initWorkbench();
 })();

@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AIPIWEN 指导师工作台</title>
+  <meta name="description" content="AIPIWEN 指导师工作台正式账号入口">
+  <link rel="stylesheet" href="static/ai-interpreter.css">
+  <script src="static/v3a-auth.js" defer></script>
+</head>
+<body data-v3a-auth-page="workbench" hidden>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <a class="brand" href="ai-interpreter-workbench.html" aria-label="AIPIWEN 指导师工作台">
+        <svg class="brand-flower" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <circle class="brand-flower-ring" cx="18" cy="18" r="15.5" stroke-width=".9" stroke-dasharray="2.5 6"/>
+          <g class="brand-flower-petals">
+            <ellipse cx="18" cy="12" rx="2.2" ry="6.5" transform="rotate(0 18 18)"/>
+            <ellipse cx="18" cy="12" rx="2.2" ry="6.5" transform="rotate(90 18 18)"/>
+            <ellipse cx="18" cy="12" rx="1.4" ry="5.5" transform="rotate(45 18 18)"/>
+            <ellipse cx="18" cy="12" rx="1.4" ry="5.5" transform="rotate(135 18 18)"/>
+          </g>
+          <circle class="brand-flower-center" cx="18" cy="18" r="3"/>
+        </svg>
+        <div>
+          <p class="brand-title">AIPIWEN指导师工作台</p>
+          <div class="brand-subtitle">正式账号入口</div>
+        </div>
+      </a>
+      <nav class="nav" aria-label="工作台导航">
+        <a class="nav-link active" href="ai-interpreter-workbench.html" aria-current="page"><span>⌂</span><span>工作台首页</span></a>
+      </nav>
+      <div class="sidebar-note">当前仅开放真实账号入口。业务模块将按验收结果逐项接通。</div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Advisor Workbench</p>
+          <h1>欢迎进入指导师工作台</h1>
+          <p>当前页面只展示已验证的真实账号状态；业务数据在正式链路接通前不展示。</p>
+        </div>
+        <div class="top-actions">
+          <span class="status done" id="v3a-workbench-role">已激活</span>
+          <button class="btn ghost" id="v3a-workbench-logout" type="button">退出登录</button>
+        </div>
+      </header>
+
+      <p class="dryrun-error" id="v3a-workbench-message" role="status" aria-live="polite" hidden></p>
+
+      <section class="layout-grid cols-3" aria-label="账号状态">
+        <article class="card metric cyan">
+          <div class="metric-label">账号名称</div>
+          <div class="account-value" id="v3a-workbench-name">已验证账号</div>
+        </article>
+        <article class="card metric blue">
+          <div class="metric-label">所在城市</div>
+          <div class="account-value" id="v3a-workbench-city">未设置</div>
+        </article>
+        <article class="card metric amber">
+          <div class="metric-label">账号状态</div>
+          <div class="account-value" id="v3a-workbench-status">active</div>
+        </article>
+      </section>
+
+      <section class="module" style="margin-top:16px" aria-labelledby="workbench-modules-title">
+        <div class="card-header">
+          <div class="card-title">
+            <h2 id="workbench-modules-title">工作台功能</h2>
+            <small>按真实数据链路验收后逐项开放</small>
+          </div>
+          <span class="status info">分阶段开通</span>
+        </div>
+        <div class="layout-grid cols-2 workbench-module-grid">
+          <div class="module feature-locked"><h3>报告接入</h3><p>等待真实报告上传与归属链路验收。</p><span class="status pending">尚未接通</span></div>
+          <div class="module feature-locked"><h3>客户管理</h3><p>等待真实客户归属与授权边界验收。</p><span class="status pending">尚未接通</span></div>
+          <div class="module feature-locked"><h3>AI 解读助手</h3><p>等待 Report OS 与安全输出链路验收。</p><span class="status pending">尚未接通</span></div>
+          <div class="module feature-locked"><h3>训练、复核与案例</h3><p>等待总部复核与脱敏沉淀流程验收。</p><span class="status pending">尚未接通</span></div>
+        </div>
+      </section>
+    </main>
+  </div>
+</body>
+</html>

@@ -51,6 +51,8 @@ Phone OTP 登录未来集成到统一 `login.html` 中，不创建独立手机�
 
 微信登录、邮箱与手机号身份合并、手机号换绑和完整 Identity OS 均留到后续阶段。
 
+唯一例外是 009 已创建的首位 `active / super_admin`：上线前可由一次性本机工具先验证该现有邮箱 Auth 身份，再通过 Supabase `phone_change` 把手机号绑定到同一个 Auth UUID。011 的无参数专用 RPC 随后从已验证 Auth/JWT 派生手机号，同步到该 UUID 唯一对应的 `public.users.phone` 并写入不含手机号的审计；浏览器和工具不能向 RPC 提交手机号。发码前和提交验证码前必须各完成一次只读唯一性核对；不开放通用邮箱登录，不创建第二个 Auth 用户，任何冲突都停止且不自动清理。
+
 ## HttpOnly Session 实现边界（2026-07-15）
 
 - `login.html`、申请页、待审核页和总部审核页只访问同源 BFF，不在浏览器加载 Supabase SDK，也不读取、保存或传递 Supabase access token / refresh token。

@@ -91,6 +91,46 @@
       "dest": "/advisor.html"
     },
     {
+      "src": "/login.html",
+      "dest": "/login.html"
+    },
+    {
+      "src": "/login",
+      "dest": "/login.html"
+    },
+    {
+      "src": "/advisor-register.html",
+      "dest": "/advisor-register.html"
+    },
+    {
+      "src": "/advisor-register",
+      "dest": "/advisor-register.html"
+    },
+    {
+      "src": "/advisor-pending.html",
+      "dest": "/advisor-pending.html"
+    },
+    {
+      "src": "/advisor-pending",
+      "dest": "/advisor-pending.html"
+    },
+    {
+      "src": "/ai-interpreter-workbench.html",
+      "dest": "/ai-interpreter-workbench.html"
+    },
+    {
+      "src": "/ai-interpreter-workbench",
+      "dest": "/ai-interpreter-workbench.html"
+    },
+    {
+      "src": "/admin-applications.html",
+      "dest": "/admin-applications.html"
+    },
+    {
+      "src": "/admin-applications",
+      "dest": "/admin-applications.html"
+    },
+    {
       "src": "/behavior-input.html",
       "headers": {
         "Location": "/child-chat.html"
@@ -212,6 +252,12 @@
     "api/generate-report.js": {
       "maxDuration": 60,
       "regions": ["iad1"]
+    },
+    "api/v3a-session.js": {
+      "maxDuration": 15
+    },
+    "api/v3a-admin.js": {
+      "maxDuration": 30
     }
   },
   "crons": [

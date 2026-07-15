@@ -10,6 +10,7 @@ const source = fs.readFileSync(sourcePath, 'utf8');
 const loginPage = fs.readFileSync(path.join(__dirname, '..', 'login.html'), 'utf8');
 const registerPage = fs.readFileSync(path.join(__dirname, '..', 'advisor-register.html'), 'utf8');
 const pendingPage = fs.readFileSync(path.join(__dirname, '..', 'advisor-pending.html'), 'utf8');
+const workbenchPage = fs.readFileSync(path.join(__dirname, '..', 'ai-interpreter-workbench.html'), 'utf8');
 
 const APP_ORIGIN = 'https://preview.aipiwen.cn';
 const SESSION_PATH = '/api/v3a-session';
@@ -80,6 +81,20 @@ function createStorage() {
   };
 }
 
+function createClassList() {
+  const values = new Set();
+  return {
+    add(value) { values.add(value); },
+    contains(value) { return values.has(value); },
+    toggle(value, force) {
+      const enabled = force === undefined ? !values.has(value) : Boolean(force);
+      if (enabled) values.add(value);
+      else values.delete(value);
+      return enabled;
+    }
+  };
+}
+
 function createHarness(options = {}) {
   const page = options.page || 'login';
   const calls = [];
@@ -92,7 +107,11 @@ function createHarness(options = {}) {
     currentRole: { textContent: '' },
     currentStatus: { textContent: '' },
     submittedAt: { textContent: '' },
-    reviewNote: { textContent: '' }
+    reviewNote: { textContent: '' },
+    workbenchName: { textContent: '' },
+    workbenchCity: { textContent: '' },
+    workbenchStatus: { textContent: '' },
+    workbenchRole: { textContent: '' }
   };
   const location = { href: '', replace(value) { this.href = value; } };
   const sendButton = {
@@ -132,6 +151,21 @@ function createHarness(options = {}) {
       if (type === 'submit') this._submit = handler;
     }
   };
+  const nav = {
+    id: '',
+    _click: null,
+    addEventListener(type, handler) { if (type === 'click') this._click = handler; }
+  };
+  const sidebar = page === 'workbench' ? {
+    classList: createClassList(),
+    toggle: null,
+    querySelector(selector) {
+      if (selector === '.nav') return nav;
+      if (selector === '.mobile-nav-toggle') return this.toggle;
+      return null;
+    },
+    insertBefore(node) { this.toggle = node; }
+  } : null;
 
   function defaultPayload(action) {
     if (action === 'capabilities') {
@@ -144,10 +178,12 @@ function createHarness(options = {}) {
       if (page === 'login') {
         return { status: 401, body: { ok: false, error: '请先登录。', code: 'UNAUTHENTICATED' } };
       }
-      return {
-        status: 200,
-        body: { ok: true, me: page === 'register' ? emptyMe() : completeMe(), csrfToken: CSRF_TOKEN }
-      };
+      const me = page === 'register'
+        ? emptyMe()
+        : page === 'workbench'
+          ? completeMe('active', 'advisor')
+          : completeMe();
+      return { status: 200, body: { ok: true, me, csrfToken: CSRF_TOKEN } };
     }
     if (action === 'request_otp') return { status: 200, body: { ok: true } };
     if (action === 'verify_otp') {
@@ -180,18 +216,38 @@ function createHarness(options = {}) {
     ['#v3a-send-otp', page === 'login' ? sendButton : null],
     ['#v3a-send-otp-button', page === 'login' ? sendButton : null],
     ['#v3a-logout-button', page === 'pending' ? logoutButton : null],
+    ['#v3a-workbench-logout', page === 'workbench' ? logoutButton : null],
     ['#v3a-login-message', page === 'login' ? message : null],
     ['#v3a-register-message', page === 'register' ? message : null],
     ['#v3a-pending-message', page === 'pending' ? message : null],
+    ['#v3a-workbench-message', page === 'workbench' ? message : null],
     ['#v3a-verified-phone', page === 'register' ? texts.verifiedPhone : null],
     ['#v3a-current-role', page === 'pending' ? texts.currentRole : null],
     ['#v3a-current-status', page === 'pending' ? texts.currentStatus : null],
     ['#v3a-submitted-at', page === 'pending' ? texts.submittedAt : null],
-    ['#v3a-review-note', page === 'pending' ? texts.reviewNote : null]
+    ['#v3a-review-note', page === 'pending' ? texts.reviewNote : null],
+    ['#v3a-workbench-name', page === 'workbench' ? texts.workbenchName : null],
+    ['#v3a-workbench-city', page === 'workbench' ? texts.workbenchCity : null],
+    ['#v3a-workbench-status', page === 'workbench' ? texts.workbenchStatus : null],
+    ['#v3a-workbench-role', page === 'workbench' ? texts.workbenchRole : null],
+    ['.sidebar', sidebar]
   ]);
   const document = {
-    body: { dataset: { v3aAuthPage: page } },
-    querySelector(selector) { return selectorMap.get(selector) || null; }
+    body: { dataset: { v3aAuthPage: page }, hidden: page === 'workbench' },
+    querySelector(selector) { return selectorMap.get(selector) || null; },
+    createElement() {
+      return {
+        className: '',
+        type: '',
+        innerHTML: '',
+        attributes: {},
+        _click: null,
+        setAttribute(name, value) { this.attributes[name] = String(value); },
+        addEventListener(type, handler) { if (type === 'click') this._click = handler; },
+        focus() {}
+      };
+    },
+    addEventListener() {}
   };
   Object.defineProperty(document, 'cookie', {
     get() { cookieAccesses.push({ operation: 'get' }); return ''; },
@@ -232,7 +288,9 @@ function createHarness(options = {}) {
     location,
     localStorage,
     sessionStorage,
-    cookieAccesses
+    cookieAccesses,
+    body: document.body,
+    sidebar
   };
 }
 
@@ -259,7 +317,7 @@ async function submit(harness) {
 
 async function clickLogout(harness) {
   await settle();
-  assert.equal(typeof harness.logoutButton._click, 'function', 'pending 页必须绑定退出处理');
+  assert.equal(typeof harness.logoutButton._click, 'function', '受保护页面必须绑定退出处理');
   await harness.logoutButton._click({ preventDefault() {} });
   await settle();
 }
@@ -326,6 +384,11 @@ async function run() {
     '申请资料页不得重新收集邮箱或密码');
   assert.equal(registerPage.includes('id="v3a-register-form"'), true, '申请资料页必须包含申请表单');
   assert.equal(pendingPage.includes('id="v3a-current-status"'), true, 'pending 页必须回读申请状态');
+  assert.equal(workbenchPage.includes('data-v3a-auth-page="workbench" hidden'), true,
+    '正式工作台必须在真实身份校验前保持隐藏');
+  assert.equal(workbenchPage.includes('static/v3a-auth.js'), true, '正式工作台必须使用统一真实认证脚本');
+  assert.equal(/preview-demo|sessionStorage|localStorage|ZHANGWEI01|王小明/.test(workbenchPage), false,
+    '正式工作台不得包含演示 Session 或硬编码业务数据');
 
   assert.equal(source.includes("const SESSION_API = '/api/v3a-session'"), true, '浏览器必须只接入同源 Session BFF');
   assert.equal(source.includes("credentials: 'same-origin'"), true, 'BFF 请求必须携带同源 HttpOnly cookie');
@@ -462,7 +525,52 @@ async function run() {
   await settle();
   assert.equal(harness.message.textContent.includes('申请未通过'), true, 'rejected 路由必须保留安全提示');
 
-  console.log('PASS: V3a browser BFF, HttpOnly isolation, CSRF, phone login, registration, and routing contracts');
+  harness = createHarness({ page: 'workbench' });
+  await settle();
+  assert.equal(harness.body.hidden, false, 'active 指导师通过真实 Session 校验后才显示工作台');
+  assert.equal(harness.texts.workbenchName.textContent, '测试指导师');
+  assert.equal(harness.texts.workbenchCity.textContent, '上海');
+  assert.equal(harness.texts.workbenchStatus.textContent, 'active');
+  assert.equal(harness.texts.workbenchRole.textContent, '指导师');
+  assert.equal(harness.sidebar.classList.contains('mobile-nav-ready'), true,
+    '工作台通过身份校验后必须启用紧凑移动导航');
+  assert.equal(harness.sidebar.toggle.attributes['aria-expanded'], 'false');
+  await harness.sidebar.toggle._click();
+  assert.equal(harness.sidebar.classList.contains('is-open'), true, '移动导航按钮必须可以展开菜单');
+  assert.equal(harness.sidebar.toggle.attributes['aria-expanded'], 'true');
+  assertBrowserIsolation(harness);
+  await clickLogout(harness);
+  assert.equal(harness.location.href, '/login.html', '工作台退出后必须返回统一登录页');
+  assertBrowserIsolation(harness);
+
+  harness = createHarness({ page: 'workbench', me: completeMe('pending') });
+  await settle();
+  assert.equal(harness.body.hidden, true, '非 active 身份不得看到工作台内容');
+  assert.equal(harness.location.href, '/advisor-pending.html');
+
+  harness = createHarness({ page: 'workbench', me: completeMe('active', 'super_admin') });
+  await settle();
+  assert.equal(harness.body.hidden, true, 'super_admin 不得误入指导师工作台');
+  assert.equal(harness.location.href, '/admin-applications.html');
+
+  harness = createHarness({
+    page: 'workbench',
+    failures: { me: { status: 401, body: { ok: false, error: '请先登录。', code: 'UNAUTHENTICATED' } } }
+  });
+  await settle();
+  assert.equal(harness.body.hidden, true, '未登录时不得闪现工作台内容');
+  assert.equal(harness.location.href, '/login.html');
+
+  harness = createHarness({
+    page: 'workbench',
+    failures: { me: { status: 503, body: { ok: false, error: '账号服务暂时不可用。', code: 'UPSTREAM_UNAVAILABLE' } } }
+  });
+  await settle();
+  assert.equal(harness.body.hidden, true, '账号服务异常时也不得显示工作台壳层');
+  assert.equal(harness.location.href, '/login.html?service_unavailable=1',
+    '账号服务异常必须回到统一登录页并保留安全状态标识');
+
+  console.log('PASS: V3a browser BFF, HttpOnly isolation, phone login, registration, and protected workbench contracts');
 }
 
 run().catch((error) => {
