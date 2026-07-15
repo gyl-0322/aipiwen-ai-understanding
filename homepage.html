@@ -786,6 +786,7 @@ setInterval(() => switchReview((_reviewIdx + 1) % 3), 5000);
   }
 
   const talentSignals = [
+    !!localStorage.getItem('aipiwen_fp_result'),
     !!localStorage.getItem('aipiwen_fp_uid'),
     !!localStorage.getItem('aipiwen_style_result'),
     !!localStorage.getItem('aipiwen_vark_result'),

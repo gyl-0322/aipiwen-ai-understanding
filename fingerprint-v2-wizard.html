@@ -2415,6 +2415,14 @@ function showResult() {
           const dot = document.getElementById('pd' + j);
           if (dot) dot.className = 'progress-dot done';
         }
+        try {
+          localStorage.setItem('aipiwen_fp_result', JSON.stringify({
+            date: new Date().toISOString(),
+            mainType: result.mainType,
+            tagline: result.tagline,
+            key: result.key
+          }));
+        } catch(e) {}
         if (window.GT) GT.track('result_view', { type: result.key });
         document.getElementById('tool-fp-done').classList.add('show');
         _logFingerprintSession(result);
@@ -2809,9 +2817,36 @@ function initVarkQuiz(){vs={V:0,A:0,R:0,K:0};vq=0;document.getElementById('varkQ
 function renderVarkQ(){if(vq>=VARK_QS.length){showVarkResult();return}var q=VARK_QS[vq];document.getElementById('varkQNum').textContent='第 '+(vq+1)+' / 8 题';document.getElementById('varkQText').textContent=q.q;var pair=document.getElementById('varkPair');pair.innerHTML='';pair.style.gridTemplateColumns='1fr 1fr';['a','b','c','d'].forEach(function(o){var x=q[o];var d=document.createElement('div');d.className='vark-option';d.innerHTML='<span class="vark-icon">'+x.icon+'</span>'+x.t;d.onclick=function(){document.querySelectorAll('#varkPair .vark-option').forEach(function(e){e.classList.remove('selected')});d.classList.add('selected');q.dims.forEach(function(dm,i){if(['a','b','c','d'][i]===o)vs[dm]=(vs[dm]||0)+1});setTimeout(function(){vq++;renderVarkQ()},300)};pair.appendChild(d)})}
 function showVarkResult(){document.getElementById('varkQuiz').style.display='none';var r=document.getElementById('varkResult');var t=vs.V+vs.A+vs.R+vs.K||1;var types=[{k:'V',l:'视觉型',p:Math.round(vs.V/t*100),d:'看图、图表、演示时最容易吸收'},{k:'A',l:'听觉型',p:Math.round(vs.A/t*100),d:'听讲、讨论、播客效果最好'},{k:'R',l:'读写型',p:Math.round(vs.R/t*100),d:'写下来、阅读文字最有效'},{k:'K',l:'动手型',p:Math.round(vs.K/t*100),d:'上手做、边体验边学'}];types.sort(function(a,b){return b.p-a.p});var top=types[0];r.innerHTML='<div style="font-size:14px;font-weight:600;color:var(--amber);margin-bottom:10px">VARK 学习风格</div><div style="font-size:16px;font-weight:700;color:var(--ink);margin-bottom:4px">以'+top.l+'为主</div><p style="margin-bottom:12px">'+top.d+'</p><div class="vark-bars">'+types.map(function(t){return'<div class="vark-bar-row"><div class="vark-bar-label">'+t.l+'</div><div class="vark-bar-track"><div class="vark-bar-fill" style="width:'+t.p+'%"></div></div><div style="font-size:11px;color:var(--ink-40);width:35px">'+t.p+'%</div></div>'}).join('')+'</div><p style="font-size:11px;color:var(--ink-40)">VARK 模型由 Neil Fleming 在 1987 年提出，是全球使用最广泛的学习风格框架之一。</p>';r.classList.add('show');r.scrollIntoView({behavior:'smooth'});try{localStorage.setItem('aipiwen_vark_result',JSON.stringify({date:new Date().toISOString(),scores:vs}))}catch(e){}document.getElementById('tool-vark-done').classList.add('show')}
 
-(function(){var ctxs=[{k:'child',l:'孩子'},{k:'self',l:'自己'},{k:'partner',l:'伴侣'},{k:'business',l:'伙伴'}];var all=[];ctxs.forEach(function(cx){try{var m=JSON.parse(localStorage.getItem('aipiwen_mem_'+cx.k)||'[]');m.forEach(function(x){x.context=cx.l;all.push(x)})}catch(e){}});if(!all.length){document.getElementById('historyEmpty').style.display='';return;}document.getElementById('tool-history-card').style.display='';all.sort(function(a,b){return(a.date||'')<(b.date||'')?1:-1});var recent=all.slice(0,10);var words={};recent.forEach(function(r){(r.behavior||'').replace(/[，。！？、]/g,' ').split(' ').forEach(function(w){if(w.length>=2)words[w]=(words[w]||0)+1})});var top=Object.entries(words).sort(function(a,b){return b[1]-a[1]}).slice(0,5).map(function(x){return x[0]});var h='';if(top.length)h+='<div style="font-size:12px;color:var(--amber);margin-bottom:10px;font-weight:600">最近 '+recent.length+' 次的共同触发词：'+top.map(function(w){return'"'+w+'"'}).join('、')+'</div>';recent.forEach(function(r){var b=(r.behavior||'').slice(0,40);var ins=(r.insight||'').replace(/<br>/g,' ').slice(0,60);h+='<div class="history-item"><div class="history-date">'+r.date+'<br><span style="color:var(--amber)">'+(r.context||'')+'</span></div><div class="history-insight"><span class="history-trigger">'+b+'</span>'+(ins?' — '+ins+'…':'')+'</div></div>'});document.getElementById('historyContent').innerHTML=h})();
+(function(){
+  function readJSON(key, fallback){try{return JSON.parse(localStorage.getItem(key)||'')||fallback}catch(e){return fallback}}
+  function esc(s){return String(s||'').replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+  function shortDate(s){return (s||'').slice(0,10)||'最近'}
+  var entries=[], ctxs=[{k:'child',l:'孩子'},{k:'self',l:'自己'},{k:'partner',l:'伴侣'},{k:'business',l:'伙伴'}];
+  ctxs.forEach(function(cx){var m=readJSON('aipiwen_mem_'+cx.k,[]);m.forEach(function(x){entries.push({date:x.date||'',tag:cx.l,title:(x.behavior||'').slice(0,40),body:(x.insight||'').replace(/<br>/g,' ').slice(0,76)})})});
 
-(function(){try{var t=new Date().toISOString().slice(0,10);if(JSON.parse(localStorage.getItem('aipiwen_moods')||'{}')[t])document.getElementById('tool-mood-done').classList.add('show');if(localStorage.getItem('aipiwen_style_result'))document.getElementById('tool-style-done').classList.add('show');if(localStorage.getItem('aipiwen_vark_result'))document.getElementById('tool-vark-done').classList.add('show')}catch(e){}})();
+  var moods=readJSON('aipiwen_moods',{}), moodDates=Object.keys(moods).sort().reverse();
+  moodDates.slice(0,3).forEach(function(d){var m=moods[d]||{};entries.push({date:d,tag:'情绪',title:(m.emoji||'')+' '+(m.label||'情绪记录'),body:'这是一条当下状态线索，可以和行为触发点一起看。'})});
+
+  var style=readJSON('aipiwen_style_result',null);
+  if(style&&style.scores){var s=style.scores;entries.push({date:style.date||'',tag:'沟通',title:s.initiate>0?'边想边说':'先听再想',body:(s.express>0?'更习惯先说事实':'更习惯先说感受')+'，被误解时'+(s.react>0?'倾向直接澄清。':'可能先沉默。')})}
+
+  var vark=readJSON('aipiwen_vark_result',null);
+  if(vark&&vark.scores){var total=(vark.scores.V||0)+(vark.scores.A||0)+(vark.scores.R||0)+(vark.scores.K||0)||1;var labels={V:'视觉型',A:'听觉型',R:'读写型',K:'动手型'};var top=Object.keys(labels).sort(function(a,b){return(vark.scores[b]||0)-(vark.scores[a]||0)})[0];entries.push({date:vark.date||'',tag:'学习',title:'偏向 '+labels[top],body:'当前学习输入线索中，'+labels[top]+'约占 '+Math.round((vark.scores[top]||0)/total*100)+'%。'})}
+
+  var fp=readJSON('aipiwen_fp_result',null);
+  if(fp&&fp.mainType){entries.push({date:fp.date||'',tag:'天赋',title:fp.mainType,body:fp.tagline||'已完成一次天赋底色速测。'})}
+
+  if(!entries.length){document.getElementById('historyEmpty').style.display='';return}
+  document.getElementById('historyEmpty').style.display='none';
+  entries.sort(function(a,b){return(a.date||'')<(b.date||'')?1:-1});
+  var behaviorCount=0, toolCount=0;
+  entries.forEach(function(e){if(['孩子','自己','伴侣','伙伴'].indexOf(e.tag)>=0)behaviorCount++;else toolCount++});
+  var h='<div style="font-size:12px;color:var(--amber);margin-bottom:10px;font-weight:600">已记录 '+entries.length+' 条理解线索：行为 '+behaviorCount+' 条，工具 '+toolCount+' 条</div>';
+  entries.slice(0,12).forEach(function(e){h+='<div class="history-item"><div class="history-date">'+esc(shortDate(e.date))+'<br><span style="color:var(--amber)">'+esc(e.tag)+'</span></div><div class="history-insight"><span class="history-trigger">'+esc(e.title)+'</span>'+(e.body?' — '+esc(e.body)+'…':'')+'</div></div>'});
+  document.getElementById('historyContent').innerHTML=h
+})();
+
+(function(){try{var t=new Date().toISOString().slice(0,10);if(JSON.parse(localStorage.getItem('aipiwen_moods')||'{}')[t])document.getElementById('tool-mood-done').classList.add('show');if(localStorage.getItem('aipiwen_style_result'))document.getElementById('tool-style-done').classList.add('show');if(localStorage.getItem('aipiwen_vark_result'))document.getElementById('tool-vark-done').classList.add('show');if(localStorage.getItem('aipiwen_fp_result'))document.getElementById('tool-fp-done').classList.add('show')}catch(e){}})();
 </script>
 </body>
 </html>
