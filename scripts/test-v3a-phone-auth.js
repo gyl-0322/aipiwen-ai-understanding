@@ -7,7 +7,12 @@ const vm = require('vm');
 
 const sourcePath = path.join(__dirname, '..', 'static', 'v3a-auth.js');
 const source = fs.readFileSync(sourcePath, 'utf8');
+const loginPage = fs.readFileSync(path.join(__dirname, '..', 'login.html'), 'utf8');
+const registerPage = fs.readFileSync(path.join(__dirname, '..', 'advisor-register.html'), 'utf8');
+const pendingPage = fs.readFileSync(path.join(__dirname, '..', 'advisor-pending.html'), 'utf8');
 const verifiedPhone = '+8613800138000';
+const previewRef = 'lmjriqncuopgxwyudfee';
+const productionRef = 'tysbwijizgebnrazxpvo';
 
 function completeRecords(status = 'pending', role) {
   const effectiveRole = role || (status === 'active' ? 'advisor' : 'pending');
@@ -223,8 +228,9 @@ function createHarness(options = {}) {
     createElement() { return {}; }
   };
   const window = {
-    AIPIWEN_V3A_SUPABASE: {
-      supabaseUrl: 'https://supabase.example.invalid',
+    AIPIWEN_V3A_SUPABASE: options.supabaseConfig || {
+      supabaseUrl: `https://${previewRef}.supabase.co`,
+      projectRef: previewRef,
       supabaseAnonKey: 'TEST_ANON_KEY_NOT_REAL'
     },
     AIPIWEN_V3A_PHONE_OTP_ENABLED: options.phoneOtpEnabled === true,
@@ -245,7 +251,8 @@ function createHarness(options = {}) {
     setTimeout,
     clearTimeout,
     Date,
-    Promise
+    Promise,
+    URL
   });
 
   vm.runInContext(source, context, { filename: 'static/v3a-auth.js' });
@@ -301,10 +308,41 @@ function assertNoRawDetail(message, fragments) {
 }
 
 async function run() {
+  assert.equal(loginPage.includes('id="v3a-phone-auth-form"'), true, '统一登录页必须包含手机号表单');
+  assert.equal(loginPage.includes('name="phone"'), true, '统一登录页必须包含手机号字段');
+  assert.equal(loginPage.includes('name="otp"'), true, '统一登录页必须包含验证码字段');
+  assert.equal(loginPage.includes('preview-demo-auth') || loginPage.includes('模拟验证码'), false,
+    '统一登录页不得包含模拟登录资产');
+  assert.equal(/name="email"|name="password"/.test(registerPage), false,
+    '申请资料页不得重新收集邮箱或密码');
+  assert.equal(registerPage.includes('id="v3a-register-form"'), true, '申请资料页必须包含原子申请表单');
+  assert.equal(pendingPage.includes('id="v3a-current-status"'), true, 'pending 页必须回读申请状态');
+  assert.equal(source.includes('persistSession: false'), true, '本地集成阶段不得让 Supabase SDK 持久化 Session');
+  assert.equal(source.includes(".select('id,role,status,phone,email"), false,
+    '账号状态路由不得额外查询原始 phone/email');
+
   let harness = createHarness({ phoneOtpEnabled: false });
   await clickSend(harness);
   assert.equal(harness.calls.signInWithOtp.length, 0, '发送门禁关闭时绝不能调用 signInWithOtp');
   assertNoSecretStorage(harness);
+
+  for (const supabaseConfig of [
+    {
+      supabaseUrl: `https://${productionRef}.supabase.co`,
+      projectRef: productionRef,
+      supabaseAnonKey: 'TEST_ANON_KEY_NOT_REAL'
+    },
+    {
+      supabaseUrl: `https://${productionRef}.supabase.co`,
+      projectRef: previewRef,
+      supabaseAnonKey: 'TEST_ANON_KEY_NOT_REAL'
+    }
+  ]) {
+    harness = createHarness({ phoneOtpEnabled: true, supabaseConfig });
+    await clickSend(harness);
+    assert.equal(harness.calls.signInWithOtp.length, 0,
+      'Production 或 URL/ref 不一致必须在任何手机号 Auth 请求前停止');
+  }
 
   for (const phone of ['13800138000', '8613800138000', '+8613800138000']) {
     harness = createHarness({ phoneOtpEnabled: true, formData: { phone } });

@@ -5,6 +5,8 @@
   if (!page) return;
 
   const AGREEMENT_VERSION = 'v3a-phase-b-preview-2026-07-09';
+  const PREVIEW_PROJECT_REF = 'lmjriqncuopgxwyudfee';
+  const PRODUCTION_PROJECT_REF = 'tysbwijizgebnrazxpvo';
   const PHONE_OTP_ENABLED = window.AIPIWEN_V3A_PHONE_OTP_ENABLED === true;
   const validRoles = new Set(['advisor', 'agent', 'center']);
   const validPractitionerTypes = new Set(['independent', 'organization', 'agent', 'center', 'other']);
@@ -77,14 +79,26 @@
     const config = window.AIPIWEN_V3A_SUPABASE || {};
     const supabaseUrl = normalize(config.supabaseUrl);
     const supabaseAnonKey = normalize(config.supabaseAnonKey);
-    if (!supabaseUrl || !supabaseAnonKey || !window.supabase?.createClient) {
+    const projectRef = normalize(config.projectRef);
+    let parsed;
+    try {
+      parsed = new URL(supabaseUrl);
+    } catch {
+      parsed = null;
+    }
+    if (
+      !supabaseUrl || !supabaseAnonKey || !window.supabase?.createClient ||
+      projectRef === PRODUCTION_PROJECT_REF || projectRef !== PREVIEW_PROJECT_REF ||
+      parsed?.protocol !== 'https:' || parsed?.hostname !== `${PREVIEW_PROJECT_REF}.supabase.co` ||
+      parsed?.pathname !== '/'
+    ) {
       throw new Error('手机号登录组件尚未完成 Preview 配置。');
     }
     cachedClient = window.supabase.createClient(supabaseUrl, supabaseAnonKey, {
       auth: {
-        autoRefreshToken: true,
-        detectSessionInUrl: true,
-        persistSession: true
+        autoRefreshToken: false,
+        detectSessionInUrl: false,
+        persistSession: false
       }
     });
     return cachedClient;
@@ -112,7 +126,7 @@
     const authUser = await getVerifiedPhoneUser(client);
     const { data: user, error: userError } = await client
       .from('users')
-      .select('id,role,status,phone,email,display_name,city,created_at,last_login_at')
+      .select('id,role,status,display_name,city,created_at,last_login_at')
       .eq('auth_user_id', authUser.id)
       .maybeSingle();
     if (userError) throw new Error('账号状态暂时无法读取，请稍后重试。');
@@ -318,6 +332,7 @@
     const form = $('#v3a-register-form');
     const messageSelector = '#v3a-register-message';
     if (!form) return;
+    let identityReady = false;
     try {
       const client = await getClient();
       const user = await getVerifiedPhoneUser(client);
@@ -327,6 +342,7 @@
         routeByStatus(current, messageSelector);
         return;
       }
+      identityReady = true;
     } catch (error) {
       showMessage(messageSelector, error.message);
     }
@@ -334,6 +350,10 @@
     form.addEventListener('submit', async (event) => {
       event.preventDefault();
       showMessage(messageSelector, '');
+      if (!identityReady) {
+        showMessage(messageSelector, '请先在统一登录页完成手机号验证。');
+        return;
+      }
       const formData = new FormData(form);
       const payload = {
         displayName: normalize(formData.get('displayName')),

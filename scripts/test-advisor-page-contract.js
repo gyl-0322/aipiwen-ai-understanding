@@ -69,6 +69,9 @@ try {
     assert(v3aAuth.includes("window.AIPIWEN_V3A_PHONE_OTP_ENABLED === true"), '短信发送必须使用显式默认关闭门禁');
     assert(v3aAuth.includes('signInWithOtp'), '统一登录页必须保留真实手机号 OTP 接口');
     assert(v3aAuth.includes("type: 'sms'"), '统一登录页必须使用短信 OTP 验证类型');
+    assert(v3aAuth.includes("const PREVIEW_PROJECT_REF = 'lmjriqncuopgxwyudfee'"), '浏览器认证必须固定 Preview Project Ref');
+    assert(v3aAuth.includes("const PRODUCTION_PROJECT_REF = 'tysbwijizgebnrazxpvo'"), '浏览器认证必须显式拒绝 Production Project Ref');
+    assert(v3aAuth.includes('persistSession: false'), '未建立 HttpOnly Session 前不得持久化 Supabase Session');
     assert(!v3aAuth.includes('localStorage') && !v3aAuth.includes('sessionStorage'), '真实认证脚本不得把手机号或验证码写入浏览器存储');
     assert(!login.includes('cdn.jsdelivr.net') && !login.includes('esm.sh'), '中国用户登录页不得依赖境外 CDN 加载认证组件');
   }
