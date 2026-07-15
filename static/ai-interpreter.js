@@ -310,6 +310,52 @@
     });
   }
 
+  function initMobileNavigation() {
+    const sidebar = $(".sidebar");
+    const nav = sidebar ? $(".nav", sidebar) : null;
+    if (!sidebar || !nav || $(".mobile-nav-toggle", sidebar)) return;
+
+    nav.id = nav.id || "advisor-primary-nav";
+
+    const toggle = document.createElement("button");
+    toggle.type = "button";
+    toggle.className = "mobile-nav-toggle";
+    toggle.setAttribute("aria-controls", nav.id);
+    toggle.innerHTML = [
+      '<span class="mobile-nav-icon" aria-hidden="true"><span></span><span></span><span></span></span>',
+      '<span class="mobile-nav-toggle-text">菜单</span>'
+    ].join("");
+
+    function setOpen(open) {
+      sidebar.classList.toggle("is-open", open);
+      toggle.setAttribute("aria-expanded", String(open));
+      toggle.setAttribute("aria-label", open ? "关闭工作台导航" : "打开工作台导航");
+    }
+
+    setOpen(false);
+    sidebar.classList.add("mobile-nav-ready");
+    sidebar.insertBefore(toggle, nav);
+
+    toggle.addEventListener("click", () => {
+      setOpen(!sidebar.classList.contains("is-open"));
+    });
+
+    nav.addEventListener("click", (event) => {
+      if (event.target.closest(".nav-link")) setOpen(false);
+    });
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key !== "Escape" || !sidebar.classList.contains("is-open")) return;
+      setOpen(false);
+      toggle.focus();
+    });
+
+    const mobileQuery = window.matchMedia("(max-width: 980px)");
+    mobileQuery.addEventListener("change", (event) => {
+      if (!event.matches) setOpen(false);
+    });
+  }
+
   function initSession() {
     if (!document.body.matches('[data-page="session"]')) return;
 
@@ -521,6 +567,7 @@
 
   document.addEventListener("DOMContentLoaded", () => {
     initNavigation();
+    initMobileNavigation();
     initSession();
     initCustomerRows();
     initReviewDemo();

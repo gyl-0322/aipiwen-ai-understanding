@@ -24,6 +24,7 @@ try {
   const session = read('ai-interpreter-session.html');
   const demoAuth = read('static/preview-demo-auth.js');
   const interpreterDemo = read('static/ai-interpreter.js');
+  const interpreterCss = read('static/ai-interpreter.css');
   const vercel = JSON.parse(read('vercel.json'));
   const vercelIgnore = read('.vercelignore');
   const advisorVisibleCopy = advisor.replace(/<!--[\s\S]*?-->/g, '');
@@ -71,6 +72,17 @@ try {
   assert(demoAuth.includes("sessionStorage.removeItem(REPORT_STATE_KEY)"), '退出演示必须同时清除报告接入状态');
   assert(!interpreterDemo.includes('localStorage'), '模拟业务额度不得跨浏览器会话持久化');
   assert(!interpreterDemo.includes('mock-register'), '旧的“注册即赠积分”处理不得恢复');
+  assert(interpreterDemo.includes('function initMobileNavigation()'), '工作台缺少统一移动导航初始化');
+  assert(interpreterDemo.includes('mobile-nav-ready'), '移动导航必须采用渐进增强状态');
+  assert(interpreterDemo.includes('aria-controls'), '移动导航按钮必须关联主导航');
+  assert(interpreterDemo.includes('aria-expanded'), '移动导航按钮必须公布展开状态');
+  assert(interpreterDemo.includes('event.key !== "Escape"'), '移动导航必须支持 Escape 收起');
+  assert(interpreterDemo.includes('toggle.focus()'), 'Escape 收起后必须把焦点还给菜单按钮');
+  assert(interpreterDemo.includes('window.matchMedia("(max-width: 980px)")'), '移动导航必须在桌面断点重置状态');
+  assert(interpreterDemo.includes('initMobileNavigation();'), '页面加载时必须初始化移动导航');
+  assert(interpreterCss.includes('.mobile-nav-toggle'), '工作台样式缺少移动导航按钮');
+  assert(interpreterCss.includes('.sidebar.mobile-nav-ready:not(.is-open) .nav'), '移动端缺少导航折叠规则');
+  assert(interpreterCss.includes('.sidebar.mobile-nav-ready.is-open .nav'), '移动端缺少导航展开规则');
 
   assert(session.includes('class="finger-column-headings"'), '五大功能区必须使用统一左右手列标题');
   assert(count(session, />右手</g) === 1, '“右手”只能作为列标题出现一次');
@@ -82,6 +94,10 @@ try {
     const page = read(pagePath);
     const visiblePage = page.replace(/<!--[\s\S]*?-->/g, '');
     assert(page.includes('data-preview-demo-auth="required"'), `${pagePath} 缺少演示登录门禁`);
+    assert(count(page, /static\/ai-interpreter\.js/g) === 1, `${pagePath} 必须且只能加载一次共享工作台脚本`);
+    assert(count(page, /class="sidebar"/g) === 1, `${pagePath} 必须且只能有一个侧边栏`);
+    assert(count(page, /class="nav"/g) === 1, `${pagePath} 必须且只能有一个主导航`);
+    assert(count(page, /class="nav-link"/g) === 7, `${pagePath} 必须保留七个工作台导航项`);
     assert(page.includes('static/preview-demo-auth.js'), `${pagePath} 未加载演示登录门禁脚本`);
     assert(/<body[^>]+hidden/.test(page), `${pagePath} 必须在会话确认前隐藏内容`);
     assert(!page.includes('static/v3a-auth.js'), `${pagePath} 不得加载真实 Supabase 认证脚本`);
