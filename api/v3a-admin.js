@@ -23,7 +23,9 @@ const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3
 
 function getConfig() {
   const sessionConfig = getSessionConfig();
-  const serviceRoleKey = String(process.env.V3A_SUPABASE_SERVICE_ROLE_KEY || '');
+  const serviceRoleKey = String(
+    process.env.V3A_SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || ''
+  );
   const reviewWritesEnabled = process.env.V3A_ADMIN_REVIEW_WRITES_ENABLED === 'true';
   if (!serviceRoleKey) {
     throw new HttpError(503, '总部审核服务尚未完成 Preview 配置。', 'ADMIN_SERVICE_NOT_CONFIGURED');

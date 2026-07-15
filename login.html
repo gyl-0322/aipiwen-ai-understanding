@@ -32,7 +32,7 @@
 
     <section class="auth-grid">
       <div class="module auth-card">
-        <span class="status pending">短信登录准备中</span>
+        <span class="status pending" id="v3a-phone-login-status">正在检查短信登录状态</span>
         <p class="eyebrow" style="margin-top:14px">Unified Login</p>
         <h1>手机号登录</h1>
         <p>手机号、微信、邮箱等登录方式以后都保留在这一个统一页面内，不创建独立登录页。</p>
@@ -69,8 +69,8 @@
 
       <aside class="module">
         <span class="status info">当前安全状态</span>
-        <h2>短信发送默认关闭</h2>
-        <p>只有短信模板、运营商报备、Supabase Hook 和 010 数据库验收全部通过后，系统才会单独打开发送开关。</p>
+        <h2 id="v3a-phone-login-heading">短信登录状态检查中</h2>
+        <p id="v3a-phone-login-description">系统正在确认短信登录服务是否可用。</p>
       </aside>
     </section>
   </main>

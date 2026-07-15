@@ -36,9 +36,15 @@ function parseEncryptionKey(value) {
 }
 
 function getConfig() {
-  const supabaseUrl = normalize(process.env.V3A_SUPABASE_URL).replace(/\/+$/, '');
-  const anonKey = normalize(process.env.V3A_SUPABASE_ANON_KEY);
+  const supabaseUrl = normalize(
+    process.env.V3A_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL
+  ).replace(/\/+$/, '');
+  const anonKey = normalize(
+    process.env.V3A_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  );
   const projectRef = normalize(process.env.V3A_SUPABASE_PROJECT_REF);
+  const vercelEnv = normalize(process.env.VERCEL_ENV);
+  const vercelTargetEnv = normalize(process.env.VERCEL_TARGET_ENV);
   const allowedOrigin = normalize(process.env.V3A_ALLOWED_ORIGIN);
   const kvUrl = normalize(process.env.KV_REST_API_URL).replace(/\/+$/, '');
   const kvToken = normalize(process.env.KV_REST_API_TOKEN);
@@ -58,6 +64,7 @@ function getConfig() {
   }
   if (
     projectRef === PRODUCTION_PROJECT_REF || projectRef !== PREVIEW_PROJECT_REF ||
+    vercelEnv !== 'preview' || vercelTargetEnv !== 'preview' ||
     parsedSupabase.protocol !== 'https:' || parsedSupabase.username || parsedSupabase.password || parsedSupabase.port ||
     parsedSupabase.hostname !== `${PREVIEW_PROJECT_REF}.supabase.co` ||
     parsedSupabase.origin !== supabaseUrl || parsedSupabase.pathname !== '/' || parsedSupabase.search || parsedSupabase.hash ||

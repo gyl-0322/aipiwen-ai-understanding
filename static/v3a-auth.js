@@ -134,16 +134,36 @@
     const messageSelector = '#v3a-login-message';
     if (!form || !sendButton) return;
 
+    function showPhoneLoginStatus(enabled, unavailable = false) {
+      const status = $('#v3a-phone-login-status');
+      if (status) {
+        status.className = enabled ? 'status done' : 'status pending';
+        status.textContent = unavailable
+          ? '账号服务暂时不可用'
+          : enabled ? '短信登录已开放' : '短信登录尚未开放';
+      }
+      setText('#v3a-phone-login-heading', unavailable
+        ? '短信登录暂不可用'
+        : enabled ? '短信登录已开放' : '短信登录尚未开放');
+      setText('#v3a-phone-login-description', unavailable
+        ? '请稍后刷新页面重试。'
+        : enabled
+          ? '输入中国大陆手机号获取验证码，验证通过后即可继续。'
+          : '当前不会发送验证码，请等待总部开放短信登录。');
+    }
+
     let phoneOtpEnabled = false;
     sendButton.disabled = true;
     try {
       const capabilities = await requestSession('capabilities');
       phoneOtpEnabled = capabilities.phoneOtpEnabled === true;
       sendButton.disabled = !phoneOtpEnabled;
+      showPhoneLoginStatus(phoneOtpEnabled);
       if (!phoneOtpEnabled) {
         showMessage(messageSelector, '手机号短信登录尚未开放，当前不会发送验证码。');
       }
     } catch (error) {
+      showPhoneLoginStatus(false, true);
       showMessage(messageSelector, error.message);
     }
 

@@ -103,6 +103,9 @@ function createHarness(options = {}) {
   const cookieAccesses = [];
   const message = { textContent: '', hidden: true };
   const texts = {
+    phoneLoginStatus: { textContent: '', className: '' },
+    phoneLoginHeading: { textContent: '' },
+    phoneLoginDescription: { textContent: '' },
     verifiedPhone: { textContent: '' },
     currentRole: { textContent: '' },
     currentStatus: { textContent: '' },
@@ -218,6 +221,9 @@ function createHarness(options = {}) {
     ['#v3a-logout-button', page === 'pending' ? logoutButton : null],
     ['#v3a-workbench-logout', page === 'workbench' ? logoutButton : null],
     ['#v3a-login-message', page === 'login' ? message : null],
+    ['#v3a-phone-login-status', page === 'login' ? texts.phoneLoginStatus : null],
+    ['#v3a-phone-login-heading', page === 'login' ? texts.phoneLoginHeading : null],
+    ['#v3a-phone-login-description', page === 'login' ? texts.phoneLoginDescription : null],
     ['#v3a-register-message', page === 'register' ? message : null],
     ['#v3a-pending-message', page === 'pending' ? message : null],
     ['#v3a-workbench-message', page === 'workbench' ? message : null],
@@ -378,6 +384,7 @@ async function run() {
   assert.equal(loginPage.includes('id="v3a-phone-auth-form"'), true, '统一登录页必须包含手机号表单');
   assert.equal(loginPage.includes('name="phone"'), true, '统一登录页必须包含手机号字段');
   assert.equal(loginPage.includes('name="otp"'), true, '统一登录页必须包含验证码字段');
+  assert.equal(loginPage.includes('id="v3a-phone-login-status"'), true, '统一登录页必须动态回读短信登录状态');
   assert.equal(loginPage.includes('preview-demo-auth') || loginPage.includes('模拟验证码'), false,
     '统一登录页不得包含模拟登录资产');
   assert.equal(/name="email"|name="password"/.test(registerPage), false,
@@ -406,6 +413,9 @@ async function run() {
   await clickSend(harness);
   await submit(harness);
   assert.equal(harness.sendButton.disabled, true, 'capabilities 关闭时发送按钮必须禁用');
+  assert.equal(harness.texts.phoneLoginStatus.textContent, '短信登录尚未开放');
+  assert.equal(harness.texts.phoneLoginStatus.className, 'status pending');
+  assert.equal(harness.texts.phoneLoginHeading.textContent, '短信登录尚未开放');
   assert.equal(harness.calls.length, initialCount, '服务端短信门禁关闭时不得请求 OTP 或 verify');
   assert.equal(actionCalls(harness, 'request_otp').length, 0);
   assert.equal(actionCalls(harness, 'verify_otp').length, 0);
@@ -413,6 +423,9 @@ async function run() {
 
   for (const phone of ['13800138000', '8613800138000', '+8613800138000']) {
     harness = createHarness({ formData: { phone } });
+    await settle();
+    assert.equal(harness.texts.phoneLoginStatus.textContent, '短信登录已开放');
+    assert.equal(harness.texts.phoneLoginStatus.className, 'status done');
     await clickSend(harness);
     const request = actionCalls(harness, 'request_otp')[0];
     assertBffCall(request, { action: 'request_otp', method: 'POST' });

@@ -40,6 +40,11 @@ const REQUIRED_ADMIN_ENV = new Set([
 ]);
 const ALLOWED_ENV = new Set([
   ...REQUIRED_ADMIN_ENV,
+  'NEXT_PUBLIC_SUPABASE_URL',
+  'NEXT_PUBLIC_SUPABASE_ANON_KEY',
+  'SUPABASE_SERVICE_ROLE_KEY',
+  'VERCEL_ENV',
+  'VERCEL_TARGET_ENV',
   'V3A_ADMIN_REVIEW_WRITES_ENABLED',
   'V3A_PHONE_OTP_ENABLED'
 ]);
@@ -50,6 +55,8 @@ function previewEnv(reviewWritesEnabled = 'false') {
     V3A_SUPABASE_ANON_KEY: ANON_KEY,
     V3A_SUPABASE_SERVICE_ROLE_KEY: SERVICE_KEY,
     V3A_SUPABASE_PROJECT_REF: PREVIEW_REF,
+    VERCEL_ENV: 'preview',
+    VERCEL_TARGET_ENV: 'preview',
     V3A_ADMIN_REVIEW_WRITES_ENABLED: reviewWritesEnabled,
     V3A_ALLOWED_ORIGIN: ALLOWED_ORIGIN,
     KV_REST_API_URL: KV_URL,
@@ -729,6 +736,14 @@ async function run() {
     {
       ...previewEnv(),
       V3A_SUPABASE_PROJECT_REF: 'another-project-ref'
+    },
+    {
+      ...previewEnv(),
+      VERCEL_ENV: 'production'
+    },
+    {
+      ...previewEnv(),
+      VERCEL_TARGET_ENV: 'production'
     }
   ]) {
     const fetchStub = createFetch();
@@ -736,6 +751,17 @@ async function run() {
     assert.equal(res.statusCode, 503, 'Production、非 Preview 或 URL/ref 不一致必须返回 503');
     assert.equal(fetchStub.calls.length, 0, '项目门禁失败时绝不能发起 fetch');
   }
+
+  const genericAdminEnv = previewEnv();
+  genericAdminEnv.NEXT_PUBLIC_SUPABASE_URL = genericAdminEnv.V3A_SUPABASE_URL;
+  genericAdminEnv.NEXT_PUBLIC_SUPABASE_ANON_KEY = genericAdminEnv.V3A_SUPABASE_ANON_KEY;
+  genericAdminEnv.SUPABASE_SERVICE_ROLE_KEY = genericAdminEnv.V3A_SUPABASE_SERVICE_ROLE_KEY;
+  delete genericAdminEnv.V3A_SUPABASE_URL;
+  delete genericAdminEnv.V3A_SUPABASE_ANON_KEY;
+  delete genericAdminEnv.V3A_SUPABASE_SERVICE_ROLE_KEY;
+  let genericAdminResult = await invoke({ action: 'list_applications', env: genericAdminEnv });
+  assert.equal(genericAdminResult.res.statusCode, 200,
+    'Preview 必须可安全复用现有 Supabase URL、anon key 与 service role key');
 
   for (const invalidSupabaseUrl of [
     `https://user:pass@${PREVIEW_REF}.supabase.co`,

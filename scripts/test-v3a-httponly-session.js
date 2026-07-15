@@ -31,7 +31,11 @@ const ROTATED_REFRESH_TOKEN = 'TEST_V3A_ROTATED_REFRESH_TOKEN_NOT_REAL';
 const ALLOWED_ENV = new Set([
   'V3A_SUPABASE_URL',
   'V3A_SUPABASE_ANON_KEY',
+  'NEXT_PUBLIC_SUPABASE_URL',
+  'NEXT_PUBLIC_SUPABASE_ANON_KEY',
   'V3A_SUPABASE_PROJECT_REF',
+  'VERCEL_ENV',
+  'VERCEL_TARGET_ENV',
   'V3A_ALLOWED_ORIGIN',
   'V3A_PHONE_OTP_ENABLED',
   'V3A_SESSION_ENCRYPTION_KEY',
@@ -46,6 +50,8 @@ function previewEnv(overrides = {}) {
     V3A_SUPABASE_URL: PREVIEW_URL,
     V3A_SUPABASE_ANON_KEY: ANON_KEY,
     V3A_SUPABASE_PROJECT_REF: PREVIEW_REF,
+    VERCEL_ENV: 'preview',
+    VERCEL_TARGET_ENV: 'preview',
     V3A_ALLOWED_ORIGIN: ALLOWED_ORIGIN,
     V3A_SESSION_ENCRYPTION_KEY: SESSION_ENCRYPTION_KEY,
     KV_REST_API_URL: KV_URL,
@@ -500,6 +506,8 @@ async function run() {
     previewEnv({ V3A_SUPABASE_URL: `https://${PRODUCTION_REF}.supabase.co` }),
     previewEnv({ V3A_SUPABASE_PROJECT_REF: PRODUCTION_REF }),
     previewEnv({ V3A_SUPABASE_PROJECT_REF: 'another-project-ref' }),
+    previewEnv({ VERCEL_ENV: 'production' }),
+    previewEnv({ VERCEL_TARGET_ENV: 'production' }),
     previewEnv({ V3A_ALLOWED_ORIGIN: `${ALLOWED_ORIGIN}/path` }),
     previewEnv({ V3A_ALLOWED_ORIGIN: '' }),
     previewEnv({ V3A_SESSION_ENCRYPTION_KEY: '' }),
@@ -518,6 +526,25 @@ async function run() {
     assert.equal(result.res.statusCode, 503, '无效 Preview、Origin、KV 或 Session encryption key 配置必须返回 503');
     assert.equal(fetchStub.calls.length, 0, '配置门禁失败时不得发起任何网络请求');
   }
+
+  const genericSupabaseEnv = previewEnv({ V3A_PHONE_OTP_ENABLED: 'true' });
+  genericSupabaseEnv.NEXT_PUBLIC_SUPABASE_URL = genericSupabaseEnv.V3A_SUPABASE_URL;
+  genericSupabaseEnv.NEXT_PUBLIC_SUPABASE_ANON_KEY = genericSupabaseEnv.V3A_SUPABASE_ANON_KEY;
+  delete genericSupabaseEnv.V3A_SUPABASE_URL;
+  delete genericSupabaseEnv.V3A_SUPABASE_ANON_KEY;
+  let genericFetchStub = createFetch();
+  let genericResult = await invoke({
+    method: 'POST',
+    action: 'request_otp',
+    body: { phone: PHONE },
+    headers: otpHeaders('203.0.113.9'),
+    env: genericSupabaseEnv,
+    fetchStub: genericFetchStub
+  });
+  assert.equal(genericResult.res.statusCode, 200,
+    'Preview 必须可安全复用现有 NEXT_PUBLIC Supabase URL/anon key');
+  assert.equal(supabaseCalls(genericFetchStub.calls).length, 1,
+    '通用 Preview Supabase 变量只能触发一次 OTP 上游请求');
 
   for (const action of ['request_otp', 'verify_otp']) {
     for (const headers of [{}, { origin: `${ALLOWED_ORIGIN}/` }, { origin: `${ALLOWED_ORIGIN}.evil` }]) {
