@@ -193,6 +193,7 @@ module.exports = async function handler(req, res) {
     imageBase64 = null, imageMimeType = 'image/jpeg',
     subjectAge = null,   // 被测者年龄（数字），用于年龄分层解读
     reportSummary = null, // 第一次vision解读后缓存的报告数据摘要，追问时传入
+    evidenceLevel = null, // behavior_only 表示只有行为描述，没有完整测评报告数据
     refToken = null,     // 邀请裂变 token（被邀请人首次使用时传入，给邀请人积分）
   } = payload;
 
@@ -201,6 +202,7 @@ module.exports = async function handler(req, res) {
 
   // 图片上传模式：content 可以为空（纯看图）或追加问题
   const isVisionMode = !!imageBase64;
+  const isBehaviorOnly = evidenceLevel === 'behavior_only' && !isVisionMode && context !== 'report' && !reportSummary;
   if (!isVisionMode && !content?.trim()) return res.status(400).json({ error: '内容不能为空' });
 
   // ── 年龄/阶段分层：根据 subjectAge / context 决定 AI 解读语气和场景聚焦 ──────
@@ -344,14 +346,14 @@ module.exports = async function handler(req, res) {
   const NO_FILLER = `【重要格式要求】禁止用"收到""好的""当然""明白""我来帮你"等开场白。直接进入分析内容，第一句就是核心洞察。`;
 
   // 历史记忆注入段（所有场景均支持，越聊越了解用户）
-  const memSection = previousContext
+  const memSection = previousContext && !isBehaviorOnly
     ? `\n【该用户的历史记录（此前几次对话的核心发现，了解其行为模式）】\n${previousContext}\n`
     : '';
 
   // TRC注入策略：previousContext 含类型关键词 或 对话已≥4轮 → 完整 TRC_SECTION
   // 否则注入精简 TRC_HINT，节省约1200 tokens（首次对话时AI无需完整类型库）
   const TRC_TYPE_KEYWORDS = ['认知型','模仿型','开放型','逆思型','整合型','双视型','超级认知型','超级模仿型','弘拓模仿型','弘拓整合','智业集','花茂美','完美型'];
-  const hasTRCContext = TRC_TYPE_KEYWORDS.some(kw => previousContext.includes(kw)) || history.length >= 4;
+  const hasTRCContext = !isBehaviorOnly && (TRC_TYPE_KEYWORDS.some(kw => previousContext.includes(kw)) || history.length >= 4);
 
   // 五步路径说明（所有场景共用，内嵌在各自提示词中）
   const FIVE_STEPS = `
@@ -568,7 +570,10 @@ ${TRC_LEARNING_CHANNEL}
 ${WU_DA_GONG_NENG}`;
 
   // hasTRCContext=true → 完整知识库（复访用户/长对话）；false → 精简提示（首次/短对话）
-  const trcContent = hasTRCContext ? TRC_SECTION : TRC_HINT;
+  const behaviorOnlyEvidenceRule = isBehaviorOnly
+    ? `\n【证据边界：仅行为描述】\n用户没有上传任何完整测评报告数据。你只能基于用户描述的行为做理解性推测。\n严格禁止输出：ATD值、TRC数值、学习通道占比、五大功能区数值、具体人格类型判定、具体手指/脑区数据。\n如果用户的行为描述让你联想到某种认知或学习倾向，只能用推测语气表达，例如：这可能和反馈节奏、任务启动方式、掌控感或被看见的需求有关。如需进一步校准，可以试试天赋底色速测或上传已有皮纹报告。\n`
+    : '';
+  const trcContent = isBehaviorOnly ? behaviorOnlyEvidenceRule : (hasTRCContext ? TRC_SECTION : TRC_HINT);
 
   // ── Task 1B: 报告定制模板（仅注入用户请求的那一个，节省约2000 tokens）──────
   const REPORT_TEMPLATES = {
@@ -770,7 +775,7 @@ ${NO_FILLER}`;
   // ── 知识库检索注入（grounding）：拿用户输入去 knowledge 检索，取前3条作为底座 ──
   // 失败/超时一律静默跳过，绝不影响对话主流程。仅普通对话注入（vision 模式不注入）。
   let kbInjection = '';
-  if (!isVisionMode && content && content.trim()) {
+  if (!isVisionMode && !isBehaviorOnly && content && content.trim()) {
     try {
       const host  = req.headers['x-forwarded-host'] || req.headers.host;
       const proto = req.headers['x-forwarded-proto'] || 'https';
@@ -792,7 +797,7 @@ ${NO_FILLER}`;
     } catch (e) { /* 检索失败不影响主流程 */ }
   }
 
-  const systemPrompt = (isVisionMode ? VISION_SYSTEM : (SYSTEM[context] || SYSTEM.child)) + kbInjection;
+  const systemPrompt = (isVisionMode ? VISION_SYSTEM : (SYSTEM[context] || SYSTEM.child)) + (isBehaviorOnly ? behaviorOnlyEvidenceRule : '') + kbInjection;
 
   // ── 构建消息结构 ──────────────────────────────────────────────────────────────
   const messages = [{ role: 'system', content: systemPrompt }];
@@ -800,6 +805,7 @@ ${NO_FILLER}`;
   // 注入历史对话（最多8轮，视觉模式不注入历史）
   if (!isVisionMode) {
     history.slice(-8).forEach(m => {
+      if (isBehaviorOnly && m.role === 'ai' && /(ATD|TRC|学习通道|五大功能区|脑区|R[1-5]|[0-9]{2,}\s*分)/i.test(m.content || '')) return;
       messages.push({
         role:    m.role === 'ai' ? 'assistant' : 'user',
         content: m.content,
@@ -876,7 +882,9 @@ ${NO_FILLER}`;
     partner:  '你说的这些，我在认真感受。能再描述一个具体的场景吗？',
     business: '我在思考你说的这些。能再说说这个行为在什么情况下最明显吗？',
   };
-  const finalReply = reply || FALLBACK[context] || FALLBACK.child;
+  const behaviorOnlyDataLeak = isBehaviorOnly && /(ATD|TRC|学习通道|五大功能区|脑区|R[1-5]|[0-9]{2,}\s*分)/i.test(reply || '');
+  const safeBehaviorReply = '从你描述的行为看，这更适合先当作一个行为信号来理解，而不是直接下结论。它可能和孩子当下的反馈节奏、任务启动方式、掌控感或被看见的需求有关。你可以先观察：这个行为通常发生在什么时候、前面发生了什么、孩子最想避开或最想得到什么。下一步建议先做一个小调整：把指责换成具体描述，比如“我看到你现在很烦，我们先把第一步做完”，再观察 1-2 周。如果想进一步校准，可以试试天赋底色速测或上传已有皮纹报告。';
+  const finalReply = behaviorOnlyDataLeak ? safeBehaviorReply : (reply || FALLBACK[context] || FALLBACK.child);
 
   // 异步记录对话日志，不阻塞返回
   logConversation(sessionId, context, content, finalReply, ip).catch(() => {});

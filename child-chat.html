@@ -886,12 +886,12 @@ async function sendChat() {
 }
 
 async function callAPI(content) {
-  // 判断用户当前是否有报告/速测数据（控制 AI 证据层级）
+  // 判断用户当前是否有完整报告数据（控制 AI 证据层级）。
+  // 速测记录只能作为轻量体验，不足以支持 ATD/TRC/学习通道等数据断言。
   var hasReportData = false;
   try {
     var rdc = sessionStorage.getItem('aipiwen_report_deepchat');
-    var fpData = localStorage.getItem('aipiwen_fp_uid');
-    hasReportData = !!(rdc || fpData);
+    hasReportData = !!rdc;
   } catch(e) { hasReportData = false; }
 
   const body = {
