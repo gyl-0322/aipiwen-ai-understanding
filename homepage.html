@@ -297,6 +297,36 @@ body {
   background:rgba(255,255,255,.1); transition:background .3s;
 }
 .syn-dot.filled { background:rgba(194,105,42,.7); }
+.syn-route {
+  display:grid; grid-template-columns:repeat(3,1fr); gap:6px;
+  margin-top:14px;
+}
+.syn-step {
+  border:1px solid rgba(255,255,255,.08);
+  background:rgba(255,255,255,.04);
+  border-radius:10px; padding:7px 8px;
+  font-size:10px; line-height:1.45; color:rgba(255,255,255,.44);
+}
+.syn-step strong {
+  display:block; font-size:11px; color:rgba(255,255,255,.72);
+  margin-bottom:2px; font-weight:600;
+}
+.syn-step.done {
+  border-color:rgba(194,105,42,.38);
+  background:rgba(194,105,42,.10);
+  color:rgba(255,255,255,.62);
+}
+.syn-step.done strong { color:#D4A453; }
+.synthesis-card.inactive .syn-step {
+  border-color:var(--ink-10); background:rgba(255,255,255,.36);
+  color:var(--ink-40);
+}
+.synthesis-card.inactive .syn-step strong { color:var(--ink-70); }
+.synthesis-card.inactive .syn-step.done {
+  border-color:rgba(194,105,42,.24);
+  background:rgba(194,105,42,.08);
+}
+.synthesis-card.inactive .syn-step.done strong { color:var(--amber); }
 
 /* ── ABOUT ── */
 .about-strip { background:var(--dark); margin:0; padding:40px 28px; }
@@ -513,6 +543,11 @@ body {
       <div class="syn-dot" id="synDot1"></div>
       <div class="syn-dot" id="synDot2"></div>
       <div class="syn-dot" id="synDot3"></div>
+    </div>
+    <div class="syn-route" aria-label="AIPIWEN 使用路径进度">
+      <div class="syn-step" id="synStepBehavior"><strong>行为理解</strong><span>未开始</span></div>
+      <div class="syn-step" id="synStepTalent"><strong>天赋速测</strong><span>未开始</span></div>
+      <div class="syn-step" id="synStepReport"><strong>报告解读</strong><span>可上传</span></div>
     </div>
   </div>
 </div>
@@ -743,15 +778,46 @@ setInterval(() => switchReview((_reviewIdx + 1) % 3), 5000);
     } catch(e) { return false; }
   });
 
+  function hasJSONStorage(key, check) {
+    try {
+      const value = JSON.parse(localStorage.getItem(key) || 'null');
+      return check ? check(value) : !!value;
+    } catch(e) { return false; }
+  }
+
+  const talentSignals = [
+    !!localStorage.getItem('aipiwen_fp_uid'),
+    !!localStorage.getItem('aipiwen_style_result'),
+    !!localStorage.getItem('aipiwen_vark_result'),
+    hasJSONStorage('aipiwen_moods', value => value && Object.keys(value).length > 0)
+  ];
+  const talentCount = talentSignals.filter(Boolean).length;
+
+  let hasReportSignal = false;
+  try { hasReportSignal = !!sessionStorage.getItem('aipiwen_report_deepchat'); } catch(e) {}
+
   const count = filledContexts.length;
   const card  = document.getElementById('synthesisCard');
   const sub   = document.getElementById('synSub');
   const dots  = document.querySelectorAll('.syn-dot');
+  const stepBehavior = document.getElementById('synStepBehavior');
+  const stepTalent = document.getElementById('synStepTalent');
+  const stepReport = document.getElementById('synStepReport');
+
+  function setStep(el, done, text) {
+    if (!el) return;
+    el.classList.toggle('done', done);
+    const span = el.querySelector('span');
+    if (span) span.textContent = text;
+  }
 
   // 更新进度点
   dots.forEach((dot, i) => {
     if (i < count) dot.classList.add('filled');
   });
+  setStep(stepBehavior, count > 0, count > 0 ? `已探索 ${count}/4` : '先说一个行为');
+  setStep(stepTalent, talentCount > 0, talentCount > 0 ? `已完成 ${talentCount} 项` : '可继续速测');
+  setStep(stepReport, hasReportSignal, hasReportSignal ? '已有报告线索' : '可上传报告');
 
   if (count >= 2) {
     // 激活状态
@@ -761,8 +827,14 @@ setInterval(() => switchReview((_reviewIdx + 1) % 3), 5000);
     const CONTEXT_LABELS = { child:'孩子', self:'自己', partner:'伴侣', business:'伙伴' };
     const labels = filledContexts.map(k => CONTEXT_LABELS[k] || k).join('、');
     sub.textContent = `已有${count}个场景数据（${labels}），点击查看跨场景综合洞察 →`;
+  } else if (count === 1 && talentCount > 0) {
+    sub.textContent = '已完成一次行为理解和天赋速测，再探索一个关系场景即可解锁综合分析';
+  } else if (count === 1) {
+    sub.textContent = '已完成一次行为理解，建议继续做天赋底色速测，或再探索一个关系场景';
+  } else if (talentCount > 0) {
+    sub.textContent = '已完成天赋速测，建议从一个真实行为开始，让 AI 帮你翻译背后的需求';
   } else {
-    sub.textContent = `已探索 ${count}/4 个场景，再探索 ${2 - count} 个即可解锁综合分析`;
+    sub.textContent = '建议路径：先读懂一个行为，再做天赋底色速测，最后上传已有报告深度解读';
   }
 })();
 </script>
