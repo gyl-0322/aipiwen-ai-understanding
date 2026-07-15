@@ -29,6 +29,8 @@ try {
   const routeSources = vercel.routes.map((route) => route.src);
   const catchAllIndex = routeSources.indexOf('/(.*)');
 
+  assert(!routeSources.some((route) => route.startsWith('/server')), '服务端 Session helper 目录不得配置为公开静态路由');
+
   assert(count(homepage, /href="\/advisor\.html"/g) === 1, '首页必须且只能保留一个指导师工作台入口');
   assert(homepage.includes('src="/js/error-tracker.js"'), 'Production 首页必须保留错误上报脚本');
   assert(homepage.includes('src="/js/growth-tracker.js"'), 'Production 首页必须保留增长统计脚本');
@@ -60,19 +62,36 @@ try {
     assert(!exists(previewOnlyPath), `Production 包不得包含 Preview 演示文件：${previewOnlyPath}`);
   });
 
+  assert(exists('api/v3a-session.js'), 'HttpOnly Session 服务端路由必须存在');
+  assert(exists('server/v3a-session-store.js'), '加密服务端 Session 存储模块必须存在且不得放入公开 lib 路由');
+
   if (exists('login.html')) {
     const login = read('login.html');
     const v3aAuth = read('static/v3a-auth.js');
+    const sessionStore = read('server/v3a-session-store.js');
     assert(login.includes('static/v3a-auth.js'), '统一登录页必须使用真实 V3a 认证脚本');
     assert(!login.includes('preview-demo-auth'), '统一登录页不得加载 Preview 模拟认证脚本');
     assert(!login.includes('Preview 演示') && !login.includes('模拟验证码'), '统一登录页不得包含模拟登录文案');
-    assert(v3aAuth.includes("window.AIPIWEN_V3A_PHONE_OTP_ENABLED === true"), '短信发送必须使用显式默认关闭门禁');
-    assert(v3aAuth.includes('signInWithOtp'), '统一登录页必须保留真实手机号 OTP 接口');
-    assert(v3aAuth.includes("type: 'sms'"), '统一登录页必须使用短信 OTP 验证类型');
-    assert(v3aAuth.includes("const PREVIEW_PROJECT_REF = 'lmjriqncuopgxwyudfee'"), '浏览器认证必须固定 Preview Project Ref');
-    assert(v3aAuth.includes("const PRODUCTION_PROJECT_REF = 'tysbwijizgebnrazxpvo'"), '浏览器认证必须显式拒绝 Production Project Ref');
-    assert(v3aAuth.includes('persistSession: false'), '未建立 HttpOnly Session 前不得持久化 Supabase Session');
-    assert(!v3aAuth.includes('localStorage') && !v3aAuth.includes('sessionStorage'), '真实认证脚本不得把手机号或验证码写入浏览器存储');
+    assert(v3aAuth.includes("const SESSION_API = '/api/v3a-session'"),
+      '浏览器认证必须只调用同源 HttpOnly Session API');
+    assert(count(v3aAuth, /\bfetch\s*\(/g) === 1, '浏览器认证必须集中使用唯一 Session API 请求入口');
+    assert(v3aAuth.includes('fetch(`${SESSION_API}?${query.toString()}`'),
+      '浏览器认证请求必须固定发送到 /api/v3a-session');
+    assert(v3aAuth.includes("credentials: 'same-origin'"),
+      '浏览器 Session 请求必须显式携带同源 HttpOnly Cookie');
+    const browserApiPaths = [...v3aAuth.matchAll(/[\"'`](\/api\/[A-Za-z0-9._/-]+)/g)]
+      .map((match) => match[1]);
+    assert(browserApiPaths.length > 0 && browserApiPaths.every((apiPath) => apiPath === '/api/v3a-session'),
+      '浏览器认证不得访问 /api/v3a-session 以外的 API');
+    assert(!/supabase|AIPIWEN_V3A_SUPABASE|createClient|getSession|signInWithOtp|verifyOtp|persistSession/i.test(v3aAuth),
+      '浏览器认证不得依赖 Supabase SDK 或浏览器端 Supabase 配置');
+    assert(!v3aAuth.includes('lmjriqncuopgxwyudfee'), '浏览器认证不得包含 Preview Project Ref');
+    assert(!/access[_A-Za-z]*token|refresh[_A-Za-z]*token/i.test(v3aAuth),
+      '浏览器认证不得读取、保存或发送 Supabase access/refresh token');
+    assert(!v3aAuth.includes('localStorage') && !v3aAuth.includes('sessionStorage'),
+      '真实认证脚本不得把手机号、验证码或 Session 写入浏览器存储');
+    assert(sessionStore.includes("process.env.V3A_PHONE_OTP_ENABLED === 'true'"),
+      '短信发送门禁必须转移到服务端并保持显式默认关闭');
     assert(!login.includes('cdn.jsdelivr.net') && !login.includes('esm.sh'), '中国用户登录页不得依赖境外 CDN 加载认证组件');
   }
 
@@ -102,7 +121,10 @@ try {
     assert(routeIndex < catchAllIndex, `Production 路由必须位于首页 catch-all 之前：${requiredRoute}`);
   });
 
-  assert(!routeSources.some((route) => route.startsWith('/login') || route.startsWith('/ai-interpreter')), 'Production 不得发布 Preview 登录或工作台演示路由');
+  assert(!routeSources.some((route) => route.startsWith('/login') || route.startsWith('/ai-interpreter')),
+    'Production 不得发布真实登录或工作台 Preview 路由');
+  assert(!routeSources.includes('/api/v3a-session'),
+    'Production 路由表不得显式暴露 V3a 真实登录 Session 路由');
   assert(vercel.functions && typeof vercel.functions === 'object', 'Production 必须保留 Serverless Functions 配置');
   [
     'api/auth.js',

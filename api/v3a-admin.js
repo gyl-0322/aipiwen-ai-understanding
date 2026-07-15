@@ -6,69 +6,34 @@
  */
 
 const crypto = require('crypto');
+const {
+  HttpError,
+  getConfig: getSessionConfig,
+  setPrivateHeaders,
+  requireSameOrigin,
+  requireJsonRequest,
+  readRequestBody,
+  clearSessionCookie,
+  loadSession,
+  resolveSession,
+  requireCsrf
+} = require('../server/v3a-session-store');
 
-const PREVIEW_PROJECT_REF = 'lmjriqncuopgxwyudfee';
-const PRODUCTION_PROJECT_REF = 'tysbwijizgebnrazxpvo';
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
-class HttpError extends Error {
-  constructor(statusCode, message, code) {
-    super(message);
-    this.statusCode = statusCode;
-    this.code = code;
-  }
-}
-
 function getConfig() {
-  const supabaseUrl = String(process.env.V3A_SUPABASE_URL || '').replace(/\/+$/, '');
+  const sessionConfig = getSessionConfig();
   const serviceRoleKey = String(process.env.V3A_SUPABASE_SERVICE_ROLE_KEY || '');
-  const projectRef = String(process.env.V3A_SUPABASE_PROJECT_REF || '');
   const reviewWritesEnabled = process.env.V3A_ADMIN_REVIEW_WRITES_ENABLED === 'true';
-  if (!supabaseUrl || !serviceRoleKey || !projectRef) {
+  if (!serviceRoleKey) {
     throw new HttpError(503, '总部审核服务尚未完成 Preview 配置。', 'ADMIN_SERVICE_NOT_CONFIGURED');
   }
-  if (projectRef === PRODUCTION_PROJECT_REF || projectRef !== PREVIEW_PROJECT_REF) {
-    throw new HttpError(503, '总部审核服务项目校验未通过。', 'PROJECT_REF_NOT_ALLOWED');
-  }
-  let parsed;
-  try {
-    parsed = new URL(supabaseUrl);
-  } catch {
-    throw new HttpError(503, '总部审核服务项目校验未通过。', 'PROJECT_REF_MISMATCH');
-  }
-  if (parsed.protocol !== 'https:' || parsed.hostname !== `${projectRef}.supabase.co` || parsed.pathname !== '/') {
-    throw new HttpError(503, '总部审核服务项目校验未通过。', 'PROJECT_REF_MISMATCH');
-  }
-  return { supabaseUrl, serviceRoleKey, projectRef, reviewWritesEnabled };
+  return { ...sessionConfig, serviceRoleKey, reviewWritesEnabled };
 }
 
 function requireReviewWritesEnabled(config) {
   if (config.reviewWritesEnabled !== true) {
     throw new HttpError(503, '总部审核写操作尚未开放。', 'REVIEW_WRITES_DISABLED');
-  }
-}
-
-function readBearerToken(req) {
-  const header = req.headers?.authorization || req.headers?.Authorization || '';
-  const match = String(header).match(/^Bearer\s+([^\s]+)$/i);
-  if (!match || match[1].length > 8192) {
-    throw new HttpError(401, '未登录或登录状态已失效。', 'UNAUTHENTICATED');
-  }
-  return match[1];
-}
-
-function readRequestBody(req) {
-  if (!req.body) return {};
-  if (typeof req.body === 'object' && !Array.isArray(req.body)) return req.body;
-  if (typeof req.body !== 'string' || req.body.length > 10000) {
-    throw new HttpError(400, '请求内容无效。', 'INVALID_REQUEST_BODY');
-  }
-  try {
-    const body = JSON.parse(req.body);
-    if (!body || typeof body !== 'object' || Array.isArray(body)) throw new Error('invalid');
-    return body;
-  } catch {
-    throw new HttpError(400, '请求内容无效。', 'INVALID_REQUEST_BODY');
   }
 }
 
@@ -78,31 +43,6 @@ async function readJson(response) {
   } catch {
     return null;
   }
-}
-
-async function verifyAccessToken(config, accessToken) {
-  let response;
-  try {
-    response = await fetch(`${config.supabaseUrl}/auth/v1/user`, {
-      method: 'GET',
-      headers: {
-        apikey: config.serviceRoleKey,
-        Authorization: `Bearer ${accessToken}`,
-        Accept: 'application/json'
-      }
-    });
-  } catch {
-    throw new HttpError(502, '管理员身份验证服务暂时不可用。', 'AUTH_UPSTREAM_UNAVAILABLE');
-  }
-  if (response.status === 401 || response.status === 403) {
-    throw new HttpError(401, '未登录或登录状态已失效。', 'UNAUTHENTICATED');
-  }
-  if (!response.ok) throw new HttpError(502, '管理员身份验证服务暂时不可用。', 'AUTH_UPSTREAM_ERROR');
-  const authUser = await readJson(response);
-  if (!authUser?.id || !UUID_PATTERN.test(authUser.id)) {
-    throw new HttpError(401, '未登录或登录状态已失效。', 'UNAUTHENTICATED');
-  }
-  return authUser;
 }
 
 function buildRestUrl(config, table, params) {
@@ -132,8 +72,8 @@ async function selectRows(config, table, params) {
   return Array.isArray(payload) ? payload : [];
 }
 
-async function requireActiveSuperAdmin(config, accessToken) {
-  const authUser = await verifyAccessToken(config, accessToken);
+async function requireActiveSuperAdmin(config, session) {
+  const authUser = session.user;
   const rows = await selectRows(config, 'users', {
     select: 'id,role,status,display_name',
     auth_user_id: `eq.${authUser.id}`,
@@ -159,7 +99,6 @@ function mapBy(rows, key) {
 function applicationSummary(review, user, profile) {
   return {
     applicationId: review.id,
-    userId: review.user_id,
     name: review.applied_name || review.applied_nickname || user?.display_name || null,
     nickname: review.applied_nickname || user?.display_name || null,
     phoneMasked: maskPhone(user?.phone),
@@ -325,18 +264,14 @@ function normalizeApprovalResult(result) {
   ) {
     throw new HttpError(500, '审核事务返回结果无效。', 'TRANSACTION_FAILED');
   }
+  requireUuid(data.application_id);
+  requireUuid(data.user_id);
+  requireUuid(data.wallet.id);
+  requireUuid(data.credit_log.id);
+  requireUuid(data.audit_log_id);
   return {
     ok: true,
-    alreadyProcessed: result.already_processed === true,
-    data: {
-      applicationId: requireUuid(data.application_id),
-      userId: requireUuid(data.user_id),
-      userStatus: 'active',
-      wallet: { id: requireUuid(data.wallet.id), balance },
-      creditLog: { id: requireUuid(data.credit_log.id), type: 'REGISTER_BONUS', amount },
-      inviteCode: data.invite_code,
-      auditLogId: requireUuid(data.audit_log_id)
-    }
+    alreadyProcessed: result.already_processed === true
   };
 }
 
@@ -345,16 +280,13 @@ function normalizeRejectionResult(result) {
   if (result?.success !== true || data?.user_status !== 'rejected') {
     throw new HttpError(500, '审核事务返回结果无效。', 'TRANSACTION_FAILED');
   }
+  requireUuid(data.application_id);
+  requireUuid(data.user_id);
+  requireUuid(data.review_id);
+  if (data.audit_log_id) requireUuid(data.audit_log_id);
   return {
     ok: true,
-    alreadyProcessed: result.already_processed === true,
-    data: {
-      applicationId: requireUuid(data.application_id),
-      userId: requireUuid(data.user_id),
-      userStatus: 'rejected',
-      reviewId: requireUuid(data.review_id),
-      auditLogId: data.audit_log_id ? requireUuid(data.audit_log_id) : null
-    }
+    alreadyProcessed: result.already_processed === true
   };
 }
 
@@ -394,23 +326,30 @@ async function rejectApplication(config, admin, applicationId, reason) {
 }
 
 module.exports = async function handler(req, res) {
-  res.setHeader('Cache-Control', 'no-store');
+  setPrivateHeaders(res);
   res.setHeader('Allow', 'GET, POST');
   if (!['GET', 'POST'].includes(req.method)) {
     return res.status(405).json({ ok: false, error: 'Method not allowed', code: 'METHOD_NOT_ALLOWED' });
   }
   try {
-    const accessToken = readBearerToken(req);
     const config = getConfig();
-    const admin = await requireActiveSuperAdmin(config, accessToken);
+    if (req.method === 'POST') {
+      requireSameOrigin(req, config);
+      requireJsonRequest(req);
+    }
+    const loaded = await loadSession(req, config);
+    if (req.method === 'POST') requireCsrf(req, loaded);
+    const session = await resolveSession(config, loaded);
+    const admin = await requireActiveSuperAdmin(config, session);
     const action = req.query?.action;
 
     if (req.method === 'GET' && action === 'list_applications') {
       const applications = await listApplications(config);
       return res.status(200).json({
         ok: true,
-        admin: { id: admin.id, displayName: admin.display_name || 'AIPIWEN 总部' },
-        applications
+        admin: { displayName: admin.display_name || 'AIPIWEN 总部' },
+        applications,
+        csrfToken: session.csrfToken
       });
     }
     if (req.method === 'GET' && action === 'get_application') {
@@ -419,7 +358,7 @@ module.exports = async function handler(req, res) {
         throw new HttpError(400, 'application_id 格式无效。', 'INVALID_APPLICATION_ID');
       }
       const application = await getApplication(config, applicationId);
-      return res.status(200).json({ ok: true, application });
+      return res.status(200).json({ ok: true, application, csrfToken: session.csrfToken });
     }
     if (req.method === 'POST' && action === 'approve_application') {
       requireReviewWritesEnabled(config);
@@ -441,6 +380,7 @@ module.exports = async function handler(req, res) {
     }
     throw new HttpError(400, '不支持的 action。', 'INVALID_ACTION');
   } catch (error) {
+    if (error?.code === 'UNAUTHENTICATED') clearSessionCookie(res);
     const statusCode = error instanceof HttpError ? error.statusCode : 500;
     const message = error instanceof HttpError ? error.message : '服务暂时不可用，请稍后重试。';
     const code = error instanceof HttpError ? error.code : 'INTERNAL_ERROR';

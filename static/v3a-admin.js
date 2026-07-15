@@ -4,8 +4,6 @@
   if (document.body?.dataset?.v3aAdminPage !== 'applications') return;
 
   const roleLabels = { advisor: '指导师', agent: '代理', center: '采集中心' };
-  const PREVIEW_PROJECT_REF = 'lmjriqncuopgxwyudfee';
-  const PRODUCTION_PROJECT_REF = 'tysbwijizgebnrazxpvo';
   const practitionerLabels = {
     independent: '独立从业者',
     organization: '机构从业者',
@@ -13,7 +11,7 @@
     center: '采集中心',
     other: '其他'
   };
-  let client = null;
+  let csrfToken = '';
   let applications = [];
   let selected = null;
   let busy = false;
@@ -47,50 +45,21 @@
     $('#v3a-admin-workspace').hidden = true;
   }
 
-  function getClient() {
-    if (client) return client;
-    const config = window.AIPIWEN_V3A_SUPABASE || {};
-    let parsed;
-    try {
-      parsed = new URL(String(config.supabaseUrl || ''));
-    } catch {
-      parsed = null;
-    }
-    if (
-      !config.supabaseUrl || !config.supabaseAnonKey || !window.supabase?.createClient ||
-      config.projectRef === PRODUCTION_PROJECT_REF || config.projectRef !== PREVIEW_PROJECT_REF ||
-      parsed?.protocol !== 'https:' || parsed?.hostname !== `${PREVIEW_PROJECT_REF}.supabase.co` ||
-      parsed?.pathname !== '/'
-    ) {
-      throw new Error('总部登录组件尚未完成 Preview 配置。');
-    }
-    client = window.supabase.createClient(config.supabaseUrl, config.supabaseAnonKey, {
-      auth: { autoRefreshToken: false, detectSessionInUrl: false, persistSession: false }
-    });
-    return client;
-  }
-
-  async function accessToken() {
-    const supabase = getClient();
-    const { data, error } = await supabase.auth.getSession();
-    const token = data?.session?.access_token;
-    if (error || !token) throw Object.assign(new Error('请先从统一登录页登录总部账号。'), { status: 401 });
-    return token;
-  }
-
   async function requestAdmin(action, options = {}) {
-    const token = await accessToken();
     const query = new URLSearchParams({ action });
     if (options.id) query.set('id', options.id);
+    const method = options.method || 'GET';
+    const isPost = method === 'POST';
     let response;
     try {
       response = await fetch(`/api/v3a-admin?${query.toString()}`, {
-        method: options.method || 'GET',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          ...(options.body ? { 'Content-Type': 'application/json' } : {})
-        },
-        body: options.body ? JSON.stringify(options.body) : undefined
+        method,
+        credentials: 'same-origin',
+        headers: isPost ? {
+          'Content-Type': 'application/json',
+          ...(csrfToken ? { 'X-CSRF-Token': csrfToken } : {})
+        } : undefined,
+        body: isPost ? JSON.stringify(options.body || {}) : undefined
       });
     } catch {
       throw Object.assign(new Error('总部审核服务暂时不可用。'), { status: 502 });
@@ -104,6 +73,7 @@
     if (!response.ok || payload?.ok !== true) {
       throw Object.assign(new Error(payload?.error || '总部审核服务暂时不可用。'), { status: response.status });
     }
+    if (typeof payload.csrfToken === 'string') csrfToken = payload.csrfToken;
     return payload;
   }
 
@@ -285,9 +255,20 @@
   $('#v3a-admin-reject')?.addEventListener('click', reject);
   $('#v3a-admin-logout')?.addEventListener('click', async () => {
     try {
-      await getClient().auth.signOut();
-    } finally {
+      const response = await fetch('/api/v3a-session?action=logout', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(csrfToken ? { 'X-CSRF-Token': csrfToken } : {})
+        },
+        body: '{}'
+      });
+      if (!response.ok) throw new Error('退出失败，请稍后重试。');
+      csrfToken = '';
       window.location.href = '/login.html';
+    } catch (error) {
+      showError(error.message || '退出失败，请稍后重试。');
     }
   });
   init();

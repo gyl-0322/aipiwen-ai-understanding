@@ -10,91 +10,99 @@ const source = fs.readFileSync(sourcePath, 'utf8');
 const loginPage = fs.readFileSync(path.join(__dirname, '..', 'login.html'), 'utf8');
 const registerPage = fs.readFileSync(path.join(__dirname, '..', 'advisor-register.html'), 'utf8');
 const pendingPage = fs.readFileSync(path.join(__dirname, '..', 'advisor-pending.html'), 'utf8');
-const verifiedPhone = '+8613800138000';
-const previewRef = 'lmjriqncuopgxwyudfee';
-const productionRef = 'tysbwijizgebnrazxpvo';
 
-function completeRecords(status = 'pending', role) {
+const APP_ORIGIN = 'https://preview.aipiwen.cn';
+const SESSION_PATH = '/api/v3a-session';
+const VERIFIED_PHONE = '+8613800138000';
+const MASKED_PHONE = '+86 138****8000';
+const OTP = '123456';
+const CSRF_TOKEN = 'TEST_V3A_CSRF_TOKEN_ONLY_NOT_REAL_1234567890';
+
+function emptyMe() {
+  return { phoneMasked: MASKED_PHONE, user: null, profile: null, applicationReview: null };
+}
+
+function completeMe(status = 'pending', role) {
   const effectiveRole = role || (status === 'active' ? 'advisor' : 'pending');
   return {
-    users: {
-      id: '10000000-0000-4000-8000-000000000001',
-      auth_user_id: '40000000-0000-4000-8000-000000000001',
+    phoneMasked: MASKED_PHONE,
+    user: {
       role: effectiveRole,
       status,
-      phone: verifiedPhone,
-      email: null,
-      display_name: '测试指导师',
-      city: '上海'
+      displayName: '测试指导师',
+      city: '上海',
+      createdAt: '2026-07-15T00:00:00.000Z',
+      lastLoginAt: null
     },
-    advisor_profiles: {
-      id: '20000000-0000-4000-8000-000000000001',
+    profile: {
       role: effectiveRole === 'super_admin' ? 'super_admin' : 'advisor',
       status,
       nickname: '测试指导师',
       city: '上海',
-      practitioner_type: 'independent'
+      practitionerType: 'independent',
+      createdAt: '2026-07-15T00:00:00.000Z'
     },
-    application_reviews: {
-      id: '30000000-0000-4000-8000-000000000001',
+    applicationReview: {
       role: effectiveRole === 'super_admin' ? 'super_admin' : 'advisor',
       status: status === 'active' ? 'approved' : status,
-      applied_city: '上海',
-      applied_nickname: '测试指导师',
-      practitioner_type: 'independent',
-      invite_code: null
+      appliedCity: '上海',
+      appliedNickname: '测试指导师',
+      practitionerType: 'independent',
+      reviewNote: '总部审核后更新',
+      createdAt: '2026-07-15T00:00:00.000Z',
+      reviewedAt: null
     }
   };
 }
 
-function authUser(overrides = {}) {
+function webResponse(status, body) {
   return {
-    id: '40000000-0000-4000-8000-000000000001',
-    phone: verifiedPhone,
-    phone_confirmed_at: '2026-07-15T00:00:00.000Z',
-    confirmed_at: '2026-07-15T00:00:00.000Z',
-    ...overrides
+    status,
+    ok: status >= 200 && status < 300,
+    async json() { return body; }
   };
 }
 
-function createStorage(initial = {}) {
-  const values = new Map(Object.entries(initial));
-  const writes = [];
+function createStorage() {
+  const accesses = [];
   return {
-    writes,
+    accesses,
     getItem(key) {
-      return values.has(key) ? values.get(key) : null;
+      accesses.push({ operation: 'get', key: String(key) });
+      return null;
     },
     setItem(key, value) {
-      writes.push({ key: String(key), value: String(value) });
-      values.set(String(key), String(value));
+      accesses.push({ operation: 'set', key: String(key), value: String(value) });
     },
     removeItem(key) {
-      values.delete(String(key));
+      accesses.push({ operation: 'remove', key: String(key) });
     }
   };
 }
 
 function createHarness(options = {}) {
   const page = options.page || 'login';
-  const calls = {
-    signInWithOtp: [],
-    verifyOtp: [],
-    rpc: [],
-    from: [],
-    inserts: 0
-  };
+  const calls = [];
   const localStorage = createStorage();
   const sessionStorage = createStorage();
+  const cookieAccesses = [];
   const message = { textContent: '', hidden: true };
-  const location = {
-    href: '',
-    replace(value) {
-      this.href = value;
-    }
+  const texts = {
+    verifiedPhone: { textContent: '' },
+    currentRole: { textContent: '' },
+    currentStatus: { textContent: '' },
+    submittedAt: { textContent: '' },
+    reviewNote: { textContent: '' }
   };
+  const location = { href: '', replace(value) { this.href = value; } };
   const sendButton = {
     disabled: false,
+    _click: null,
+    addEventListener(type, handler) {
+      if (type === 'click') this._click = handler;
+    }
+  };
+  const logoutButton = {
     _click: null,
     addEventListener(type, handler) {
       if (type === 'click') this._click = handler;
@@ -108,13 +116,8 @@ function createHarness(options = {}) {
         practitionerType: 'independent',
         inviteCode: ''
       }
-    : {
-        phone: '13800138000',
-        token: '123456',
-        otp: '123456'
-      };
+    : { phone: '13800138000', token: OTP, otp: OTP };
   Object.assign(formData, options.formData || {});
-
   const form = {
     _data: formData,
     _submit: null,
@@ -124,86 +127,51 @@ function createHarness(options = {}) {
       otp: { value: formData.otp || '' },
       acceptedRules: { checked: options.acceptedRules !== false }
     },
-    querySelectorAll() {
-      return [];
-    },
-    querySelector(selector) {
-      const name = selector.match(/^\[name=['\"]?([^'\"\]]+)/)?.[1];
-      return name ? this.elements[name] || null : null;
-    },
+    querySelectorAll() { return []; },
     addEventListener(type, handler) {
       if (type === 'submit') this._submit = handler;
     }
   };
 
-  let rpcCompleted = false;
-  const requestedPhone = options.requestedPhone || verifiedPhone;
-  const currentAuthUser = options.authUser || authUser();
-  const otpUser = options.verifyUser || currentAuthUser;
-
-  function currentRecords() {
-    if (typeof options.records === 'function') return options.records({ rpcCompleted, calls });
-    if (options.records) return options.records;
-    if (page === 'register' && rpcCompleted) return completeRecords('pending');
-    return {};
+  function defaultPayload(action) {
+    if (action === 'capabilities') {
+      return { status: 200, body: { ok: true, phoneOtpEnabled: options.phoneOtpEnabled !== false } };
+    }
+    if (action === 'me') {
+      if (Object.prototype.hasOwnProperty.call(options, 'me')) {
+        return { status: 200, body: { ok: true, me: options.me, csrfToken: CSRF_TOKEN } };
+      }
+      if (page === 'login') {
+        return { status: 401, body: { ok: false, error: '请先登录。', code: 'UNAUTHENTICATED' } };
+      }
+      return {
+        status: 200,
+        body: { ok: true, me: page === 'register' ? emptyMe() : completeMe(), csrfToken: CSRF_TOKEN }
+      };
+    }
+    if (action === 'request_otp') return { status: 200, body: { ok: true } };
+    if (action === 'verify_otp') {
+      return { status: 200, body: { ok: true, me: options.verifyMe || emptyMe(), csrfToken: CSRF_TOKEN } };
+    }
+    if (action === 'submit_application') {
+      return { status: 200, body: { ok: true, me: options.submitMe || completeMe(), csrfToken: CSRF_TOKEN } };
+    }
+    if (action === 'logout') return { status: 200, body: { ok: true } };
+    return { status: 400, body: { ok: false, error: '不支持的 action。', code: 'INVALID_ACTION' } };
   }
 
-  function query(table) {
-    calls.from.push(table);
-    return {
-      select() { return this; },
-      eq() { return this; },
-      order() { return this; },
-      limit() { return this; },
-      insert() {
-        calls.inserts += 1;
-        throw new Error('direct table insert must not be called');
-      },
-      async maybeSingle() {
-        const value = currentRecords()[table];
-        if (value?.error) return { data: null, error: value.error };
-        return { data: value || null, error: null };
-      }
-    };
+  async function fetchStub(input, init = {}) {
+    const url = new URL(String(input), APP_ORIGIN);
+    const action = url.searchParams.get('action') || '';
+    let body;
+    try { body = init.body === undefined ? undefined : JSON.parse(init.body); } catch { body = init.body; }
+    calls.push({ input: String(input), url, action, method: init.method || 'GET', init, body });
+    const failure = options.failures?.[action];
+    if (failure instanceof Error) throw failure;
+    if (failure) return webResponse(failure.status, failure.body);
+    const result = defaultPayload(action);
+    return webResponse(result.status, result.body);
   }
-
-  const client = {
-    auth: {
-      async signInWithOtp(payload) {
-        calls.signInWithOtp.push(payload);
-        if (options.signInThrow) throw options.signInThrow;
-        return { data: {}, error: options.signInError || null };
-      },
-      async verifyOtp(payload) {
-        calls.verifyOtp.push(payload);
-        if (options.verifyThrow) throw options.verifyThrow;
-        return {
-          data: options.verifyData || {
-            user: otpUser,
-            session: { access_token: 'TEST_TOKEN_NOT_REAL', user: otpUser }
-          },
-          error: options.verifyError || null
-        };
-      },
-      async getUser() {
-        if (options.getUserThrow) throw options.getUserThrow;
-        return { data: { user: currentAuthUser }, error: options.getUserError || null };
-      },
-      async getSession() {
-        return { data: { session: { user: currentAuthUser } }, error: null };
-      },
-      async signOut() {
-        return { error: null };
-      }
-    },
-    async rpc(name, args) {
-      calls.rpc.push({ name, args });
-      rpcCompleted = true;
-      if (typeof options.rpc === 'function') return options.rpc(name, args);
-      return options.rpc || { data: { success: true }, error: null };
-    },
-    from: query
-  };
 
   const selectorMap = new Map([
     ['#v3a-phone-auth-form', page === 'login' ? form : null],
@@ -211,94 +179,135 @@ function createHarness(options = {}) {
     ['#v3a-register-form', page === 'register' ? form : null],
     ['#v3a-send-otp', page === 'login' ? sendButton : null],
     ['#v3a-send-otp-button', page === 'login' ? sendButton : null],
+    ['#v3a-logout-button', page === 'pending' ? logoutButton : null],
     ['#v3a-login-message', page === 'login' ? message : null],
     ['#v3a-register-message', page === 'register' ? message : null],
-    ['#v3a-phone', page === 'login' ? form.elements.phone : null],
-    ['#v3a-token', page === 'login' ? form.elements.token : null],
-    ['#v3a-otp', page === 'login' ? form.elements.otp : null]
+    ['#v3a-pending-message', page === 'pending' ? message : null],
+    ['#v3a-verified-phone', page === 'register' ? texts.verifiedPhone : null],
+    ['#v3a-current-role', page === 'pending' ? texts.currentRole : null],
+    ['#v3a-current-status', page === 'pending' ? texts.currentStatus : null],
+    ['#v3a-submitted-at', page === 'pending' ? texts.submittedAt : null],
+    ['#v3a-review-note', page === 'pending' ? texts.reviewNote : null]
   ]);
   const document = {
     body: { dataset: { v3aAuthPage: page } },
-    head: { appendChild() {} },
-    querySelector(selector) {
-      return selectorMap.get(selector) || null;
-    },
-    querySelectorAll() { return []; },
-    getElementById() { return null; },
-    createElement() { return {}; }
+    querySelector(selector) { return selectorMap.get(selector) || null; }
   };
-  const window = {
-    AIPIWEN_V3A_SUPABASE: options.supabaseConfig || {
-      supabaseUrl: `https://${previewRef}.supabase.co`,
-      projectRef: previewRef,
-      supabaseAnonKey: 'TEST_ANON_KEY_NOT_REAL'
-    },
-    AIPIWEN_V3A_PHONE_OTP_ENABLED: options.phoneOtpEnabled === true,
-    supabase: { createClient() { return client; } },
-    location
-  };
-
+  Object.defineProperty(document, 'cookie', {
+    get() { cookieAccesses.push({ operation: 'get' }); return ''; },
+    set(value) { cookieAccesses.push({ operation: 'set', value: String(value) }); }
+  });
+  const window = { location };
+  for (const forbidden of ['supabase', 'AIPIWEN_V3A_SUPABASE', 'AIPIWEN_V3A_PHONE_OTP_ENABLED']) {
+    Object.defineProperty(window, forbidden, {
+      get() { throw new Error(`浏览器脚本不得读取 ${forbidden}`); }
+    });
+  }
   const context = vm.createContext({
     window,
     document,
+    fetch: fetchStub,
     localStorage,
     sessionStorage,
     FormData: class {
       constructor(target) { this.target = target; }
       get(name) { return this.target._data[name]; }
     },
-    console,
-    setTimeout,
-    clearTimeout,
+    URL,
+    URLSearchParams,
     Date,
     Promise,
-    URL
+    console,
+    setTimeout,
+    clearTimeout
   });
-
-  vm.runInContext(source, context, { filename: 'static/v3a-auth.js' });
-  form._data.phone = options.formData?.phone || form._data.phone || requestedPhone;
-
+  vm.runInContext(source, context, { filename: sourcePath });
   return {
     calls,
     form,
     sendButton,
+    logoutButton,
     message,
+    texts,
     location,
     localStorage,
-    sessionStorage
+    sessionStorage,
+    cookieAccesses
   };
 }
 
-async function flush() {
-  await new Promise((resolve) => setImmediate(resolve));
+async function settle() {
+  for (let index = 0; index < 4; index += 1) {
+    await new Promise((resolve) => setImmediate(resolve));
+  }
 }
 
 async function clickSend(harness) {
-  await flush();
+  await settle();
   if (typeof harness.sendButton._click === 'function') {
     await harness.sendButton._click({ preventDefault() {} });
-    await flush();
+    await settle();
   }
 }
 
 async function submit(harness) {
-  await flush();
+  await settle();
   assert.equal(typeof harness.form._submit, 'function', '页面必须绑定表单提交处理');
   await harness.form._submit({ preventDefault() {} });
-  await flush();
+  await settle();
+}
+
+async function clickLogout(harness) {
+  await settle();
+  assert.equal(typeof harness.logoutButton._click, 'function', 'pending 页必须绑定退出处理');
+  await harness.logoutButton._click({ preventDefault() {} });
+  await settle();
 }
 
 function plain(value) {
   return JSON.parse(JSON.stringify(value));
 }
 
-function assertNoSecretStorage(harness) {
-  const serialized = JSON.stringify([
-    ...harness.localStorage.writes,
-    ...harness.sessionStorage.writes
-  ]);
-  assert.equal(serialized.includes('13800138000'), false, '不得把手机号写入浏览器存储');
-  assert.equal(serialized.includes('123456'), false, '不得把短信验证码写入浏览器存储');
+function actionCalls(harness, action) {
+  return harness.calls.filter((call) => call.action === action);
+}
+
+function headerValue(headers, name) {
+  const key = Object.keys(headers || {}).find((candidate) => candidate.toLowerCase() === name.toLowerCase());
+  return key ? headers[key] : undefined;
+}
+
+function assertBffCall(call, expected = {}) {
+  assert(call, `缺少 BFF 请求 ${expected.action || ''}`);
+  assert.equal(call.url.origin, APP_ORIGIN, '浏览器身份请求必须同源');
+  assert.equal(call.url.pathname, SESSION_PATH, '浏览器只能调用 /api/v3a-session');
+  assert.equal(call.input.startsWith(`${SESSION_PATH}?`), true, '浏览器不得拼接 Supabase 或外部 URL');
+  assert.equal(call.action, expected.action);
+  assert.equal(call.method, expected.method || 'GET');
+  assert.equal(call.init.credentials, 'same-origin', '所有身份请求必须携带同源 HttpOnly cookie');
+  assert.equal(headerValue(call.init.headers, 'Authorization'), undefined, '浏览器不得持有或发送 access token');
+  assert.equal(headerValue(call.init.headers, 'Cookie'), undefined, '浏览器脚本不得读取或手工拼接 HttpOnly cookie');
+  if (call.method === 'POST') {
+    assert.equal(headerValue(call.init.headers, 'Content-Type'), 'application/json', 'POST 必须使用 JSON');
+    assert(call.body && typeof call.body === 'object' && !Array.isArray(call.body), 'POST body 必须是 JSON object');
+    const csrf = headerValue(call.init.headers, 'X-CSRF-Token');
+    if (expected.csrf) assert.equal(csrf, expected.csrf, '已认证写请求必须携带内存 CSRF token');
+    else assert.equal(csrf, undefined, 'OTP 前置请求不得伪造 CSRF token');
+  }
+}
+
+function assertBrowserIsolation(harness) {
+  harness.calls.forEach((call) => assertBffCall(call, {
+    action: call.action,
+    method: call.method,
+    csrf: ['submit_application', 'logout'].includes(call.action) ? CSRF_TOKEN : undefined
+  }));
+  assert.equal(harness.localStorage.accesses.length, 0, '浏览器脚本不得访问 localStorage');
+  assert.equal(harness.sessionStorage.accesses.length, 0, '浏览器脚本不得访问 sessionStorage');
+  assert.equal(harness.cookieAccesses.length, 0, '浏览器脚本不得读取或写入 document.cookie');
+  const serialized = JSON.stringify(harness.calls);
+  assert.equal(/access_token|refresh_token|service_role|anon[_-]?key/i.test(serialized), false,
+    '浏览器请求不得含 Supabase token 或 key');
 }
 
 function assertNoRawDetail(message, fragments) {
@@ -315,143 +324,145 @@ async function run() {
     '统一登录页不得包含模拟登录资产');
   assert.equal(/name="email"|name="password"/.test(registerPage), false,
     '申请资料页不得重新收集邮箱或密码');
-  assert.equal(registerPage.includes('id="v3a-register-form"'), true, '申请资料页必须包含原子申请表单');
+  assert.equal(registerPage.includes('id="v3a-register-form"'), true, '申请资料页必须包含申请表单');
   assert.equal(pendingPage.includes('id="v3a-current-status"'), true, 'pending 页必须回读申请状态');
-  assert.equal(source.includes('persistSession: false'), true, '本地集成阶段不得让 Supabase SDK 持久化 Session');
-  assert.equal(source.includes(".select('id,role,status,phone,email"), false,
-    '账号状态路由不得额外查询原始 phone/email');
+
+  assert.equal(source.includes("const SESSION_API = '/api/v3a-session'"), true, '浏览器必须只接入同源 Session BFF');
+  assert.equal(source.includes("credentials: 'same-origin'"), true, 'BFF 请求必须携带同源 HttpOnly cookie');
+  assert.equal(source.includes("'X-CSRF-Token'"), true, '已认证 POST 必须支持内存 CSRF token');
+  assert.equal(/window\.supabase|createClient|AIPIWEN_V3A_SUPABASE|supabase\.co/i.test(source), false,
+    '浏览器不得再依赖 Supabase SDK 或项目配置');
+  assert.equal(/access_token|refresh_token|service_role|anon[_-]?key/i.test(source), false,
+    '浏览器源码不得处理 Supabase token 或 key');
+  assert.equal(/localStorage|sessionStorage|document\.cookie/.test(source), false,
+    '浏览器身份脚本不得自行持久化或读取 cookie');
 
   let harness = createHarness({ phoneOtpEnabled: false });
+  await settle();
+  const initialCount = harness.calls.length;
   await clickSend(harness);
-  assert.equal(harness.calls.signInWithOtp.length, 0, '发送门禁关闭时绝不能调用 signInWithOtp');
-  assertNoSecretStorage(harness);
-
-  for (const supabaseConfig of [
-    {
-      supabaseUrl: `https://${productionRef}.supabase.co`,
-      projectRef: productionRef,
-      supabaseAnonKey: 'TEST_ANON_KEY_NOT_REAL'
-    },
-    {
-      supabaseUrl: `https://${productionRef}.supabase.co`,
-      projectRef: previewRef,
-      supabaseAnonKey: 'TEST_ANON_KEY_NOT_REAL'
-    }
-  ]) {
-    harness = createHarness({ phoneOtpEnabled: true, supabaseConfig });
-    await clickSend(harness);
-    assert.equal(harness.calls.signInWithOtp.length, 0,
-      'Production 或 URL/ref 不一致必须在任何手机号 Auth 请求前停止');
-  }
+  await submit(harness);
+  assert.equal(harness.sendButton.disabled, true, 'capabilities 关闭时发送按钮必须禁用');
+  assert.equal(harness.calls.length, initialCount, '服务端短信门禁关闭时不得请求 OTP 或 verify');
+  assert.equal(actionCalls(harness, 'request_otp').length, 0);
+  assert.equal(actionCalls(harness, 'verify_otp').length, 0);
+  assertBrowserIsolation(harness);
 
   for (const phone of ['13800138000', '8613800138000', '+8613800138000']) {
-    harness = createHarness({ phoneOtpEnabled: true, formData: { phone } });
+    harness = createHarness({ formData: { phone } });
     await clickSend(harness);
-    assert.equal(harness.calls.signInWithOtp.length, 1, `有效中国手机号必须可规范化：${phone}`);
-    assert.deepStrictEqual(plain(harness.calls.signInWithOtp[0]), {
-      phone: verifiedPhone,
-      options: { shouldCreateUser: true }
-    });
-    assertNoSecretStorage(harness);
+    const request = actionCalls(harness, 'request_otp')[0];
+    assertBffCall(request, { action: 'request_otp', method: 'POST' });
+    assert.deepStrictEqual(plain(request.body), { phone: VERIFIED_PHONE });
+    assertBrowserIsolation(harness);
   }
 
-  harness = createHarness({ phoneOtpEnabled: true, formData: { phone: '23800138000' } });
+  harness = createHarness({ formData: { phone: '23800138000' } });
   await clickSend(harness);
-  assert.equal(harness.calls.signInWithOtp.length, 0, '无效中国手机号不得触发短信发送');
+  assert.equal(actionCalls(harness, 'request_otp').length, 0, '无效中国手机号不得触发短信发送');
   assertNoRawDetail(harness.message.textContent, ['auth.users', 'stack', 'schema']);
 
-  harness = createHarness({ phoneOtpEnabled: true, records: {} });
+  harness = createHarness({ verifyMe: emptyMe() });
   await submit(harness);
-  assert.equal(harness.calls.verifyOtp.length, 1);
-  assert.deepStrictEqual(plain(harness.calls.verifyOtp[0]), {
-    phone: verifiedPhone,
-    token: '123456',
-    type: 'sms'
-  });
+  let request = actionCalls(harness, 'verify_otp')[0];
+  assertBffCall(request, { action: 'verify_otp', method: 'POST' });
+  assert.deepStrictEqual(plain(request.body), { phone: VERIFIED_PHONE, token: OTP });
   assert.equal(harness.location.href, '/advisor-register.html', '无业务记录必须进入申请资料页');
-  assertNoSecretStorage(harness);
-
-  harness = createHarness({
-    phoneOtpEnabled: true,
-    records: {},
-    authUser: authUser({ phone: '+8613900139000' }),
-    verifyUser: authUser({ phone: '+8613900139000' })
-  });
-  await submit(harness);
-  assert.equal(harness.location.href, '', 'Auth user 手机号与本次验证手机号不一致时不得继续');
-  assertNoRawDetail(harness.message.textContent, ['+8613900139000', 'auth.users', 'stack', 'schema']);
-
-  harness = createHarness({
-    phoneOtpEnabled: true,
-    records: {},
-    authUser: authUser({ phone_confirmed_at: null, confirmed_at: null }),
-    verifyUser: authUser({ phone_confirmed_at: null, confirmed_at: null })
-  });
-  await submit(harness);
-  assert.equal(harness.location.href, '', '手机号未确认的 Auth user 不得继续');
+  assertBrowserIsolation(harness);
 
   for (const testCase of [
-    { records: completeRecords('pending'), expected: '/advisor-pending.html' },
-    { records: completeRecords('active', 'advisor'), expected: '/ai-interpreter-workbench.html' },
-    { records: completeRecords('active', 'super_admin'), expected: '/admin-applications.html' }
+    { me: completeMe('pending'), expected: '/advisor-pending.html' },
+    { me: completeMe('active', 'advisor'), expected: '/ai-interpreter-workbench.html' },
+    { me: completeMe('active', 'super_admin'), expected: '/admin-applications.html' }
   ]) {
-    harness = createHarness({ phoneOtpEnabled: true, records: testCase.records });
+    harness = createHarness({ verifyMe: testCase.me });
     await submit(harness);
     assert.equal(harness.location.href, testCase.expected);
+    assertBrowserIsolation(harness);
   }
 
-  harness = createHarness({ page: 'register' });
-  await submit(harness);
-  assert.equal(harness.calls.rpc.length, 1, '注册资料必须且只能提交一次原子 RPC');
-  assert.equal(harness.calls.inserts, 0, '注册资料不得直接 insert 业务表');
-  assert.equal(harness.calls.rpc[0].name, 'v3a_submit_pending_application');
-  assert.deepStrictEqual(
-    Object.keys(harness.calls.rpc[0].args).sort(),
-    [
-      'p_accepted_rules',
-      'p_agreement_version',
-      'p_city',
-      'p_display_name',
-      'p_invite_code',
-      'p_practitioner_type',
-      'p_requested_role'
-    ]
-  );
-  for (const forbidden of ['phone', 'email', 'auth_user_id', 'status']) {
-    assert.equal(forbidden in harness.calls.rpc[0].args, false, `RPC 参数不得包含 ${forbidden}`);
-  }
-  assert.equal(harness.location.href, '/advisor-pending.html');
-  assertNoSecretStorage(harness);
+  harness = createHarness({ me: completeMe('active', 'advisor') });
+  await settle();
+  assert.equal(harness.location.href, '/ai-interpreter-workbench.html', '已有 Session 必须按状态恢复路由');
+  assertBrowserIsolation(harness);
 
   harness = createHarness({
-    phoneOtpEnabled: true,
-    signInError: { code: 'provider_failure', message: 'auth.users internal provider detail' }
-  });
-  await clickSend(harness);
-  assertNoRawDetail(harness.message.textContent, ['auth.users', 'internal provider detail']);
-
-  harness = createHarness({
-    phoneOtpEnabled: true,
-    records: {},
-    verifyError: { code: 'otp_expired', message: 'auth schema raw verification detail' }
+    failures: {
+      verify_otp: { status: 400, body: { ok: false, error: '验证码不正确或已失效。', code: 'OTP_VERIFY_FAILED' } }
+    }
   });
   await submit(harness);
   assert.equal(harness.location.href, '');
+  assert.equal(harness.message.textContent, '验证码不正确或已失效。');
   assertNoRawDetail(harness.message.textContent, ['auth schema', 'raw verification detail']);
+
+  harness = createHarness({ failures: { request_otp: new Error('auth.users internal provider detail') } });
+  await clickSend(harness);
+  assert.equal(harness.message.textContent, '账号服务暂时不可用，请稍后重试。');
+  assertNoRawDetail(harness.message.textContent, ['auth.users', 'internal provider detail']);
+
+  harness = createHarness({ page: 'register' });
+  await settle();
+  assert.equal(harness.texts.verifiedPhone.textContent, MASKED_PHONE, '申请页只能显示脱敏手机号');
+  await submit(harness);
+  request = actionCalls(harness, 'submit_application')[0];
+  assertBffCall(request, { action: 'submit_application', method: 'POST', csrf: CSRF_TOKEN });
+  assert.deepStrictEqual(plain(request.body), {
+    displayName: '测试指导师',
+    city: '上海',
+    role: 'advisor',
+    practitionerType: 'independent',
+    inviteCode: '',
+    acceptedRules: true
+  });
+  for (const forbidden of ['phone', 'email', 'auth_user_id', 'status']) {
+    assert.equal(forbidden in request.body, false, `申请 BFF 参数不得包含 ${forbidden}`);
+  }
+  assert.equal(harness.location.href, '/advisor-pending.html');
+  assertBrowserIsolation(harness);
+
+  harness = createHarness({ page: 'register', acceptedRules: false });
+  await submit(harness);
+  assert.equal(actionCalls(harness, 'submit_application').length, 0, '未同意规则不得提交申请');
+  assert.equal(harness.message.textContent.includes('请先勾选同意'), true);
 
   harness = createHarness({
     page: 'register',
-    records: {},
-    rpc: async () => ({
-      data: null,
-      error: { code: 'XX000', message: 'public.users internal_constraint raw detail' }
-    })
+    failures: {
+      submit_application: {
+        status: 502,
+        body: { ok: false, error: 'public.users internal_constraint raw detail', code: 'APPLICATION_RESULT_UNKNOWN' }
+      }
+    }
   });
   await submit(harness);
   assert.equal(harness.location.href, '');
   assertNoRawDetail(harness.message.textContent, ['public.users', 'internal_constraint', 'raw detail']);
 
-  console.log('PASS: V3a phone auth and atomic registration contracts');
+  harness = createHarness({ page: 'pending' });
+  await settle();
+  assert.equal(harness.texts.currentRole.textContent, '指导师');
+  assert.equal(harness.texts.currentStatus.textContent, 'pending');
+  assert.equal(harness.texts.reviewNote.textContent, '总部审核后更新');
+  await clickLogout(harness);
+  request = actionCalls(harness, 'logout')[0];
+  assertBffCall(request, { action: 'logout', method: 'POST', csrf: CSRF_TOKEN });
+  assert.deepStrictEqual(plain(request.body), {});
+  assert.equal(harness.location.href, '/login.html', '退出后必须返回统一登录页');
+  assertBrowserIsolation(harness);
+
+  harness = createHarness({
+    page: 'pending',
+    failures: { me: { status: 401, body: { ok: false, error: '请先登录。', code: 'UNAUTHENTICATED' } } }
+  });
+  await settle();
+  assert.equal(harness.location.href, '/login.html', 'pending Session 失效必须返回登录页');
+
+  harness = createHarness({ page: 'pending', me: completeMe('rejected') });
+  await settle();
+  assert.equal(harness.message.textContent.includes('申请未通过'), true, 'rejected 路由必须保留安全提示');
+
+  console.log('PASS: V3a browser BFF, HttpOnly isolation, CSRF, phone login, registration, and routing contracts');
 }
 
 run().catch((error) => {
