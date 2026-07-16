@@ -79,9 +79,10 @@ function parseBody(body) {
   return body;
 }
 
-function createFetch() {
+function createFetch(options = {}) {
   const calls = [];
   const kvStore = new Map();
+  const businessStatus = options.businessStatus || 'pending';
 
   function applyKv(command) {
     assert(Array.isArray(command) && command.length > 0, 'KV 请求必须是 Redis 命令数组');
@@ -169,7 +170,7 @@ function createFetch() {
         phone: PHONE,
         email: 'private@example.test',
         role: 'advisor',
-        status: 'pending',
+        status: businessStatus,
         display_name: '测试指导师',
         city: '上海',
         created_at: '2026-07-15T00:00:00.000Z',
@@ -180,7 +181,7 @@ function createFetch() {
       return response(200, [{
         user_id: BUSINESS_USER_ID,
         role: 'advisor',
-        status: 'pending',
+        status: businessStatus,
         nickname: '测试指导师',
         city: '上海',
         practitioner_type: 'independent',
@@ -191,12 +192,20 @@ function createFetch() {
       return response(200, [{
         user_id: BUSINESS_USER_ID,
         role: 'advisor',
-        status: 'pending',
+        status: businessStatus === 'active' ? 'approved' : businessStatus,
         applied_city: '上海',
         applied_nickname: '测试指导师',
         practitioner_type: 'independent',
         created_at: '2026-07-15T00:00:00.000Z'
       }]);
+    }
+    if (url.pathname === '/rest/v1/credit_wallets') {
+      if (businessStatus !== 'active') throw new Error('pending 用户不得读取钱包');
+      return response(200, [{ balance: options.walletBalance ?? 500 }]);
+    }
+    if (url.pathname === '/rest/v1/invite_codes') {
+      if (businessStatus !== 'active') throw new Error('pending 用户不得读取邀请码');
+      return response(200, [{ code: options.inviteCode || 'ADV-ABCDEFGH' }]);
     }
     if (url.pathname === '/rest/v1/rpc/v3a_submit_pending_application') {
       return response(200, { success: true });
@@ -731,12 +740,45 @@ async function run() {
   assert(mePayload.csrfToken.length >= 32, 'CSRF token 必须具有足够随机性');
   assert.equal(JSON.stringify(mePayload).includes(MASKED_PHONE), true, 'me 只能返回脱敏手机号');
   assert.equal(JSON.stringify(mePayload).includes('pending'), true, 'me 必须返回当前业务状态');
+  assert.equal(Object.prototype.hasOwnProperty.call(mePayload.me, 'wallet'), false,
+    'pending 用户响应不得暴露钱包');
+  assert.equal(Object.prototype.hasOwnProperty.call(mePayload.me, 'inviteCode'), false,
+    'pending 用户响应不得暴露邀请码');
   assertNoSensitiveBody(mePayload);
   assert.equal(setCookie(result.res), '', '普通 me 不得重发或滑动 Session cookie');
   upstream = supabaseCalls(lifecycleFetch.calls.slice(mark));
   let refreshCalls = upstream.filter(({ url }) => new URL(url).pathname === '/auth/v1/token');
   assert.equal(refreshCalls.length, 0, 'access token 尚有 60 秒以上有效期时不得刷新');
+  assert.equal(upstream.some(({ url }) => ['/rest/v1/credit_wallets', '/rest/v1/invite_codes']
+    .includes(new URL(url).pathname)), false, 'pending 用户不得查询钱包或邀请码');
   sessionRecord = assertEncryptedKv(lifecycleFetch.kvStore, sid);
+
+  const activeFetch = createFetch({ businessStatus: 'active' });
+  let activeResult = await invoke({
+    method: 'POST',
+    action: 'verify_otp',
+    body: { phone: PHONE, token: OTP },
+    env: enabledEnv,
+    fetchStub: activeFetch
+  });
+  const activeSid = assertSidCookie(activeResult.res);
+  const activeMark = activeFetch.calls.length;
+  activeResult = await invoke({
+    action: 'me',
+    headers: { cookie: `${COOKIE_NAME}=${encodeURIComponent(activeSid)}` },
+    env: enabledEnv,
+    fetchStub: activeFetch
+  });
+  assert.equal(activeResult.res.statusCode, 200, 'active 用户必须可读取真实工作台资产');
+  const activeMe = payload(activeResult.res).me;
+  assert.deepStrictEqual(JSON.parse(JSON.stringify(activeMe.wallet)), { balance: 500 });
+  assert.equal(activeMe.inviteCode, 'ADV-ABCDEFGH');
+  const activeAssetPaths = supabaseCalls(activeFetch.calls.slice(activeMark))
+    .map(({ url }) => new URL(url).pathname);
+  assert.equal(activeAssetPaths.filter((value) => value === '/rest/v1/credit_wallets').length, 1,
+    'active 用户只能读取一次 own wallet');
+  assert.equal(activeAssetPaths.filter((value) => value === '/rest/v1/invite_codes').length, 1,
+    'active 用户只能读取一次 own active invite code');
 
   sessionRecord.accessExpiresAt = Date.now() + 30000;
   replaceSession(lifecycleFetch.kvStore, sid, sessionRecord);

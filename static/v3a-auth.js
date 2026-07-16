@@ -342,6 +342,8 @@
       setText('#v3a-workbench-city', me.profile?.city || me.user.city, '未设置');
       setText('#v3a-workbench-status', me.user.status, 'active');
       setText('#v3a-workbench-role', roleLabels[me.user.role] || me.user.role, '已激活');
+      setText('#v3a-workbench-balance', me.wallet?.balance, '待同步');
+      setText('#v3a-workbench-invite-code', me.inviteCode, '待生成');
       initMobileNavigation();
       document.body.hidden = false;
     } catch (error) {

@@ -104,7 +104,7 @@ async function readCurrentApplication(config, session) {
       limit: 1
     })
   ]);
-  return {
+  const current = {
     phoneMasked: maskPhone(session.user.phone),
     user: {
       role: user.role,
@@ -134,6 +134,25 @@ async function readCurrentApplication(config, session) {
       reviewedAt: reviews[0].reviewed_at
     } : null
   };
+  if (user.status === 'active' && validRoles.has(user.role)) {
+    const [wallets, inviteCodes] = await Promise.all([
+      selectRows(config, session.record.accessToken, 'credit_wallets', {
+        select: 'balance',
+        user_id: `eq.${user.id}`,
+        limit: 1
+      }),
+      selectRows(config, session.record.accessToken, 'invite_codes', {
+        select: 'code',
+        user_id: `eq.${user.id}`,
+        status: 'eq.active',
+        limit: 1
+      })
+    ]);
+    const balance = Number(wallets[0]?.balance);
+    current.wallet = Number.isSafeInteger(balance) && balance >= 0 ? { balance } : null;
+    current.inviteCode = normalize(inviteCodes[0]?.code) || null;
+  }
+  return current;
 }
 
 function nextPath(me) {

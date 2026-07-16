@@ -70,6 +70,7 @@ const ADMIN_AUTH_ID = '40000000-0000-4000-8000-000000000001';
 const ADMIN_USER_ID = '10000000-0000-4000-8000-000000000001';
 const APPLICATION_ID = '20000000-0000-4000-8000-000000000001';
 const APPROVED_APPLICATION_ID = '20000000-0000-4000-8000-000000000002';
+const REJECTED_APPLICATION_ID = '20000000-0000-4000-8000-000000000003';
 const APPLICANT_USER_ID = '30000000-0000-4000-8000-000000000001';
 const APPROVED_USER_ID = '30000000-0000-4000-8000-000000000002';
 const APPLICANT_AUTH_ID = '50000000-0000-4000-8000-000000000001';
@@ -118,6 +119,12 @@ const approvedReview = {
   id: APPROVED_APPLICATION_ID,
   user_id: APPROVED_USER_ID,
   status: 'approved'
+};
+
+const rejectedReview = {
+  ...pendingReview,
+  id: REJECTED_APPLICATION_ID,
+  status: 'rejected'
 };
 
 const applicant = {
@@ -256,6 +263,9 @@ function createFetch(options = {}) {
       if (requestedId === `eq.${APPROVED_APPLICATION_ID}`) {
         return response(200, pendingOnly ? [] : [approvedReview]);
       }
+      if (requestedId === `eq.${REJECTED_APPLICATION_ID}`) {
+        return response(200, pendingOnly ? [] : [rejectedReview]);
+      }
       if (requestedId === `eq.${APPLICATION_ID}`) return response(200, [pendingReview]);
       return response(200, pendingOnly ? [pendingReview] : [pendingReview, approvedReview]);
     }
@@ -264,12 +274,13 @@ function createFetch(options = {}) {
     if (url.pathname === '/rest/v1/rpc/v3a_approve_application') {
       if (options.rpcFailure) return response(500, options.rpcFailure);
       const body = JSON.parse(init.body);
+      const alreadyProcessed = body.p_application_id === APPROVED_APPLICATION_ID;
       return response(200, {
         success: true,
-        already_processed: false,
+        already_processed: alreadyProcessed,
         data: {
-          application_id: APPLICATION_ID,
-          user_id: APPLICANT_USER_ID,
+          application_id: body.p_application_id,
+          user_id: alreadyProcessed ? APPROVED_USER_ID : APPLICANT_USER_ID,
           user_status: 'active',
           wallet: { id: WALLET_ID, balance: 500 },
           credit_log: { id: CREDIT_LOG_ID, type: 'REGISTER_BONUS', amount: 500 },
@@ -996,6 +1007,29 @@ async function run() {
   assert.equal(rpcBody.p_reviewer_user_id, ADMIN_USER_ID);
   assert.equal(typeof rpcBody.p_invite_code, 'string');
   assertNoSensitivePayload(result.res.body);
+
+  result = await invoke({
+    method: 'POST',
+    action: 'approve_application',
+    body: { applicationId: APPROVED_APPLICATION_ID },
+    env: previewEnv('true')
+  });
+  assert.equal(result.res.statusCode, 200, '已批准申请重放必须进入 RPC 幂等分支');
+  assert.equal(result.res.body.alreadyProcessed, true, '已批准重放必须返回 alreadyProcessed');
+  writes = reviewMutationCalls(result.fetchStub.calls);
+  assert.equal(writes.length, 1, '已批准重放仍只能调用一次数据库 RPC');
+  rpcBody = JSON.parse(writes[0].init.body);
+  assert.equal(rpcBody.p_application_id, APPROVED_APPLICATION_ID);
+
+  result = await invoke({
+    method: 'POST',
+    action: 'approve_application',
+    body: { applicationId: REJECTED_APPLICATION_ID },
+    env: previewEnv('true')
+  });
+  assert.equal(result.res.statusCode, 400, '已驳回申请不得进入 approve RPC');
+  assert.equal(reviewMutationCalls(result.fetchStub.calls).length, 0,
+    '已驳回申请不得产生任何审批写请求');
 
   const reason = '申请资料与当前审核要求不一致，请补充后重新提交';
   result = await invoke({

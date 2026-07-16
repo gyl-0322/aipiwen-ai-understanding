@@ -221,11 +221,16 @@ async function getApplicationRole(config, applicationId) {
   const rows = await selectRows(config, 'application_reviews', {
     select: 'id,role,status',
     id: `eq.${applicationId}`,
-    status: 'eq.pending',
     limit: 1
   });
-  if (!rows[0] || rows[0].status !== 'pending') {
-    throw new HttpError(404, '未找到该 pending 申请。', 'APPLICATION_NOT_FOUND');
+  if (!rows[0]) {
+    throw new HttpError(404, '未找到该申请。', 'APPLICATION_NOT_FOUND');
+  }
+  if (rows[0].status === 'rejected') {
+    throw new HttpError(400, '该申请已经被驳回。', 'APPLICATION_ALREADY_REJECTED');
+  }
+  if (!['pending', 'approved'].includes(rows[0].status)) {
+    throw new HttpError(400, '该申请已不处于可批准状态。', 'APPLICATION_NOT_PENDING');
   }
   if (!['advisor', 'agent', 'center'].includes(rows[0].role)) {
     throw new HttpError(400, '申请角色无效。', 'INVALID_APPLICATION_ROLE');

@@ -25,7 +25,7 @@ function emptyMe() {
 
 function completeMe(status = 'pending', role) {
   const effectiveRole = role || (status === 'active' ? 'advisor' : 'pending');
-  return {
+  const me = {
     phoneMasked: MASKED_PHONE,
     user: {
       role: effectiveRole,
@@ -54,6 +54,11 @@ function completeMe(status = 'pending', role) {
       reviewedAt: null
     }
   };
+  if (status === 'active' && ['advisor', 'agent', 'center'].includes(effectiveRole)) {
+    me.wallet = { balance: 500 };
+    me.inviteCode = 'ADV-ABCDEFGH';
+  }
+  return me;
 }
 
 function webResponse(status, body) {
@@ -114,7 +119,9 @@ function createHarness(options = {}) {
     workbenchName: { textContent: '' },
     workbenchCity: { textContent: '' },
     workbenchStatus: { textContent: '' },
-    workbenchRole: { textContent: '' }
+    workbenchRole: { textContent: '' },
+    workbenchBalance: { textContent: '' },
+    workbenchInviteCode: { textContent: '' }
   };
   const location = { href: '', replace(value) { this.href = value; } };
   const sendButton = {
@@ -236,6 +243,8 @@ function createHarness(options = {}) {
     ['#v3a-workbench-city', page === 'workbench' ? texts.workbenchCity : null],
     ['#v3a-workbench-status', page === 'workbench' ? texts.workbenchStatus : null],
     ['#v3a-workbench-role', page === 'workbench' ? texts.workbenchRole : null],
+    ['#v3a-workbench-balance', page === 'workbench' ? texts.workbenchBalance : null],
+    ['#v3a-workbench-invite-code', page === 'workbench' ? texts.workbenchInviteCode : null],
     ['.sidebar', sidebar]
   ]);
   const document = {
@@ -394,6 +403,10 @@ async function run() {
   assert.equal(workbenchPage.includes('data-v3a-auth-page="workbench" hidden'), true,
     '正式工作台必须在真实身份校验前保持隐藏');
   assert.equal(workbenchPage.includes('static/v3a-auth.js'), true, '正式工作台必须使用统一真实认证脚本');
+  assert.equal(workbenchPage.includes('id="v3a-workbench-balance"'), true,
+    '正式工作台必须展示真实积分余额');
+  assert.equal(workbenchPage.includes('id="v3a-workbench-invite-code"'), true,
+    '正式工作台必须展示真实邀请码');
   assert.equal(/preview-demo|sessionStorage|localStorage|ZHANGWEI01|王小明/.test(workbenchPage), false,
     '正式工作台不得包含演示 Session 或硬编码业务数据');
 
@@ -545,6 +558,8 @@ async function run() {
   assert.equal(harness.texts.workbenchCity.textContent, '上海');
   assert.equal(harness.texts.workbenchStatus.textContent, 'active');
   assert.equal(harness.texts.workbenchRole.textContent, '指导师');
+  assert.equal(harness.texts.workbenchBalance.textContent, '500');
+  assert.equal(harness.texts.workbenchInviteCode.textContent, 'ADV-ABCDEFGH');
   assert.equal(harness.sidebar.classList.contains('mobile-nav-ready'), true,
     '工作台通过身份校验后必须启用紧凑移动导航');
   assert.equal(harness.sidebar.toggle.attributes['aria-expanded'], 'false');
