@@ -33,11 +33,11 @@
 - `public.users.phone` 使用 Supabase Auth 已确认的 E.164 值；中国入口仅接受 `+86` 加 11 位大陆手机号。
 - Phone OTP 用户的 `public.users.phone` 必须同时等于当前 Supabase JWT 的 `phone` claim 与 `auth.users.phone`，且 `auth.users.phone_confirmed_at` 非空；不能用 `phone = null` 绕过。
 - 现有 `users_phone_unique_idx` 继续负责全局唯一保护。
-- 已验证邮箱用户允许 `public.users.phone` 为 null，但不能声明任意手机号。
-- 邮箱与 Phone OTP 用户共用 `public.v3a_submit_pending_application(...)`；RPC 从 `auth.uid()` 对应的 `auth.users` 派生身份字段，并在同一事务创建或确认 `public.users`、`advisor_profiles`、`application_reviews`。
+- 通用注册与登录统一使用 Phone OTP，不再以邮箱或邮箱验证为前置；010 中已验证邮箱分支仅保留为历史兼容能力，不构成当前产品入口。
+- Phone OTP 用户通过 `public.v3a_submit_pending_application(...)` 提交申请；RPC 从 `auth.uid()` 对应的 `auth.users` 派生身份字段，并在同一事务创建或确认 `public.users`、`advisor_profiles`、`application_reviews`。
 - RPC 只接受数据库白名单中的当前协议版本；客户端不能自行伪造已同意的协议版本。可选邀请码沿用现有 `ADV|AGT|CTR-8位` 格式，但本阶段不创建或核销邀请码。
 - 浏览器不再直接 INSERT 三表；普通 authenticated 用户也不能 UPDATE phone。RPC 只创建 pending 申请，不创建 wallet、credit、invite 或 approve audit。
-- 009 首管理员邮箱 bootstrap、pending 审核、approve/reject 与审核后 500 积分流程不改变。
+- 空 Preview 的首位管理员统一使用 012 手机号 bootstrap；009 migration 仅保留历史记录，其邮箱初始化函数由 012 关闭；011 仅兼容已经存在的旧管理员。pending 审核、approve/reject 与审核后 500 积分流程不改变。
 
 ## 前端后续边界
 
@@ -47,11 +47,11 @@
 2. `advisor_profiles` pending 资料；
 3. `application_reviews` pending 申请。
 
-Phone OTP 登录未来集成到统一 `login.html` 中，不创建独立手机号登录页面。手机号认证成功后继续复用 `static/v3a-auth.js` 和现有 `routeByStatus`，进入统一的 pending / active 流程。本决策不授权本轮开发页面、配置 Hook、发送短信或部署。
+Phone OTP 登录统一集成到 `login.html` 中，不创建独立手机号登录页面。手机号认证成功后继续复用 `static/v3a-auth.js` 和现有 `routeByStatus`，进入统一的 pending / active 流程。本决策不授权本轮开发页面、配置 Hook、发送短信或部署。
 
-微信登录、邮箱与手机号身份合并、手机号换绑和完整 Identity OS 均留到后续阶段。
+微信登录、邮箱登录与身份合并、手机号换绑和完整 Identity OS 均留到后续阶段；当前通用身份入口不保留邮箱验证前置。
 
-唯一例外是 009 已创建的首位 `active / super_admin`：上线前可由一次性本机工具先验证该现有邮箱 Auth 身份，再通过 Supabase `phone_change` 把手机号绑定到同一个 Auth UUID。011 的无参数专用 RPC 随后从已验证 Auth/JWT 派生手机号，同步到该 UUID 唯一对应的 `public.users.phone` 并写入不含手机号的审计；浏览器和工具不能向 RPC 提交手机号。发码前和提交验证码前必须各完成一次只读唯一性核对；不开放通用邮箱登录，不创建第二个 Auth 用户，任何冲突都停止且不自动清理。
+空 Preview 的首位 `active / super_admin` 必须由 012 从已完成中国手机号 OTP 验证的 Auth 用户创建，不要求邮箱或邮箱验证。009 migration 仅保留历史记录，012 安装后其 `public.v3a_create_first_super_admin_from_auth(uuid, text)` 初始化函数不再存在；011 仅兼容已经由 009 创建的旧首管理员在同一 Auth UUID 上补绑手机号，不得用于新的空 Preview 初始化。任何冲突都停止且不自动清理。
 
 ## HttpOnly Session 实现边界（2026-07-15）
 

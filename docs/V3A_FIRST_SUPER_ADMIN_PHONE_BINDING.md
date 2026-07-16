@@ -1,12 +1,14 @@
-# V3a 首位 super_admin 同 UUID 绑定手机号
+# 历史兼容：V3a 首位 super_admin 同 UUID 绑定手机号
 
 ## 目的与边界
 
-本流程只处理已经存在、邮箱已验证并且已经映射为 `active / super_admin` 的首位总部账号。它把中国手机号绑定到同一个 Supabase Auth UUID，不创建第二个账号，不修改 009、010，也不开放通用邮箱登录。011 的专用无参数 RPC 会从已验证 Auth 身份派生手机号，并同步到同一 UUID 对应的 `public.users.phone`；客户端不能提交数据库手机号参数，也不能直接更新表。
+本流程仅保留给已经由 009 创建、邮箱已验证并且已经映射为 `active / super_admin` 的历史首位总部账号。它把中国手机号绑定到同一个 Supabase Auth UUID，不创建第二个账号，不修改 009、010，也不开放通用邮箱登录。011 的专用无参数 RPC 会从已验证 Auth 身份派生手机号，并同步到同一 UUID 对应的 `public.users.phone`；客户端不能提交数据库手机号参数，也不能直接更新表。
+
+本流程不是空 Preview 的当前初始化路径。空 Preview 的首位管理员统一通过 Phone OTP 完成 Auth 验证，再使用 012 `public.v3a_create_first_super_admin_from_phone_auth(uuid, text)` 初始化；不要求邮箱或邮箱验证。009 migration 只保留历史记录，其初始化函数由 012 删除；011 仅服务已经存在的旧账号。
 
 工具只允许连接 Preview `lmjriqncuopgxwyudfee`。Production `tysbwijizgebnrazxpvo` 禁止连接。工具不读取 service role，不保存或打印邮箱密码、验证码、anon key、access token 或 refresh token。
 
-真正运行工具会发送一条短信，并对 Preview Auth 执行手机号换绑；必须另行确认后才能运行：
+仅在处理上述历史账号时，真正运行工具会发送一条短信，并对 Preview Auth 执行手机号换绑；必须另行确认后才能运行：
 
 ```text
 node scripts/v3a-bind-first-admin-phone.js --preview-write-approved
