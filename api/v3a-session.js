@@ -42,6 +42,11 @@ function normalizeChinaPhone(value) {
   return `+86${phone}`;
 }
 
+function canonicalVerifiedPhone(value) {
+  const match = /^(?:\+86|86)(1[3-9][0-9]{9})$/.exec(normalize(value));
+  return match ? `+86${match[1]}` : '';
+}
+
 function maskPhone(phone) {
   const value = normalize(phone);
   if (!/^\+861[3-9][0-9]{9}$/.test(value)) return '已验证手机号';
@@ -252,7 +257,7 @@ async function verifyOtp(config, phone, token, req) {
   const { response, payload } = await authRequest(config, '/verify', { phone, token, type: 'sms' });
   if (response.status === 429) throw new HttpError(429, '操作过于频繁，请稍后重试。', 'RATE_LIMITED');
   if (!response.ok) throw new HttpError(400, '验证码不正确或已失效。', 'OTP_VERIFY_FAILED');
-  if (payload?.user?.phone !== phone || !payload?.user?.phone_confirmed_at) {
+  if (canonicalVerifiedPhone(payload?.user?.phone) !== phone || !payload?.user?.phone_confirmed_at) {
     throw new HttpError(502, '登录身份验证结果无效。', 'INVALID_SESSION');
   }
   return payload;

@@ -20,6 +20,7 @@ const SESSION_ENCRYPTION_KEY = Buffer.from('0123456789abcdef0123456789abcdef').t
 const COOKIE_NAME = '__Host-aipiwen_v3a_session';
 const COOKIE_MAX_AGE = 604800;
 const PHONE = '+8613800138000';
+const HOSTED_PHONE = '8613800138000';
 const MASKED_PHONE = '+86 138****8000';
 const OTP = '123456';
 const AUTH_USER_ID = '40000000-0000-4000-8000-000000000001';
@@ -145,11 +146,14 @@ function createFetch(options = {}) {
     }
     if (url.pathname === '/auth/v1/otp') return response(200, {});
     if (url.pathname === '/auth/v1/verify') {
+      const verifiedPhone = Object.prototype.hasOwnProperty.call(options, 'verifyPhone')
+        ? options.verifyPhone
+        : String(body.phone || '').replace(/^\+86(?=1)/, '86');
       return response(200, {
         access_token: ACCESS_TOKEN,
         refresh_token: REFRESH_TOKEN,
         expires_in: 3600,
-        user: authUser({ phone: body.phone })
+        user: authUser({ phone: verifiedPhone, ...(options.verifyUserOverrides || {}) })
       });
     }
     if (url.pathname === '/auth/v1/token') {
@@ -360,7 +364,7 @@ function assertSidCookie(res) {
     ? Buffer.from(sid, 'hex')
     : Buffer.from(sid, 'base64url');
   assert.equal(bytes.length, 32, 'Session SID 必须由 32 字节随机数生成');
-  for (const forbidden of [ACCESS_TOKEN, REFRESH_TOKEN, ROTATED_ACCESS_TOKEN, ROTATED_REFRESH_TOKEN, PHONE, OTP]) {
+  for (const forbidden of [ACCESS_TOKEN, REFRESH_TOKEN, ROTATED_ACCESS_TOKEN, ROTATED_REFRESH_TOKEN, PHONE, HOSTED_PHONE, OTP]) {
     assert.equal(serialized.includes(forbidden), false, '浏览器 Cookie 不得包含 Supabase token、手机号或 OTP');
   }
   return sid;
@@ -377,7 +381,7 @@ function assertNoSensitiveBody(value) {
   const serialized = JSON.stringify(value);
   for (const forbidden of [
     ACCESS_TOKEN, REFRESH_TOKEN, ROTATED_ACCESS_TOKEN, ROTATED_REFRESH_TOKEN,
-    PHONE, OTP, AUTH_USER_ID, 'private@example.test', 'AUTH_USER_PRIVATE_MARKER',
+    PHONE, HOSTED_PHONE, OTP, AUTH_USER_ID, 'private@example.test', 'AUTH_USER_PRIVATE_MARKER',
     SESSION_ENCRYPTION_KEY, KV_TOKEN
   ]) {
     assert.equal(serialized.includes(forbidden), false, `响应不得泄漏敏感值 ${forbidden}`);
@@ -442,7 +446,7 @@ function assertEncryptedKv(kvStore, sid) {
   const raw = kvStore.get(sessionKey(sid));
   for (const forbidden of [
     ACCESS_TOKEN, REFRESH_TOKEN, ROTATED_ACCESS_TOKEN, ROTATED_REFRESH_TOKEN,
-    PHONE, OTP, AUTH_USER_ID, 'accessToken', 'refreshToken', 'csrfToken'
+    PHONE, HOSTED_PHONE, OTP, AUTH_USER_ID, 'accessToken', 'refreshToken', 'csrfToken'
   ]) {
     assert.equal(raw.includes(forbidden), false, 'KV Session 记录必须使用 AES-256-GCM 加密');
   }
@@ -599,6 +603,48 @@ async function run() {
   assertNoSensitiveBody(payload(result.res));
 
   const enabledEnv = previewEnv({ V3A_PHONE_OTP_ENABLED: 'true' });
+
+  for (const [label, verifyPhone] of [['Hosted 86', HOSTED_PHONE], ['E.164 +86', PHONE]]) {
+    const compatibleFetch = createFetch({ verifyPhone });
+    const compatibleResult = await invoke({
+      method: 'POST',
+      action: 'verify_otp',
+      body: { phone: PHONE, token: OTP },
+      env: enabledEnv,
+      fetchStub: compatibleFetch
+    });
+    assert.equal(compatibleResult.res.statusCode, 200, `${label} 同号格式必须通过身份校验`);
+    assertSidCookie(compatibleResult.res);
+  }
+
+  for (const testCase of [
+    { label: '不同中国手机号', verifyPhone: '+8613900139000' },
+    { label: '裸 11 位手机号', verifyPhone: '13800138000' },
+    { label: '境外手机号', verifyPhone: '+14155550100' },
+    { label: '畸形手机号', verifyPhone: 'not-a-phone' },
+    { label: '缺失手机号', verifyPhone: undefined },
+    { label: '未确认手机号', verifyPhone: HOSTED_PHONE, verifyUserOverrides: { phone_confirmed_at: null } }
+  ]) {
+    const rejectedFetch = createFetch({
+      verifyPhone: testCase.verifyPhone,
+      verifyUserOverrides: testCase.verifyUserOverrides
+    });
+    const rejected = await invoke({
+      method: 'POST',
+      action: 'verify_otp',
+      body: { phone: PHONE, token: OTP },
+      env: enabledEnv,
+      fetchStub: rejectedFetch
+    });
+    assert.equal(rejected.res.statusCode, 502, `${testCase.label} 必须拒绝建立 Session`);
+    assert.equal(payload(rejected.res).code, 'INVALID_SESSION');
+    assert.equal(sessionEntries(rejectedFetch.kvStore).length, 0, '身份校验失败不得写 Session KV');
+    assert.equal(setCookie(rejected.res), '', '身份校验失败不得下发 Session Cookie');
+    assert.equal(supabaseCalls(rejectedFetch.calls)
+      .some(({ url }) => new URL(url).pathname === '/auth/v1/user'), false,
+      '身份校验失败不得继续回读 Auth user');
+  }
+
   const sendPhoneIp = '203.0.113.10';
   const sendPhoneRateFetch = createFetch();
   for (let index = 0; index < 6; index += 1) {
