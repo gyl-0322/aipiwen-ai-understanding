@@ -122,13 +122,19 @@ function verifyPayload(config, rawBody, headers) {
   }
 }
 
+function normalizeChinaSmsPhone(value) {
+  const match = /^(?:\+86|86)(1[3-9][0-9]{9})$/.exec(normalize(value));
+  if (!match) throw new HookError(400, 'INVALID_SMS_PAYLOAD');
+  return match[1];
+}
+
 function validatePayload(payload) {
-  const phone = normalize(payload?.user?.phone);
+  const phone = normalizeChinaSmsPhone(payload?.user?.phone);
   const otp = normalize(payload?.sms?.otp);
-  if (!/^\+861[3-9][0-9]{9}$/.test(phone) || !/^[0-9]{6}$/.test(otp)) {
+  if (!/^[0-9]{6}$/.test(otp)) {
     throw new HookError(400, 'INVALID_SMS_PAYLOAD');
   }
-  return { phone: phone.slice(3), otp };
+  return { phone, otp };
 }
 
 async function kvCommand(config, command, fetchImpl, deadlineAt) {

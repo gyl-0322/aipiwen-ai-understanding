@@ -15,6 +15,7 @@ const KV_TOKEN = 'TEST_KV_TOKEN_NOT_REAL';
 const ACCESS_KEY_ID = 'TEST_ACCESS_KEY_ID_NOT_REAL';
 const ACCESS_KEY_SECRET = 'TEST_ACCESS_KEY_SECRET_NOT_REAL';
 const PHONE = '+8613800138000';
+const LOCAL_PHONE = '13800138000';
 const OTP = '123456';
 const SECRET = Buffer.from('test-standard-webhook-secret-32b').toString('base64');
 const PAYLOAD = JSON.stringify({ user: { phone: PHONE }, sms: { otp: OTP } });
@@ -191,6 +192,22 @@ async function testValidAndDuplicate() {
   });
 }
 
+async function testSupabaseChinaPhoneFormats() {
+  await withEnv(previewEnv(), async () => {
+    const harness = createHarness();
+    const formats = [PHONE, `86${LOCAL_PHONE}`];
+    for (const [index, phone] of formats.entries()) {
+      const body = JSON.stringify({ user: { phone }, sms: { otp: OTP } });
+      const result = await invoke(harness.handler, signedRequest({
+        body,
+        webhookId: `msg_china_phone_format_${index}`
+      }));
+      assert.equal(result.statusCode, 200, `中国手机号格式 ${index + 1} 应被 Hook 接受`);
+      assert.equal(harness.sends[index].sms.phone, LOCAL_PHONE, '阿里云只接收 11 位中国大陆手机号');
+    }
+  });
+}
+
 async function testConcurrentClaim() {
   await withEnv(previewEnv(), async () => {
     const fetch = createKvFetch();
@@ -240,6 +257,9 @@ async function testSignatureAndPayloadRejections() {
     const badPhoneBody = JSON.stringify({ user: { phone: '+14155550100' }, sms: { otp: OTP } });
     const badPhone = await invoke(harness.handler, signedRequest({ body: badPhoneBody, webhookId: 'msg_bad_phone' }));
     assert.equal(badPhone.statusCode, 400);
+    const barePhoneBody = JSON.stringify({ user: { phone: LOCAL_PHONE }, sms: { otp: OTP } });
+    const barePhone = await invoke(harness.handler, signedRequest({ body: barePhoneBody, webhookId: 'msg_bare_phone' }));
+    assert.equal(barePhone.statusCode, 400);
     const badOtpBody = JSON.stringify({ user: { phone: PHONE }, sms: { otp: '12345' } });
     const badOtp = await invoke(harness.handler, signedRequest({ body: badOtpBody, webhookId: 'msg_bad_otp' }));
     assert.equal(badOtp.statusCode, 400);
@@ -438,6 +458,7 @@ async function testNoSensitiveOutputAndContracts() {
 
 async function main() {
   await testValidAndDuplicate();
+  await testSupabaseChinaPhoneFormats();
   await testConcurrentClaim();
   await testReplayConflict();
   await testSignatureAndPayloadRejections();
