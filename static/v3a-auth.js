@@ -153,6 +153,32 @@
     }
 
     let phoneOtpEnabled = false;
+    let otpRequestPending = false;
+    let otpCooldownSeconds = 0;
+    let otpCooldownTimer = null;
+
+    function resetOtpSendButton() {
+      if (otpCooldownTimer !== null) clearInterval(otpCooldownTimer);
+      otpCooldownTimer = null;
+      otpCooldownSeconds = 0;
+      sendButton.disabled = !phoneOtpEnabled;
+      sendButton.textContent = '获取验证码';
+    }
+
+    function startOtpCooldown() {
+      otpCooldownSeconds = 60;
+      sendButton.disabled = true;
+      sendButton.textContent = `${otpCooldownSeconds} 秒后重试`;
+      otpCooldownTimer = setInterval(() => {
+        otpCooldownSeconds -= 1;
+        if (otpCooldownSeconds <= 0) {
+          resetOtpSendButton();
+          return;
+        }
+        sendButton.textContent = `${otpCooldownSeconds} 秒后重试`;
+      }, 1000);
+    }
+
     sendButton.disabled = true;
     try {
       const capabilities = await requestSession('capabilities');
@@ -176,6 +202,7 @@
     }
 
     sendButton.addEventListener('click', async () => {
+      if (otpRequestPending || otpCooldownSeconds > 0) return;
       showMessage(messageSelector, '');
       if (!phoneOtpEnabled) {
         showMessage(messageSelector, '手机号短信登录尚未开放，当前不会发送验证码。');
@@ -188,14 +215,21 @@
         showMessage(messageSelector, error.message);
         return;
       }
+      otpRequestPending = true;
+      sendButton.textContent = '发送中…';
       setBusy(form, true);
+      let sent = false;
       try {
         await requestSession('request_otp', { method: 'POST', body: { phone } });
-        showMessage(messageSelector, '验证码已发送，请查看短信。');
+        sent = true;
+        showMessage(messageSelector, '验证码已发送，请查看短信；60 秒后可重新获取。');
       } catch (error) {
         showMessage(messageSelector, error.message);
       } finally {
+        otpRequestPending = false;
         setBusy(form, false);
+        if (sent) startOtpCooldown();
+        else resetOtpSendButton();
       }
     });
 
@@ -227,6 +261,7 @@
         showMessage(messageSelector, error.message);
       } finally {
         setBusy(form, false);
+        sendButton.disabled = otpCooldownSeconds > 0 || !phoneOtpEnabled;
       }
     });
   }

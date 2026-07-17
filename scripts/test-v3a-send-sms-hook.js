@@ -145,8 +145,16 @@ function createRes() {
     payload: undefined,
     setHeader(name, value) { this.headers[String(name).toLowerCase()] = value; },
     status(code) { this.statusCode = code; return this; },
-    json(value) { this.payload = value; return this; },
-    send(value) { this.payload = value; return this; }
+    json(value) {
+      this.headers['content-type'] = 'application/json; charset=utf-8';
+      this.payload = value;
+      return this;
+    },
+    send(value) {
+      if (typeof value === 'string') this.headers['content-type'] = 'text/html; charset=utf-8';
+      this.payload = value;
+      return this;
+    }
   };
 }
 
@@ -180,7 +188,8 @@ async function testValidAndDuplicate() {
       chunks: [Buffer.from(PAYLOAD.slice(0, splitAt)), Buffer.from(PAYLOAD.slice(splitAt))]
     }));
     assert.equal(first.statusCode, 200);
-    assert.equal(first.payload, '', '成功响应必须为空');
+    assert.deepStrictEqual(first.payload, {}, '成功响应必须是 JSON object，避免 Supabase 将 text/html 判为 Hook 失败');
+    assert.match(first.headers['content-type'], /^application\/json\b/, '成功响应必须明确使用 application/json');
     assert.equal(duplicate.statusCode, 200, '已发送的相同 webhook 必须幂等成功');
     assert.equal(chunked.statusCode, 200, '多 chunk 原始请求体必须保持验签字节不变');
     assert.equal(harness.sends.length, 2, '重复 webhook 不得重复发送短信');

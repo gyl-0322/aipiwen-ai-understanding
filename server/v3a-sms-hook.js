@@ -241,7 +241,7 @@ function setHeaders(res) {
 }
 
 function respond(res, statusCode) {
-  if (statusCode === 200) return res.status(200).send('');
+  if (statusCode === 200) return res.status(200).json({});
   const message = statusCode === 405
     ? 'Method not allowed.'
     : statusCode === 400 || statusCode === 401

@@ -103,6 +103,8 @@ function createClassList() {
 function createHarness(options = {}) {
   const page = options.page || 'login';
   const calls = [];
+  const intervals = new Map();
+  let nextIntervalId = 1;
   const localStorage = createStorage();
   const sessionStorage = createStorage();
   const cookieAccesses = [];
@@ -126,6 +128,7 @@ function createHarness(options = {}) {
   const location = { href: '', replace(value) { this.href = value; } };
   const sendButton = {
     disabled: false,
+    textContent: '获取验证码',
     _click: null,
     addEventListener(type, handler) {
       if (type === 'click') this._click = handler;
@@ -156,7 +159,7 @@ function createHarness(options = {}) {
       otp: { value: formData.otp || '' },
       acceptedRules: { checked: options.acceptedRules !== false }
     },
-    querySelectorAll() { return []; },
+    querySelectorAll() { return [sendButton]; },
     addEventListener(type, handler) {
       if (type === 'submit') this._submit = handler;
     }
@@ -290,7 +293,14 @@ function createHarness(options = {}) {
     Promise,
     console,
     setTimeout,
-    clearTimeout
+    clearTimeout,
+    setInterval(callback, delay) {
+      const id = nextIntervalId;
+      nextIntervalId += 1;
+      intervals.set(id, { callback, delay });
+      return id;
+    },
+    clearInterval(id) { intervals.delete(id); }
   });
   vm.runInContext(source, context, { filename: sourcePath });
   return {
@@ -305,7 +315,12 @@ function createHarness(options = {}) {
     sessionStorage,
     cookieAccesses,
     body: document.body,
-    sidebar
+    sidebar,
+    tickIntervals(seconds = 1) {
+      for (let second = 0; second < seconds; second += 1) {
+        [...intervals.values()].forEach(({ callback }) => callback());
+      }
+    }
   };
 }
 
@@ -446,6 +461,20 @@ async function run() {
     assertBrowserIsolation(harness);
   }
 
+  harness = createHarness();
+  await clickSend(harness);
+  assert.equal(harness.message.textContent, '验证码已发送，请查看短信；60 秒后可重新获取。');
+  assert.equal(harness.message.hidden, false, '发送成功提示必须立即可见');
+  assert.equal(harness.sendButton.disabled, true, '发送成功后必须阻止连续点击');
+  assert.equal(harness.sendButton.textContent, '60 秒后重试');
+  await clickSend(harness);
+  assert.equal(actionCalls(harness, 'request_otp').length, 1, '冷却期间重复点击不得再次发送 OTP');
+  harness.tickIntervals(1);
+  assert.equal(harness.sendButton.textContent, '59 秒后重试');
+  harness.tickIntervals(59);
+  assert.equal(harness.sendButton.disabled, false, '60 秒后必须允许重新获取');
+  assert.equal(harness.sendButton.textContent, '获取验证码');
+
   harness = createHarness({ formData: { phone: '23800138000' } });
   await clickSend(harness);
   assert.equal(actionCalls(harness, 'request_otp').length, 0, '无效中国手机号不得触发短信发送');
@@ -480,14 +509,19 @@ async function run() {
       verify_otp: { status: 400, body: { ok: false, error: '验证码不正确或已失效。', code: 'OTP_VERIFY_FAILED' } }
     }
   });
+  await clickSend(harness);
   await submit(harness);
   assert.equal(harness.location.href, '');
   assert.equal(harness.message.textContent, '验证码不正确或已失效。');
+  assert.equal(harness.sendButton.disabled, true, '验证码校验结束后仍须保持发送冷却');
+  assert.equal(harness.sendButton.textContent, '60 秒后重试');
   assertNoRawDetail(harness.message.textContent, ['auth schema', 'raw verification detail']);
 
   harness = createHarness({ failures: { request_otp: new Error('auth.users internal provider detail') } });
   await clickSend(harness);
   assert.equal(harness.message.textContent, '账号服务暂时不可用，请稍后重试。');
+  assert.equal(harness.sendButton.disabled, false, '发送失败后必须允许用户重试');
+  assert.equal(harness.sendButton.textContent, '获取验证码');
   assertNoRawDetail(harness.message.textContent, ['auth.users', 'internal provider detail']);
 
   harness = createHarness({ page: 'register' });
