@@ -103,14 +103,14 @@
       return;
     }
     if (status === 'rejected') {
-      showMessage(messageSelector, '申请未通过。如需复核，请联系 AIPIWEN 总部。');
+      showMessage(messageSelector, '您的指导师准入申请未通过平台审核。');
       return;
     }
     if (status === 'frozen' || status === 'disabled') {
-      showMessage(messageSelector, '账号当前不可用，请联系 AIPIWEN 总部处理。');
+      showMessage(messageSelector, '账号当前不可用，请联系平台超级管理员处理。');
       return;
     }
-    showMessage(messageSelector, '账号状态无法识别，请联系 AIPIWEN 总部。');
+    showMessage(messageSelector, '账号状态无法识别，请联系平台超级管理员。');
   }
 
   function validateApplication(payload) {
@@ -149,7 +149,7 @@
         ? '请稍后刷新页面重试。'
         : enabled
           ? '输入中国大陆手机号获取验证码，验证通过后即可继续。'
-          : '当前不会发送验证码，请等待总部开放短信登录。');
+          : '当前不会发送验证码，请等待平台开放短信登录。');
     }
 
     let phoneOtpEnabled = false;
@@ -377,6 +377,7 @@
       setText('#v3a-workbench-city', me.profile?.city || me.user.city, '未设置');
       setText('#v3a-workbench-status', me.user.status, 'active');
       setText('#v3a-workbench-role', roleLabels[me.user.role] || me.user.role, '已激活');
+      setText('#v3a-workbench-role-label', roleLabels[me.user.role] || me.user.role, '读取中');
       setText('#v3a-workbench-balance', me.wallet?.balance, '待同步');
       setText('#v3a-workbench-invite-code', me.inviteCode, '待生成');
       initMobileNavigation();
@@ -400,7 +401,7 @@
       setText('#v3a-current-role', roleLabels[role] || role);
       setText('#v3a-current-status', me.user.status);
       setText('#v3a-submitted-at', formatTime(me.applicationReview?.createdAt || me.user.createdAt));
-      setText('#v3a-review-note', me.applicationReview?.reviewNote || '总部审核后更新');
+      setText('#v3a-review-note', me.applicationReview?.reviewNote || '平台准入审核后更新');
       if (me.user.status !== 'pending') routeByStatus(me, messageSelector);
     } catch (error) {
       if (error.status === 401) window.location.href = '/login.html';

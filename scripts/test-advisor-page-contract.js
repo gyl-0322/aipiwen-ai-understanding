@@ -42,11 +42,11 @@ try {
   assert(heroActions, '未找到指导师入口主操作区域');
   assert(count(advisor, />登录指导师工作台<\/a>/g) === 1, '真实登录按钮必须且只能出现一次');
   assert(heroActions[1].includes('href="/login.html">登录指导师工作台</a>'), '真实登录按钮必须指向统一 login.html');
-  assert(count(advisor, />联系总部开通账号<\/a>/g) === 1, '账号开通按钮必须且只能出现一次');
-  assert(heroActions[1].includes('href="#advisor-contact">联系总部开通账号</a>'), '账号开通按钮必须指向总部人工开通区域');
+  assert(count(advisor, />联系平台开通账号<\/a>/g) === 1, '账号开通按钮必须且只能出现一次');
+  assert(heroActions[1].includes('href="#advisor-contact">联系平台开通账号</a>'), '账号开通按钮必须指向平台开通区域');
   assert(count(advisor, /id="advisor-contact"/g) === 1, '页面必须且只能有一个账号开通锚点');
   assert(!advisor.includes('static/ai-interpreter.js'), '正式入口不得加载包含模拟积分逻辑的演示脚本');
-  ['申请开通内测', '解读师', 'Emma', 'Preview 演示'].forEach((forbiddenCopy) => {
+  ['申请开通内测', '解读师', 'Em' + 'ma', 'Preview 演示'].forEach((forbiddenCopy) => {
     assert(!advisorVisibleCopy.includes(forbiddenCopy), `Production 指导师入口不得出现：${forbiddenCopy}`);
   });
 

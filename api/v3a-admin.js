@@ -1,5 +1,5 @@
 /**
- * AIPIWEN V3a Preview-only headquarters application review API.
+ * AIPIWEN V3a Preview-only platform admission review API.
  *
  * This local integration is intentionally pinned to the Preview Supabase
  * project. It cannot query Production, create Auth users, or adjust credits.
@@ -28,14 +28,14 @@ function getConfig() {
   );
   const reviewWritesEnabled = process.env.V3A_ADMIN_REVIEW_WRITES_ENABLED === 'true';
   if (!serviceRoleKey) {
-    throw new HttpError(503, '总部审核服务尚未完成 Preview 配置。', 'ADMIN_SERVICE_NOT_CONFIGURED');
+    throw new HttpError(503, '平台准入审核服务尚未完成 Preview 配置。', 'ADMIN_SERVICE_NOT_CONFIGURED');
   }
   return { ...sessionConfig, serviceRoleKey, reviewWritesEnabled };
 }
 
 function requireReviewWritesEnabled(config) {
   if (config.reviewWritesEnabled !== true) {
-    throw new HttpError(503, '总部审核写操作尚未开放。', 'REVIEW_WRITES_DISABLED');
+    throw new HttpError(503, '平台准入审核写操作尚未开放。', 'REVIEW_WRITES_DISABLED');
   }
 }
 
@@ -83,7 +83,7 @@ async function requireActiveSuperAdmin(config, session) {
   });
   const admin = rows[0];
   if (!admin || admin.role !== 'super_admin' || admin.status !== 'active') {
-    throw new HttpError(403, '无权访问总部审核页面。', 'FORBIDDEN');
+    throw new HttpError(403, '无权访问平台准入审核后台。', 'FORBIDDEN');
   }
   return admin;
 }
@@ -188,6 +188,14 @@ const RPC_ERROR_MAP = {
   REJECTION_REASON_TOO_SHORT: [400, '驳回原因至少需要 10 个字符。', 'REASON_REQUIRED']
 };
 
+function requireExactBodyKeys(body, allowedKeys) {
+  const allowed = new Set(allowedKeys);
+  const keys = Object.keys(body || {});
+  if (keys.some((key) => !allowed.has(key))) {
+    throw new HttpError(400, '请求字段不符合审核操作要求。', 'INVALID_REQUEST_BODY');
+  }
+}
+
 async function callRpc(config, functionName, body) {
   let response;
   try {
@@ -278,7 +286,15 @@ function normalizeApprovalResult(result) {
   requireUuid(data.audit_log_id);
   return {
     ok: true,
-    alreadyProcessed: result.already_processed === true
+    alreadyProcessed: result.already_processed === true,
+    message: '平台准入审核通过',
+    userStatus: data.user_status,
+    walletBalance: balance,
+    creditLog: {
+      type: data.credit_log.type,
+      amount
+    },
+    inviteCode: data.invite_code
   };
 }
 
@@ -293,7 +309,9 @@ function normalizeRejectionResult(result) {
   if (data.audit_log_id) requireUuid(data.audit_log_id);
   return {
     ok: true,
-    alreadyProcessed: result.already_processed === true
+    alreadyProcessed: result.already_processed === true,
+    message: '平台准入审核驳回',
+    userStatus: data.user_status
   };
 }
 
@@ -354,7 +372,7 @@ module.exports = async function handler(req, res) {
       const applications = await listApplications(config);
       return res.status(200).json({
         ok: true,
-        admin: { displayName: admin.display_name || 'AIPIWEN 总部' },
+        admin: { displayName: admin.display_name || '平台超级管理员' },
         applications,
         csrfToken: session.csrfToken
       });
@@ -370,6 +388,7 @@ module.exports = async function handler(req, res) {
     if (req.method === 'POST' && action === 'approve_application') {
       requireReviewWritesEnabled(config);
       const body = readRequestBody(req);
+      requireExactBodyKeys(body, ['applicationId']);
       const applicationId = String(body.applicationId || '');
       if (!UUID_PATTERN.test(applicationId)) {
         throw new HttpError(400, 'applicationId 格式无效。', 'INVALID_APPLICATION_ID');
@@ -379,6 +398,7 @@ module.exports = async function handler(req, res) {
     if (req.method === 'POST' && action === 'reject_application') {
       requireReviewWritesEnabled(config);
       const body = readRequestBody(req);
+      requireExactBodyKeys(body, ['applicationId', 'reason']);
       const applicationId = String(body.applicationId || '');
       if (!UUID_PATTERN.test(applicationId)) {
         throw new HttpError(400, 'applicationId 格式无效。', 'INVALID_APPLICATION_ID');

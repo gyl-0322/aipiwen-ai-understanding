@@ -678,22 +678,34 @@ async function flushAsyncWork() {
 async function run() {
   [
     'v3a-admin-gate', 'v3a-admin-workspace', 'v3a-admin-list', 'v3a-admin-detail-list',
+    'v3a-admin-result',
     'v3a-admin-approve', 'v3a-admin-reject', 'v3a-admin-reject-reason'
-  ].forEach((id) => assert.equal(adminPage.includes(`id="${id}"`), true, `总部审核页缺少 ${id}`));
-  assert.equal(adminPage.includes('href="login.html"'), true, '总部审核页必须返回统一 login.html');
-  assert.equal(adminPage.includes('advisor-login'), false, '总部审核页不得使用旧独立登录页');
+  ].forEach((id) => assert.equal(adminPage.includes(`id="${id}"`), true, `平台准入审核页缺少 ${id}`));
+  assert.equal(adminPage.includes('AIPIWEN 指导师准入审核中心'), true,
+    '平台准入审核后台必须使用正式主标题');
+  assert.equal(adminPage.includes('href="login.html"'), true, '平台准入审核页必须返回统一 login.html');
+  assert.equal(adminPage.includes('advisor-login'), false, '平台准入审核页不得使用旧独立登录页');
   assert.equal(adminPage.includes('cdn.jsdelivr.net') || adminPage.includes('esm.sh'), false,
     '中国用户后台不得依赖境外 CDN');
-  assert.equal(adminPage.includes('解读师'), false, '总部审核页必须统一使用“指导师”');
+  assert.equal(adminPage.includes('解读师'), false, '平台准入审核页必须统一使用“指导师”');
+  const forbiddenReviewCopy = new RegExp([
+    'Em' + 'ma审核',
+    'Em' + 'ma后台',
+    'Em' + 'ma管理员',
+    '总部' + '审核',
+    '总部' + '账号'
+  ].join('|'));
+  assert.equal(forbiddenReviewCopy.test(adminPage), false,
+    '平台准入审核页不得出现旧审核称呼');
   assert.equal(adminClient.includes('phoneMasked'), true, '浏览器后台只能消费脱敏手机号');
   assert.equal(/localStorage|sessionStorage/.test(adminClient), false,
-    '总部审核脚本不得自行保存身份或申请数据');
+    '平台准入审核脚本不得自行保存身份或申请数据');
   assert.equal(/document\.cookie/.test(adminClient), false,
     'HttpOnly opaque session cookie 不得被浏览器脚本读取');
   assert.equal(/\bgetSession\b|\baccessToken\b|access_token|\bAuthorization\b|\bBearer\b/.test(adminClient), false,
-    '总部审核脚本不得读取或发送 Supabase token');
+    '平台准入审核脚本不得读取或发送 Supabase token');
   assert.equal(/AIPIWEN_V3A_SUPABASE|window\.supabase|\bcreateClient\b/.test(adminClient), false,
-    '总部审核脚本不得依赖 Supabase SDK 或浏览器端 Supabase 配置');
+    '平台准入审核脚本不得依赖 Supabase SDK 或浏览器端 Supabase 配置');
   assert.equal(source.includes('readBearerToken'), false,
     '后台接口不得再接受浏览器 Bearer token');
   assert.equal(/auth\/v1\/admin\/users|admin\.createUser|auth\.admin\.createUser|\.signUp\s*\(/.test(source), false,
@@ -703,7 +715,7 @@ async function run() {
   await flushAsyncWork();
   const browserRequest = browser.fetchCalls.find(({ input }) =>
     input.startsWith('/api/v3a-admin?') && input.includes('action=list_applications'));
-  assert(browserRequest, '总部审核页初始化必须通过同源 API 读取申请列表');
+  assert(browserRequest, '平台准入审核页初始化必须通过同源 API 读取申请列表');
   assert.equal(browserRequest.init.credentials, 'same-origin',
     '浏览器管理端请求必须显式使用 credentials: same-origin');
   assert.equal(headerValue(browserRequest.init.headers, 'authorization'), undefined,
@@ -998,6 +1010,15 @@ async function run() {
     env: previewEnv('true')
   });
   assert.equal(result.res.statusCode, 200, '批准 pending 申请应成功');
+  assert.equal(result.res.body.message, '平台准入审核通过', '批准响应必须使用正式用户可读文案');
+  assert.equal(result.res.body.userStatus, 'active', '批准响应必须返回 active 状态');
+  assert.equal(result.res.body.walletBalance, 500, '批准响应必须返回真实钱包余额');
+  assert.equal(result.res.body.creditLog?.type, 'REGISTER_BONUS',
+    '批准响应必须返回 REGISTER_BONUS 类型');
+  assert.equal(result.res.body.creditLog?.amount, 500,
+    '批准响应必须返回 REGISTER_BONUS 金额');
+  assert.match(result.res.body.inviteCode, /^(ADV|AGT|CTR)-[ABCDEFGHJKMNPQRSTUVWXYZ23456789]{8}$/,
+    '批准响应必须返回邀请码');
   let writes = reviewMutationCalls(result.fetchStub.calls);
   assert.equal(writes.length, 1, '批准流程只能有一次写请求');
   assert.equal(new URL(writes[0].url).pathname, '/rest/v1/rpc/v3a_approve_application',
@@ -1007,6 +1028,16 @@ async function run() {
   assert.equal(rpcBody.p_reviewer_user_id, ADMIN_USER_ID);
   assert.equal(typeof rpcBody.p_invite_code, 'string');
   assertNoSensitivePayload(result.res.body);
+
+  result = await invoke({
+    method: 'POST',
+    action: 'approve_application',
+    body: { applicationId: APPLICATION_ID, reviewer_id: ADMIN_USER_ID },
+    env: previewEnv('true')
+  });
+  assert.equal(result.res.statusCode, 400, '批准请求不得接受前端传入的 reviewer_id');
+  assert.equal(reviewMutationCalls(result.fetchStub.calls).length, 0,
+    '请求字段不符合合同时不得调用 RPC');
 
   result = await invoke({
     method: 'POST',
@@ -1039,6 +1070,8 @@ async function run() {
     env: previewEnv('true')
   });
   assert.equal(result.res.statusCode, 200, '驳回 pending 申请应成功');
+  assert.equal(result.res.body.message, '平台准入审核驳回', '驳回应答必须使用正式用户可读文案');
+  assert.equal(result.res.body.userStatus, 'rejected', '驳回应答必须返回 rejected 状态');
   writes = reviewMutationCalls(result.fetchStub.calls);
   assert.equal(writes.length, 1, '驳回流程只能有一次写请求');
   assert.equal(new URL(writes[0].url).pathname, '/rest/v1/rpc/v3a_reject_application',
@@ -1050,6 +1083,16 @@ async function run() {
     p_reason: reason
   });
   assertNoSensitivePayload(result.res.body);
+
+  result = await invoke({
+    method: 'POST',
+    action: 'reject_application',
+    body: { applicationId: APPLICATION_ID, reason, reviewer_id: ADMIN_USER_ID },
+    env: previewEnv('true')
+  });
+  assert.equal(result.res.statusCode, 400, '驳回请求不得接受前端传入的 reviewer_id');
+  assert.equal(reviewMutationCalls(result.fetchStub.calls).length, 0,
+    '驳回请求字段不符合合同时不得调用 RPC');
 
   result = await invoke({
     method: 'POST',

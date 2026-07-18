@@ -37,6 +37,39 @@
     node.hidden = !message;
   }
 
+  function showResult(payload, fallbackMessage) {
+    const node = $('#v3a-admin-result');
+    if (!node) return;
+    if (!payload) {
+      node.hidden = true;
+      node.replaceChildren();
+      return;
+    }
+    const items = [
+      ['处理结果', payload.message || fallbackMessage],
+      ['账号状态', payload.userStatus],
+      ['钱包余额', payload.walletBalance],
+      ['REGISTER_BONUS', payload.creditLog?.type === 'REGISTER_BONUS' ? '成功' : null],
+      ['邀请码', payload.inviteCode]
+    ].filter(([, text]) => text !== undefined && text !== null && text !== '');
+    const title = document.createElement('h2');
+    title.textContent = payload.message || fallbackMessage;
+    const list = document.createElement('dl');
+    list.className = 'admin-detail-list';
+    items.forEach(([label, text]) => {
+      const item = document.createElement('div');
+      item.className = 'admin-detail-item';
+      const term = document.createElement('dt');
+      const description = document.createElement('dd');
+      term.textContent = label;
+      description.textContent = String(text);
+      item.append(term, description);
+      list.appendChild(item);
+    });
+    node.replaceChildren(title, list);
+    node.hidden = false;
+  }
+
   function showGate(title, message, badge = '访问受限') {
     $('#v3a-admin-gate-title').textContent = title;
     $('#v3a-admin-gate-message').textContent = message;
@@ -62,7 +95,7 @@
         body: isPost ? JSON.stringify(options.body || {}) : undefined
       });
     } catch {
-      throw Object.assign(new Error('总部审核服务暂时不可用。'), { status: 502 });
+      throw Object.assign(new Error('平台准入审核服务暂时不可用。'), { status: 502 });
     }
     let payload = null;
     try {
@@ -71,7 +104,7 @@
       // The public message below remains generic.
     }
     if (!response.ok || payload?.ok !== true) {
-      throw Object.assign(new Error(payload?.error || '总部审核服务暂时不可用。'), { status: response.status });
+      throw Object.assign(new Error(payload?.error || '平台准入审核服务暂时不可用。'), { status: response.status });
     }
     if (typeof payload.csrfToken === 'string') csrfToken = payload.csrfToken;
     return payload;
@@ -175,7 +208,7 @@
       applications = Array.isArray(payload.applications)
         ? payload.applications.filter((item) => item?.status === 'pending')
         : [];
-      $('#v3a-admin-name').textContent = value(payload.admin?.displayName, 'AIPIWEN 总部');
+      $('#v3a-admin-name').textContent = value(payload.admin?.displayName, '平台超级管理员');
       $('#v3a-admin-refreshed-at').textContent = new Date().toLocaleTimeString('zh-CN', { hour12: false });
       renderList();
       return payload;
@@ -186,15 +219,17 @@
 
   async function approve() {
     const applicationId = selected?.summary?.applicationId;
-    if (!applicationId || busy || !window.confirm('确认通过该申请？账号将被激活，并按当前规则创建钱包、体验额度和邀请码。')) return;
+    if (!applicationId || busy || !window.confirm('确认通过该申请？系统将激活账号、开通钱包、发放 500 注册积分并生成邀请码。')) return;
     setBusy(true);
     showError('');
+    showResult(null);
     try {
-      await requestAdmin('approve_application', { method: 'POST', body: { applicationId } });
+      const payload = await requestAdmin('approve_application', { method: 'POST', body: { applicationId } });
       selected = null;
       $('#v3a-admin-actions').hidden = true;
       $('#v3a-admin-detail-list').hidden = true;
       $('#v3a-admin-detail-empty').hidden = false;
+      showResult(payload, '平台准入审核通过');
       await loadApplications();
     } catch (error) {
       showError(error.message);
@@ -214,12 +249,14 @@
     if (!window.confirm('确认驳回该申请？')) return;
     setBusy(true);
     showError('');
+    showResult(null);
     try {
-      await requestAdmin('reject_application', { method: 'POST', body: { applicationId, reason } });
+      const payload = await requestAdmin('reject_application', { method: 'POST', body: { applicationId, reason } });
       selected = null;
       $('#v3a-admin-actions').hidden = true;
       $('#v3a-admin-detail-list').hidden = true;
       $('#v3a-admin-detail-empty').hidden = false;
+      showResult(payload, '平台准入审核驳回');
       await loadApplications();
     } catch (error) {
       showError(error.message);
@@ -231,16 +268,16 @@
   async function init() {
     try {
       const payload = await loadApplications();
-      $('#v3a-admin-identity').textContent = value(payload.admin?.displayName, 'AIPIWEN 总部');
+      $('#v3a-admin-identity').textContent = value(payload.admin?.displayName, '平台超级管理员');
       $('#v3a-admin-identity').hidden = false;
       $('#v3a-admin-refresh').hidden = false;
       $('#v3a-admin-logout').hidden = false;
       $('#v3a-admin-gate').hidden = true;
       $('#v3a-admin-workspace').hidden = false;
     } catch (error) {
-      if (error.status === 401) showGate('请先登录总部账号', error.message, '需要登录');
+      if (error.status === 401) showGate('请先登录平台超级管理员账号', error.message, '需要登录');
       else if (error.status === 403) showGate('无权访问此页面', '当前账号不是 active super_admin。', '权限不足');
-      else showGate('总部审核服务尚未就绪', error.message, 'Preview 未配置');
+      else showGate('平台准入审核服务尚未就绪', error.message, 'Preview 未配置');
     }
   }
 
