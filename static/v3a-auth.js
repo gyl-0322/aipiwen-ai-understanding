@@ -6,12 +6,18 @@
 
   const SESSION_API = '/api/v3a-session';
   const validRoles = new Set(['advisor', 'agent', 'center']);
-  const validPractitionerTypes = new Set(['independent', 'organization', 'agent', 'center', 'other']);
+  const validChannelIdentities = new Set(['', 'branch_company', 'service_center', 'collection_center']);
+  const validPractitionerTypes = new Set(['independent', 'organization', 'other']);
   const roleLabels = {
     advisor: '指导师',
-    agent: '代理',
-    center: '采集中心',
+    agent: '分公司',
+    center: '服务中心/采集中心',
     pending: '待审核身份'
+  };
+  const channelRoleMap = {
+    branch_company: 'agent',
+    service_center: 'center',
+    collection_center: 'center'
   };
   let csrfToken = '';
 
@@ -117,6 +123,7 @@
     if (!payload.acceptedRules) throw new Error('请先勾选同意从业者协议和四条规则。');
     if (Array.from(payload.displayName).length < 2) throw new Error('请填写至少 2 个字符的昵称或从业名。');
     if (!payload.city) throw new Error('请填写城市。');
+    if (!validChannelIdentities.has(payload.channelIdentity)) throw new Error('代理身份选择无效。');
     if (!validRoles.has(payload.role)) throw new Error('身份选择无效。');
     if (!validPractitionerTypes.has(payload.practitionerType)) throw new Error('从业类型无效。');
   }
@@ -131,6 +138,7 @@
   async function initLogin() {
     const form = $('#v3a-phone-auth-form') || $('#v3a-login-form');
     const sendButton = $('#v3a-send-otp') || $('#v3a-send-otp-button');
+    const loginButton = form?.querySelector('button[type="submit"]');
     const messageSelector = '#v3a-login-message';
     if (!form || !sendButton) return;
 
@@ -154,8 +162,18 @@
 
     let phoneOtpEnabled = false;
     let otpRequestPending = false;
+    let otpVerifyPending = false;
     let otpCooldownSeconds = 0;
     let otpCooldownTimer = null;
+
+    function otpInput() {
+      return form.elements.otp || form.elements.token || $('#v3a-otp');
+    }
+
+    function setLoginButtonBusy(busy) {
+      if (!loginButton) return;
+      loginButton.textContent = busy ? '正在登录…' : '登录';
+    }
 
     function resetOtpSendButton() {
       if (otpCooldownTimer !== null) clearInterval(otpCooldownTimer);
@@ -222,6 +240,11 @@
       try {
         await requestSession('request_otp', { method: 'POST', body: { phone } });
         sent = true;
+        const otp = otpInput();
+        if (otp) {
+          otp.value = '';
+          otp.focus?.();
+        }
         showMessage(messageSelector, '验证码已发送，请查看短信；60 秒后可重新获取。');
       } catch (error) {
         showMessage(messageSelector, error.message);
@@ -235,9 +258,14 @@
 
     form.addEventListener('submit', async (event) => {
       event.preventDefault();
+      if (otpVerifyPending) return;
       showMessage(messageSelector, '');
       if (!phoneOtpEnabled) {
         showMessage(messageSelector, '手机号短信登录尚未开放，当前不会验证或创建账号。');
+        return;
+      }
+      if (otpRequestPending) {
+        showMessage(messageSelector, '验证码正在发送，请稍后再登录。');
         return;
       }
       const formData = new FormData(form);
@@ -253,14 +281,19 @@
         showMessage(messageSelector, '请输入 6 位短信验证码。');
         return;
       }
+      otpVerifyPending = true;
       setBusy(form, true);
+      setLoginButtonBusy(true);
+      showMessage(messageSelector, '正在验证验证码，请稍候。');
       try {
         const result = await requestSession('verify_otp', { method: 'POST', body: { phone, token } });
         routeByStatus(result.me, messageSelector);
       } catch (error) {
         showMessage(messageSelector, error.message);
       } finally {
+        otpVerifyPending = false;
         setBusy(form, false);
+        setLoginButtonBusy(false);
         sendButton.disabled = otpCooldownSeconds > 0 || !phoneOtpEnabled;
       }
     });
@@ -294,11 +327,12 @@
       const payload = {
         displayName: normalize(formData.get('displayName')),
         city: normalize(formData.get('city')),
-        role: normalize(formData.get('role')),
+        channelIdentity: normalize(formData.get('channelIdentity')),
         practitionerType: normalize(formData.get('practitionerType')),
         inviteCode: normalize(formData.get('inviteCode')).toUpperCase(),
         acceptedRules: form.elements.acceptedRules?.checked === true
       };
+      payload.role = channelRoleMap[payload.channelIdentity] || 'advisor';
       try {
         validateApplication(payload);
       } catch (error) {

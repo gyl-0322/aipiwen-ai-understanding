@@ -134,6 +134,10 @@ function createHarness(options = {}) {
       if (type === 'click') this._click = handler;
     }
   };
+  const loginButton = {
+    disabled: false,
+    textContent: '登录'
+  };
   const logoutButton = {
     _click: null,
     addEventListener(type, handler) {
@@ -144,7 +148,7 @@ function createHarness(options = {}) {
     ? {
         displayName: '测试指导师',
         city: '上海',
-        role: 'advisor',
+        channelIdentity: '',
         practitionerType: 'independent',
         inviteCode: ''
       }
@@ -159,7 +163,11 @@ function createHarness(options = {}) {
       otp: { value: formData.otp || '' },
       acceptedRules: { checked: options.acceptedRules !== false }
     },
-    querySelectorAll() { return [sendButton]; },
+    querySelector(selector) {
+      if (selector === 'button[type="submit"]') return loginButton;
+      return null;
+    },
+    querySelectorAll() { return [sendButton, loginButton]; },
     addEventListener(type, handler) {
       if (type === 'submit') this._submit = handler;
     }
@@ -285,7 +293,12 @@ function createHarness(options = {}) {
     sessionStorage,
     FormData: class {
       constructor(target) { this.target = target; }
-      get(name) { return this.target._data[name]; }
+      get(name) {
+        if (this.target.elements?.[name] && 'value' in this.target.elements[name]) {
+          return this.target.elements[name].value;
+        }
+        return this.target._data[name];
+      }
     },
     URL,
     URLSearchParams,
@@ -307,6 +320,7 @@ function createHarness(options = {}) {
     calls,
     form,
     sendButton,
+    loginButton,
     logoutButton,
     message,
     texts,
@@ -463,10 +477,11 @@ async function run() {
     assertBrowserIsolation(harness);
   }
 
-  harness = createHarness();
+  harness = createHarness({ formData: { otp: '999999', token: '999999' } });
   await clickSend(harness);
   assert.equal(harness.message.textContent, '验证码已发送，请查看短信；60 秒后可重新获取。');
   assert.equal(harness.message.hidden, false, '发送成功提示必须立即可见');
+  assert.equal(harness.form.elements.otp.value, '', '重新发送成功后必须清空旧验证码，避免旧码误提交');
   assert.equal(harness.sendButton.disabled, true, '发送成功后必须阻止连续点击');
   assert.equal(harness.sendButton.textContent, '60 秒后重试');
   await clickSend(harness);
@@ -487,6 +502,7 @@ async function run() {
   let request = actionCalls(harness, 'verify_otp')[0];
   assertBffCall(request, { action: 'verify_otp', method: 'POST' });
   assert.deepStrictEqual(plain(request.body), { phone: VERIFIED_PHONE, token: OTP });
+  assert.equal(harness.loginButton.textContent, '登录', '验证码校验结束后登录按钮必须恢复');
   assert.equal(harness.location.href, '/advisor-register.html', '无业务记录必须进入申请资料页');
   assertBrowserIsolation(harness);
 
@@ -535,6 +551,7 @@ async function run() {
   assert.deepStrictEqual(plain(request.body), {
     displayName: '测试指导师',
     city: '上海',
+    channelIdentity: '',
     role: 'advisor',
     practitionerType: 'independent',
     inviteCode: '',
@@ -543,6 +560,22 @@ async function run() {
   for (const forbidden of ['phone', 'email', 'auth_user_id', 'status']) {
     assert.equal(forbidden in request.body, false, `申请 BFF 参数不得包含 ${forbidden}`);
   }
+  assert.equal(harness.location.href, '/advisor-pending.html');
+  assertBrowserIsolation(harness);
+
+  harness = createHarness({ page: 'register', formData: { channelIdentity: 'branch_company' } });
+  await settle();
+  await submit(harness);
+  request = actionCalls(harness, 'submit_application')[0];
+  assert.deepStrictEqual(plain(request.body), {
+    displayName: '测试指导师',
+    city: '上海',
+    channelIdentity: 'branch_company',
+    role: 'agent',
+    practitionerType: 'independent',
+    inviteCode: '',
+    acceptedRules: true
+  });
   assert.equal(harness.location.href, '/advisor-pending.html');
   assertBrowserIsolation(harness);
 

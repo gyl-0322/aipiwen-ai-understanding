@@ -43,19 +43,18 @@
           <label>城市
             <input class="field" name="city" type="text" required maxlength="80" placeholder="例如：上海">
           </label>
-          <label>申请身份
-            <select class="field" name="role" required>
-              <option value="advisor">指导师</option>
-              <option value="agent">代理</option>
-              <option value="center">采集中心</option>
+          <label>代理身份（可选）
+            <select class="field" name="channelIdentity">
+              <option value="">暂不选择</option>
+              <option value="branch_company">分公司</option>
+              <option value="service_center">服务中心</option>
+              <option value="collection_center">采集中心</option>
             </select>
           </label>
           <label>从业类型
             <select class="field" name="practitionerType" required>
               <option value="independent">独立从业者</option>
               <option value="organization">机构从业者</option>
-              <option value="agent">代理</option>
-              <option value="center">采集中心</option>
               <option value="other">其他</option>
             </select>
           </label>

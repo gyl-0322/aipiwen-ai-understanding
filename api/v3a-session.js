@@ -25,7 +25,13 @@ const {
 
 const AGREEMENT_VERSION = 'v3a-phase-b-preview-2026-07-09';
 const validRoles = new Set(['advisor', 'agent', 'center']);
-const validPractitionerTypes = new Set(['independent', 'organization', 'agent', 'center', 'other']);
+const validChannelIdentities = new Set(['', 'branch_company', 'service_center', 'collection_center']);
+const validPractitionerTypes = new Set(['independent', 'organization', 'other']);
+const channelRoleMap = {
+  branch_company: 'agent',
+  service_center: 'center',
+  collection_center: 'center'
+};
 
 function normalize(value) {
   return String(value || '').trim();
@@ -172,17 +178,21 @@ function validateApplication(body) {
   const payload = {
     displayName: normalize(body.displayName),
     city: normalize(body.city),
-    role: normalize(body.role),
+    channelIdentity: normalize(body.channelIdentity),
     practitionerType: normalize(body.practitionerType),
     inviteCode: normalize(body.inviteCode).toUpperCase(),
     acceptedRules: body.acceptedRules === true
   };
+  payload.role = channelRoleMap[payload.channelIdentity] || normalize(body.role) || 'advisor';
   if (!payload.acceptedRules) throw new HttpError(400, '请先同意从业者协议和四条规则。', 'INVALID_AGREEMENT');
   if (Array.from(payload.displayName).length < 2 || Array.from(payload.displayName).length > 80) {
     throw new HttpError(400, '请填写有效的昵称或从业名。', 'INVALID_DISPLAY_NAME');
   }
   if (!payload.city || Array.from(payload.city).length > 80) {
     throw new HttpError(400, '请填写有效的城市。', 'INVALID_CITY');
+  }
+  if (!validChannelIdentities.has(payload.channelIdentity)) {
+    throw new HttpError(400, '代理身份无效。', 'INVALID_CHANNEL_IDENTITY');
   }
   if (!validRoles.has(payload.role)) throw new HttpError(400, '申请身份无效。', 'INVALID_ROLE');
   if (!validPractitionerTypes.has(payload.practitionerType)) {
@@ -209,7 +219,8 @@ async function submitApplication(config, session, payload) {
         p_practitioner_type: payload.practitionerType,
         p_agreement_version: AGREEMENT_VERSION,
         p_accepted_rules: true,
-        p_invite_code: payload.inviteCode || null
+        p_invite_code: payload.inviteCode || null,
+        p_application_identity: payload.channelIdentity || null
       })
     });
   } catch {

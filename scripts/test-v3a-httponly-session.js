@@ -883,6 +883,7 @@ async function run() {
     displayName: '测试指导师',
     city: '上海',
     role: 'advisor',
+    channelIdentity: '',
     practitionerType: 'independent',
     inviteCode: '',
     acceptedRules: true
@@ -954,12 +955,15 @@ async function run() {
   assert.deepStrictEqual(Object.keys(rpcBody).sort(), [
     'p_accepted_rules',
     'p_agreement_version',
+    'p_application_identity',
     'p_city',
     'p_display_name',
     'p_invite_code',
     'p_practitioner_type',
     'p_requested_role'
   ]);
+  assert.equal(rpcBody.p_application_identity, null,
+    '未选择代理身份时 RPC 必须收到 null application identity');
   for (const forbidden of ['phone', 'email', 'auth_user_id', 'status']) {
     assert.equal(forbidden in rpcBody, false, `申请 RPC 参数不得包含 ${forbidden}`);
   }
