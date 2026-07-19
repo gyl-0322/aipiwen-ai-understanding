@@ -15,6 +15,8 @@ const PREVIEW_REF = 'lmjriqncuopgxwyudfee';
 const PRODUCTION_REF = 'tysbwijizgebnrazxpvo';
 const PREVIEW_URL = `https://${PREVIEW_REF}.supabase.co`;
 const ALLOWED_ORIGIN = 'https://preview.aipiwen.cn';
+const DEPLOYMENT_HOST = 'aipiwen-ai-understanding-a5lprbyl2-guo-yanling-s-projects.vercel.app';
+const DEPLOYMENT_ORIGIN = `https://${DEPLOYMENT_HOST}`;
 const KV_URL = 'https://v3a-session-kv.example';
 const KV_TOKEN = 'TEST_V3A_KV_TOKEN_NOT_REAL';
 const ENCRYPTION_KEY_BYTES = Buffer.alloc(32, 0x42);
@@ -33,7 +35,6 @@ const REQUIRED_ADMIN_ENV = new Set([
   'V3A_SUPABASE_ANON_KEY',
   'V3A_SUPABASE_SERVICE_ROLE_KEY',
   'V3A_SUPABASE_PROJECT_REF',
-  'V3A_ALLOWED_ORIGIN',
   'KV_REST_API_URL',
   'KV_REST_API_TOKEN',
   'V3A_SESSION_ENCRYPTION_KEY'
@@ -45,6 +46,9 @@ const ALLOWED_ENV = new Set([
   'SUPABASE_SERVICE_ROLE_KEY',
   'VERCEL_ENV',
   'VERCEL_TARGET_ENV',
+  'V3A_ALLOWED_ORIGIN',
+  'V3A_ALLOWED_ORIGINS',
+  'VERCEL_URL',
   'V3A_ADMIN_REVIEW_WRITES_ENABLED',
   'V3A_PHONE_OTP_ENABLED'
 ]);
@@ -59,6 +63,7 @@ function previewEnv(reviewWritesEnabled = 'false') {
     VERCEL_TARGET_ENV: 'preview',
     V3A_ADMIN_REVIEW_WRITES_ENABLED: reviewWritesEnabled,
     V3A_ALLOWED_ORIGIN: ALLOWED_ORIGIN,
+    VERCEL_URL: DEPLOYMENT_HOST,
     KV_REST_API_URL: KV_URL,
     KV_REST_API_TOKEN: KV_TOKEN,
     V3A_SESSION_ENCRYPTION_KEY: ENCRYPTION_KEY,
@@ -767,6 +772,14 @@ async function run() {
     {
       ...previewEnv(),
       VERCEL_TARGET_ENV: 'production'
+    },
+    {
+      ...previewEnv(),
+      VERCEL_URL: 'preview.aipiwen.cn'
+    },
+    {
+      ...previewEnv(),
+      VERCEL_URL: `${DEPLOYMENT_HOST}/path`
     }
   ]) {
     const fetchStub = createFetch();
@@ -1028,6 +1041,23 @@ async function run() {
   assert.equal(rpcBody.p_reviewer_user_id, ADMIN_USER_ID);
   assert.equal(typeof rpcBody.p_invite_code, 'string');
   assertNoSensitivePayload(result.res.body);
+
+  result = await invoke({
+    method: 'POST',
+    action: 'approve_application',
+    body: { applicationId: APPLICATION_ID },
+    headers: {
+      cookie: `${SESSION_COOKIE}=${encodeURIComponent(SESSION_ID)}`,
+      origin: DEPLOYMENT_ORIGIN,
+      'x-csrf-token': CSRF_TOKEN,
+      'content-type': 'application/json',
+      'sec-fetch-site': 'same-origin'
+    },
+    env: previewEnv('true')
+  });
+  assert.equal(result.res.statusCode, 200, '当前 Vercel Preview 部署域名必须可通过管理端同源写校验');
+  assert.equal(reviewMutationCalls(result.fetchStub.calls).length, 1,
+    '当前 Preview 部署域名通过后只能调用一次审核 RPC');
 
   result = await invoke({
     method: 'POST',

@@ -35,6 +35,43 @@ function parseEncryptionKey(value) {
   return key;
 }
 
+function parseHttpsOrigin(value, code = 'SESSION_CONFIG_INVALID') {
+  const raw = normalize(value);
+  if (!raw) return '';
+  let url;
+  try {
+    url = new URL(raw.startsWith('http://') || raw.startsWith('https://') ? raw : `https://${raw}`);
+  } catch {
+    throw new HttpError(503, '手机号登录服务项目校验未通过。', code);
+  }
+  if (
+    url.protocol !== 'https:' || url.username || url.password || url.port ||
+    url.pathname !== '/' || url.search || url.hash
+  ) {
+    throw new HttpError(503, '手机号登录服务项目校验未通过。', code);
+  }
+  return url.origin;
+}
+
+function previewDeploymentOrigin(vercelUrl) {
+  const origin = parseHttpsOrigin(vercelUrl);
+  if (!origin) return '';
+  const hostname = new URL(origin).hostname;
+  if (!hostname.endsWith('.vercel.app')) {
+    throw new HttpError(503, '手机号登录服务项目校验未通过。', 'SESSION_CONFIG_INVALID');
+  }
+  return origin;
+}
+
+function parseAllowedOrigins(env) {
+  const origins = [
+    normalize(env.V3A_ALLOWED_ORIGIN),
+    ...normalize(env.V3A_ALLOWED_ORIGINS).split(',').map(normalize),
+    previewDeploymentOrigin(env.VERCEL_URL)
+  ].filter(Boolean).map((value) => parseHttpsOrigin(value));
+  return [...new Set(origins)];
+}
+
 function getConfig() {
   const supabaseUrl = normalize(
     process.env.V3A_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -45,19 +82,17 @@ function getConfig() {
   const projectRef = normalize(process.env.V3A_SUPABASE_PROJECT_REF);
   const vercelEnv = normalize(process.env.VERCEL_ENV);
   const vercelTargetEnv = normalize(process.env.VERCEL_TARGET_ENV);
-  const allowedOrigin = normalize(process.env.V3A_ALLOWED_ORIGIN);
+  const allowedOrigins = parseAllowedOrigins(process.env);
   const kvUrl = normalize(process.env.KV_REST_API_URL).replace(/\/+$/, '');
   const kvToken = normalize(process.env.KV_REST_API_TOKEN);
   const phoneOtpEnabled = process.env.V3A_PHONE_OTP_ENABLED === 'true';
-  if (!supabaseUrl || !anonKey || !projectRef || !allowedOrigin || !kvUrl || !kvToken) {
+  if (!supabaseUrl || !anonKey || !projectRef || allowedOrigins.length === 0 || !kvUrl || !kvToken) {
     throw new HttpError(503, '手机号登录服务尚未完成 Preview 配置。', 'SESSION_SERVICE_NOT_CONFIGURED');
   }
   let parsedSupabase;
-  let parsedOrigin;
   let parsedKv;
   try {
     parsedSupabase = new URL(supabaseUrl);
-    parsedOrigin = new URL(allowedOrigin);
     parsedKv = new URL(kvUrl);
   } catch {
     throw new HttpError(503, '手机号登录服务项目校验未通过。', 'SESSION_CONFIG_INVALID');
@@ -68,9 +103,6 @@ function getConfig() {
     parsedSupabase.protocol !== 'https:' || parsedSupabase.username || parsedSupabase.password || parsedSupabase.port ||
     parsedSupabase.hostname !== `${PREVIEW_PROJECT_REF}.supabase.co` ||
     parsedSupabase.origin !== supabaseUrl || parsedSupabase.pathname !== '/' || parsedSupabase.search || parsedSupabase.hash ||
-    parsedOrigin.protocol !== 'https:' || parsedOrigin.username || parsedOrigin.password || parsedOrigin.port ||
-    parsedOrigin.origin !== allowedOrigin ||
-    parsedOrigin.pathname !== '/' || parsedOrigin.search || parsedOrigin.hash ||
     parsedKv.protocol !== 'https:' || !parsedKv.hostname || parsedKv.username || parsedKv.password || parsedKv.port ||
     parsedKv.origin !== kvUrl || parsedKv.pathname !== '/' || parsedKv.search || parsedKv.hash
   ) {
@@ -80,7 +112,8 @@ function getConfig() {
     supabaseUrl,
     anonKey,
     projectRef,
-    allowedOrigin,
+    allowedOrigin: allowedOrigins[0],
+    allowedOrigins,
     kvUrl,
     kvToken,
     encryptionKey: parseEncryptionKey(process.env.V3A_SESSION_ENCRYPTION_KEY),
@@ -98,7 +131,7 @@ function setPrivateHeaders(res) {
 function requireSameOrigin(req, config) {
   const origin = normalize(req.headers?.origin || req.headers?.Origin);
   const fetchSite = normalize(req.headers?.['sec-fetch-site']).toLowerCase();
-  if (origin !== config.allowedOrigin || (fetchSite && fetchSite !== 'same-origin')) {
+  if (!config.allowedOrigins.includes(origin) || (fetchSite && fetchSite !== 'same-origin')) {
     throw new HttpError(403, '请求来源校验未通过。', 'ORIGIN_NOT_ALLOWED');
   }
 }

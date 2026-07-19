@@ -411,6 +411,8 @@ async function run() {
   assert.equal(loginPage.includes('id="v3a-phone-login-status"'), true, '统一登录页必须动态回读短信登录状态');
   assert.equal(loginPage.includes('preview-demo-auth') || loginPage.includes('模拟验证码'), false,
     '统一登录页不得包含模拟登录资产');
+  assert.equal(/邮箱|name="email"|name="password"/.test(loginPage), false,
+    '统一登录页当前不得继续提示邮箱或密码登录入口');
   assert.equal(/name="email"|name="password"/.test(registerPage), false,
     '申请资料页不得重新收集邮箱或密码');
   assert.equal(registerPage.includes('id="v3a-register-form"'), true, '申请资料页必须包含申请表单');

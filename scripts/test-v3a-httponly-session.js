@@ -13,6 +13,8 @@ const PREVIEW_REF = 'lmjriqncuopgxwyudfee';
 const PRODUCTION_REF = 'tysbwijizgebnrazxpvo';
 const PREVIEW_URL = `https://${PREVIEW_REF}.supabase.co`;
 const ALLOWED_ORIGIN = 'https://preview.aipiwen.cn';
+const DEPLOYMENT_HOST = 'aipiwen-ai-understanding-a5lprbyl2-guo-yanling-s-projects.vercel.app';
+const DEPLOYMENT_ORIGIN = `https://${DEPLOYMENT_HOST}`;
 const KV_URL = 'https://kv-session.test';
 const ANON_KEY = 'TEST_V3A_ANON_KEY_NOT_REAL';
 const KV_TOKEN = 'TEST_V3A_KV_TOKEN_NOT_REAL';
@@ -38,6 +40,8 @@ const ALLOWED_ENV = new Set([
   'VERCEL_ENV',
   'VERCEL_TARGET_ENV',
   'V3A_ALLOWED_ORIGIN',
+  'V3A_ALLOWED_ORIGINS',
+  'VERCEL_URL',
   'V3A_PHONE_OTP_ENABLED',
   'V3A_SESSION_ENCRYPTION_KEY',
   'KV_REST_API_URL',
@@ -54,6 +58,7 @@ function previewEnv(overrides = {}) {
     VERCEL_ENV: 'preview',
     VERCEL_TARGET_ENV: 'preview',
     V3A_ALLOWED_ORIGIN: ALLOWED_ORIGIN,
+    VERCEL_URL: DEPLOYMENT_HOST,
     V3A_SESSION_ENCRYPTION_KEY: SESSION_ENCRYPTION_KEY,
     KV_REST_API_URL: KV_URL,
     KV_REST_API_TOKEN: KV_TOKEN,
@@ -482,9 +487,9 @@ function restMutations(calls) {
     new URL(url).pathname.startsWith('/rest/v1/') && !['GET', 'HEAD'].includes(method));
 }
 
-function otpHeaders(ip) {
+function otpHeaders(ip, origin = ALLOWED_ORIGIN) {
   return {
-    origin: ALLOWED_ORIGIN,
+    origin,
     'sec-fetch-site': 'same-origin',
     'content-type': 'application/json',
     'x-forwarded-for': ip
@@ -505,6 +510,9 @@ function assertPrivateRateKeys(fetchStub, scopes, identifiers) {
 }
 
 async function run() {
+  const enabledEnv = previewEnv({ V3A_PHONE_OTP_ENABLED: 'true' });
+  let result;
+
   assert.equal(/auth\/v1\/admin\/users|admin\.createUser|auth\.admin\.createUser|\.signUp\s*\(/.test(source), false,
     'Session API 不得创建 Supabase admin Auth 用户');
   assert.equal(source.includes('V3A_SUPABASE_SERVICE_ROLE_KEY'), false,
@@ -522,7 +530,9 @@ async function run() {
     previewEnv({ VERCEL_ENV: 'production' }),
     previewEnv({ VERCEL_TARGET_ENV: 'production' }),
     previewEnv({ V3A_ALLOWED_ORIGIN: `${ALLOWED_ORIGIN}/path` }),
-    previewEnv({ V3A_ALLOWED_ORIGIN: '' }),
+    previewEnv({ V3A_ALLOWED_ORIGIN: '', VERCEL_URL: '' }),
+    previewEnv({ VERCEL_URL: 'preview.aipiwen.cn' }),
+    previewEnv({ VERCEL_URL: `${DEPLOYMENT_HOST}/path` }),
     previewEnv({ V3A_SESSION_ENCRYPTION_KEY: '' }),
     previewEnv({ V3A_SESSION_ENCRYPTION_KEY: Buffer.alloc(31, 7).toString('base64') }),
     previewEnv({ V3A_SESSION_ENCRYPTION_KEY: 'not-valid-base64!' }),
@@ -570,13 +580,26 @@ async function run() {
         env: previewEnv({ V3A_PHONE_OTP_ENABLED: 'true' }),
         fetchStub
       });
-      assert.equal(result.res.statusCode, 403, 'OTP POST 必须精确匹配 V3A_ALLOWED_ORIGIN');
+      assert.equal(result.res.statusCode, 403, 'OTP POST 必须匹配允许的 Preview Origin');
       assert.equal(fetchStub.calls.length, 0, 'Origin 失败必须发生在 OTP 上游请求前');
     }
   }
 
+  const deploymentOriginFetch = createFetch();
+  result = await invoke({
+    method: 'POST',
+    action: 'request_otp',
+    body: { phone: PHONE },
+    headers: otpHeaders('203.0.113.8', DEPLOYMENT_ORIGIN),
+    env: enabledEnv,
+    fetchStub: deploymentOriginFetch
+  });
+  assert.equal(result.res.statusCode, 200, '当前 Vercel Preview 部署域名必须可通过同源校验');
+  assert.equal(supabaseCalls(deploymentOriginFetch.calls).length, 1,
+    '当前 Preview 部署域名通过后只能触发一次 OTP 上游请求');
+
   let fetchStub = createFetch();
-  let result = await invoke({
+  result = await invoke({
     method: 'POST',
     action: 'request_otp',
     body: { phone: '13800138000' },
@@ -601,8 +624,6 @@ async function run() {
   assert.equal(upstream[0].body.phone, PHONE, '手机号必须规范化为中国 E.164');
   assert.equal(upstream[0].body.create_user, true, 'Phone OTP 必须允许 Supabase 创建普通 Auth 用户');
   assertNoSensitiveBody(payload(result.res));
-
-  const enabledEnv = previewEnv({ V3A_PHONE_OTP_ENABLED: 'true' });
 
   for (const [label, verifyPhone] of [['Hosted 86', HOSTED_PHONE], ['E.164 +86', PHONE]]) {
     const compatibleFetch = createFetch({ verifyPhone });
