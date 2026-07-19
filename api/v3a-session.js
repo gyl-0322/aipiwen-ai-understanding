@@ -189,6 +189,7 @@ function validateApplication(body) {
     city: normalize(body.city),
     channelIdentity: normalize(body.channelIdentity),
     practitionerType: normalize(body.practitionerType),
+    practitionerTypeNote: normalize(body.practitionerTypeNote),
     inviteCode: normalize(body.inviteCode).toUpperCase(),
     acceptedRules: body.acceptedRules === true
   };
@@ -206,6 +207,14 @@ function validateApplication(body) {
   if (!validRoles.has(payload.role)) throw new HttpError(400, '申请身份无效。', 'INVALID_ROLE');
   if (!validPractitionerTypes.has(payload.practitionerType)) {
     throw new HttpError(400, '从业类型无效。', 'INVALID_PRACTITIONER_TYPE');
+  }
+  const noteLength = Array.from(payload.practitionerTypeNote).length;
+  if (payload.practitionerType === 'other') {
+    if (noteLength < 2 || noteLength > 80 || /[\x00-\x1f<>]/.test(payload.practitionerTypeNote)) {
+      throw new HttpError(400, '请填写 2-80 个字符的其他从业类型说明。', 'INVALID_PRACTITIONER_TYPE_NOTE');
+    }
+  } else if (payload.practitionerTypeNote) {
+    throw new HttpError(400, '只有选择其他从业类型时才需要填写补充说明。', 'INVALID_PRACTITIONER_TYPE_NOTE');
   }
   return payload;
 }
@@ -229,7 +238,8 @@ async function submitApplication(config, session, payload) {
         p_agreement_version: AGREEMENT_VERSION,
         p_accepted_rules: true,
         p_invite_code: payload.inviteCode || null,
-        p_application_identity: payload.channelIdentity || null
+        p_application_identity: payload.channelIdentity || null,
+        p_practitioner_type_note: payload.practitionerTypeNote || null
       })
     });
   } catch {

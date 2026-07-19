@@ -150,10 +150,20 @@ function createHarness(options = {}) {
         city: '上海',
         channelIdentity: '',
         practitionerType: 'independent',
+        practitionerTypeNote: '',
         inviteCode: ''
       }
     : { phone: '13800138000', token: OTP, otp: OTP };
   Object.assign(formData, options.formData || {});
+  const practitionerTypeField = {
+    value: formData.practitionerType || '',
+    _change: null,
+    addEventListener(type, handler) {
+      if (type === 'change') this._change = handler;
+    }
+  };
+  const practitionerTypeNoteField = { value: formData.practitionerTypeNote || '', required: false };
+  const practitionerTypeNoteRow = { hidden: true };
   const form = {
     _data: formData,
     _submit: null,
@@ -161,13 +171,15 @@ function createHarness(options = {}) {
       phone: { value: formData.phone || '' },
       token: { value: formData.token || '' },
       otp: { value: formData.otp || '' },
+      practitionerType: practitionerTypeField,
+      practitionerTypeNote: practitionerTypeNoteField,
       acceptedRules: { checked: options.acceptedRules !== false }
     },
     querySelector(selector) {
       if (selector === 'button[type="submit"]') return loginButton;
       return null;
     },
-    querySelectorAll() { return [sendButton, loginButton]; },
+    querySelectorAll() { return [sendButton, loginButton, practitionerTypeField, practitionerTypeNoteField]; },
     addEventListener(type, handler) {
       if (type === 'submit') this._submit = handler;
     }
@@ -243,6 +255,7 @@ function createHarness(options = {}) {
     ['#v3a-phone-login-heading', page === 'login' ? texts.phoneLoginHeading : null],
     ['#v3a-phone-login-description', page === 'login' ? texts.phoneLoginDescription : null],
     ['#v3a-register-message', page === 'register' ? message : null],
+    ['#v3a-practitioner-other-note-row', page === 'register' ? practitionerTypeNoteRow : null],
     ['#v3a-pending-message', page === 'pending' ? message : null],
     ['#v3a-workbench-message', page === 'workbench' ? message : null],
     ['#v3a-verified-phone', page === 'register' ? texts.verifiedPhone : null],
@@ -322,6 +335,9 @@ function createHarness(options = {}) {
     sendButton,
     loginButton,
     logoutButton,
+    practitionerTypeField,
+    practitionerTypeNoteField,
+    practitionerTypeNoteRow,
     message,
     texts,
     location,
@@ -444,6 +460,12 @@ async function run() {
   ]) {
     assert.equal(registerPage.includes(`>${label}</option>`), true, `从业类型必须包含 ${label}`);
   }
+  assert.equal(registerPage.includes('name="practitionerTypeNote"'), true,
+    '选择其他从业类型时必须有补充说明字段');
+  assert.equal(registerPage.includes('其他从业类型说明'), true,
+    '补充说明字段必须清楚说明用途');
+  assert.equal(registerPage.includes('例如：企业培训、公益项目、社区服务等'), true,
+    '补充说明字段必须提供中性的示例');
   assert.equal(pendingPage.includes('id="v3a-current-status"'), true, 'pending 页必须回读申请状态');
   assert.equal(workbenchPage.includes('data-v3a-auth-page="workbench" hidden'), true,
     '正式工作台必须在真实身份校验前保持隐藏');
@@ -568,6 +590,7 @@ async function run() {
     channelIdentity: '',
     role: 'advisor',
     practitionerType: 'independent',
+    practitionerTypeNote: '',
     inviteCode: '',
     acceptedRules: true
   });
@@ -587,6 +610,7 @@ async function run() {
     channelIdentity: 'branch_company',
     role: 'agent',
     practitionerType: 'independent',
+    practitionerTypeNote: '',
     inviteCode: '',
     acceptedRules: true
   });
@@ -611,6 +635,33 @@ async function run() {
   request = actionCalls(harness, 'submit_application')[0];
   assert.equal(request.body.practitionerType, 'psychological_consulting',
     '心理咨询服务从业者必须作为独立从业类型提交');
+  assert.equal(harness.location.href, '/advisor-pending.html');
+  assertBrowserIsolation(harness);
+
+  harness = createHarness({
+    page: 'register',
+    formData: { practitionerType: 'other', practitionerTypeNote: '' }
+  });
+  await settle();
+  assert.equal(harness.practitionerTypeNoteRow.hidden, false,
+    '选择其他从业类型时必须显示备注输入框');
+  assert.equal(harness.practitionerTypeNoteField.required, true,
+    '选择其他从业类型时备注必须必填');
+  await submit(harness);
+  assert.equal(actionCalls(harness, 'submit_application').length, 0,
+    '其他从业类型未填写备注不得提交申请');
+  assert.equal(harness.message.textContent.includes('其他从业类型说明'), true);
+
+  harness = createHarness({
+    page: 'register',
+    formData: { practitionerType: 'other', practitionerTypeNote: '企业培训' }
+  });
+  await settle();
+  await submit(harness);
+  request = actionCalls(harness, 'submit_application')[0];
+  assert.equal(request.body.practitionerType, 'other');
+  assert.equal(request.body.practitionerTypeNote, '企业培训',
+    '其他从业类型补充说明必须提交给 BFF');
   assert.equal(harness.location.href, '/advisor-pending.html');
   assertBrowserIsolation(harness);
 

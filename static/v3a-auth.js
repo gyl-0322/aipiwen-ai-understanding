@@ -135,6 +135,14 @@
     if (!validChannelIdentities.has(payload.channelIdentity)) throw new Error('代理身份选择无效。');
     if (!validRoles.has(payload.role)) throw new Error('身份选择无效。');
     if (!validPractitionerTypes.has(payload.practitionerType)) throw new Error('从业类型无效。');
+    const noteLength = Array.from(payload.practitionerTypeNote || '').length;
+    if (payload.practitionerType === 'other') {
+      if (noteLength < 2 || noteLength > 80 || /[\x00-\x1f<>]/.test(payload.practitionerTypeNote)) {
+        throw new Error('请填写 2-80 个字符的其他从业类型说明。');
+      }
+    } else if (payload.practitionerTypeNote) {
+      throw new Error('只有选择其他从业类型时才需要填写补充说明。');
+    }
   }
 
   function safeApplicationError(error) {
@@ -312,6 +320,22 @@
     const form = $('#v3a-register-form');
     const messageSelector = '#v3a-register-message';
     if (!form) return;
+    const practitionerType = form.elements.practitionerType;
+    const practitionerTypeNote = form.elements.practitionerTypeNote;
+    const practitionerTypeNoteRow = $('#v3a-practitioner-other-note-row');
+
+    function syncPractitionerTypeNote() {
+      const needsNote = practitionerType?.value === 'other';
+      if (practitionerTypeNoteRow) practitionerTypeNoteRow.hidden = !needsNote;
+      if (practitionerTypeNote) {
+        practitionerTypeNote.required = needsNote;
+        if (!needsNote) practitionerTypeNote.value = '';
+      }
+    }
+
+    practitionerType?.addEventListener('change', syncPractitionerTypeNote);
+    syncPractitionerTypeNote();
+
     let identityReady = false;
     try {
       const current = await requestSession('me');
@@ -338,6 +362,7 @@
         city: normalize(formData.get('city')),
         channelIdentity: normalize(formData.get('channelIdentity')),
         practitionerType: normalize(formData.get('practitionerType')),
+        practitionerTypeNote: normalize(formData.get('practitionerTypeNote')),
         inviteCode: normalize(formData.get('inviteCode')).toUpperCase(),
         acceptedRules: form.elements.acceptedRules?.checked === true
       };

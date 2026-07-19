@@ -885,6 +885,7 @@ async function run() {
     role: 'advisor',
     channelIdentity: '',
     practitionerType: 'education_family',
+    practitionerTypeNote: '',
     inviteCode: '',
     acceptedRules: true
   };
@@ -960,12 +961,15 @@ async function run() {
     'p_display_name',
     'p_invite_code',
     'p_practitioner_type',
+    'p_practitioner_type_note',
     'p_requested_role'
   ]);
   assert.equal(rpcBody.p_application_identity, null,
     '未选择代理身份时 RPC 必须收到 null application identity');
   assert.equal(rpcBody.p_practitioner_type, 'education_family',
     '新增从业类型必须原样传给申请 RPC');
+  assert.equal(rpcBody.p_practitioner_type_note, null,
+    '非其他从业类型不得向 RPC 携带补充说明');
   for (const forbidden of ['phone', 'email', 'auth_user_id', 'status']) {
     assert.equal(forbidden in rpcBody, false, `申请 RPC 参数不得包含 ${forbidden}`);
   }
