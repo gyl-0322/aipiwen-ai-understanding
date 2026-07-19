@@ -430,6 +430,20 @@ async function run() {
   assert.equal(/name="email"|name="password"/.test(registerPage), false,
     '申请资料页不得重新收集邮箱或密码');
   assert.equal(registerPage.includes('id="v3a-register-form"'), true, '申请资料页必须包含申请表单');
+  for (const label of ['暂不选择', '分公司', '服务中心', '采集中心', '普通指导师']) {
+    assert.equal(registerPage.includes(`>${label}</option>`), true, `申请身份必须包含 ${label}`);
+  }
+  for (const label of [
+    '独立从业者',
+    '机构从业者',
+    '教育/家庭教育从业者',
+    '心理咨询服务从业者',
+    '儿童成长/素质教育从业者',
+    '测评/采集服务从业者',
+    '其他'
+  ]) {
+    assert.equal(registerPage.includes(`>${label}</option>`), true, `从业类型必须包含 ${label}`);
+  }
   assert.equal(pendingPage.includes('id="v3a-current-status"'), true, 'pending 页必须回读申请状态');
   assert.equal(workbenchPage.includes('data-v3a-auth-page="workbench" hidden'), true,
     '正式工作台必须在真实身份校验前保持隐藏');
@@ -576,6 +590,27 @@ async function run() {
     inviteCode: '',
     acceptedRules: true
   });
+  assert.equal(harness.location.href, '/advisor-pending.html');
+  assertBrowserIsolation(harness);
+
+  harness = createHarness({ page: 'register', formData: { channelIdentity: 'ordinary_advisor' } });
+  await settle();
+  await submit(harness);
+  request = actionCalls(harness, 'submit_application')[0];
+  assert.equal(request.body.role, 'advisor', '普通指导师必须映射为 advisor 角色');
+  assert.equal(request.body.channelIdentity, 'ordinary_advisor');
+  assert.equal(harness.location.href, '/advisor-pending.html');
+  assertBrowserIsolation(harness);
+
+  harness = createHarness({
+    page: 'register',
+    formData: { practitionerType: 'psychological_consulting' }
+  });
+  await settle();
+  await submit(harness);
+  request = actionCalls(harness, 'submit_application')[0];
+  assert.equal(request.body.practitionerType, 'psychological_consulting',
+    '心理咨询服务从业者必须作为独立从业类型提交');
   assert.equal(harness.location.href, '/advisor-pending.html');
   assertBrowserIsolation(harness);
 

@@ -25,12 +25,21 @@ const {
 
 const AGREEMENT_VERSION = 'v3a-phase-b-preview-2026-07-09';
 const validRoles = new Set(['advisor', 'agent', 'center']);
-const validChannelIdentities = new Set(['', 'branch_company', 'service_center', 'collection_center']);
-const validPractitionerTypes = new Set(['independent', 'organization', 'other']);
+const validChannelIdentities = new Set(['', 'branch_company', 'service_center', 'collection_center', 'ordinary_advisor']);
+const validPractitionerTypes = new Set([
+  'independent',
+  'organization',
+  'education_family',
+  'psychological_consulting',
+  'child_growth_quality',
+  'assessment_collection',
+  'other'
+]);
 const channelRoleMap = {
   branch_company: 'agent',
   service_center: 'center',
-  collection_center: 'center'
+  collection_center: 'center',
+  ordinary_advisor: 'advisor'
 };
 
 function normalize(value) {

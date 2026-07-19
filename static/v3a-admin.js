@@ -3,12 +3,14 @@
 
   if (document.body?.dataset?.v3aAdminPage !== 'applications') return;
 
-  const roleLabels = { advisor: '指导师', agent: '代理', center: '采集中心' };
+  const roleLabels = { advisor: '普通指导师', agent: '分公司', center: '服务中心/采集中心' };
   const practitionerLabels = {
     independent: '独立从业者',
     organization: '机构从业者',
-    agent: '代理',
-    center: '采集中心',
+    education_family: '教育/家庭教育从业者',
+    psychological_consulting: '心理咨询服务从业者',
+    child_growth_quality: '儿童成长/素质教育从业者',
+    assessment_collection: '测评/采集服务从业者',
     other: '其他'
   };
   let csrfToken = '';

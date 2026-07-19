@@ -884,7 +884,7 @@ async function run() {
     city: '上海',
     role: 'advisor',
     channelIdentity: '',
-    practitionerType: 'independent',
+    practitionerType: 'education_family',
     inviteCode: '',
     acceptedRules: true
   };
@@ -964,6 +964,8 @@ async function run() {
   ]);
   assert.equal(rpcBody.p_application_identity, null,
     '未选择代理身份时 RPC 必须收到 null application identity');
+  assert.equal(rpcBody.p_practitioner_type, 'education_family',
+    '新增从业类型必须原样传给申请 RPC');
   for (const forbidden of ['phone', 'email', 'auth_user_id', 'status']) {
     assert.equal(forbidden in rpcBody, false, `申请 RPC 参数不得包含 ${forbidden}`);
   }

@@ -6,8 +6,16 @@
 
   const SESSION_API = '/api/v3a-session';
   const validRoles = new Set(['advisor', 'agent', 'center']);
-  const validChannelIdentities = new Set(['', 'branch_company', 'service_center', 'collection_center']);
-  const validPractitionerTypes = new Set(['independent', 'organization', 'other']);
+  const validChannelIdentities = new Set(['', 'branch_company', 'service_center', 'collection_center', 'ordinary_advisor']);
+  const validPractitionerTypes = new Set([
+    'independent',
+    'organization',
+    'education_family',
+    'psychological_consulting',
+    'child_growth_quality',
+    'assessment_collection',
+    'other'
+  ]);
   const roleLabels = {
     advisor: '指导师',
     agent: '分公司',
@@ -17,7 +25,8 @@
   const channelRoleMap = {
     branch_company: 'agent',
     service_center: 'center',
-    collection_center: 'center'
+    collection_center: 'center',
+    ordinary_advisor: 'advisor'
   };
   let csrfToken = '';
 
