@@ -1,32 +1,10 @@
 -- AIPIWEN V3a Preview auto activation for ordinary advisors.
 --
--- This migration defines schema rules and one authenticated RPC for the new
--- ordinary-advisor path. It does not update existing pending institution
--- applications and does not create wallets, credits, or invite codes by itself.
+-- This migration replaces the unexecuted 017 draft. Ordinary-advisor auto
+-- activation is not a platform admission review and must not create
+-- application_reviews. Institution identities keep using application_reviews.
 
 begin;
-
-alter table public.application_reviews
-  drop constraint if exists application_reviews_review_consistency_check;
-
-alter table public.application_reviews
-  add constraint application_reviews_review_consistency_check
-  check (
-    (
-      status = 'approved'
-      and reviewed_at is not null
-      and (
-        reviewer_user_id is not null
-        or application_note like '%AUTO_ACTIVATE_ADVISOR%'
-      )
-    )
-    or (
-      status = 'rejected'
-      and reviewer_user_id is not null
-      and reviewed_at is not null
-    )
-    or status not in ('approved', 'rejected')
-  );
 
 alter table public.admin_audit_logs
   drop constraint if exists admin_audit_logs_action_check;
@@ -62,8 +40,9 @@ alter table public.admin_audit_logs
         and nullif(details ->> 'application_id', '') is not null
       then action || ':' || ((details ->> 'application_id')::uuid::text)
       when action = 'AUTO_ACTIVATE_ADVISOR'
-        and nullif(details ->> 'user_id', '') is not null
-      then action || ':' || ((details ->> 'user_id')::uuid::text)
+        and target_type = 'user'
+        and target_id is not null
+      then action || ':' || target_id::text
       else null
     end
   ) stored;
@@ -82,9 +61,13 @@ alter table public.admin_audit_logs
     )
     or (
       action = 'AUTO_ACTIVATE_ADVISOR'
-      and idempotency_key is not null
-      and idempotency_key =
-        'AUTO_ACTIVATE_ADVISOR:' || ((details ->> 'user_id')::uuid::text)
+      and target_type = 'user'
+      and target_id is not null
+      and idempotency_key = 'AUTO_ACTIVATE_ADVISOR:' || target_id::text
+      and details = jsonb_build_object(
+        'source', 'phone_verified_auto_activation',
+        'reason', 'first_advisor_activation'
+      )
     )
   );
 
@@ -116,7 +99,7 @@ language plpgsql
 set search_path = public, pg_temp
 as $$
 declare
-  v_application_key text;
+  v_bonus_key text;
   v_application_id uuid;
 begin
   if new.type <> 'REGISTER_BONUS' then
@@ -125,31 +108,45 @@ begin
 
   if new.idempotency_key is null
     or new.idempotency_key !~
-      '^REGISTER_BONUS:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}:([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}|AUTO_ADVISOR_ACTIVATION)$' then
+      '^REGISTER_BONUS:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}:([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}|AUTO_ADVISOR_ACTIVATION)$'
+    or split_part(new.idempotency_key, ':', 2) <> new.user_id::text
+    or new.amount <> 500
+    or new.balance_before <> 0
+    or new.balance_after <> 500 then
     raise exception using
       errcode = '23514',
-      message = 'REGISTER_BONUS_REQUIRES_APPROVED_APPLICATION';
+      message = 'INVALID_REGISTER_BONUS_SHAPE';
   end if;
 
-  v_application_key := split_part(new.idempotency_key, ':', 3);
+  v_bonus_key := split_part(new.idempotency_key, ':', 3);
 
-  if v_application_key = 'AUTO_ADVISOR_ACTIVATION' then
+  if v_bonus_key = 'AUTO_ADVISOR_ACTIVATION' then
+    if new.operator_id is not null then
+      raise exception using
+        errcode = '23514',
+        message = 'AUTO_REGISTER_BONUS_MUST_NOT_HAVE_OPERATOR';
+    end if;
+
     if not exists (
       select 1
-      from public.application_reviews review
-      where review.user_id = new.user_id
-        and review.role = 'advisor'
-        and review.status = 'approved'
-        and review.application_note like '%AUTO_ACTIVATE_ADVISOR%'
+      from public.users users_row
+      join public.advisor_profiles profile
+        on profile.user_id = users_row.id
+      where users_row.id = new.user_id
+        and users_row.role = 'advisor'
+        and users_row.status = 'active'
+        and profile.role = 'advisor'
+        and profile.status = 'active'
     ) then
       raise exception using
         errcode = '23514',
-        message = 'REGISTER_BONUS_REQUIRES_APPROVED_APPLICATION';
+        message = 'AUTO_REGISTER_BONUS_REQUIRES_ACTIVE_ADVISOR';
     end if;
+
     return new;
   end if;
 
-  v_application_id := v_application_key::uuid;
+  v_application_id := v_bonus_key::uuid;
 
   if not exists (
     select 1
@@ -166,6 +163,9 @@ begin
   return new;
 end;
 $$;
+
+comment on function public.v3a_credit_logs_require_approved_application() is
+  'Validates REGISTER_BONUS issuance: institution bonuses require an approved application; ordinary advisor auto bonuses require an active advisor account/profile and no operator.';
 
 revoke all on function public.v3a_credit_logs_require_approved_application()
   from public, anon, authenticated, service_role;
@@ -208,13 +208,9 @@ declare
   v_expected_agreement_version constant text :=
     'v3a-phase-b-preview-2026-07-09';
   v_invite_code_input text := upper(nullif(btrim(coalesce(p_invite_code, '')), ''));
-  v_application_note text;
   v_user public.users%rowtype;
   v_profile public.advisor_profiles%rowtype;
-  v_review public.application_reviews%rowtype;
   v_user_id uuid;
-  v_profile_id uuid;
-  v_application_id uuid;
   v_wallet_id uuid;
   v_wallet_balance integer;
   v_credit_log_id uuid;
@@ -234,11 +230,10 @@ declare
   v_attempt integer;
   v_char_index integer;
   v_audit_log_id uuid;
-  v_audit_action text;
   v_audit_target_id uuid;
+  v_audit_action text;
   v_audit_details jsonb;
-  v_reviewed_at timestamptz := now();
-  v_affected_rows integer;
+  v_activated_at timestamptz := now();
 begin
   v_auth_user_id := auth.uid();
   v_jwt := coalesce(auth.jwt(), '{}'::jsonb);
@@ -300,20 +295,6 @@ begin
       '^(ADV|AGT|CTR)-[ABCDEFGHJKMNPQRSTUVWXYZ23456789]{8}$' then
     raise exception using errcode = '22023', message = 'INVALID_INVITE_CODE';
   end if;
-
-  v_application_note := concat_ws(
-    '; ',
-    case when v_application_identity = 'ordinary_advisor'
-      then '申请身份：普通指导师'
-      else '申请身份：普通指导师基础账号'
-    end,
-    case when v_practitioner_type = 'other'
-      then '从业类型补充：' || v_practitioner_type_note
-      else null
-    end,
-    'AUTO_ACTIVATE_ADVISOR',
-    '普通指导师账号自动开通'
-  );
 
   perform pg_advisory_xact_lock(
     hashtext('v3a_auto_activate_advisor'),
@@ -385,8 +366,8 @@ begin
     v_email := null;
   end if;
 
-  if v_phone is null and v_email is null then
-    raise exception using errcode = '22023', message = 'AUTH_IDENTITY_NOT_VERIFIED';
+  if v_phone is null then
+    raise exception using errcode = '22023', message = 'AUTH_PHONE_NOT_VERIFIED';
   end if;
 
   select users_row.*
@@ -430,7 +411,7 @@ begin
       v_display_name,
       v_city,
       'direct',
-      v_reviewed_at
+      v_activated_at
     )
     returning * into v_user;
     v_user_id := v_user.id;
@@ -446,7 +427,6 @@ begin
     if v_profile.role <> 'advisor' or v_profile.status <> 'active' then
       raise exception using errcode = '55000', message = 'ACCOUNT_NOT_ELIGIBLE_FOR_AUTO_ACTIVATION';
     end if;
-    v_profile_id := v_profile.id;
   else
     insert into public.advisor_profiles (
       user_id,
@@ -465,53 +445,9 @@ begin
       v_city,
       v_practitioner_type,
       v_agreement_version,
-      v_reviewed_at
+      v_activated_at
     )
     returning * into v_profile;
-    v_profile_id := v_profile.id;
-  end if;
-
-  select review.*
-  into v_review
-  from public.application_reviews review
-  where review.user_id = v_user_id
-  order by review.created_at asc
-  limit 1
-  for update;
-
-  if found then
-    if v_review.status <> 'approved'
-      or v_review.role <> 'advisor'
-      or v_review.application_note not like '%AUTO_ACTIVATE_ADVISOR%' then
-      raise exception using errcode = '55000', message = 'ACCOUNT_NOT_ELIGIBLE_FOR_AUTO_ACTIVATION';
-    end if;
-    v_application_id := v_review.id;
-  else
-    insert into public.application_reviews (
-      user_id,
-      role,
-      status,
-      applied_city,
-      applied_nickname,
-      practitioner_type,
-      invite_code,
-      application_note,
-      review_note,
-      reviewed_at
-    ) values (
-      v_user_id,
-      'advisor',
-      'approved',
-      v_city,
-      v_display_name,
-      v_practitioner_type,
-      v_invite_code_input,
-      v_application_note,
-      '普通指导师账号自动开通',
-      v_reviewed_at
-    )
-    returning * into v_review;
-    v_application_id := v_review.id;
   end if;
 
   select wallet.id, wallet.balance
@@ -658,12 +594,7 @@ begin
     v_user_id,
     jsonb_build_object(
       'source', 'phone_verified_auto_activation',
-      'user_id', v_user_id,
-      'application_id', v_application_id,
-      'wallet_id', v_wallet_id,
-      'credit_log_id', v_credit_log_id,
-      'invite_code', v_existing_invite_code,
-      'user_visible_note', '普通指导师账号自动开通'
+      'reason', 'first_advisor_activation'
     )
   )
   on conflict (idempotency_key)
@@ -682,26 +613,20 @@ begin
   if v_audit_log_id is null
     or v_audit_target_id is distinct from v_user_id
     or v_audit_action is distinct from 'AUTO_ACTIVATE_ADVISOR'
-    or v_audit_details ->> 'source' is distinct from 'phone_verified_auto_activation' then
+    or v_audit_details is distinct from jsonb_build_object(
+      'source', 'phone_verified_auto_activation',
+      'reason', 'first_advisor_activation'
+    ) then
     raise exception using errcode = 'P0001', message = 'INCOMPLETE_AUTO_ACTIVATION_STATE';
   end if;
 
   return jsonb_build_object(
-    'success', true,
-    'data', jsonb_build_object(
-      'user_id', v_user_id,
-      'user_status', 'active',
-      'role', 'advisor',
-      'application_id', v_application_id,
-      'wallet', jsonb_build_object('id', v_wallet_id, 'balance', v_wallet_balance),
-      'credit_log', jsonb_build_object(
-        'id', v_credit_log_id,
-        'type', v_credit_log_type,
-        'amount', v_credit_log_amount
-      ),
-      'invite_code', v_existing_invite_code,
-      'audit_log_id', v_audit_log_id
-    )
+    'activated', true,
+    'user_id', v_user_id,
+    'role', 'advisor',
+    'wallet_balance', 500,
+    'invite_code', v_existing_invite_code,
+    'activation_type', 'AUTO_ADVISOR'
   );
 exception
   when unique_violation then
@@ -721,7 +646,6 @@ exception
       'AUTH_PHONE_NOT_VERIFIED',
       'AUTH_PHONE_NOT_SUPPORTED',
       'AUTH_PHONE_CLAIM_MISMATCH',
-      'AUTH_IDENTITY_NOT_VERIFIED',
       'IDENTITY_MAPPING_CONFLICT',
       'ACCOUNT_NOT_ELIGIBLE_FOR_AUTO_ACTIVATION',
       'INCOMPLETE_AUTO_ACTIVATION_STATE'
@@ -735,7 +659,7 @@ $$;
 comment on function public.v3a_auto_activate_advisor(
   text, text, text, text, boolean, text, text, text
 ) is
-  'Auto-activates the current verified-phone Auth user as an ordinary advisor; creates approved auto application, wallet, one 500-point register bonus, one invite code, and AUTO_ACTIVATE_ADVISOR audit log in one transaction.';
+  'Auto-activates the current verified-phone Auth user as an ordinary advisor without creating application_reviews; creates active user/profile, wallet, one 500-point register bonus, one invite code, and AUTO_ACTIVATE_ADVISOR audit log in one transaction.';
 
 revoke all on function public.v3a_auto_activate_advisor(
   text, text, text, text, boolean, text, text, text

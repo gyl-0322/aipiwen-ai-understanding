@@ -320,6 +320,13 @@ async function submitApplication(config, session, payload) {
   if (response?.ok) {
     const result = await readJson(response);
     if (result?.success === true) return;
+    if (
+      rpcName === 'v3a_auto_activate_advisor' &&
+      result?.activated === true &&
+      result?.role === 'advisor' &&
+      result?.wallet_balance === 500 &&
+      result?.activation_type === 'AUTO_ADVISOR'
+    ) return;
   }
   try {
     const current = await readCurrentApplication(config, session);

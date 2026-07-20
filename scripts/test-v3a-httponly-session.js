@@ -236,7 +236,14 @@ function createFetch(options = {}) {
       return response(200, { success: true });
     }
     if (url.pathname === '/rest/v1/rpc/v3a_auto_activate_advisor') {
-      return response(200, { success: true });
+      return response(200, {
+        activated: true,
+        user_id: BUSINESS_USER_ID,
+        role: 'advisor',
+        wallet_balance: 500,
+        invite_code: 'ADV-ABCDEFGH',
+        activation_type: 'AUTO_ADVISOR'
+      });
     }
     throw new Error(`Unexpected Supabase path: ${url.pathname}`);
   };
