@@ -276,23 +276,31 @@ p {
 .auth-tabs {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
-  margin-top: 16px;
-}
-
-.auth-tab {
-  min-height: 38px;
+  gap: 0;
+  margin-top: 18px;
+  overflow: hidden;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: rgba(255, 255, 255, .035);
+}
+
+.auth-tab {
+  min-height: 44px;
+  border: 0;
+  border-right: 1px solid var(--line);
+  background: transparent;
   color: var(--muted);
   cursor: pointer;
 }
 
+.auth-tab:last-child {
+  border-right: 0;
+}
+
 .auth-tab.active {
-  border-color: rgba(82, 213, 232, .5);
   background: rgba(82, 213, 232, .12);
   color: var(--text);
+  font-weight: 800;
 }
 
 .icon-btn {
@@ -1315,12 +1323,43 @@ body[data-page="advisor"] .value-card {
   width: min(1120px, calc(100% - 48px));
 }
 
+.auth-layout {
+  display: grid;
+  justify-items: center;
+  padding: 44px 0 20px;
+}
+
 .auth-grid {
   grid-template-columns: minmax(420px, 1fr) minmax(330px, .78fr);
 }
 
 .auth-card {
   grid-row: span 2;
+}
+
+.auth-card-centered {
+  width: min(100%, 440px);
+}
+
+.auth-pane {
+  margin-top: 18px;
+}
+
+.auth-helper-text {
+  width: min(100%, 440px);
+  margin: 12px 0 0;
+  color: var(--faint);
+  font-size: 13px;
+  text-align: center;
+}
+
+.advisor-entry-layout {
+  min-height: calc(100vh - 110px);
+  align-content: center;
+}
+
+.advisor-entry-card {
+  text-align: left;
 }
 
 .form-grid {

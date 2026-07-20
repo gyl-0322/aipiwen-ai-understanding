@@ -202,6 +202,7 @@
     let resetPasswordMode = false;
     let otpCooldownSeconds = 0;
     let otpCooldownTimer = null;
+    let currentAuthMode = 'password';
 
     function otpInput() {
       return form.elements.otp || form.elements.token || $('#v3a-otp');
@@ -219,10 +220,14 @@
 
     function setAuthMode(mode) {
       const useSms = mode === 'sms';
+      currentAuthMode = useSms ? 'sms' : 'password';
       form.hidden = !useSms;
       if (passwordForm) passwordForm.hidden = useSms;
       $('#v3a-password-tab')?.classList.toggle('active', !useSms);
       $('#v3a-sms-tab')?.classList.toggle('active', useSms);
+      setText('#v3a-phone-login-description', useSms
+        ? '第一次使用或忘记密码，请获取短信验证码。'
+        : '已设置密码的账号，可直接用手机号和密码登录。');
       showMessage(messageSelector, '');
       showMessage(passwordMessageSelector, '');
     }
@@ -271,6 +276,7 @@
       phoneOtpEnabled = capabilities.phoneOtpEnabled === true;
       sendButton.disabled = !phoneOtpEnabled;
       showPhoneLoginStatus(phoneOtpEnabled);
+      setAuthMode(currentAuthMode);
       if (!phoneOtpEnabled) {
         showMessage(messageSelector, '手机号短信登录尚未开放，当前不会发送验证码。');
       }
@@ -389,7 +395,13 @@
         const result = await requestSession('password_login', { method: 'POST', body: { phone, password } });
         routeByStatus(result.me, passwordMessageSelector);
       } catch (error) {
-        showMessage(passwordMessageSelector, error.message);
+        if (error.code === 'PASSWORD_LOGIN_FAILED') {
+          if (form.elements.phone) form.elements.phone.value = phone;
+          setAuthMode('sms');
+          showMessage(messageSelector, '如果是第一次使用或忘记密码，请获取短信验证码。验证后即可继续。');
+        } else {
+          showMessage(passwordMessageSelector, error.message);
+        }
       } finally {
         passwordLoginPending = false;
         setBusy(passwordForm, false);
