@@ -203,11 +203,12 @@ async function readCurrentApplication(config, session) {
 }
 
 function nextPath(me) {
-  if (me?.requiresPasswordSetup) return '/advisor-register.html?set_password=1';
-  if (!me.user) return '/advisor-register.html';
+  if (me?.passwordReset) return '/advisor-register.html?set_password=1';
+  if (!me.user) return me?.requiresPasswordSetup ? '/advisor-register.html?set_password=1' : '/advisor-register.html';
   if (me.user.status === 'pending') return '/advisor-pending.html';
   if (me.user.status === 'active' && me.user.role === 'super_admin') return '/admin-applications.html';
   if (me.user.status === 'active' && validRoles.has(me.user.role)) return '/ai-interpreter-workbench.html';
+  if (me?.requiresPasswordSetup) return '/advisor-register.html?set_password=1';
   return null;
 }
 

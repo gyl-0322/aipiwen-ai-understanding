@@ -603,6 +603,14 @@ async function run() {
   assert.equal(harness.location.href, '/ai-interpreter-workbench.html', '已有 Session 必须按状态恢复路由');
   assertBrowserIsolation(harness);
 
+  const activeAdvisorWithoutPasswordFlag = completeMe('active', 'advisor');
+  activeAdvisorWithoutPasswordFlag.requiresPasswordSetup = true;
+  harness = createHarness({ me: activeAdvisorWithoutPasswordFlag });
+  await settle();
+  assert.equal(harness.location.href, '/ai-interpreter-workbench.html',
+    'active 指导师即使缺少旧密码标记，也必须直接进入工作台');
+  assertBrowserIsolation(harness);
+
   harness = createHarness({
     failures: {
       verify_otp: { status: 400, body: { ok: false, error: '验证码不正确或已失效。', code: 'OTP_VERIFY_FAILED' } }
@@ -645,6 +653,14 @@ async function run() {
   }
   assert.equal(harness.location.href, '/ai-interpreter-workbench.html',
     '普通指导师必须自动开通后进入工作台');
+  assertBrowserIsolation(harness);
+
+  const activeAdvisorOnRegister = completeMe('active', 'advisor');
+  activeAdvisorOnRegister.requiresPasswordSetup = true;
+  harness = createHarness({ page: 'register', me: activeAdvisorOnRegister });
+  await settle();
+  assert.equal(harness.location.href, '/ai-interpreter-workbench.html',
+    'active 指导师误入申请页时必须直接回工作台');
   assertBrowserIsolation(harness);
 
   harness = createHarness({ page: 'register', formData: { channelIdentity: 'branch_company' } });

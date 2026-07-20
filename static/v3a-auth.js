@@ -101,12 +101,14 @@
   }
 
   function routeByStatus(me, messageSelector) {
-    if (me?.requiresPasswordSetup) {
+    if (me?.passwordReset) {
       window.location.href = '/advisor-register.html?set_password=1';
       return;
     }
     if (!me?.user) {
-      window.location.href = '/advisor-register.html';
+      window.location.href = me?.requiresPasswordSetup
+        ? '/advisor-register.html?set_password=1'
+        : '/advisor-register.html';
       return;
     }
     const { role, status } = me.user;
@@ -120,6 +122,10 @@
     }
     if (status === 'active' && validRoles.has(role)) {
       window.location.href = '/ai-interpreter-workbench.html';
+      return;
+    }
+    if (me?.requiresPasswordSetup) {
+      window.location.href = '/advisor-register.html?set_password=1';
       return;
     }
     if (status === 'rejected') {
@@ -474,13 +480,15 @@
     try {
       const current = await requestSession('me');
       currentMe = current.me;
+      const wantsPasswordSetup = new URLSearchParams(window.location.search).has('set_password');
       setText('#v3a-verified-phone', current.me?.phoneMasked, '已验证手机号');
-      if (current.me?.requiresPasswordSetup || new URLSearchParams(window.location.search).has('set_password')) {
-        identityReady = true;
-        showPasswordStep();
-      } else if (current.me?.user) {
+      if (current.me?.user && !wantsPasswordSetup) {
         routeByStatus(current.me, messageSelector);
         return;
+      }
+      if (wantsPasswordSetup || current.me?.requiresPasswordSetup) {
+        identityReady = true;
+        showPasswordStep();
       } else {
         identityReady = true;
         showApplicationStep();

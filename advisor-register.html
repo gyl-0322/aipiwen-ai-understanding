@@ -30,14 +30,14 @@
       <a class="btn ghost" href="login.html">返回统一登录</a>
     </nav>
 
-    <section class="auth-grid">
-      <div class="module auth-card">
+    <section class="register-layout">
+      <div class="module register-card">
         <p class="eyebrow">Advisor Application</p>
-        <h1>填写账号申请资料</h1>
-        <p id="v3a-register-intro">当前已验证身份：<strong id="v3a-verified-phone">正在核对</strong>。普通指导师自动开通，机构身份进入平台准入审核队列。</p>
+        <h1>完成账号开通</h1>
+        <p id="v3a-register-intro">已验证手机号：<strong id="v3a-verified-phone">正在核对</strong>。首次使用请先设置密码，再填写从业资料。</p>
 
-        <form class="form-grid" id="v3a-password-setup-form" style="margin-top:18px" hidden>
-          <div class="notice">
+        <form class="form-grid register-form" id="v3a-password-setup-form" hidden>
+          <div class="register-section">
             <strong>设置登录密码</strong>
             <p>首次手机号验证后请设置登录密码。后续可使用手机号 + 密码登录，也可用短信验证码登录或重设密码。</p>
           </div>
@@ -51,7 +51,7 @@
           <button class="btn primary" type="submit">保存密码</button>
         </form>
 
-        <form class="form-grid" id="v3a-register-form" style="margin-top:18px" hidden>
+        <form class="form-grid register-form" id="v3a-register-form" hidden>
           <label>昵称 / 从业名
             <input class="field" name="displayName" type="text" required minlength="2" maxlength="80" placeholder="用于审核与工作台展示">
           </label>
@@ -86,7 +86,7 @@
           </label>
           <p class="notice" id="v3a-application-mode-note">暂不选择或普通指导师将自动开通基础账号；机构身份提交后进入平台审核。</p>
 
-          <div class="notice">
+          <div class="register-section">
             <strong>四条规则</strong>
             <ol class="rules-list">
               <li>数值没有好坏，高有高的特长，低有低的特长</li>
@@ -104,10 +104,23 @@
         </form>
       </div>
 
-      <aside class="module safety-card">
+      <aside class="module register-guide">
         <span class="status done">普通指导师自动开通</span>
-        <h2>机构身份仍需平台审核</h2>
-        <p>普通指导师提交后自动激活、创建钱包、发放 500 体验积分并生成邀请码；分公司、服务中心、采集中心继续进入 pending 审核。</p>
+        <h2>这里只用于首次开通</h2>
+        <div class="register-guide-list">
+          <div>
+            <strong>普通指导师</strong>
+            <p>资料提交后直接开通工作台、创建钱包、发放 500 体验积分并生成邀请码。</p>
+          </div>
+          <div>
+            <strong>机构身份</strong>
+            <p>分公司、服务中心、采集中心进入平台准入审核，审核通过后再开通对应权限。</p>
+          </div>
+          <div>
+            <strong>已开通账号</strong>
+            <p>使用手机号和密码登录后直接进入指导师工作台，不再停留在本页。</p>
+          </div>
+        </div>
       </aside>
     </section>
   </main>
