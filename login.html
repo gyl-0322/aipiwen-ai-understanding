@@ -30,18 +30,37 @@
       <a class="btn ghost" href="advisor.html">返回工作台介绍</a>
     </nav>
 
-    <section class="auth-layout">
-      <div class="module auth-card auth-card-centered">
-        <span class="status pending" id="v3a-phone-login-status">正在检查短信登录状态</span>
-        <p class="eyebrow" style="margin-top:14px">Advisor Login</p>
-        <h1>登录指导师工作台</h1>
+    <section class="login-showcase">
+      <div class="login-story" aria-label="AIPIWEN 指导师工作台">
+        <p class="eyebrow">Advisor Workbench</p>
+        <h1>AIPIWEN 指导师工作台</h1>
+        <p>从业者账号、积分钱包、邀请码和平台准入审核集中在这里完成。</p>
+        <div class="login-story-strip" aria-label="账号流程">
+          <span>手机号验证</span>
+          <span>设置密码</span>
+          <span>提交资料</span>
+          <span>进入工作台</span>
+        </div>
+      </div>
 
-        <div class="auth-tabs" role="tablist" aria-label="登录方式">
-          <button class="auth-tab active" id="v3a-password-tab" type="button" data-auth-mode="password">手机号码和密码</button>
-          <button class="auth-tab" id="v3a-sms-tab" type="button" data-auth-mode="sms">短信验证码</button>
+      <div class="module auth-card login-card">
+        <div class="login-card-head">
+          <div>
+            <span class="status pending" id="v3a-phone-login-status">正在检查短信登录状态</span>
+            <p class="eyebrow">Advisor Login</p>
+            <h2>登录指导师工作台</h2>
+          </div>
+          <div class="auth-switch" role="tablist" aria-label="切换登录方式">
+            <button class="auth-tab active" id="v3a-password-tab" type="button" data-auth-mode="password">密码登录</button>
+            <button class="auth-tab" id="v3a-sms-tab" type="button" data-auth-mode="sms">短信验证码</button>
+          </div>
         </div>
 
         <form class="form-grid auth-pane" id="v3a-password-login-form" novalidate>
+          <div class="auth-pane-title">
+            <strong>手机号码和密码</strong>
+            <span>已设置密码的账号可直接登录。</span>
+          </div>
           <label for="v3a-password-phone">中国大陆手机号
             <input class="field" id="v3a-password-phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" maxlength="17" placeholder="请输入 11 位手机号" required>
           </label>
@@ -53,6 +72,10 @@
         </form>
 
         <form class="form-grid auth-pane" id="v3a-phone-auth-form" novalidate hidden>
+          <div class="auth-pane-title">
+            <strong>短信验证码</strong>
+            <span>第一次使用或忘记密码，请先验证手机号。</span>
+          </div>
           <label for="v3a-phone">中国大陆手机号
             <input class="field" id="v3a-phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" maxlength="17" placeholder="请输入 11 位手机号" required>
           </label>
@@ -66,8 +89,8 @@
           <button class="btn primary" type="submit">登录</button>
         </form>
         <p class="dryrun-error" id="v3a-password-login-message" role="status" aria-live="polite" hidden></p>
+        <p class="auth-helper-text" id="v3a-phone-login-description">第一次使用或忘记密码，请切换到短信验证码。</p>
       </div>
-      <p class="auth-helper-text" id="v3a-phone-login-description">第一次使用或忘记密码，请切换到短信验证码。</p>
     </section>
   </main>
 </body>

@@ -303,6 +303,29 @@ p {
   font-weight: 800;
 }
 
+.auth-switch {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.auth-switch .auth-tab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 32px;
+  padding: 5px 10px;
+  border: 1px solid rgba(82, 213, 232, .34);
+  border-radius: 999px;
+  background: rgba(82, 213, 232, .08);
+  color: #c8f8ff;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.auth-switch .auth-tab.active {
+  display: none;
+}
+
 .icon-btn {
   width: 32px;
   height: 32px;
@@ -1329,6 +1352,53 @@ body[data-page="advisor"] .value-card {
   padding: 44px 0 20px;
 }
 
+.login-showcase {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 390px;
+  align-items: center;
+  gap: 48px;
+  min-height: calc(100vh - 120px);
+  padding: 28px 0 46px;
+}
+
+.login-story {
+  max-width: 650px;
+}
+
+.login-story h1 {
+  max-width: 560px;
+  font-size: 48px;
+  line-height: 1.08;
+}
+
+.login-story p:not(.eyebrow) {
+  max-width: 560px;
+  margin: 18px 0 0;
+  color: var(--muted);
+  font-size: 17px;
+  line-height: 1.9;
+}
+
+.login-story-strip {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  max-width: 620px;
+  margin-top: 34px;
+}
+
+.login-story-strip span {
+  min-height: 78px;
+  padding: 14px 12px;
+  border: 1px solid rgba(149, 173, 211, .18);
+  border-radius: 8px;
+  background: rgba(18, 25, 37, .62);
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1.45;
+}
+
 .auth-grid {
   grid-template-columns: minmax(420px, 1fr) minmax(330px, .78fr);
 }
@@ -1341,16 +1411,52 @@ body[data-page="advisor"] .value-card {
   width: min(100%, 440px);
 }
 
+.login-card {
+  width: min(100%, 390px);
+  justify-self: end;
+  padding: 20px;
+}
+
+.login-card-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: start;
+}
+
+.login-card-head h2 {
+  font-size: 24px;
+  line-height: 1.22;
+}
+
 .auth-pane {
   margin-top: 18px;
 }
 
+.auth-pane-title {
+  display: grid;
+  gap: 4px;
+  padding-bottom: 2px;
+}
+
+.auth-pane-title strong {
+  color: var(--text);
+  font-size: 16px;
+}
+
+.auth-pane-title span {
+  color: var(--faint);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
 .auth-helper-text {
-  width: min(100%, 440px);
+  width: 100%;
   margin: 12px 0 0;
   color: var(--faint);
   font-size: 13px;
-  text-align: center;
+  line-height: 1.6;
+  text-align: left;
 }
 
 .advisor-entry-layout {
@@ -1612,11 +1718,32 @@ body[data-page="advisor"] .value-card {
   .credit-overview,
   .public-hero,
   .auth-grid,
+  .login-showcase,
   .value-grid,
   .split-actions,
   .timeline,
   .mini-grid {
     grid-template-columns: 1fr;
+  }
+
+  .login-showcase {
+    gap: 24px;
+    min-height: auto;
+    padding-top: 18px;
+  }
+
+  .login-card {
+    justify-self: stretch;
+    width: 100%;
+    order: -1;
+  }
+
+  .login-story h1 {
+    font-size: 34px;
+  }
+
+  .login-story-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .pipeline-step::after {
