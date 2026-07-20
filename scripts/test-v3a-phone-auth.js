@@ -131,6 +131,7 @@ function createHarness(options = {}) {
   const sendButton = {
     disabled: false,
     textContent: '获取验证码',
+    tabIndex: 0,
     _click: null,
     addEventListener(type, handler) {
       if (type === 'click') this._click = handler;
@@ -138,7 +139,8 @@ function createHarness(options = {}) {
   };
   const loginButton = {
     disabled: false,
-    textContent: '登录'
+    textContent: '登录',
+    tabIndex: 0
   };
   const logoutButton = {
     _click: null,
@@ -157,16 +159,42 @@ function createHarness(options = {}) {
       }
     : { phone: '13800138000', token: OTP, otp: OTP };
   Object.assign(formData, options.formData || {});
+  const passwordButton = { disabled: false, textContent: '登录', tabIndex: 0 };
+  const passwordPhoneField = { value: formData.phone || '', disabled: false, tabIndex: 0 };
+  const passwordField = { value: formData.password || '', disabled: false, tabIndex: 0 };
+  const passwordForm = page === 'login' ? {
+    classList: createClassList(),
+    attributes: {},
+    hidden: false,
+    _submit: null,
+    elements: {
+      phone: passwordPhoneField,
+      password: passwordField
+    },
+    setAttribute(name, value) { this.attributes[name] = String(value); },
+    querySelector(selector) {
+      if (selector === 'button[type="submit"]') return passwordButton;
+      return null;
+    },
+    querySelectorAll() { return [passwordPhoneField, passwordField, passwordButton]; },
+    addEventListener(type, handler) {
+      if (type === 'submit') this._submit = handler;
+    }
+  } : null;
   const practitionerTypeField = {
     value: formData.practitionerType || '',
+    tabIndex: 0,
     _change: null,
     addEventListener(type, handler) {
       if (type === 'change') this._change = handler;
     }
   };
-  const practitionerTypeNoteField = { value: formData.practitionerTypeNote || '', required: false };
+  const practitionerTypeNoteField = { value: formData.practitionerTypeNote || '', required: false, tabIndex: 0 };
   const practitionerTypeNoteRow = { hidden: true };
   const form = {
+    classList: createClassList(),
+    attributes: {},
+    hidden: false,
     _data: formData,
     _submit: null,
     elements: {
@@ -182,10 +210,13 @@ function createHarness(options = {}) {
       return null;
     },
     querySelectorAll() { return [sendButton, loginButton, practitionerTypeField, practitionerTypeNoteField]; },
+    setAttribute(name, value) { this.attributes[name] = String(value); },
     addEventListener(type, handler) {
       if (type === 'submit') this._submit = handler;
     }
   };
+  const passwordTab = { classList: createClassList(), _click: null, addEventListener(type, handler) { if (type === 'click') this._click = handler; } };
+  const smsTab = { classList: createClassList(), _click: null, addEventListener(type, handler) { if (type === 'click') this._click = handler; } };
   const nav = {
     id: '',
     _click: null,
@@ -250,6 +281,9 @@ function createHarness(options = {}) {
   const selectorMap = new Map([
     ['#v3a-phone-auth-form', page === 'login' ? form : null],
     ['#v3a-login-form', page === 'login' ? form : null],
+    ['#v3a-password-login-form', passwordForm],
+    ['#v3a-password-tab', page === 'login' ? passwordTab : null],
+    ['#v3a-sms-tab', page === 'login' ? smsTab : null],
     ['#v3a-register-form', page === 'register' ? form : null],
     ['#v3a-send-otp', page === 'login' ? sendButton : null],
     ['#v3a-send-otp-button', page === 'login' ? sendButton : null],

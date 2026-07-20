@@ -41,6 +41,16 @@
           <span>提交资料</span>
           <span>进入工作台</span>
         </div>
+        <div class="login-feature-grid" aria-label="工作台能力">
+          <span>AI 辅助解读</span>
+          <span>8 步标准解读流程</span>
+          <span>表达建议与提问提示</span>
+          <span>解读训练</span>
+          <span>质量审核支持</span>
+          <span>优秀案例沉淀</span>
+          <span>客户归属机制</span>
+          <span>账号与额度说明</span>
+        </div>
       </div>
 
       <div class="module auth-card login-card">
@@ -51,43 +61,45 @@
             <h2>登录指导师工作台</h2>
           </div>
           <div class="auth-switch" role="tablist" aria-label="切换登录方式">
-            <button class="auth-tab active" id="v3a-password-tab" type="button" data-auth-mode="password">密码登录</button>
-            <button class="auth-tab" id="v3a-sms-tab" type="button" data-auth-mode="sms">短信验证码</button>
+            <button class="auth-tab active" id="v3a-password-tab" type="button" data-auth-mode="password">切换到密码</button>
+            <button class="auth-tab" id="v3a-sms-tab" type="button" data-auth-mode="sms">切换到短信</button>
           </div>
         </div>
 
-        <form class="form-grid auth-pane" id="v3a-password-login-form" novalidate>
-          <div class="auth-pane-title">
-            <strong>手机号码和密码</strong>
-            <span>已设置密码的账号可直接登录。</span>
-          </div>
-          <label for="v3a-password-phone">中国大陆手机号
-            <input class="field" id="v3a-password-phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" maxlength="17" placeholder="请输入 11 位手机号" required>
-          </label>
-          <label for="v3a-login-password">登录密码
-            <input class="field" id="v3a-login-password" name="password" type="password" autocomplete="current-password" minlength="8" placeholder="请输入登录密码" required>
-          </label>
-          <button class="btn ghost" id="v3a-forgot-password" type="button">忘记密码？用短信验证码重设</button>
-          <button class="btn primary" type="submit">登录</button>
-        </form>
+        <div class="auth-stack">
+          <form class="form-grid auth-pane is-front" id="v3a-password-login-form" novalidate>
+            <div class="auth-pane-title">
+              <strong>手机号码和密码</strong>
+              <span>已设置密码的账号可直接登录。</span>
+            </div>
+            <label for="v3a-password-phone">中国大陆手机号
+              <input class="field" id="v3a-password-phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" maxlength="17" placeholder="请输入 11 位手机号" required>
+            </label>
+            <label for="v3a-login-password">登录密码
+              <input class="field" id="v3a-login-password" name="password" type="password" autocomplete="current-password" minlength="8" placeholder="请输入登录密码" required>
+            </label>
+            <button class="btn ghost" id="v3a-forgot-password" type="button">忘记密码？用短信验证码重设</button>
+            <button class="btn primary" type="submit">登录</button>
+          </form>
 
-        <form class="form-grid auth-pane" id="v3a-phone-auth-form" novalidate hidden>
-          <div class="auth-pane-title">
-            <strong>短信验证码</strong>
-            <span>第一次使用或忘记密码，请先验证手机号。</span>
-          </div>
-          <label for="v3a-phone">中国大陆手机号
-            <input class="field" id="v3a-phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" maxlength="17" placeholder="请输入 11 位手机号" required>
-          </label>
-          <label for="v3a-otp">短信验证码
-            <span class="code-row">
-              <input class="field" id="v3a-otp" name="otp" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" placeholder="6 位验证码" required>
-              <button class="btn ghost" id="v3a-send-otp" type="button">获取验证码</button>
-            </span>
-          </label>
-          <p class="dryrun-error" id="v3a-login-message" role="status" aria-live="polite" hidden></p>
-          <button class="btn primary" type="submit">登录</button>
-        </form>
+          <form class="form-grid auth-pane is-back" id="v3a-phone-auth-form" novalidate>
+            <div class="auth-pane-title">
+              <strong>短信验证码</strong>
+              <span>第一次使用或忘记密码，请先验证手机号。</span>
+            </div>
+            <label for="v3a-phone">中国大陆手机号
+              <input class="field" id="v3a-phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" maxlength="17" placeholder="请输入 11 位手机号" required>
+            </label>
+            <label for="v3a-otp">短信验证码
+              <span class="code-row">
+                <input class="field" id="v3a-otp" name="otp" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" placeholder="6 位验证码" required>
+                <button class="btn ghost" id="v3a-send-otp" type="button">获取验证码</button>
+              </span>
+            </label>
+            <p class="dryrun-error" id="v3a-login-message" role="status" aria-live="polite" hidden></p>
+            <button class="btn primary" type="submit">登录</button>
+          </form>
+        </div>
         <p class="dryrun-error" id="v3a-password-login-message" role="status" aria-live="polite" hidden></p>
         <p class="auth-helper-text" id="v3a-phone-login-description">第一次使用或忘记密码，请切换到短信验证码。</p>
       </div>

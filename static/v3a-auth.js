@@ -221,8 +221,22 @@
     function setAuthMode(mode) {
       const useSms = mode === 'sms';
       currentAuthMode = useSms ? 'sms' : 'password';
-      form.hidden = !useSms;
-      if (passwordForm) passwordForm.hidden = useSms;
+      form.hidden = false;
+      if (passwordForm) passwordForm.hidden = false;
+      form.classList.toggle('is-front', useSms);
+      form.classList.toggle('is-back', !useSms);
+      if (passwordForm) {
+        passwordForm.classList.toggle('is-front', !useSms);
+        passwordForm.classList.toggle('is-back', useSms);
+      }
+      form.setAttribute('aria-hidden', String(!useSms));
+      if (passwordForm) passwordForm.setAttribute('aria-hidden', String(useSms));
+      form.querySelectorAll('input, button').forEach((control) => {
+        control.tabIndex = useSms ? 0 : -1;
+      });
+      passwordForm?.querySelectorAll('input, button').forEach((control) => {
+        control.tabIndex = useSms ? -1 : 0;
+      });
       $('#v3a-password-tab')?.classList.toggle('active', !useSms);
       $('#v3a-sms-tab')?.classList.toggle('active', useSms);
       setText('#v3a-phone-login-description', useSms
