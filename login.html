@@ -35,9 +35,25 @@
         <span class="status pending" id="v3a-phone-login-status">正在检查短信登录状态</span>
         <p class="eyebrow" style="margin-top:14px">Unified Login</p>
         <h1>手机号登录</h1>
-        <p>当前 Preview 仅开放手机号短信验证入口。验证通过后继续提交指导师准入申请。</p>
+        <p>可使用手机号和密码登录；也可用短信验证码完成首次验证或重设密码。</p>
 
-        <form class="form-grid" id="v3a-phone-auth-form" style="margin-top:18px" novalidate>
+        <div class="auth-tabs" role="tablist" aria-label="登录方式">
+          <button class="auth-tab active" id="v3a-password-tab" type="button" data-auth-mode="password">手机号 + 密码</button>
+          <button class="auth-tab" id="v3a-sms-tab" type="button" data-auth-mode="sms">短信验证码</button>
+        </div>
+
+        <form class="form-grid" id="v3a-password-login-form" style="margin-top:18px" novalidate>
+          <label for="v3a-password-phone">中国大陆手机号
+            <input class="field" id="v3a-password-phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" maxlength="17" placeholder="请输入 11 位手机号" required>
+          </label>
+          <label for="v3a-login-password">登录密码
+            <input class="field" id="v3a-login-password" name="password" type="password" autocomplete="current-password" minlength="8" placeholder="请输入登录密码" required>
+          </label>
+          <button class="btn ghost" id="v3a-forgot-password" type="button">忘记密码？用短信验证码重设</button>
+          <button class="btn primary" type="submit">登录</button>
+        </form>
+
+        <form class="form-grid" id="v3a-phone-auth-form" style="margin-top:18px" novalidate hidden>
           <label for="v3a-phone">中国大陆手机号
             <input class="field" id="v3a-phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" maxlength="17" placeholder="请输入 11 位手机号" required>
           </label>
@@ -50,6 +66,7 @@
           <p class="dryrun-error" id="v3a-login-message" role="status" aria-live="polite" hidden></p>
           <button class="btn primary" type="submit">登录</button>
         </form>
+        <p class="dryrun-error" id="v3a-password-login-message" role="status" aria-live="polite" hidden></p>
       </div>
 
       <aside class="module safety-card">
@@ -61,9 +78,9 @@
         </div>
         <div class="data-list">
           <div class="data-item"><span>第 1 步</span><strong>本人验证手机号</strong></div>
-          <div class="data-item"><span>第 2 步</span><strong>填写申请资料</strong></div>
-          <div class="data-item"><span>第 3 步</span><strong>平台准入审核</strong></div>
-          <div class="data-item"><span>审核通过</span><strong>账号激活并进入工作台</strong></div>
+          <div class="data-item"><span>第 2 步</span><strong>设置登录密码</strong></div>
+          <div class="data-item"><span>普通指导师</span><strong>自动开通并进入工作台</strong></div>
+          <div class="data-item"><span>机构身份</span><strong>提交后进入平台审核</strong></div>
         </div>
       </aside>
 

@@ -20,13 +20,15 @@ const OTP = '123456';
 const CSRF_TOKEN = 'TEST_V3A_CSRF_TOKEN_ONLY_NOT_REAL_1234567890';
 
 function emptyMe() {
-  return { phoneMasked: MASKED_PHONE, user: null, profile: null, applicationReview: null };
+  return { phoneMasked: MASKED_PHONE, passwordSet: true, requiresPasswordSetup: false, user: null, profile: null, applicationReview: null };
 }
 
 function completeMe(status = 'pending', role) {
   const effectiveRole = role || (status === 'active' ? 'advisor' : 'pending');
   const me = {
     phoneMasked: MASKED_PHONE,
+    passwordSet: true,
+    requiresPasswordSetup: false,
     user: {
       role: effectiveRole,
       status,
@@ -200,7 +202,7 @@ function createHarness(options = {}) {
     insertBefore(node) { this.toggle = node; }
   } : null;
 
-  function defaultPayload(action) {
+  function defaultPayload(action, requestBody = {}) {
     if (action === 'capabilities') {
       return { status: 200, body: { ok: true, phoneOtpEnabled: options.phoneOtpEnabled !== false } };
     }
@@ -223,7 +225,10 @@ function createHarness(options = {}) {
       return { status: 200, body: { ok: true, me: options.verifyMe || emptyMe(), csrfToken: CSRF_TOKEN } };
     }
     if (action === 'submit_application') {
-      return { status: 200, body: { ok: true, me: options.submitMe || completeMe(), csrfToken: CSRF_TOKEN } };
+      const submittedMe = requestBody.applicationMode === 'auto_advisor'
+        ? completeMe('active', 'advisor')
+        : completeMe();
+      return { status: 200, body: { ok: true, me: options.submitMe || submittedMe, csrfToken: CSRF_TOKEN } };
     }
     if (action === 'logout') return { status: 200, body: { ok: true } };
     return { status: 400, body: { ok: false, error: '不支持的 action。', code: 'INVALID_ACTION' } };
@@ -238,7 +243,7 @@ function createHarness(options = {}) {
     const failure = options.failures?.[action];
     if (failure instanceof Error) throw failure;
     if (failure) return webResponse(failure.status, failure.body);
-    const result = defaultPayload(action);
+    const result = defaultPayload(action, body);
     return webResponse(result.status, result.body);
   }
 
@@ -441,10 +446,16 @@ async function run() {
   assert.equal(loginPage.includes('id="v3a-phone-login-status"'), true, '统一登录页必须动态回读短信登录状态');
   assert.equal(loginPage.includes('preview-demo-auth') || loginPage.includes('模拟验证码'), false,
     '统一登录页不得包含模拟登录资产');
-  assert.equal(/邮箱|name="email"|name="password"/.test(loginPage), false,
-    '统一登录页当前不得继续提示邮箱或密码登录入口');
-  assert.equal(/name="email"|name="password"/.test(registerPage), false,
-    '申请资料页不得重新收集邮箱或密码');
+  assert.equal(/邮箱|name="email"/.test(loginPage), false,
+    '统一登录页不得恢复邮箱登录入口');
+  assert.equal(loginPage.includes('id="v3a-password-login-form"'), true,
+    '统一登录页必须支持手机号 + 密码登录');
+  assert.equal(loginPage.includes('id="v3a-forgot-password"'), true,
+    '统一登录页必须支持通过短信验证码重设密码');
+  assert.equal(/name="email"/.test(registerPage), false,
+    '申请资料页不得重新收集邮箱');
+  assert.equal(registerPage.includes('id="v3a-password-setup-form"'), true,
+    '首次短信验证后必须设置登录密码');
   assert.equal(registerPage.includes('id="v3a-register-form"'), true, '申请资料页必须包含申请表单');
   for (const label of ['暂不选择', '分公司', '服务中心', '采集中心', '普通指导师']) {
     assert.equal(registerPage.includes(`>${label}</option>`), true, `申请身份必须包含 ${label}`);
@@ -537,7 +548,7 @@ async function run() {
   await submit(harness);
   let request = actionCalls(harness, 'verify_otp')[0];
   assertBffCall(request, { action: 'verify_otp', method: 'POST' });
-  assert.deepStrictEqual(plain(request.body), { phone: VERIFIED_PHONE, token: OTP });
+  assert.deepStrictEqual(plain(request.body), { phone: VERIFIED_PHONE, token: OTP, resetPassword: false });
   assert.equal(harness.loginButton.textContent, '登录', '验证码校验结束后登录按钮必须恢复');
   assert.equal(harness.location.href, '/advisor-register.html', '无业务记录必须进入申请资料页');
   assertBrowserIsolation(harness);
@@ -591,13 +602,15 @@ async function run() {
     role: 'advisor',
     practitionerType: 'independent',
     practitionerTypeNote: '',
+    applicationMode: 'auto_advisor',
     inviteCode: '',
     acceptedRules: true
   });
   for (const forbidden of ['phone', 'email', 'auth_user_id', 'status']) {
     assert.equal(forbidden in request.body, false, `申请 BFF 参数不得包含 ${forbidden}`);
   }
-  assert.equal(harness.location.href, '/advisor-pending.html');
+  assert.equal(harness.location.href, '/ai-interpreter-workbench.html',
+    '普通指导师必须自动开通后进入工作台');
   assertBrowserIsolation(harness);
 
   harness = createHarness({ page: 'register', formData: { channelIdentity: 'branch_company' } });
@@ -611,6 +624,7 @@ async function run() {
     role: 'agent',
     practitionerType: 'independent',
     practitionerTypeNote: '',
+    applicationMode: 'institution_pending',
     inviteCode: '',
     acceptedRules: true
   });
@@ -623,7 +637,8 @@ async function run() {
   request = actionCalls(harness, 'submit_application')[0];
   assert.equal(request.body.role, 'advisor', '普通指导师必须映射为 advisor 角色');
   assert.equal(request.body.channelIdentity, 'ordinary_advisor');
-  assert.equal(harness.location.href, '/advisor-pending.html');
+  assert.equal(request.body.applicationMode, 'auto_advisor');
+  assert.equal(harness.location.href, '/ai-interpreter-workbench.html');
   assertBrowserIsolation(harness);
 
   harness = createHarness({
@@ -635,7 +650,7 @@ async function run() {
   request = actionCalls(harness, 'submit_application')[0];
   assert.equal(request.body.practitionerType, 'psychological_consulting',
     '心理咨询服务从业者必须作为独立从业类型提交');
-  assert.equal(harness.location.href, '/advisor-pending.html');
+  assert.equal(harness.location.href, '/ai-interpreter-workbench.html');
   assertBrowserIsolation(harness);
 
   harness = createHarness({
@@ -662,7 +677,7 @@ async function run() {
   assert.equal(request.body.practitionerType, 'other');
   assert.equal(request.body.practitionerTypeNote, '企业培训',
     '其他从业类型补充说明必须提交给 BFF');
-  assert.equal(harness.location.href, '/advisor-pending.html');
+  assert.equal(harness.location.href, '/ai-interpreter-workbench.html');
   assertBrowserIsolation(harness);
 
   harness = createHarness({ page: 'register', acceptedRules: false });

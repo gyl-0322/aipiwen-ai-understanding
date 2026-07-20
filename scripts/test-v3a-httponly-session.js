@@ -89,6 +89,7 @@ function createFetch(options = {}) {
   const calls = [];
   const kvStore = new Map();
   const businessStatus = options.businessStatus || 'pending';
+  let userMetadata = { v3a_password_set: true, ...(options.userMetadata || {}) };
 
   function applyKv(command) {
     assert(Array.isArray(command) && command.length > 0, 'KV 请求必须是 Redis 命令数组');
@@ -163,14 +164,29 @@ function createFetch(options = {}) {
     }
     if (url.pathname === '/auth/v1/token') {
       await new Promise((resolve) => setImmediate(resolve));
+      const grantType = url.searchParams.get('grant_type');
+      if (grantType === 'password') {
+        return response(200, {
+          access_token: ACCESS_TOKEN,
+          refresh_token: REFRESH_TOKEN,
+          expires_in: 3600,
+          user: authUser({ user_metadata: userMetadata })
+        });
+      }
       return response(200, {
         access_token: ROTATED_ACCESS_TOKEN,
         refresh_token: ROTATED_REFRESH_TOKEN,
         expires_in: 3600,
-        user: authUser()
+        user: authUser({ user_metadata: userMetadata })
       });
     }
-    if (url.pathname === '/auth/v1/user') return response(200, authUser());
+    if (url.pathname === '/auth/v1/user') {
+      if (method === 'PUT') {
+        userMetadata = { ...userMetadata, ...(body?.data || {}) };
+        return response(200, authUser({ user_metadata: userMetadata }));
+      }
+      return response(200, authUser({ user_metadata: userMetadata }));
+    }
     if (url.pathname === '/auth/v1/logout') return response(204, null);
     if (url.pathname === '/rest/v1/users') {
       return response(200, [{
@@ -219,6 +235,9 @@ function createFetch(options = {}) {
     if (url.pathname === '/rest/v1/rpc/v3a_submit_pending_application') {
       return response(200, { success: true });
     }
+    if (url.pathname === '/rest/v1/rpc/v3a_auto_activate_advisor') {
+      return response(200, { success: true });
+    }
     throw new Error(`Unexpected Supabase path: ${url.pathname}`);
   };
 
@@ -233,7 +252,7 @@ function authUser(overrides = {}) {
     phone: PHONE,
     email: 'private@example.test',
     phone_confirmed_at: '2026-07-15T00:00:00.000Z',
-    user_metadata: { privateMarker: 'AUTH_USER_PRIVATE_MARKER' },
+    user_metadata: { v3a_password_set: true, privateMarker: 'AUTH_USER_PRIVATE_MARKER' },
     ...overrides
   };
 }
@@ -948,8 +967,8 @@ async function run() {
   assert.equal(result.res.statusCode, 200, '有效 Session、Origin 和 CSRF 必须可提交申请');
   let mutations = restMutations(lifecycleFetch.calls.slice(mark));
   assert.equal(mutations.length, 1, '申请流程只能有一次业务写请求');
-  assert.equal(new URL(mutations[0].url).pathname, '/rest/v1/rpc/v3a_submit_pending_application',
-    '申请只能调用 v3a_submit_pending_application 用户态 RPC');
+  assert.equal(new URL(mutations[0].url).pathname, '/rest/v1/rpc/v3a_auto_activate_advisor',
+    '普通指导师申请必须调用 v3a_auto_activate_advisor 用户态 RPC');
   assert.equal(mutations[0].init.headers.Authorization, `Bearer ${ROTATED_ACCESS_TOKEN}`,
     '申请 RPC 必须使用当前用户 access token');
   const rpcBody = mutations[0].body;
@@ -961,8 +980,7 @@ async function run() {
     'p_display_name',
     'p_invite_code',
     'p_practitioner_type',
-    'p_practitioner_type_note',
-    'p_requested_role'
+    'p_practitioner_type_note'
   ]);
   assert.equal(rpcBody.p_application_identity, null,
     '未选择代理身份时 RPC 必须收到 null application identity');
@@ -970,7 +988,7 @@ async function run() {
     '新增从业类型必须原样传给申请 RPC');
   assert.equal(rpcBody.p_practitioner_type_note, null,
     '非其他从业类型不得向 RPC 携带补充说明');
-  for (const forbidden of ['phone', 'email', 'auth_user_id', 'status']) {
+  for (const forbidden of ['phone', 'email', 'auth_user_id', 'status', 'p_requested_role']) {
     assert.equal(forbidden in rpcBody, false, `申请 RPC 参数不得包含 ${forbidden}`);
   }
   assertNoSensitiveBody(payload(result.res));

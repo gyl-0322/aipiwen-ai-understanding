@@ -26,6 +26,7 @@ const {
 const AGREEMENT_VERSION = 'v3a-phase-b-preview-2026-07-09';
 const validRoles = new Set(['advisor', 'agent', 'center']);
 const validChannelIdentities = new Set(['', 'branch_company', 'service_center', 'collection_center', 'ordinary_advisor']);
+const autoAdvisorChannelIdentities = new Set(['', 'ordinary_advisor']);
 const validPractitionerTypes = new Set([
   'independent',
   'organization',
@@ -68,6 +69,22 @@ function maskPhone(phone) {
   return `+86 ${value.slice(3, 6)}****${value.slice(-4)}`;
 }
 
+function passwordIsSet(user) {
+  return user?.user_metadata?.v3a_password_set === true;
+}
+
+function validatePassword(value, confirmation = value) {
+  const password = String(value || '');
+  const repeated = String(confirmation || '');
+  if (password !== repeated) {
+    throw new HttpError(400, '两次输入的密码不一致。', 'PASSWORD_MISMATCH');
+  }
+  if (password.length < 8 || !/[A-Za-z]/.test(password) || !/[0-9]/.test(password)) {
+    throw new HttpError(400, '密码至少 8 位，且必须包含字母和数字。', 'INVALID_PASSWORD');
+  }
+  return password;
+}
+
 function requestIp(req) {
   const forwarded = normalize(req.headers?.['x-forwarded-for']).split(',')[0].trim();
   const candidate = forwarded || normalize(req.headers?.['x-real-ip']) || normalize(req.socket?.remoteAddress);
@@ -102,6 +119,7 @@ async function selectRows(config, accessToken, table, params) {
 }
 
 async function readCurrentApplication(config, session) {
+  const authPasswordSet = passwordIsSet(session.user);
   const users = await selectRows(config, session.record.accessToken, 'users', {
     select: 'id,role,status,display_name,city,created_at,last_login_at',
     auth_user_id: `eq.${session.user.id}`,
@@ -109,7 +127,14 @@ async function readCurrentApplication(config, session) {
   });
   const user = users[0];
   if (!user) {
-    return { phoneMasked: maskPhone(session.user.phone), user: null, profile: null, applicationReview: null };
+    return {
+      phoneMasked: maskPhone(session.user.phone),
+      passwordSet: authPasswordSet,
+      requiresPasswordSetup: !authPasswordSet,
+      user: null,
+      profile: null,
+      applicationReview: null
+    };
   }
   const [profiles, reviews] = await Promise.all([
     selectRows(config, session.record.accessToken, 'advisor_profiles', {
@@ -126,6 +151,8 @@ async function readCurrentApplication(config, session) {
   ]);
   const current = {
     phoneMasked: maskPhone(session.user.phone),
+    passwordSet: authPasswordSet,
+    requiresPasswordSetup: !authPasswordSet,
     user: {
       role: user.role,
       status: user.status,
@@ -176,6 +203,7 @@ async function readCurrentApplication(config, session) {
 }
 
 function nextPath(me) {
+  if (me?.requiresPasswordSetup) return '/advisor-register.html?set_password=1';
   if (!me.user) return '/advisor-register.html';
   if (me.user.status === 'pending') return '/advisor-pending.html';
   if (me.user.status === 'active' && me.user.role === 'super_admin') return '/admin-applications.html';
@@ -219,10 +247,64 @@ function validateApplication(body) {
   return payload;
 }
 
-async function submitApplication(config, session, payload) {
+function shouldAutoActivateAdvisor(payload) {
+  return payload.role === 'advisor' && autoAdvisorChannelIdentities.has(payload.channelIdentity);
+}
+
+async function authUserRequest(config, accessToken, method, body) {
   let response;
   try {
-    response = await fetch(`${config.supabaseUrl}/rest/v1/rpc/v3a_submit_pending_application`, {
+    response = await fetch(`${config.supabaseUrl}/auth/v1/user`, {
+      method,
+      headers: {
+        apikey: config.anonKey,
+        Authorization: `Bearer ${accessToken}`,
+        Accept: 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: body === undefined ? undefined : JSON.stringify(body)
+    });
+  } catch {
+    throw new HttpError(502, '账号密码服务暂时不可用。', 'AUTH_UPSTREAM_UNAVAILABLE');
+  }
+  return { response, payload: await readJson(response) };
+}
+
+async function updatePassword(config, session, password) {
+  const { response, payload } = await authUserRequest(config, session.record.accessToken, 'PUT', {
+    password,
+    data: { v3a_password_set: true }
+  });
+  if (!response.ok || payload?.id !== session.record.authUserId) {
+    throw new HttpError(502, '密码暂时无法保存，请稍后重试。', 'PASSWORD_UPDATE_FAILED');
+  }
+  session.user = payload;
+}
+
+async function markPasswordSet(config, accessToken) {
+  await authUserRequest(config, accessToken, 'PUT', {
+    data: { v3a_password_set: true }
+  }).catch(() => null);
+}
+
+async function submitApplication(config, session, payload) {
+  const rpcName = shouldAutoActivateAdvisor(payload)
+    ? 'v3a_auto_activate_advisor'
+    : 'v3a_submit_pending_application';
+  const rpcBody = {
+    p_display_name: payload.displayName,
+    p_city: payload.city,
+    ...(rpcName === 'v3a_submit_pending_application' ? { p_requested_role: payload.role } : {}),
+    p_practitioner_type: payload.practitionerType,
+    p_agreement_version: AGREEMENT_VERSION,
+    p_accepted_rules: true,
+    p_invite_code: payload.inviteCode || null,
+    p_application_identity: payload.channelIdentity || null,
+    p_practitioner_type_note: payload.practitionerTypeNote || null
+  };
+  let response;
+  try {
+    response = await fetch(`${config.supabaseUrl}/rest/v1/rpc/${rpcName}`, {
       method: 'POST',
       headers: {
         apikey: config.anonKey,
@@ -230,17 +312,7 @@ async function submitApplication(config, session, payload) {
         Accept: 'application/json',
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({
-        p_display_name: payload.displayName,
-        p_city: payload.city,
-        p_requested_role: payload.role,
-        p_practitioner_type: payload.practitionerType,
-        p_agreement_version: AGREEMENT_VERSION,
-        p_accepted_rules: true,
-        p_invite_code: payload.inviteCode || null,
-        p_application_identity: payload.channelIdentity || null,
-        p_practitioner_type_note: payload.practitionerTypeNote || null
-      })
+      body: JSON.stringify(rpcBody)
     });
   } catch {
     response = null;
@@ -251,6 +323,12 @@ async function submitApplication(config, session, payload) {
   }
   try {
     const current = await readCurrentApplication(config, session);
+    if (
+      shouldAutoActivateAdvisor(payload) &&
+      current.user?.status === 'active' && current.user?.role === 'advisor' &&
+      current.profile?.status === 'active' && current.profile?.role === 'advisor' &&
+      current.wallet?.balance === 500 && current.inviteCode
+    ) return;
     const profile = current.profile;
     const review = current.applicationReview;
     if (
@@ -265,6 +343,26 @@ async function submitApplication(config, session, payload) {
     // Keep the public result generic when verification also fails.
   }
   throw new HttpError(502, '申请提交结果暂未确认，请稍后重试。', 'APPLICATION_RESULT_UNKNOWN');
+}
+
+async function passwordLogin(config, phone, password, req) {
+  if (!config.phoneOtpEnabled) {
+    throw new HttpError(503, '手机号登录尚未开放。', 'PHONE_LOGIN_DISABLED');
+  }
+  await consumeRateLimit(config, 'password-login-ip', requestIp(req), 20, 600);
+  await consumeRateLimit(config, 'password-login-phone', phone, 10, 600);
+  const { response, payload } = await authRequest(
+    config,
+    '/token?grant_type=password',
+    { phone, password }
+  );
+  if (response.status === 429) throw new HttpError(429, '操作过于频繁，请稍后重试。', 'RATE_LIMITED');
+  if (!response.ok) throw new HttpError(400, '手机号或密码不正确。', 'PASSWORD_LOGIN_FAILED');
+  if (canonicalVerifiedPhone(payload?.user?.phone) !== phone || !payload?.user?.phone_confirmed_at) {
+    throw new HttpError(502, '登录身份验证结果无效。', 'INVALID_SESSION');
+  }
+  await markPasswordSet(config, payload.access_token);
+  return payload;
 }
 
 async function requestOtp(config, phone, req) {
@@ -331,12 +429,36 @@ async function handler(req, res) {
       if (previousSid) await destroySession(config, previousSid);
       const session = await createSession(config, res, authPayload);
       const me = await readCurrentApplication(config, session);
+      if (body.resetPassword === true) me.requiresPasswordSetup = true;
+      if (body.resetPassword === true) me.passwordReset = true;
+      return res.status(200).json({ ok: true, me, next: nextPath(me), csrfToken: session.csrfToken });
+    }
+    if (req.method === 'POST' && action === 'password_login') {
+      const phone = normalizeChinaPhone(body.phone);
+      const password = String(body.password || '');
+      const authPayload = await passwordLogin(config, phone, password, req);
+      const previousSid = readSessionId(req);
+      if (previousSid) await destroySession(config, previousSid);
+      const session = await createSession(config, res, authPayload);
+      const me = await readCurrentApplication(config, session);
+      return res.status(200).json({ ok: true, me, next: nextPath(me), csrfToken: session.csrfToken });
+    }
+    if (req.method === 'POST' && action === 'set_password') {
+      const loaded = await loadSession(req, config);
+      requireCsrf(req, loaded);
+      const session = await resolveSession(config, loaded);
+      const password = validatePassword(body.password, body.passwordConfirm);
+      await updatePassword(config, session, password);
+      const me = await readCurrentApplication(config, session);
       return res.status(200).json({ ok: true, me, next: nextPath(me), csrfToken: session.csrfToken });
     }
     if (req.method === 'POST' && action === 'submit_application') {
       const loaded = await loadSession(req, config);
       requireCsrf(req, loaded);
       const session = await resolveSession(config, loaded);
+      if (!passwordIsSet(session.user)) {
+        throw new HttpError(400, '请先设置登录密码。', 'PASSWORD_SETUP_REQUIRED');
+      }
       const payload = validateApplication(body);
       await submitApplication(config, session, payload);
       const me = await readCurrentApplication(config, session);

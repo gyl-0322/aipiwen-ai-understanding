@@ -273,6 +273,28 @@ p {
   background: transparent;
 }
 
+.auth-tabs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.auth-tab {
+  min-height: 38px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, .035);
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.auth-tab.active {
+  border-color: rgba(82, 213, 232, .5);
+  background: rgba(82, 213, 232, .12);
+  color: var(--text);
+}
+
 .icon-btn {
   width: 32px;
   height: 32px;

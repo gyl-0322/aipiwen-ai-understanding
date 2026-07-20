@@ -7,6 +7,7 @@
   const SESSION_API = '/api/v3a-session';
   const validRoles = new Set(['advisor', 'agent', 'center']);
   const validChannelIdentities = new Set(['', 'branch_company', 'service_center', 'collection_center', 'ordinary_advisor']);
+  const autoAdvisorChannelIdentities = new Set(['', 'ordinary_advisor']);
   const validPractitionerTypes = new Set([
     'independent',
     'organization',
@@ -100,6 +101,10 @@
   }
 
   function routeByStatus(me, messageSelector) {
+    if (me?.requiresPasswordSetup) {
+      window.location.href = '/advisor-register.html?set_password=1';
+      return;
+    }
     if (!me?.user) {
       window.location.href = '/advisor-register.html';
       return;
@@ -128,6 +133,16 @@
     showMessage(messageSelector, '账号状态无法识别，请联系平台超级管理员。');
   }
 
+  function passwordLooksValid(value) {
+    return String(value || '').length >= 8 && /[A-Za-z]/.test(value) && /[0-9]/.test(value);
+  }
+
+  function applicationMode(payload) {
+    return payload.role === 'advisor' && autoAdvisorChannelIdentities.has(payload.channelIdentity)
+      ? 'auto_advisor'
+      : 'institution_pending';
+  }
+
   function validateApplication(payload) {
     if (!payload.acceptedRules) throw new Error('请先勾选同意从业者协议和四条规则。');
     if (Array.from(payload.displayName).length < 2) throw new Error('请填写至少 2 个字符的昵称或从业名。');
@@ -154,9 +169,12 @@
 
   async function initLogin() {
     const form = $('#v3a-phone-auth-form') || $('#v3a-login-form');
+    const passwordForm = $('#v3a-password-login-form');
     const sendButton = $('#v3a-send-otp') || $('#v3a-send-otp-button');
     const loginButton = form?.querySelector('button[type="submit"]');
+    const passwordButton = passwordForm?.querySelector('button[type="submit"]');
     const messageSelector = '#v3a-login-message';
+    const passwordMessageSelector = '#v3a-password-login-message';
     if (!form || !sendButton) return;
 
     function showPhoneLoginStatus(enabled, unavailable = false) {
@@ -180,6 +198,8 @@
     let phoneOtpEnabled = false;
     let otpRequestPending = false;
     let otpVerifyPending = false;
+    let passwordLoginPending = false;
+    let resetPasswordMode = false;
     let otpCooldownSeconds = 0;
     let otpCooldownTimer = null;
 
@@ -191,6 +211,37 @@
       if (!loginButton) return;
       loginButton.textContent = busy ? '正在登录…' : '登录';
     }
+
+    function setPasswordButtonBusy(busy) {
+      if (!passwordButton) return;
+      passwordButton.textContent = busy ? '正在登录…' : '登录';
+    }
+
+    function setAuthMode(mode) {
+      const useSms = mode === 'sms';
+      form.hidden = !useSms;
+      if (passwordForm) passwordForm.hidden = useSms;
+      $('#v3a-password-tab')?.classList.toggle('active', !useSms);
+      $('#v3a-sms-tab')?.classList.toggle('active', useSms);
+      showMessage(messageSelector, '');
+      showMessage(passwordMessageSelector, '');
+    }
+
+    $('#v3a-password-tab')?.addEventListener('click', () => {
+      resetPasswordMode = false;
+      setAuthMode('password');
+    });
+    $('#v3a-sms-tab')?.addEventListener('click', () => {
+      resetPasswordMode = false;
+      setAuthMode('sms');
+    });
+    $('#v3a-forgot-password')?.addEventListener('click', () => {
+      resetPasswordMode = true;
+      setAuthMode('sms');
+      showMessage(messageSelector, '请输入短信验证码，验证后即可设置新密码。');
+      const phone = passwordForm?.elements?.phone?.value;
+      if (phone) form.elements.phone.value = phone;
+    });
 
     function resetOtpSendButton() {
       if (otpCooldownTimer !== null) clearInterval(otpCooldownTimer);
@@ -303,7 +354,7 @@
       setLoginButtonBusy(true);
       showMessage(messageSelector, '正在验证验证码，请稍候。');
       try {
-        const result = await requestSession('verify_otp', { method: 'POST', body: { phone, token } });
+        const result = await requestSession('verify_otp', { method: 'POST', body: { phone, token, resetPassword: resetPasswordMode } });
         routeByStatus(result.me, messageSelector);
       } catch (error) {
         showMessage(messageSelector, error.message);
@@ -314,11 +365,44 @@
         sendButton.disabled = otpCooldownSeconds > 0 || !phoneOtpEnabled;
       }
     });
+
+    passwordForm?.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      if (passwordLoginPending) return;
+      showMessage(passwordMessageSelector, '');
+      let phone;
+      try {
+        phone = normalizeChinaPhone(passwordForm.elements.phone?.value);
+      } catch (error) {
+        showMessage(passwordMessageSelector, error.message);
+        return;
+      }
+      const password = String(passwordForm.elements.password?.value || '');
+      if (!password) {
+        showMessage(passwordMessageSelector, '请输入登录密码。');
+        return;
+      }
+      passwordLoginPending = true;
+      setBusy(passwordForm, true);
+      setPasswordButtonBusy(true);
+      try {
+        const result = await requestSession('password_login', { method: 'POST', body: { phone, password } });
+        routeByStatus(result.me, passwordMessageSelector);
+      } catch (error) {
+        showMessage(passwordMessageSelector, error.message);
+      } finally {
+        passwordLoginPending = false;
+        setBusy(passwordForm, false);
+        setPasswordButtonBusy(false);
+      }
+    });
   }
 
   async function initRegister() {
     const form = $('#v3a-register-form');
+    const passwordForm = $('#v3a-password-setup-form');
     const messageSelector = '#v3a-register-message';
+    const passwordMessageSelector = '#v3a-password-setup-message';
     if (!form) return;
     const practitionerType = form.elements.practitionerType;
     const practitionerTypeNote = form.elements.practitionerTypeNote;
@@ -336,18 +420,78 @@
     practitionerType?.addEventListener('change', syncPractitionerTypeNote);
     syncPractitionerTypeNote();
 
+    function showPasswordStep() {
+      if (passwordForm) passwordForm.hidden = false;
+      form.hidden = true;
+      setText('#v3a-register-intro', '请先设置登录密码。保存后继续开通普通指导师账号或提交机构准入申请。');
+    }
+
+    function showApplicationStep() {
+      if (passwordForm) passwordForm.hidden = true;
+      form.hidden = false;
+      setText('#v3a-register-intro', '当前已验证手机号。普通指导师自动开通，机构身份进入平台准入审核队列。');
+    }
+
+    function syncApplicationModeNote() {
+      const role = channelRoleMap[normalize(form.elements.channelIdentity?.value)] || 'advisor';
+      const mode = role === 'advisor' && autoAdvisorChannelIdentities.has(normalize(form.elements.channelIdentity?.value))
+        ? '您已开通普通指导师基础账号后，可直接进入工作台；后续可申请升级为机构身份。'
+        : '您的机构准入申请将提交平台审核，审核通过后才开通相应权限。';
+      setText('#v3a-application-mode-note', mode, mode);
+    }
+
+    form.elements.channelIdentity?.addEventListener('change', syncApplicationModeNote);
+    syncApplicationModeNote();
+
     let identityReady = false;
+    let currentMe = null;
     try {
       const current = await requestSession('me');
+      currentMe = current.me;
       setText('#v3a-verified-phone', current.me?.phoneMasked, '已验证手机号');
-      if (current.me?.user) {
+      if (current.me?.requiresPasswordSetup || new URLSearchParams(window.location.search).has('set_password')) {
+        identityReady = true;
+        showPasswordStep();
+      } else if (current.me?.user) {
         routeByStatus(current.me, messageSelector);
         return;
+      } else {
+        identityReady = true;
+        showApplicationStep();
       }
-      identityReady = true;
     } catch (error) {
       showMessage(messageSelector, error.status === 401 ? '请先在统一登录页完成手机号验证。' : error.message);
     }
+
+    passwordForm?.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      showMessage(passwordMessageSelector, '');
+      const password = passwordForm.elements.password?.value || '';
+      const passwordConfirm = passwordForm.elements.passwordConfirm?.value || '';
+      if (password !== passwordConfirm) {
+        showMessage(passwordMessageSelector, '两次输入的密码不一致。');
+        return;
+      }
+      if (!passwordLooksValid(password)) {
+        showMessage(passwordMessageSelector, '密码至少 8 位，且必须包含字母和数字。');
+        return;
+      }
+      setBusy(passwordForm, true);
+      try {
+        const result = await requestSession('set_password', {
+          method: 'POST',
+          body: { password, passwordConfirm }
+        });
+        currentMe = result.me;
+        showMessage(passwordMessageSelector, '密码已保存，请继续填写申请资料。');
+        if (currentMe?.user) routeByStatus(currentMe, passwordMessageSelector);
+        else showApplicationStep();
+      } catch (error) {
+        showMessage(passwordMessageSelector, error.message);
+      } finally {
+        setBusy(passwordForm, false);
+      }
+    });
 
     form.addEventListener('submit', async (event) => {
       event.preventDefault();
@@ -367,6 +511,7 @@
         acceptedRules: form.elements.acceptedRules?.checked === true
       };
       payload.role = channelRoleMap[payload.channelIdentity] || 'advisor';
+      payload.applicationMode = applicationMode(payload);
       try {
         validateApplication(payload);
       } catch (error) {
@@ -376,6 +521,11 @@
       setBusy(form, true);
       try {
         const result = await requestSession('submit_application', { method: 'POST', body: payload });
+        if (payload.applicationMode === 'auto_advisor') {
+          showMessage(messageSelector, '普通指导师账号已自动开通。');
+        } else {
+          showMessage(messageSelector, '您的机构准入申请已提交，平台审核通过后将开通相应权限。');
+        }
         routeByStatus(result.me, messageSelector);
       } catch (error) {
         showMessage(messageSelector, safeApplicationError(error));
