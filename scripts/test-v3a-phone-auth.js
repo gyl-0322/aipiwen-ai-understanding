@@ -233,16 +233,7 @@ function createHarness(options = {}) {
     _click: null,
     addEventListener(type, handler) { if (type === 'click') this._click = handler; }
   };
-  const sidebar = page === 'workbench' ? {
-    classList: createClassList(),
-    toggle: null,
-    querySelector(selector) {
-      if (selector === '.nav') return nav;
-      if (selector === '.mobile-nav-toggle') return this.toggle;
-      return null;
-    },
-    insertBefore(node) { this.toggle = node; }
-  } : null;
+  const sidebar = null;
 
   function defaultPayload(action, requestBody = {}) {
     if (action === 'capabilities') {
@@ -544,6 +535,8 @@ async function run() {
     '正式工作台必须展示真实积分余额');
   assert.equal(workbenchPage.includes('id="v3a-workbench-invite-code"'), true,
     '正式工作台必须展示真实邀请码');
+  assert.equal(/class="sidebar"|workbench-hero|workbench-bottom-grid|Today|开始一次专业解读|今日工作提醒|权益概览/.test(workbenchPage), false,
+    '正式工作台首页不得再包含侧边栏、介绍横幅或底部说明模块');
   assert.equal(/preview-demo|sessionStorage|localStorage|ZHANGWEI01|王小明/.test(workbenchPage), false,
     '正式工作台不得包含演示 Session 或硬编码业务数据');
 
@@ -827,18 +820,9 @@ async function run() {
   harness = createHarness({ page: 'workbench' });
   await settle();
   assert.equal(harness.body.hidden, false, 'active 指导师通过真实 Session 校验后才显示工作台');
-  assert.equal(harness.texts.workbenchName.textContent, '测试指导师');
-  assert.equal(harness.texts.workbenchCity.textContent, '上海');
-  assert.equal(harness.texts.workbenchStatus.textContent, 'active');
   assert.equal(harness.texts.workbenchRole.textContent, '指导师');
   assert.equal(harness.texts.workbenchBalance.textContent, '500');
   assert.equal(harness.texts.workbenchInviteCode.textContent, 'ADV-ABCDEFGH');
-  assert.equal(harness.sidebar.classList.contains('mobile-nav-ready'), true,
-    '工作台通过身份校验后必须启用紧凑移动导航');
-  assert.equal(harness.sidebar.toggle.attributes['aria-expanded'], 'false');
-  await harness.sidebar.toggle._click();
-  assert.equal(harness.sidebar.classList.contains('is-open'), true, '移动导航按钮必须可以展开菜单');
-  assert.equal(harness.sidebar.toggle.attributes['aria-expanded'], 'true');
   assertBrowserIsolation(harness);
   await clickLogout(harness);
   assert.equal(harness.location.href, '/login.html', '工作台退出后必须返回统一登录页');

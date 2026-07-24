@@ -9,37 +9,25 @@
   <script src="static/v3a-auth.js" defer></script>
 </head>
 <body data-v3a-auth-page="workbench" hidden>
-  <div class="app-shell">
-    <aside class="sidebar">
-      <a class="brand" href="ai-interpreter-workbench.html" aria-label="AIPIWEN 指导师工作台">
-        <svg class="brand-flower" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-          <circle class="brand-flower-ring" cx="18" cy="18" r="15.5" stroke-width=".9" stroke-dasharray="2.5 6"/>
-          <g class="brand-flower-petals">
-            <ellipse cx="18" cy="12" rx="2.2" ry="6.5" transform="rotate(0 18 18)"/>
-            <ellipse cx="18" cy="12" rx="2.2" ry="6.5" transform="rotate(90 18 18)"/>
-            <ellipse cx="18" cy="12" rx="1.4" ry="5.5" transform="rotate(45 18 18)"/>
-            <ellipse cx="18" cy="12" rx="1.4" ry="5.5" transform="rotate(135 18 18)"/>
-          </g>
-          <circle class="brand-flower-center" cx="18" cy="18" r="3"/>
-        </svg>
-        <div>
-          <p class="brand-title">AIPIWEN指导师工作台</p>
-          <div class="brand-subtitle">正式账号入口</div>
-        </div>
-      </a>
-      <nav class="nav" aria-label="工作台导航">
-        <a class="nav-link active" href="ai-interpreter-workbench.html" aria-current="page"><span>⌂</span><span>工作台首页</span></a>
-      </nav>
-      <div class="sidebar-note">每次解读前先确认授权、边界和四条规则。</div>
-    </aside>
-
+  <div class="app-shell workbench-shell">
     <main class="main">
       <header class="topbar workbench-topbar">
-        <div>
-          <p class="eyebrow">Advisor Workbench</p>
-          <h1>AIPIWEN 指导师工作台</h1>
-          <p>从这里进入解读、报告、客户和训练工作。</p>
-        </div>
+        <a class="brand workbench-brand" href="ai-interpreter-workbench.html" aria-label="AIPIWEN 指导师工作台">
+          <svg class="brand-flower" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <circle class="brand-flower-ring" cx="18" cy="18" r="15.5" stroke-width=".9" stroke-dasharray="2.5 6"/>
+            <g class="brand-flower-petals">
+              <ellipse cx="18" cy="12" rx="2.2" ry="6.5" transform="rotate(0 18 18)"/>
+              <ellipse cx="18" cy="12" rx="2.2" ry="6.5" transform="rotate(90 18 18)"/>
+              <ellipse cx="18" cy="12" rx="1.4" ry="5.5" transform="rotate(45 18 18)"/>
+              <ellipse cx="18" cy="12" rx="1.4" ry="5.5" transform="rotate(135 18 18)"/>
+            </g>
+            <circle class="brand-flower-center" cx="18" cy="18" r="3"/>
+          </svg>
+          <div>
+            <p class="brand-title">AIPIWEN 指导师工作台</p>
+            <div class="brand-subtitle">工作入口</div>
+          </div>
+        </a>
         <div class="workbench-account-strip" aria-label="当前账号">
           <div>
             <span>身份</span>
@@ -58,20 +46,6 @@
       </header>
 
       <p class="dryrun-error" id="v3a-workbench-message" role="status" aria-live="polite" hidden></p>
-
-      <section class="workbench-hero" aria-label="工作台首页">
-        <div>
-          <p class="eyebrow">Today</p>
-          <h2>开始一次专业解读</h2>
-          <p>先选择工作入口，再按流程确认客户授权、报告来源和沟通边界。</p>
-        </div>
-        <div class="workbench-user-card">
-          <span>当前账号</span>
-          <strong id="v3a-workbench-name">已验证账号</strong>
-          <small><span id="v3a-workbench-city">未设置</span> · <span id="v3a-workbench-status">active</span></small>
-          <small id="v3a-workbench-role-label">读取中</small>
-        </div>
-      </section>
 
       <section class="workbench-entry-grid" aria-label="工作入口">
         <a class="workbench-entry primary-entry" href="#" aria-disabled="true">
@@ -106,30 +80,6 @@
           </div>
           <em>待开放</em>
         </a>
-      </section>
-
-      <section class="workbench-bottom-grid" aria-label="工作提醒">
-        <article class="module workbench-panel">
-          <div class="card-title">
-            <h2>今日工作提醒</h2>
-            <small>进入任何客户服务前先完成三项确认</small>
-          </div>
-          <div class="workbench-checklist">
-            <span>客户授权已确认</span>
-            <span>报告来源已确认</span>
-            <span>四条规则已确认</span>
-          </div>
-        </article>
-        <article class="module workbench-panel">
-          <div class="card-title">
-            <h2>权益概览</h2>
-            <small>注册体验积分只用于平台内功能消耗</small>
-          </div>
-          <div class="workbench-benefits">
-            <span>余额 <strong id="v3a-workbench-balance-copy">读取中</strong></span>
-            <span>邀请码 <strong id="v3a-workbench-invite-copy">读取中</strong></span>
-          </div>
-        </article>
       </section>
     </main>
   </div>
