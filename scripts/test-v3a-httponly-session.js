@@ -90,6 +90,7 @@ function createFetch(options = {}) {
   const kvStore = new Map();
   const businessStatus = options.businessStatus || 'pending';
   let userMetadata = { v3a_password_set: true, ...(options.userMetadata || {}) };
+  let phoneAccountRebound = false;
 
   function applyKv(command) {
     assert(Array.isArray(command) && command.length > 0, 'KV 请求必须是 Redis 命令数组');
@@ -189,6 +190,9 @@ function createFetch(options = {}) {
     }
     if (url.pathname === '/auth/v1/logout') return response(204, null);
     if (url.pathname === '/rest/v1/users') {
+      if (options.missingUserUntilRebind && !phoneAccountRebound && url.searchParams.has('auth_user_id')) {
+        return response(200, []);
+      }
       return response(200, [{
         id: BUSINESS_USER_ID,
         auth_user_id: AUTH_USER_ID,
@@ -243,6 +247,15 @@ function createFetch(options = {}) {
         wallet_balance: 500,
         invite_code: 'ADV-ABCDEFGH',
         activation_type: 'AUTO_ADVISOR'
+      });
+    }
+    if (url.pathname === '/rest/v1/rpc/v3a_rebind_verified_phone_account') {
+      phoneAccountRebound = true;
+      return response(200, {
+        rebound: true,
+        user_id: BUSINESS_USER_ID,
+        role: 'advisor',
+        status: businessStatus
       });
     }
     throw new Error(`Unexpected Supabase path: ${url.pathname}`);
@@ -872,6 +885,31 @@ async function run() {
     'active 用户只能读取一次 own wallet');
   assert.equal(activeAssetPaths.filter((value) => value === '/rest/v1/invite_codes').length, 1,
     'active 用户只能读取一次 own active invite code');
+
+  const reboundFetch = createFetch({ businessStatus: 'active', missingUserUntilRebind: true });
+  const reboundResult = await invoke({
+    method: 'POST',
+    action: 'password_login',
+    body: { phone: PHONE, password: 'Passw0rd!' },
+    env: enabledEnv,
+    fetchStub: reboundFetch
+  });
+  assert.equal(reboundResult.res.statusCode, 200,
+    '已注册手机号密码登录遇到 Auth 身份错绑时必须自动恢复业务账号');
+  const reboundPayload = payload(reboundResult.res);
+  assert.equal(reboundPayload.next, '/ai-interpreter-workbench.html',
+    '已开通手机号密码登录恢复后必须直接进入工作台');
+  assert.equal(reboundPayload.me.user.role, 'advisor');
+  assert.equal(reboundPayload.me.user.status, 'active');
+  assert.deepStrictEqual(JSON.parse(JSON.stringify(reboundPayload.me.wallet)), { balance: 500 });
+  assert.equal(reboundPayload.me.inviteCode, 'ADV-ABCDEFGH');
+  const reboundRpcCalls = supabaseCalls(reboundFetch.calls)
+    .filter(({ url }) => new URL(url).pathname === '/rest/v1/rpc/v3a_rebind_verified_phone_account');
+  assert.equal(reboundRpcCalls.length, 1, '同手机号错绑恢复只能调用一次受控 rebind RPC');
+  assert.equal(reboundRpcCalls[0].method, 'POST');
+  assert.equal(reboundRpcCalls[0].init.headers.Authorization, `Bearer ${ACCESS_TOKEN}`,
+    'rebind RPC 必须使用当前用户 access token');
+  assert.deepStrictEqual(JSON.parse(JSON.stringify(reboundRpcCalls[0].body)), {});
 
   sessionRecord.accessExpiresAt = Date.now() + 30000;
   replaceSession(lifecycleFetch.kvStore, sid, sessionRecord);

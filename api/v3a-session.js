@@ -118,14 +118,44 @@ async function selectRows(config, accessToken, table, params) {
   return Array.isArray(payload) ? payload : [];
 }
 
+async function rebindVerifiedPhoneAccount(config, session) {
+  if (!passwordIsSet(session.user) || !canonicalVerifiedPhone(session.user.phone)) return false;
+  let response;
+  try {
+    response = await fetch(`${config.supabaseUrl}/rest/v1/rpc/v3a_rebind_verified_phone_account`, {
+      method: 'POST',
+      headers: {
+        apikey: config.anonKey,
+        Authorization: `Bearer ${session.record.accessToken}`,
+        Accept: 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({})
+    });
+  } catch {
+    return false;
+  }
+  if (!response.ok) return false;
+  const payload = await readJson(response);
+  return payload?.rebound === true || payload?.reason === 'ALREADY_BOUND';
+}
+
 async function readCurrentApplication(config, session) {
   const authPasswordSet = passwordIsSet(session.user);
-  const users = await selectRows(config, session.record.accessToken, 'users', {
+  let users = await selectRows(config, session.record.accessToken, 'users', {
     select: 'id,role,status,display_name,city,created_at,last_login_at',
     auth_user_id: `eq.${session.user.id}`,
     limit: 1
   });
-  const user = users[0];
+  let user = users[0];
+  if (!user && await rebindVerifiedPhoneAccount(config, session)) {
+    users = await selectRows(config, session.record.accessToken, 'users', {
+      select: 'id,role,status,display_name,city,created_at,last_login_at',
+      auth_user_id: `eq.${session.user.id}`,
+      limit: 1
+    });
+    user = users[0];
+  }
   if (!user) {
     return {
       phoneMasked: maskPhone(session.user.phone),
