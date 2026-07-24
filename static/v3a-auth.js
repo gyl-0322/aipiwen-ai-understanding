@@ -632,6 +632,8 @@
       setText('#v3a-workbench-role-label', roleLabels[me.user.role] || me.user.role, '读取中');
       setText('#v3a-workbench-balance', me.wallet?.balance, '待同步');
       setText('#v3a-workbench-invite-code', me.inviteCode, '待生成');
+      setText('#v3a-workbench-balance-copy', me.wallet?.balance, '待同步');
+      setText('#v3a-workbench-invite-copy', me.inviteCode, '待生成');
       initMobileNavigation();
       document.body.hidden = false;
     } catch (error) {

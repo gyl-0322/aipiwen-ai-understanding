@@ -30,65 +30,106 @@
       <nav class="nav" aria-label="工作台导航">
         <a class="nav-link active" href="ai-interpreter-workbench.html" aria-current="page"><span>⌂</span><span>工作台首页</span></a>
       </nav>
-      <div class="sidebar-note">当前仅开放真实账号入口。业务模块将按验收结果逐项接通。</div>
+      <div class="sidebar-note">每次解读前先确认授权、边界和四条规则。</div>
     </aside>
 
     <main class="main">
-      <header class="topbar">
+      <header class="topbar workbench-topbar">
         <div>
           <p class="eyebrow">Advisor Workbench</p>
-          <h1>欢迎进入指导师工作台</h1>
-          <p>当前页面只展示已验证的真实账号状态；业务数据在正式链路接通前不展示。</p>
+          <h1>AIPIWEN 指导师工作台</h1>
+          <p>从这里进入解读、报告、客户和训练工作。</p>
         </div>
-        <div class="top-actions">
-          <span class="status done" id="v3a-workbench-role">已激活</span>
+        <div class="workbench-account-strip" aria-label="当前账号">
+          <div>
+            <span>身份</span>
+            <strong id="v3a-workbench-role">已激活</strong>
+          </div>
+          <div>
+            <span>积分</span>
+            <strong id="v3a-workbench-balance">待同步</strong>
+          </div>
+          <div>
+            <span>邀请码</span>
+            <strong id="v3a-workbench-invite-code">待生成</strong>
+          </div>
           <button class="btn ghost" id="v3a-workbench-logout" type="button">退出登录</button>
         </div>
       </header>
 
       <p class="dryrun-error" id="v3a-workbench-message" role="status" aria-live="polite" hidden></p>
 
-      <section class="layout-grid cols-3" aria-label="账号状态">
-        <article class="card metric cyan">
-          <div class="metric-label">账号名称</div>
-          <div class="account-value" id="v3a-workbench-name">已验证账号</div>
-        </article>
-        <article class="card metric blue">
-          <div class="metric-label">所在城市</div>
-          <div class="account-value" id="v3a-workbench-city">未设置</div>
-        </article>
-        <article class="card metric amber">
-          <div class="metric-label">账号状态</div>
-          <div class="account-value" id="v3a-workbench-status">active</div>
-        </article>
-        <article class="card metric blue">
-          <div class="metric-label">身份</div>
-          <div class="account-value" id="v3a-workbench-role-label">读取中</div>
-        </article>
-        <article class="card metric green">
-          <div class="metric-label">真实积分余额</div>
-          <div class="account-value" id="v3a-workbench-balance">待同步</div>
-        </article>
-        <article class="card metric cyan">
-          <div class="metric-label">我的邀请码</div>
-          <div class="account-value" id="v3a-workbench-invite-code">待生成</div>
-        </article>
+      <section class="workbench-hero" aria-label="工作台首页">
+        <div>
+          <p class="eyebrow">Today</p>
+          <h2>开始一次专业解读</h2>
+          <p>先选择工作入口，再按流程确认客户授权、报告来源和沟通边界。</p>
+        </div>
+        <div class="workbench-user-card">
+          <span>当前账号</span>
+          <strong id="v3a-workbench-name">已验证账号</strong>
+          <small><span id="v3a-workbench-city">未设置</span> · <span id="v3a-workbench-status">active</span></small>
+          <small id="v3a-workbench-role-label">读取中</small>
+        </div>
       </section>
 
-      <section class="module" style="margin-top:16px" aria-labelledby="workbench-modules-title">
-        <div class="card-header">
-          <div class="card-title">
-            <h2 id="workbench-modules-title">工作台功能</h2>
-            <small>按真实数据链路验收后逐项开放</small>
+      <section class="workbench-entry-grid" aria-label="工作入口">
+        <a class="workbench-entry primary-entry" href="#" aria-disabled="true">
+          <span>AI</span>
+          <div>
+            <h2>AI 解读助手</h2>
+            <p>进入 8 步标准解读流程，生成表达建议、提问提示和边界提醒。</p>
           </div>
-          <span class="status info">分阶段开通</span>
-        </div>
-        <div class="layout-grid cols-2 workbench-module-grid">
-          <div class="module feature-locked"><h3>报告接入</h3><p>等待真实报告上传与归属链路验收。</p><span class="status pending">尚未接通</span></div>
-          <div class="module feature-locked"><h3>客户管理</h3><p>等待真实客户归属与授权边界验收。</p><span class="status pending">尚未接通</span></div>
-          <div class="module feature-locked"><h3>AI 解读助手</h3><p>等待 Report OS 与安全输出链路验收。</p><span class="status pending">尚未接通</span></div>
-          <div class="module feature-locked"><h3>训练、复核与案例</h3><p>等待平台复核与脱敏沉淀流程验收。</p><span class="status pending">尚未接通</span></div>
-        </div>
+          <em>准备接入</em>
+        </a>
+        <a class="workbench-entry" href="#" aria-disabled="true">
+          <span>R</span>
+          <div>
+            <h2>报告接入</h2>
+            <p>绑定客户报告、确认授权来源，并进入可追溯的解读记录。</p>
+          </div>
+          <em>待开放</em>
+        </a>
+        <a class="workbench-entry" href="#" aria-disabled="true">
+          <span>C</span>
+          <div>
+            <h2>客户管理</h2>
+            <p>管理客户归属、服务进度、跟进记录和后续复盘提醒。</p>
+          </div>
+          <em>待开放</em>
+        </a>
+        <a class="workbench-entry" href="#" aria-disabled="true">
+          <span>T</span>
+          <div>
+            <h2>训练案例</h2>
+            <p>练习安全表达、案例复核和标准话术，沉淀自己的服务能力。</p>
+          </div>
+          <em>待开放</em>
+        </a>
+      </section>
+
+      <section class="workbench-bottom-grid" aria-label="工作提醒">
+        <article class="module workbench-panel">
+          <div class="card-title">
+            <h2>今日工作提醒</h2>
+            <small>进入任何客户服务前先完成三项确认</small>
+          </div>
+          <div class="workbench-checklist">
+            <span>客户授权已确认</span>
+            <span>报告来源已确认</span>
+            <span>四条规则已确认</span>
+          </div>
+        </article>
+        <article class="module workbench-panel">
+          <div class="card-title">
+            <h2>权益概览</h2>
+            <small>注册体验积分只用于平台内功能消耗</small>
+          </div>
+          <div class="workbench-benefits">
+            <span>余额 <strong id="v3a-workbench-balance-copy">500</strong></span>
+            <span>邀请码 <strong id="v3a-workbench-invite-copy">已生成</strong></span>
+          </div>
+        </article>
       </section>
     </main>
   </div>
