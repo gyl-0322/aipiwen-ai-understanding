@@ -35,12 +35,13 @@
         <p class="eyebrow">Advisor Application</p>
         <h1>完成账号开通</h1>
         <p id="v3a-register-intro">已验证手机号：<strong id="v3a-verified-phone">正在核对</strong>。首次使用请先设置密码，再填写从业资料。</p>
+        <div class="register-summary" aria-label="账号开通说明">
+          <span>普通指导师提交后直接进入工作台</span>
+          <span>机构身份提交平台审核</span>
+          <span>已开通账号下次登录直接进入</span>
+        </div>
 
         <form class="form-grid register-form" id="v3a-password-setup-form" hidden>
-          <div class="register-section">
-            <strong>设置登录密码</strong>
-            <p>首次手机号验证后请设置登录密码。后续可使用手机号 + 密码登录，也可用短信验证码登录或重设密码。</p>
-          </div>
           <label>新密码
             <input class="field" name="password" type="password" autocomplete="new-password" minlength="8" required placeholder="至少 8 位，包含字母和数字">
           </label>
@@ -85,43 +86,14 @@
             <input class="field" name="inviteCode" type="text" maxlength="40" placeholder="如有邀请码可填写">
           </label>
           <p class="notice" id="v3a-application-mode-note">暂不选择或普通指导师将自动开通基础账号；机构身份提交后进入平台审核。</p>
-
-          <div class="register-section">
-            <strong>四条规则</strong>
-            <ol class="rules-list">
-              <li>数值没有好坏，高有高的特长，低有低的特长</li>
-              <li>不做未来预测，只解释天赋底色、后天环境与教育培养的共同作用</li>
-              <li>不贴标签，不定义“一个人就是怎样的人”</li>
-              <li>不与他人比较，只与自己的平均值比较</li>
-            </ol>
-          </div>
           <label class="check-line">
             <input name="acceptedRules" type="checkbox" required>
-            我已阅读并同意从业者协议和四条规则
+            我已阅读并同意从业者协议和工作台内四条规则
           </label>
           <p class="dryrun-error" id="v3a-register-message" role="status" aria-live="polite" hidden></p>
           <button class="btn primary" type="submit">提交申请</button>
         </form>
       </div>
-
-      <aside class="module register-guide">
-        <span class="status done">普通指导师自动开通</span>
-        <h2>这里只用于首次开通</h2>
-        <div class="register-guide-list">
-          <div>
-            <strong>普通指导师</strong>
-            <p>资料提交后直接开通工作台、创建钱包、发放 500 体验积分并生成邀请码。</p>
-          </div>
-          <div>
-            <strong>机构身份</strong>
-            <p>分公司、服务中心、采集中心进入平台准入审核，审核通过后再开通对应权限。</p>
-          </div>
-          <div>
-            <strong>已开通账号</strong>
-            <p>使用手机号和密码登录后直接进入指导师工作台，不再停留在本页。</p>
-          </div>
-        </div>
-      </aside>
     </section>
   </main>
 </body>

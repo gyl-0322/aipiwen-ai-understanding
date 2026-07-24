@@ -455,20 +455,20 @@
     function showPasswordStep() {
       if (passwordForm) passwordForm.hidden = false;
       form.hidden = true;
-      setText('#v3a-register-intro', '请先设置登录密码。保存后继续开通普通指导师账号或提交机构准入申请。');
+      setText('#v3a-register-intro', '请先设置登录密码。保存后继续填写从业资料。');
     }
 
     function showApplicationStep() {
       if (passwordForm) passwordForm.hidden = true;
       form.hidden = false;
-      setText('#v3a-register-intro', '当前已验证手机号。普通指导师自动开通，机构身份进入平台准入审核队列。');
+      setText('#v3a-register-intro', '当前已验证手机号。普通指导师提交后直接进入工作台，机构身份提交审核。');
     }
 
     function syncApplicationModeNote() {
       const role = channelRoleMap[normalize(form.elements.channelIdentity?.value)] || 'advisor';
       const mode = role === 'advisor' && autoAdvisorChannelIdentities.has(normalize(form.elements.channelIdentity?.value))
-        ? '您已开通普通指导师基础账号后，可直接进入工作台；后续可申请升级为机构身份。'
-        : '您的机构准入申请将提交平台审核，审核通过后才开通相应权限。';
+        ? '普通指导师将自动开通工作台、钱包、500 体验积分和邀请码。'
+        : '机构身份将进入平台准入审核，审核通过后开通对应权限。';
       setText('#v3a-application-mode-note', mode, mode);
     }
 
@@ -517,7 +517,7 @@
           body: { password, passwordConfirm }
         });
         currentMe = result.me;
-        showMessage(passwordMessageSelector, '密码已保存，请继续填写申请资料。');
+        showMessage(passwordMessageSelector, '密码已保存，继续填写从业资料。');
         if (currentMe?.user) routeByStatus(currentMe, passwordMessageSelector);
         else showApplicationStep();
       } catch (error) {

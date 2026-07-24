@@ -252,6 +252,51 @@ function shouldAutoActivateAdvisor(payload) {
   return payload.role === 'advisor' && autoAdvisorChannelIdentities.has(payload.channelIdentity);
 }
 
+function classifyAutoActivationRpcError(response, errorPayload) {
+  const raw = [
+    errorPayload?.code,
+    errorPayload?.message,
+    errorPayload?.details,
+    errorPayload?.hint
+  ].map(normalize).join(' ');
+  if (response?.status === 404 || /schema cache|function .*v3a_auto_activate_advisor|not found/i.test(raw)) {
+    return new HttpError(
+      400,
+      '普通指导师自动开通尚未在 Preview 数据库生效，请先确认 017 migration 已执行。',
+      'AUTO_ADVISOR_RPC_NOT_READY'
+    );
+  }
+  if (response?.status === 401 || response?.status === 403 || /42501|permission|not allowed|denied/i.test(raw)) {
+    return new HttpError(
+      400,
+      '普通指导师自动开通权限未生效，请检查 Preview RPC 执行权限。',
+      'AUTO_ADVISOR_RPC_PERMISSION'
+    );
+  }
+  if (/ACCOUNT_NOT_ELIGIBLE_FOR_AUTO_ACTIVATION|IDENTITY_MAPPING_CONFLICT/.test(raw)) {
+    return new HttpError(
+      400,
+      '当前手机号已存在非普通指导师账号，不能重复走普通指导师自动开通。',
+      'AUTO_ADVISOR_ACCOUNT_NOT_ELIGIBLE'
+    );
+  }
+  if (/AUTH_PHONE_NOT_VERIFIED|AUTH_PHONE_NOT_SUPPORTED|AUTH_PHONE_CLAIM_MISMATCH/.test(raw)) {
+    return new HttpError(
+      400,
+      '手机号验证状态未通过自动开通校验，请重新短信登录后再试。',
+      'AUTO_ADVISOR_PHONE_NOT_VERIFIED'
+    );
+  }
+  if (/INCOMPLETE_AUTO_ACTIVATION_STATE|AUTO_ACTIVATION_FAILED/.test(raw)) {
+    return new HttpError(
+      400,
+      '普通指导师自动开通事务未完整完成，请暂停重复提交并检查 Preview 数据库迁移状态。',
+      'AUTO_ADVISOR_INCOMPLETE'
+    );
+  }
+  return null;
+}
+
 async function authUserRequest(config, accessToken, method, body) {
   let response;
   try {
@@ -328,6 +373,10 @@ async function submitApplication(config, session, payload) {
       result?.wallet_balance === 500 &&
       result?.activation_type === 'AUTO_ADVISOR'
     ) return;
+  } else if (rpcName === 'v3a_auto_activate_advisor') {
+    const errorPayload = response ? await readJson(response) : null;
+    const safeError = classifyAutoActivationRpcError(response, errorPayload);
+    if (safeError) throw safeError;
   }
   try {
     const current = await readCurrentApplication(config, session);
