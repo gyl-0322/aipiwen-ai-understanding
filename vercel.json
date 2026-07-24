@@ -107,6 +107,22 @@
       "dest": "/advisor-register.html"
     },
     {
+      "src": "/advisor-agreement.html",
+      "dest": "/advisor-agreement.html"
+    },
+    {
+      "src": "/advisor-agreement",
+      "dest": "/advisor-agreement.html"
+    },
+    {
+      "src": "/advisor-rules.html",
+      "dest": "/advisor-rules.html"
+    },
+    {
+      "src": "/advisor-rules",
+      "dest": "/advisor-rules.html"
+    },
+    {
       "src": "/advisor-pending.html",
       "dest": "/advisor-pending.html"
     },
