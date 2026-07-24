@@ -8,38 +8,57 @@
   <link rel="stylesheet" href="static/ai-interpreter.css">
   <script src="static/v3a-auth.js" defer></script>
 </head>
-<body data-v3a-auth-page="workbench" hidden>
-  <div class="app-shell workbench-shell">
-    <main class="main">
-      <header class="topbar workbench-topbar">
-        <a class="brand workbench-brand" href="ai-interpreter-workbench.html" aria-label="AIPIWEN 指导师工作台">
-          <svg class="brand-flower" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-            <circle class="brand-flower-ring" cx="18" cy="18" r="15.5" stroke-width=".9" stroke-dasharray="2.5 6"/>
-            <g class="brand-flower-petals">
-              <ellipse cx="18" cy="12" rx="2.2" ry="6.5" transform="rotate(0 18 18)"/>
-              <ellipse cx="18" cy="12" rx="2.2" ry="6.5" transform="rotate(90 18 18)"/>
-              <ellipse cx="18" cy="12" rx="1.4" ry="5.5" transform="rotate(45 18 18)"/>
-              <ellipse cx="18" cy="12" rx="1.4" ry="5.5" transform="rotate(135 18 18)"/>
-            </g>
-            <circle class="brand-flower-center" cx="18" cy="18" r="3"/>
-          </svg>
-          <div>
-            <p class="brand-title">AIPIWEN 指导师工作台</p>
-            <div class="brand-subtitle">工作入口</div>
-          </div>
-        </a>
+<body data-v3a-auth-page="workbench" hidden data-page="session">
+  <div class="app-shell">
+    <aside class="sidebar">
+      <a class="brand" href="ai-interpreter-workbench.html" aria-label="AIPIWEN 指导师工作台">
+        <svg class="brand-flower" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <circle class="brand-flower-ring" cx="18" cy="18" r="15.5" stroke-width=".9" stroke-dasharray="2.5 6"/>
+          <g class="brand-flower-petals">
+            <ellipse cx="18" cy="12" rx="2.2" ry="6.5" transform="rotate(0 18 18)"/>
+            <ellipse cx="18" cy="12" rx="2.2" ry="6.5" transform="rotate(90 18 18)"/>
+            <ellipse cx="18" cy="12" rx="1.4" ry="5.5" transform="rotate(45 18 18)"/>
+            <ellipse cx="18" cy="12" rx="1.4" ry="5.5" transform="rotate(135 18 18)"/>
+          </g>
+          <circle class="brand-flower-center" cx="18" cy="18" r="3"/>
+        </svg>
+        <div>
+          <p class="brand-title">AIPIWEN指导师工作台</p>
+          <div class="brand-subtitle">AI解读助手</div>
+        </div>
+      </a>
+      <nav class="nav" aria-label="主导航">
+        <a class="nav-link active" href="#workbench-home"><span>⌂</span><span>工作台首页</span></a>
+        <a class="nav-link" href="#customer-panel"><span>◎</span><span>我的客户</span></a>
+        <a class="nav-link" href="#assistant-panel"><span>◈</span><span>AI解读助手</span></a>
+        <a class="nav-link" href="#training-panel"><span>▣</span><span>解读训练</span></a>
+        <a class="nav-link" href="#review-panel"><span>◇</span><span>总部复核 / 规范</span></a>
+        <a class="nav-link" href="#cases-panel"><span>✦</span><span>优秀案例沉淀</span></a>
+      </nav>
+      <div class="sidebar-note">
+        当前账号已通过真实登录进入。客户报告、AI生成和案例入库会在后续版本接入正式链路。
+      </div>
+    </aside>
+
+    <main class="main" id="workbench-home">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Advisor Workbench</p>
+          <h1>AI解读助手</h1>
+          <p>从这里进入解读、报告、客户和训练工作。</p>
+        </div>
         <div class="workbench-account-strip" aria-label="当前账号">
           <div>
             <span>身份</span>
-            <strong id="v3a-workbench-role">已激活</strong>
+            <strong id="v3a-workbench-role">读取中</strong>
           </div>
           <div>
             <span>积分</span>
-            <strong id="v3a-workbench-balance">待同步</strong>
+            <strong id="v3a-workbench-balance">读取中</strong>
           </div>
           <div>
             <span>邀请码</span>
-            <strong id="v3a-workbench-invite-code">待生成</strong>
+            <strong id="v3a-workbench-invite-code">读取中</strong>
           </div>
           <button class="btn ghost" id="v3a-workbench-logout" type="button">退出登录</button>
         </div>
@@ -47,39 +66,206 @@
 
       <p class="dryrun-error" id="v3a-workbench-message" role="status" aria-live="polite" hidden></p>
 
-      <section class="workbench-entry-grid" aria-label="工作入口">
-        <a class="workbench-entry primary-entry" href="#" aria-disabled="true">
-          <span>AI</span>
-          <div>
-            <h2>AI 解读助手</h2>
-            <p>进入 8 步标准解读流程，生成表达建议、提问提示和边界提醒。</p>
+      <section class="session-grid" aria-label="AI解读工作台">
+        <aside class="session-column">
+          <div class="module" id="customer-panel">
+            <div class="card-header">
+              <div class="card-title">
+                <h2>左栏 · 客户信息</h2>
+                <small>选择客户和报告后在这里集中查看</small>
+              </div>
+              <span class="status info">入口</span>
+            </div>
+            <div class="data-list">
+              <div class="data-item"><span>当前账号</span><strong id="v3a-workbench-name">读取中</strong></div>
+              <div class="data-item"><span>所在城市</span><strong id="v3a-workbench-city">读取中</strong></div>
+              <div class="data-item"><span>账号状态</span><strong id="v3a-workbench-status">读取中</strong></div>
+              <div class="data-item"><span>工作身份</span><strong id="v3a-workbench-role-label">读取中</strong></div>
+            </div>
           </div>
-          <em>准备接入</em>
-        </a>
-        <a class="workbench-entry" href="#" aria-disabled="true">
-          <span>R</span>
-          <div>
-            <h2>报告接入</h2>
-            <p>绑定客户报告、确认授权来源，并进入可追溯的解读记录。</p>
+
+          <div class="module">
+            <div class="card-header">
+              <div class="card-title">
+                <h2>报告摘要</h2>
+                <small>正式报告接入后显示报告类型、指标和授权状态</small>
+              </div>
+            </div>
+            <div class="source-grid">
+              <div class="source-item"><span>报告接入</span><strong>待</strong></div>
+              <div class="source-item"><span>客户授权</span><strong>待</strong></div>
+              <div class="source-item"><span>解读记录</span><strong>待</strong></div>
+              <div class="source-item"><span>总部复核</span><strong>待</strong></div>
+            </div>
           </div>
-          <em>待开放</em>
-        </a>
-        <a class="workbench-entry" href="#" aria-disabled="true">
-          <span>C</span>
-          <div>
-            <h2>客户管理</h2>
-            <p>管理客户归属、服务进度、跟进记录和后续复盘提醒。</p>
+
+          <div class="module" id="cases-panel">
+            <div class="card-header">
+              <div class="card-title">
+                <h2>优秀案例沉淀</h2>
+                <small>把高质量解读整理成训练素材</small>
+              </div>
+            </div>
+            <div class="pill-row">
+              <span class="pill">真实解读记录</span>
+              <span class="pill">Emma 精选</span>
+              <span class="pill">脱敏入库</span>
+              <span class="pill">训练复用</span>
+            </div>
           </div>
-          <em>待开放</em>
-        </a>
-        <a class="workbench-entry" href="#" aria-disabled="true">
-          <span>T</span>
-          <div>
-            <h2>训练案例</h2>
-            <p>练习安全表达、案例复核和标准话术，沉淀自己的服务能力。</p>
+        </aside>
+
+        <section class="session-column" id="assistant-panel">
+          <div class="module">
+            <div class="card-header">
+              <div class="card-title">
+                <h2>中栏 · 8步标准解读路线</h2>
+                <small>按标准流程推进每一次解读</small>
+              </div>
+              <span class="status info">工作区</span>
+            </div>
+            <div class="progress-line" aria-label="解读进度">
+              <span style="width:50%"></span>
+            </div>
+            <div class="step-list" style="margin-top:14px">
+              <button class="step-card" type="button">
+                <span class="step-index">①</span>
+                <span><strong>建立安全感</strong><small>确认场景、对象、关系和客户期待</small></span>
+                <span class="status done">标准项</span>
+              </button>
+              <button class="step-card" type="button">
+                <span class="step-index">②</span>
+                <span><strong>说明解读边界</strong><small>讲清服务性质、权利和风险边界</small></span>
+                <span class="status done">标准项</span>
+              </button>
+              <button class="step-card" type="button">
+                <span class="step-index">③</span>
+                <span><strong>讲性格类型</strong><small>用生活化语言建立共鸣</small></span>
+                <span class="status done">标准项</span>
+              </button>
+              <button class="step-card active" type="button">
+                <span class="step-index">④</span>
+                <span><strong>解释底层数据</strong><small>解释数值含义，强调高低各有所长</small></span>
+                <span class="status info">当前</span>
+              </button>
+              <button class="step-card" type="button">
+                <span class="step-index">⑤</span>
+                <span><strong>讲学习通道 / 行为模式</strong><small>解释信息处理和行动方式</small></span>
+                <span class="status">待进入</span>
+              </button>
+              <button class="step-card" type="button">
+                <span class="step-index">⑥</span>
+                <span><strong>回应客户关注问题</strong><small>围绕客户真实提问组织回应</small></span>
+                <span class="status">待进入</span>
+              </button>
+              <button class="step-card" type="button">
+                <span class="step-index">⑦</span>
+                <span><strong>给行动建议</strong><small>输出具体、可操作的家庭或服务建议</small></span>
+                <span class="status">待进入</span>
+              </button>
+              <button class="step-card" type="button">
+                <span class="step-index">⑧</span>
+                <span><strong>记录反馈 / 提交复核</strong><small>沉淀服务记录，必要时交给总部复核</small></span>
+                <span class="status">待进入</span>
+              </button>
+            </div>
           </div>
-          <em>待开放</em>
-        </a>
+
+          <div class="module" id="training-panel">
+            <div class="card-header">
+              <div class="card-title">
+                <h2>解读训练</h2>
+                <small>练习标准流程、表达纠偏和安全边界</small>
+              </div>
+              <span class="status pending">待开放</span>
+            </div>
+            <div class="layout-grid cols-3">
+              <div class="card metric cyan">
+                <div class="metric-value">8</div>
+                <div class="metric-label">标准流程</div>
+                <p>按步骤训练解读节奏。</p>
+              </div>
+              <div class="card metric green">
+                <div class="metric-value">AI</div>
+                <div class="metric-label">表达纠偏</div>
+                <p>提示更稳妥的说法。</p>
+              </div>
+              <div class="card metric amber">
+                <div class="metric-value">审</div>
+                <div class="metric-label">风险复核</div>
+                <p>高风险内容进入审核。</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <aside class="session-column sticky-column">
+          <div class="module">
+            <div class="card-header">
+              <div class="card-title">
+                <h2>右栏 · AI辅助话术</h2>
+                <small>围绕当前步骤组织表达、提问和提醒</small>
+              </div>
+              <span class="status info">待接入</span>
+            </div>
+            <section class="ai-section why">
+              <h3>为什么这样讲</h3>
+              <ul class="speech-list">
+                <li>先解释底层含义，再回应客户具体问题，客户更容易建立信任。</li>
+                <li>数值用于理解个人内部特质组合，不用于排名和标签化判断。</li>
+              </ul>
+            </section>
+            <section class="ai-section say" style="margin-top:12px">
+              <h3>可以这样说</h3>
+              <ul class="speech-list">
+                <li>我们先看这组数据反映的倾向，再结合家庭和学习场景理解。</li>
+                <li>高低并不是好坏，而是提示孩子在哪些环境里更容易发挥。</li>
+              </ul>
+            </section>
+            <section class="ai-section" style="margin-top:12px">
+              <h3>可以这样问</h3>
+              <ul class="speech-list">
+                <li>最近在学习或沟通里，您最想先解决哪一个场景？</li>
+                <li>这个特点在家里、学校里有没有反复出现的例子？</li>
+              </ul>
+            </section>
+            <section class="ai-section no" style="margin-top:12px">
+              <h3>不要这样说</h3>
+              <ul class="speech-list">
+                <li>不要把数值说成分数、等级或确定结论。</li>
+                <li>不要替代医学、心理或升学诊断。</li>
+              </ul>
+            </section>
+          </div>
+
+          <div class="module" id="review-panel">
+            <div class="card-header">
+              <div class="card-title">
+                <h2>总部复核 / 使用规范</h2>
+                <small>复杂案例、敏感表述和高风险内容进入复核</small>
+              </div>
+            </div>
+            <div class="pill-row">
+              <span class="pill">不诊断</span>
+              <span class="pill">不预测</span>
+              <span class="pill">不贴标签</span>
+              <span class="pill">不做保证</span>
+            </div>
+          </div>
+
+          <div class="module">
+            <div class="card-header">
+              <div class="card-title">
+                <h2>权益概览</h2>
+                <small>真实账号数据来自当前登录会话</small>
+              </div>
+            </div>
+            <div class="data-list">
+              <div class="data-item"><span>当前积分</span><strong id="v3a-workbench-balance-copy">读取中</strong></div>
+              <div class="data-item"><span>我的邀请码</span><strong id="v3a-workbench-invite-copy">读取中</strong></div>
+            </div>
+          </div>
+        </aside>
       </section>
     </main>
   </div>

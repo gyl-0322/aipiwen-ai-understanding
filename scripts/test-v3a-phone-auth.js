@@ -535,8 +535,10 @@ async function run() {
     '正式工作台必须展示真实积分余额');
   assert.equal(workbenchPage.includes('id="v3a-workbench-invite-code"'), true,
     '正式工作台必须展示真实邀请码');
-  assert.equal(/class="sidebar"|workbench-hero|workbench-bottom-grid|Today|开始一次专业解读|今日工作提醒|权益概览/.test(workbenchPage), false,
-    '正式工作台首页不得再包含侧边栏、介绍横幅或底部说明模块');
+  assert.equal(workbenchPage.includes('class="sidebar"'), true,
+    '正式工作台首页必须恢复左侧导航工作台结构');
+  assert.equal(/workbench-hero|workbench-bottom-grid|Today|今日工作提醒/.test(workbenchPage), false,
+    '正式工作台首页不得再包含介绍横幅或底部说明模块');
   assert.equal(/preview-demo|sessionStorage|localStorage|ZHANGWEI01|王小明/.test(workbenchPage), false,
     '正式工作台不得包含演示 Session 或硬编码业务数据');
 
