@@ -560,7 +560,7 @@ async function run() {
 
   harness = createHarness({ formData: { otp: '999999', token: '999999' } });
   await clickSend(harness);
-  assert.equal(harness.message.textContent, '验证码已发送，请查看短信；60 秒后可重新获取。');
+  assert.equal(harness.message.textContent, '验证码已发送，10 分钟内有效；60 秒后可重新获取。');
   assert.equal(harness.message.hidden, false, '发送成功提示必须立即可见');
   assert.equal(harness.form.elements.otp.value, '', '重新发送成功后必须清空旧验证码，避免旧码误提交');
   assert.equal(harness.sendButton.disabled, true, '发送成功后必须阻止连续点击');

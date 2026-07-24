@@ -339,7 +339,7 @@
           otp.value = '';
           otp.focus?.();
         }
-        showMessage(messageSelector, '验证码已发送，请查看短信；60 秒后可重新获取。');
+        showMessage(messageSelector, '验证码已发送，10 分钟内有效；60 秒后可重新获取。');
       } catch (error) {
         showMessage(messageSelector, error.message);
       } finally {
