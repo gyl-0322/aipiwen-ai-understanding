@@ -7,10 +7,10 @@ const PREVIEW_PROJECT_REF = 'lmjriqncuopgxwyudfee';
 const PRODUCTION_PROJECT_REF = 'tysbwijizgebnrazxpvo';
 const MAX_BODY_BYTES = 20 * 1024;
 const IDEMPOTENCY_TTL_SECONDS = 10 * 60;
-const HANDLER_DEADLINE_MS = 4300;
+const HANDLER_DEADLINE_MS = 8500;
 const KV_TIMEOUT_MS = 650;
 const RESPONSE_BUFFER_MS = 250;
-const MIN_PROVIDER_BUDGET_MS = 3000;
+const MIN_PROVIDER_BUDGET_MS = 6000;
 
 class HookError extends Error {
   constructor(statusCode, code) {
@@ -220,8 +220,8 @@ async function sendAliyunSms(config, sms, outId) {
     accessKeyId: config.accessKeyId,
     accessKeySecret: config.accessKeySecret,
     endpoint: 'dysmsapi.aliyuncs.com',
-    connectTimeout: 800,
-    readTimeout: 2000
+    connectTimeout: 2500,
+    readTimeout: 4000
   }));
   const request = new SendSmsRequest({
     phoneNumbers: sms.phone,

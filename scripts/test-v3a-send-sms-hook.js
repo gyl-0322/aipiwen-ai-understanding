@@ -436,8 +436,8 @@ async function testAliyunAdapterContract() {
   const clientConfig = calls.find((call) => call.type === 'client').value.value;
   const request = calls.find((call) => call.type === 'send').value;
   assert.equal(clientConfig.endpoint, 'dysmsapi.aliyuncs.com');
-  assert.equal(clientConfig.connectTimeout, 800);
-  assert.equal(clientConfig.readTimeout, 2000);
+  assert.equal(clientConfig.connectTimeout, 2500);
+  assert.equal(clientConfig.readTimeout, 4000);
   assert.equal(request.phoneNumbers, '13800138000');
   assert.equal(request.signName, config.signName);
   assert.equal(request.templateCode, config.templateCode);
