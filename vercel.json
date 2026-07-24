@@ -84,11 +84,11 @@
     },
     {
       "src": "/advisor.html",
-      "dest": "/advisor.html"
+      "dest": "/login.html"
     },
     {
       "src": "/advisor",
-      "dest": "/advisor.html"
+      "dest": "/login.html"
     },
     {
       "src": "/login.html",

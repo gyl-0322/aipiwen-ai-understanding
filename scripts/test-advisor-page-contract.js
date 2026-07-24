@@ -24,8 +24,6 @@ try {
   const advisor = read('advisor.html');
   const homepage = read('homepage.html');
   const vercel = JSON.parse(read('vercel.json'));
-  const advisorVisibleCopy = advisor.replace(/<!--[\s\S]*?-->/g, '');
-  const heroActions = advisor.match(/<div class="hero-actions">([\s\S]*?)<\/div>/);
   const routeSources = vercel.routes.map((route) => route.src);
   const catchAllIndex = routeSources.indexOf('/(.*)');
 
@@ -37,17 +35,15 @@ try {
   assert(homepage.includes('src="/js/track.js"'), 'Production 首页必须保留访问统计脚本');
   assert(homepage.includes("fetch('/api/track'"), 'Production 首页必须保留访客统计接口');
 
-  assert(count(advisor, /class="top-actions"/g) === 0, '指导师入口导航栏不得出现重复操作按钮');
-  assert(count(advisor, /class="hero-actions"/g) === 1, '指导师入口必须且只能有一组主操作按钮');
-  assert(heroActions, '未找到指导师入口主操作区域');
-  assert(count(advisor, />登录指导师工作台<\/a>/g) === 1, '真实登录按钮必须且只能出现一次');
-  assert(heroActions[1].includes('href="/login.html">登录指导师工作台</a>'), '真实登录按钮必须指向统一 login.html');
-  assert(count(advisor, />联系平台开通账号<\/a>/g) === 1, '账号开通按钮必须且只能出现一次');
-  assert(heroActions[1].includes('href="#advisor-contact">联系平台开通账号</a>'), '账号开通按钮必须指向平台开通区域');
-  assert(count(advisor, /id="advisor-contact"/g) === 1, '页面必须且只能有一个账号开通锚点');
+  assert(advisor.includes('window.location.replace(\'/login.html\')'),
+    'advisor.html 必须直接跳转统一手机号登录页');
+  assert(advisor.includes('<meta http-equiv="refresh" content="0; url=/login.html">'),
+    'advisor.html 必须提供无脚本兜底跳转');
+  assert(!advisor.includes('class="hero-actions"') && !advisor.includes('id="advisor-contact"'),
+    'advisor.html 不得再保留中转介绍页内容');
   assert(!advisor.includes('static/ai-interpreter.js'), '正式入口不得加载包含模拟积分逻辑的演示脚本');
-  ['申请开通内测', '解读师', 'Em' + 'ma', 'Preview 演示'].forEach((forbiddenCopy) => {
-    assert(!advisorVisibleCopy.includes(forbiddenCopy), `Production 指导师入口不得出现：${forbiddenCopy}`);
+  ['申请开通内测', '解读师', 'Em' + 'ma', 'Preview 演示', '联系平台开通账号'].forEach((forbiddenCopy) => {
+    assert(!advisor.includes(forbiddenCopy), `Production 指导师入口不得出现：${forbiddenCopy}`);
   });
 
   [
@@ -83,6 +79,7 @@ try {
     const v3aAuth = read('static/v3a-auth.js');
     const sessionStore = read('server/v3a-session-store.js');
     assert(login.includes('static/v3a-auth.js'), '统一登录页必须使用真实 V3a 认证脚本');
+    assert(!login.includes('返回工作台介绍'), '统一登录页不得再返回多余工作台介绍页');
     assert(!login.includes('preview-demo-auth'), '统一登录页不得加载 Preview 模拟认证脚本');
     assert(!login.includes('Preview 演示') && !login.includes('模拟验证码'), '统一登录页不得包含模拟登录文案');
     assert(v3aAuth.includes("const SESSION_API = '/api/v3a-session'"),
@@ -143,6 +140,10 @@ try {
     assert(routeIndex >= 0, `Production 路由缺失：${requiredRoute}`);
     assert(routeIndex < catchAllIndex, `Production 路由必须位于首页 catch-all 之前：${requiredRoute}`);
   });
+  const advisorHtmlRoute = vercel.routes.find((route) => route.src === '/advisor.html');
+  const advisorRoute = vercel.routes.find((route) => route.src === '/advisor');
+  assert(advisorHtmlRoute?.dest === '/login.html' && advisorRoute?.dest === '/login.html',
+    '首页指导师入口必须直接落到统一手机号登录页');
 
   assert(!routeSources.includes('/api/v3a-session'),
     'V3a Session 继续由通用同源 API route 接收，不得增加额外公开别名');
