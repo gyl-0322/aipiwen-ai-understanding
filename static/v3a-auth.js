@@ -182,6 +182,7 @@
     const messageSelector = '#v3a-login-message';
     const passwordMessageSelector = '#v3a-password-login-message';
     if (!form || !sendButton) return;
+    const stayOnLoginHome = new URLSearchParams(window.location.search).has('home');
 
     function showPhoneLoginStatus(enabled, unavailable = false) {
       const status = $('#v3a-phone-login-status');
@@ -305,12 +306,14 @@
       showMessage(messageSelector, error.message);
     }
 
-    try {
-      const current = await requestSession('me');
-      routeByStatus(current.me, messageSelector);
-      return;
-    } catch (error) {
-      if (error.status !== 401) showMessage(messageSelector, error.message);
+    if (!stayOnLoginHome) {
+      try {
+        const current = await requestSession('me');
+        routeByStatus(current.me, messageSelector);
+        return;
+      } catch (error) {
+        if (error.status !== 401) showMessage(messageSelector, error.message);
+      }
     }
 
     sendButton.addEventListener('click', async () => {
@@ -433,6 +436,7 @@
   async function initRegister() {
     const form = $('#v3a-register-form');
     const passwordForm = $('#v3a-password-setup-form');
+    const returnHomeLink = $('#v3a-register-home-link');
     const messageSelector = '#v3a-register-message';
     const passwordMessageSelector = '#v3a-password-setup-message';
     if (!form) return;
@@ -451,6 +455,16 @@
 
     practitionerType?.addEventListener('change', syncPractitionerTypeNote);
     syncPractitionerTypeNote();
+
+    returnHomeLink?.addEventListener('click', async (event) => {
+      event.preventDefault();
+      try {
+        await requestSession('logout', { method: 'POST' });
+      } catch {
+        // The login home intentionally stays put even if the temporary session is already gone.
+      }
+      window.location.href = '/login.html?home=1';
+    });
 
     function showPasswordStep() {
       if (passwordForm) passwordForm.hidden = false;

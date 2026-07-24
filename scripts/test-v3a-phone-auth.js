@@ -127,7 +127,11 @@ function createHarness(options = {}) {
     workbenchBalance: { textContent: '' },
     workbenchInviteCode: { textContent: '' }
   };
-  const location = { href: '', replace(value) { this.href = value; } };
+  const location = {
+    href: '',
+    search: options.locationSearch || '',
+    replace(value) { this.href = value; }
+  };
   const sendButton = {
     disabled: false,
     textContent: '获取验证码',
@@ -143,6 +147,13 @@ function createHarness(options = {}) {
     tabIndex: 0
   };
   const logoutButton = {
+    _click: null,
+    addEventListener(type, handler) {
+      if (type === 'click') this._click = handler;
+    }
+  };
+  const registerHomeLink = {
+    textContent: '返回首页',
     _click: null,
     addEventListener(type, handler) {
       if (type === 'click') this._click = handler;
@@ -285,6 +296,7 @@ function createHarness(options = {}) {
     ['#v3a-password-tab', page === 'login' ? passwordTab : null],
     ['#v3a-sms-tab', page === 'login' ? smsTab : null],
     ['#v3a-register-form', page === 'register' ? form : null],
+    ['#v3a-register-home-link', page === 'register' ? registerHomeLink : null],
     ['#v3a-send-otp', page === 'login' ? sendButton : null],
     ['#v3a-send-otp-button', page === 'login' ? sendButton : null],
     ['#v3a-logout-button', page === 'pending' ? logoutButton : null],
@@ -374,6 +386,7 @@ function createHarness(options = {}) {
     sendButton,
     loginButton,
     logoutButton,
+    registerHomeLink,
     practitionerTypeField,
     practitionerTypeNoteField,
     practitionerTypeNoteRow,
@@ -494,6 +507,8 @@ async function run() {
     '首次开通页密码字段必须叫设置密码，不得叫新密码');
   assert.equal(registerPage.includes('<label>新密码'), false,
     '首次开通页不得使用改密语境的新密码文案');
+  assert.equal(registerPage.includes('id="v3a-register-home-link" href="/login.html?home=1">返回首页</a>'), true,
+    '首次开通页右上角必须叫返回首页，并带 home 参数避免临时 Session 弹回');
   assert.equal(registerPage.includes('id="v3a-register-form"'), true, '申请资料页必须包含申请表单');
   assert.equal(registerPage.includes('id="v3a-register-intro"'), false,
     '申请资料页不得显示手机号和后台开通规则说明');
@@ -645,6 +660,26 @@ async function run() {
   await settle();
   assert.equal('verifiedPhone' in harness.texts, true, '测试桩保留可选手机号节点兼容旧页面');
   assert.equal(harness.texts.verifiedPhone.textContent, '', '申请页不再显示手机号和后台规则说明');
+  assert.equal(harness.registerHomeLink.textContent, '返回首页');
+  await harness.registerHomeLink._click({ preventDefault() {} });
+  request = actionCalls(harness, 'logout')[0];
+  assertBffCall(request, { action: 'logout', method: 'POST', csrf: CSRF_TOKEN });
+  assert.equal(harness.location.href, '/login.html?home=1',
+    '首次开通页返回首页必须清理临时 Session 后停在登录首页');
+
+  harness = createHarness({
+    page: 'login',
+    locationSearch: '?home=1',
+    me: { ...emptyMe(), requiresPasswordSetup: true }
+  });
+  await settle();
+  assert.equal(harness.location.href, '',
+    '带 home 参数进入登录首页时不得因临时 Session 自动跳回设置密码页');
+  assert.equal(actionCalls(harness, 'me').length, 0,
+    '返回首页模式下登录页不得主动读取 Session 并触发路由');
+
+  harness = createHarness({ page: 'register' });
+  await settle();
   await submit(harness);
   request = actionCalls(harness, 'submit_application')[0];
   assertBffCall(request, { action: 'submit_application', method: 'POST', csrf: CSRF_TOKEN });
