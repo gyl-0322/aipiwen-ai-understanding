@@ -1658,6 +1658,67 @@ body[data-page="advisor"] .value-card {
   align-items: center;
 }
 
+.check-line a {
+  color: var(--cyan);
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.check-line a:hover {
+  text-decoration: underline;
+}
+
+.legal-shell {
+  width: min(900px, calc(100% - 48px));
+}
+
+.legal-card {
+  display: grid;
+  gap: 18px;
+  background:
+    radial-gradient(circle at 12% 0%, rgba(82, 213, 232, .12), transparent 34%),
+    var(--panel);
+}
+
+.legal-card h1 {
+  font-size: 40px;
+  line-height: 1.12;
+}
+
+.legal-card h2 {
+  margin: 0 0 8px;
+  font-size: 20px;
+  line-height: 1.35;
+}
+
+.legal-card p,
+.legal-card li {
+  color: var(--muted);
+  line-height: 1.85;
+}
+
+.legal-card ul {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.legal-card section {
+  padding-top: 2px;
+}
+
+.legal-card a {
+  color: var(--cyan);
+  font-weight: 800;
+}
+
+.legal-updated,
+.legal-example {
+  padding: 12px 14px;
+  border: 1px solid rgba(82, 213, 232, .18);
+  border-radius: 8px;
+  background: rgba(82, 213, 232, .06);
+}
+
 .auth-success {
   display: grid;
   gap: 14px;
