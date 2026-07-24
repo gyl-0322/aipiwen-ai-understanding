@@ -23,6 +23,10 @@ function mustMatch(pattern, message) {
 try {
   mustContain('create or replace function public.v3a_auto_activate_advisor', '必须新增普通指导师自动开通 RPC');
   mustContain("'AUTO_ACTIVATE_ADVISOR'", '自动开通审计动作必须独立于人工审核');
+  mustContain('drop constraint if exists users_approval_consistency_check', '自动开通必须重建 users active 审核一致性约束');
+  mustContain("role = 'advisor'", '普通指导师自动激活必须只放宽 advisor 角色');
+  mustContain("source = 'direct'", '普通指导师自动激活必须只放宽 direct 来源');
+  mustContain('approved_by_user_id is null', '普通指导师自动激活不得伪造人工审核员');
   mustContain('alter column admin_id drop not null', '自动开通不得伪造 super_admin，admin_id 必须允许为空');
   mustContain("'source', 'phone_verified_auto_activation'", '自动开通审计必须记录来源');
   mustContain("'reason', 'first_advisor_activation'", '自动开通审计必须记录自动开通原因');

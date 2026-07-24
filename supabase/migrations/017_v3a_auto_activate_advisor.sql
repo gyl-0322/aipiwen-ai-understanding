@@ -6,6 +6,26 @@
 
 begin;
 
+alter table public.users
+  drop constraint if exists users_approval_consistency_check;
+
+alter table public.users
+  add constraint users_approval_consistency_check
+  check (
+    status <> 'active'
+    or role = 'super_admin'
+    or (
+      approved_at is not null
+      and approved_by_user_id is not null
+    )
+    or (
+      role = 'advisor'
+      and source = 'direct'
+      and approved_at is not null
+      and approved_by_user_id is null
+    )
+  );
+
 alter table public.admin_audit_logs
   drop constraint if exists admin_audit_logs_action_check;
 
