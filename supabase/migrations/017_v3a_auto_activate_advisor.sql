@@ -475,7 +475,14 @@ begin
   into v_register_bonus_exists;
 
   if v_wallet_balance is distinct from 500 and not v_register_bonus_exists then
-    raise exception using errcode = 'P0001', message = 'INCOMPLETE_AUTO_ACTIVATION_STATE';
+    if v_wallet_balance = 0 then
+      update public.credit_wallets
+      set balance = 500
+      where id = v_wallet_id
+      returning balance into v_wallet_balance;
+    else
+      raise exception using errcode = 'P0001', message = 'INCOMPLETE_AUTO_ACTIVATION_STATE';
+    end if;
   end if;
 
   insert into public.credit_logs (
