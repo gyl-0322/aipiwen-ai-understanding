@@ -1013,30 +1013,6 @@ button.table-row {
   line-height: 1.12;
 }
 
-.register-card > p:not(.eyebrow) {
-  max-width: 520px;
-  color: var(--muted);
-  line-height: 1.8;
-}
-
-.register-summary {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px;
-  margin-top: 16px;
-}
-
-.register-summary span {
-  min-height: 52px;
-  padding: 12px;
-  border: 1px solid rgba(82, 213, 232, .2);
-  border-radius: 8px;
-  background: rgba(82, 213, 232, .065);
-  color: var(--text);
-  font-size: 13px;
-  line-height: 1.45;
-}
-
 .register-form {
   margin-top: 18px;
 }
@@ -2161,10 +2137,6 @@ body[data-page="advisor"] .value-card {
 
   .login-feature-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .register-summary {
-    grid-template-columns: 1fr;
   }
 
   .register-guide {

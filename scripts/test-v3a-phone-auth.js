@@ -491,6 +491,12 @@ async function run() {
   assert.equal(registerPage.includes('id="v3a-password-setup-form"'), true,
     '首次短信验证后必须设置登录密码');
   assert.equal(registerPage.includes('id="v3a-register-form"'), true, '申请资料页必须包含申请表单');
+  assert.equal(registerPage.includes('id="v3a-register-intro"'), false,
+    '申请资料页不得显示手机号和后台开通规则说明');
+  assert.equal(registerPage.includes('class="register-summary"'), false,
+    '申请资料页不得展示后台流程说明方块');
+  assert.equal(registerPage.includes('id="v3a-application-mode-note"'), false,
+    '申请资料页不得把自动开通、积分和审核规则写到页面上');
   for (const label of ['暂不选择', '分公司', '服务中心', '采集中心', '普通指导师']) {
     assert.equal(registerPage.includes(`>${label}</option>`), true, `申请身份必须包含 ${label}`);
   }
@@ -633,7 +639,8 @@ async function run() {
 
   harness = createHarness({ page: 'register' });
   await settle();
-  assert.equal(harness.texts.verifiedPhone.textContent, MASKED_PHONE, '申请页只能显示脱敏手机号');
+  assert.equal('verifiedPhone' in harness.texts, true, '测试桩保留可选手机号节点兼容旧页面');
+  assert.equal(harness.texts.verifiedPhone.textContent, '', '申请页不再显示手机号和后台规则说明');
   await submit(harness);
   request = actionCalls(harness, 'submit_application')[0];
   assertBffCall(request, { action: 'submit_application', method: 'POST', csrf: CSRF_TOKEN });

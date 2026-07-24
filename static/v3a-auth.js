@@ -455,25 +455,12 @@
     function showPasswordStep() {
       if (passwordForm) passwordForm.hidden = false;
       form.hidden = true;
-      setText('#v3a-register-intro', '请先设置登录密码。保存后继续填写从业资料。');
     }
 
     function showApplicationStep() {
       if (passwordForm) passwordForm.hidden = true;
       form.hidden = false;
-      setText('#v3a-register-intro', '当前已验证手机号。普通指导师提交后直接进入工作台，机构身份提交审核。');
     }
-
-    function syncApplicationModeNote() {
-      const role = channelRoleMap[normalize(form.elements.channelIdentity?.value)] || 'advisor';
-      const mode = role === 'advisor' && autoAdvisorChannelIdentities.has(normalize(form.elements.channelIdentity?.value))
-        ? '普通指导师将自动开通工作台、钱包、500 体验积分和邀请码。'
-        : '机构身份将进入平台准入审核，审核通过后开通对应权限。';
-      setText('#v3a-application-mode-note', mode, mode);
-    }
-
-    form.elements.channelIdentity?.addEventListener('change', syncApplicationModeNote);
-    syncApplicationModeNote();
 
     let identityReady = false;
     let currentMe = null;
@@ -481,7 +468,6 @@
       const current = await requestSession('me');
       currentMe = current.me;
       const wantsPasswordSetup = new URLSearchParams(window.location.search).has('set_password');
-      setText('#v3a-verified-phone', current.me?.phoneMasked, '已验证手机号');
       if (current.me?.user && !wantsPasswordSetup) {
         routeByStatus(current.me, messageSelector);
         return;
