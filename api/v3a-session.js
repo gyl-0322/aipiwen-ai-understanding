@@ -358,9 +358,25 @@ async function updatePassword(config, session, password) {
 }
 
 async function markPasswordSet(config, accessToken) {
-  await authUserRequest(config, accessToken, 'PUT', {
+  const result = await authUserRequest(config, accessToken, 'PUT', {
     data: { v3a_password_set: true }
   }).catch(() => null);
+  return result?.response?.ok ? result.payload : null;
+}
+
+function syncPasswordSetUser(payload, markedUser) {
+  if (!payload?.user) return;
+  if (markedUser?.id === payload.user.id) {
+    payload.user = markedUser;
+    return;
+  }
+  payload.user = {
+    ...payload.user,
+    user_metadata: {
+      ...(payload.user.user_metadata || {}),
+      v3a_password_set: true
+    }
+  };
 }
 
 async function submitApplication(config, session, payload) {
@@ -448,7 +464,7 @@ async function passwordLogin(config, phone, password, req) {
   if (canonicalVerifiedPhone(payload?.user?.phone) !== phone || !payload?.user?.phone_confirmed_at) {
     throw new HttpError(502, '登录身份验证结果无效。', 'INVALID_SESSION');
   }
-  await markPasswordSet(config, payload.access_token);
+  syncPasswordSetUser(payload, await markPasswordSet(config, payload.access_token));
   return payload;
 }
 

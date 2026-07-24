@@ -171,7 +171,11 @@ function createFetch(options = {}) {
           access_token: ACCESS_TOKEN,
           refresh_token: REFRESH_TOKEN,
           expires_in: 3600,
-          user: authUser({ user_metadata: userMetadata })
+          user: authUser({
+            user_metadata: Object.prototype.hasOwnProperty.call(options, 'passwordLoginUserMetadata')
+              ? options.passwordLoginUserMetadata
+              : userMetadata
+          })
         });
       }
       return response(200, {
@@ -886,7 +890,11 @@ async function run() {
   assert.equal(activeAssetPaths.filter((value) => value === '/rest/v1/invite_codes').length, 1,
     'active 用户只能读取一次 own active invite code');
 
-  const reboundFetch = createFetch({ businessStatus: 'active', missingUserUntilRebind: true });
+  const reboundFetch = createFetch({
+    businessStatus: 'active',
+    missingUserUntilRebind: true,
+    passwordLoginUserMetadata: {}
+  });
   const reboundResult = await invoke({
     method: 'POST',
     action: 'password_login',
@@ -906,6 +914,10 @@ async function run() {
   const reboundRpcCalls = supabaseCalls(reboundFetch.calls)
     .filter(({ url }) => new URL(url).pathname === '/rest/v1/rpc/v3a_rebind_verified_phone_account');
   assert.equal(reboundRpcCalls.length, 1, '同手机号错绑恢复只能调用一次受控 rebind RPC');
+  const passwordMarkCalls = supabaseCalls(reboundFetch.calls)
+    .filter(({ url, method }) => new URL(url).pathname === '/auth/v1/user' && method === 'PUT');
+  assert.equal(passwordMarkCalls.length, 1,
+    '密码登录后必须先同步当前 Session 用户的已设置密码标记，再恢复业务账号');
   assert.equal(reboundRpcCalls[0].method, 'POST');
   assert.equal(reboundRpcCalls[0].init.headers.Authorization, `Bearer ${ACCESS_TOKEN}`,
     'rebind RPC 必须使用当前用户 access token');
