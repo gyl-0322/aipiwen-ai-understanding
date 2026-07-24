@@ -490,6 +490,10 @@ async function run() {
     '申请资料页不得重新收集邮箱');
   assert.equal(registerPage.includes('id="v3a-password-setup-form"'), true,
     '首次短信验证后必须设置登录密码');
+  assert.equal(registerPage.includes('<label>设置密码'), true,
+    '首次开通页密码字段必须叫设置密码，不得叫新密码');
+  assert.equal(registerPage.includes('<label>新密码'), false,
+    '首次开通页不得使用改密语境的新密码文案');
   assert.equal(registerPage.includes('id="v3a-register-form"'), true, '申请资料页必须包含申请表单');
   assert.equal(registerPage.includes('id="v3a-register-intro"'), false,
     '申请资料页不得显示手机号和后台开通规则说明');
