@@ -660,6 +660,13 @@ async function run() {
   await settle();
   assert.equal('verifiedPhone' in harness.texts, true, '测试桩保留可选手机号节点兼容旧页面');
   assert.equal(harness.texts.verifiedPhone.textContent, '', '申请页不再显示手机号和后台规则说明');
+  assert.equal(harness.form.hidden, false, '已设置密码但没有业务账号时必须显示资料表单');
+  harness = createHarness({ page: 'register', locationSearch: '?set_password=1' });
+  await settle();
+  assert.equal(harness.form.hidden, false,
+    '已设置密码的账号即使带旧 set_password 参数，也不得再显示设置密码步骤');
+  harness = createHarness({ page: 'register' });
+  await settle();
   assert.equal(harness.registerHomeLink.textContent, '返回首页');
   await harness.registerHomeLink._click({ preventDefault() {} });
   request = actionCalls(harness, 'logout')[0];

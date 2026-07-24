@@ -486,7 +486,7 @@
         routeByStatus(current.me, messageSelector);
         return;
       }
-      if (wantsPasswordSetup || current.me?.requiresPasswordSetup) {
+      if (!current.me?.passwordSet && (wantsPasswordSetup || current.me?.requiresPasswordSetup)) {
         identityReady = true;
         showPasswordStep();
       } else {
