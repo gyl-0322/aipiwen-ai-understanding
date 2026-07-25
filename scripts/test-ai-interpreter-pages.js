@@ -3,7 +3,7 @@ const path = require('path');
 
 const root = path.join(__dirname, '..');
 const pages = [
-  ['ai-interpreter-workbench.html', 'AI解读助手'],
+  ['ai-interpreter-workbench.html', 'AIPIWEN指导师工作台'],
   ['ai-interpreter-customers.html', '我的客户'],
   ['ai-interpreter-session.html', 'AI解读助手'],
   ['ai-interpreter-training.html', '解读训练'],
