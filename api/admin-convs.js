@@ -11,7 +11,7 @@
  * POST /api/stats  { event, meta? }              → 埋点（公开）
  * GET  /api/stats?admin=1&secret=xxx             → 查看统计数据（管理端）
  * POST /api/error-log  { msg, stack, page... }   → 前端上报错误（无需登录）
- * GET  /api/error-log?secret=xxx                 → 查看错误日志（同 action=errors）
+ * GET  /api/error-log + x-admin-secret header    → 查看错误日志
  * GET/POST /api/track  { event, meta, ... }      → 增长埋点（merged from track.js）
  * GET  /api/growth                               → 增长数据汇总（merged from track.js）
  * GET/POST /api/knowledge?action=search|load|list|delete → 知识库管理（merged from knowledge.js）
@@ -25,6 +25,29 @@ const { redisGet, redisSet } = require('./_lib');
 // ── 错误日志 Redis 工具（list 操作，直接调 Upstash HTTP）───────────────────────
 const kvUrl   = () => process.env.KV_REST_API_URL   || process.env.REDIS_URL  || '';
 const kvToken = () => process.env.KV_REST_API_TOKEN || '';
+
+function matchesSecret(provided, expected) {
+  if (!provided || !expected) return false;
+  const providedBuffer = Buffer.from(String(provided));
+  const expectedBuffer = Buffer.from(String(expected));
+  return providedBuffer.length === expectedBuffer.length &&
+    crypto.timingSafeEqual(providedBuffer, expectedBuffer);
+}
+
+function redactErrorField(value, maxLength) {
+  return String(value || '')
+    .replace(
+      /((?:password|passwd|otp|token|secret|cookie|session|authorization|验证码|密码)["']?\s*[:=]\s*)(?:"[^"]*"|'[^']*'|[^&\s,}\]]+)/gi,
+      '$1[REDACTED]'
+    )
+    .replace(
+      /([?&](?:password|passwd|otp|token|secret|cookie|session|authorization|code)=)[^&\s]*/gi,
+      '$1[REDACTED]'
+    )
+    .replace(/\b(?:\+?86)?1[3-9][0-9]{9}\b/g, '[REDACTED_PHONE]')
+    .replace(/\b[0-9]{6}\b/g, '[REDACTED_CODE]')
+    .slice(0, maxLength);
+}
 
 async function pushError(entry) {
   await fetch(`${kvUrl()}/pipeline`, {
@@ -73,6 +96,7 @@ async function sendAlert(entry) {
   if (!webhook) return;   // 未配置就跳过，不影响主流程
   const timeStr = new Date(entry.ts).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai', hour12: false });
   const lines = [`🔴 用户出错了`, `时间：${timeStr}`, `页面：${entry.page || '-'}`, `错误：${entry.msg}`];
+  if (entry.module)  lines.push(`模块：${entry.module}`);
   if (entry.context) lines.push(`场景：${entry.context.slice(0, 200)}`);
   if (entry.stack)   lines.push(`堆栈：${entry.stack.slice(0, 300)}`);
   await fetch(webhook, {
@@ -95,14 +119,17 @@ async function handleErrorLog(req, res) {
         await new Promise(r => { req.on('data', c => (raw += c)); req.on('end', r); });
         try { parsed = JSON.parse(raw); } catch { parsed = {}; }
       }
-      const { msg, stack, page, context, ua } = parsed || {};
+      const { msg, stack, page, module: productModule, context, ua } = parsed || {};
       if (!msg) return res.status(400).json({ ok: false, error: 'msg required' });
       const entry = {
-        ts: Date.now(), msg: String(msg).slice(0, 500),
-        stack:   stack   ? String(stack).slice(0, 800)   : undefined,
-        page:    page    ? String(page).slice(0, 200)    : undefined,
-        context: context ? String(context).slice(0, 300) : undefined,
-        ua:      ua      ? String(ua).slice(0, 200)      : undefined,
+        ts: Date.now(), msg: redactErrorField(msg, 500),
+        stack:   stack   ? redactErrorField(stack, 800)   : undefined,
+        page:    page    ? redactErrorField(String(page).split('?')[0], 200) : undefined,
+        module:  typeof productModule === 'string' && /^[a-z0-9_-]{1,80}$/i.test(productModule)
+          ? productModule
+          : undefined,
+        context: context ? redactErrorField(context, 300) : undefined,
+        ua:      ua      ? redactErrorField(ua, 200)      : undefined,
       };
       const hash = crypto.createHash('md5').update((entry.msg || '') + (entry.page || '')).digest('hex').slice(0, 8);
       const [, isDup] = await Promise.all([pushError({ ...entry, hash }), checkAndMarkDup(hash)]);
@@ -114,9 +141,10 @@ async function handleErrorLog(req, res) {
   }
 
   if (req.method === 'GET') {
-    const adminSecret = process.env.ADMIN_SECRET || 'coco1013';
-    const token = req.headers['x-admin-secret'] || req.query.secret;
-    if (token !== adminSecret) return res.status(401).json({ error: '未授权，请携带 secret 参数' });
+    const adminSecret = process.env.ADMIN_SECRET;
+    if (!adminSecret) return res.status(503).json({ error: '错误日志读取未配置' });
+    const token = req.headers['x-admin-secret'] || '';
+    if (!matchesSecret(token, adminSecret)) return res.status(401).json({ error: '未授权' });
     try {
       const n      = Math.min(parseInt(req.query.n || '50', 10), 200);
       const errors = await getErrors(n);
@@ -166,7 +194,7 @@ async function handleStats(req, res) {
     const adminSecret = process.env.ADMIN_SECRET;
     const provided    = req.query?.secret || req.headers['x-admin-secret'] || '';
     if (!adminSecret) return res.status(500).json({ error: '管理密钥未配置' });
-    if (provided !== adminSecret) return res.status(401).json({ error: '未授权' });
+    if (!matchesSecret(provided, adminSecret)) return res.status(401).json({ error: '未授权' });
     const events = await redisGet('stats:events') || [];
     const dates  = Array.from({ length: 14 }, (_, i) => {
       const d = new Date(Date.now() - i * 86400000);
@@ -311,9 +339,9 @@ function knowledgeExtractWords(text) {
 }
 
 function knowledgeIsAdmin(req) {
-  const s = process.env.ADMIN_SECRET;
-  if (!s) return false;
-  return req.query.secret === s || req.headers['x-admin-secret'] === s;
+  const adminSecret = process.env.ADMIN_SECRET;
+  const provided = req.query?.secret || req.headers['x-admin-secret'] || '';
+  return matchesSecret(provided, adminSecret);
 }
 
 async function handleKnowledge(req, res) {
@@ -397,8 +425,8 @@ module.exports = async function handler(req, res) {
   if (!adminSecret) {
     return res.status(500).json({ error: '管理密钥未配置，请在 Vercel 环境变量中设置 ADMIN_SECRET' });
   }
-  const provided = req.query.secret || req.headers['x-admin-secret'] || '';
-  if (provided !== adminSecret) {
+  const provided = req.query?.secret || req.headers['x-admin-secret'] || '';
+  if (!matchesSecret(provided, adminSecret)) {
     return res.status(401).json({ error: '未授权' });
   }
 

@@ -21,6 +21,32 @@
   var _dedup    = {};        // { hash: timestamp }，前端内存去重
   var DEDUP_MS  = 5 * 60 * 1000;  // 5 分钟
 
+  function redactSensitive(value, maxLength) {
+    var text = String(value || '');
+    text = text.replace(
+      /((?:password|passwd|otp|token|secret|cookie|session|authorization|验证码|密码)["']?\s*[:=]\s*)(?:"[^"]*"|'[^']*'|[^&\s,}\]]+)/gi,
+      '$1[REDACTED]'
+    );
+    text = text.replace(
+      /([?&](?:password|passwd|otp|token|secret|cookie|session|authorization|code)=)[^&\s]*/gi,
+      '$1[REDACTED]'
+    );
+    text = text.replace(/\b(?:\+?86)?1[3-9][0-9]{9}\b/g, '[REDACTED_PHONE]');
+    text = text.replace(/\b[0-9]{6}\b/g, '[REDACTED_CODE]');
+    return text.slice(0, maxLength);
+  }
+
+  function productModule() {
+    try {
+      var dataset = document && document.body && document.body.dataset;
+      var name = dataset && (dataset.page || dataset.v3aAuthPage);
+      if (!name || !/^[a-z0-9_-]{1,50}$/i.test(name)) return 'advisor-workbench';
+      return 'advisor-' + name.toLowerCase();
+    } catch (_) {
+      return 'advisor-workbench';
+    }
+  }
+
   /** 简单哈希（msg + page），用于前端去重 */
   function quickHash(msg, page) {
     var s = (msg || '') + (page || '');
@@ -53,7 +79,8 @@
     try {
       if (!msg) return;
       var page = typeof location !== 'undefined' ? location.pathname : '';
-      var hash = quickHash(String(msg), page);
+      var safeMsg = redactSensitive(msg, 500);
+      var hash = quickHash(safeMsg, page);
       var now  = Date.now();
 
       // 5 分钟内同样的错误不重复上报
@@ -61,11 +88,12 @@
       _dedup[hash] = now;
 
       send({
-        msg:     String(msg).slice(0, 500),
-        stack:   stack   ? String(stack).slice(0, 800)   : undefined,
+        msg:     safeMsg,
+        stack:   stack   ? redactSensitive(stack, 800)   : undefined,
         page:    page,
-        context: context ? String(context).slice(0, 300) : undefined,
-        ua:      typeof navigator !== 'undefined' ? navigator.userAgent : undefined,
+        module:  productModule(),
+        context: context ? redactSensitive(context, 300) : undefined,
+        ua:      typeof navigator !== 'undefined' ? redactSensitive(navigator.userAgent, 200) : undefined,
       });
     } catch (_) {}
   }
@@ -110,14 +138,11 @@
     return origFetch.apply(this, arguments).then(function (res) {
       try {
         if (isOwnApi && !res.ok) {
-          // 克隆响应体（原始 res 留给调用方消费）
-          res.clone().text().then(function (body) {
-            report(
-              'API ' + res.status + ': ' + url.replace(/\?.*$/, ''),
-              undefined,
-              body.slice(0, 300)
-            );
-          }).catch(function () {});
+          report(
+            'API ' + res.status + ': ' + url.replace(/\?.*$/, ''),
+            undefined,
+            'HTTP ' + res.status
+          );
         }
       } catch (_) {}
       return res;

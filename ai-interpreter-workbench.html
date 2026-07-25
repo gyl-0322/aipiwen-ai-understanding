@@ -6,6 +6,7 @@
   <title>AIPIWEN指导师工作台</title>
   <meta name="description" content="AIPIWEN 指导师工作台首页">
   <link rel="stylesheet" href="static/ai-interpreter.css">
+  <script src="/js/error-tracker.js" defer></script>
   <script src="https://cdn.bootcdn.net/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" defer></script>
   <script src="static/v3a-auth.js" defer></script>
   <script src="static/ai-interpreter.js" defer></script>
@@ -190,7 +191,7 @@
   </div>
 
   <main class="public-shell auth-shell" id="v3a-workbench-error" hidden>
-    <section class="module auth-card">
+    <section class="module auth-card" id="v3a-workbench-error-shell">
       <p class="eyebrow">AIPIWEN 指导师工作台</p>
       <h1>工作台暂时无法打开</h1>
       <p id="v3a-workbench-error-message" role="alert">账号信息暂时无法加载，请稍后重试。</p>

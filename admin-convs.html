@@ -380,7 +380,9 @@ async function loadErrors() {
   const list = document.getElementById('error-list');
   list.innerHTML = '<div class="loading">加载中…</div>';
   try {
-    const res  = await fetch(`/api/error-log?secret=${encodeURIComponent(_secret)}&n=100`);
+    const res  = await fetch('/api/error-log?n=100', {
+      headers: { 'x-admin-secret': _secret }
+    });
     if (res.status === 401) { list.innerHTML = '<div class="empty">密码验证失败</div>'; return; }
     const data = await res.json();
     renderErrors(data.errors || []);
@@ -423,7 +425,9 @@ function renderErrors(errors) {
 async function checkNewErrors() {
   try {
     const lastSeen = parseInt(localStorage.getItem('admin_errors_last_seen') || '0', 10);
-    const res  = await fetch(`/api/error-log?secret=${encodeURIComponent(_secret)}&n=50`);
+    const res  = await fetch('/api/error-log?n=50', {
+      headers: { 'x-admin-secret': _secret }
+    });
     if (!res.ok) return;
     const data = await res.json();
     const newCount = (data.errors || []).filter(e => (e.ts || 0) > lastSeen).length;
