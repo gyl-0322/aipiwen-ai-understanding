@@ -14,6 +14,7 @@ const allowedMissing = new Set(['advisor-dryrun-new-customer.html']);
 const allowedExternalScripts = new Set([
   'https://cdn.bootcdn.net/ajax/libs/qrcodejs/1.0.0/qrcode.min.js'
 ]);
+const experienceNotice = '当前展示为功能演示数据，正式业务数据将在后续版本接入。';
 
 function read(relativePath) {
   return fs.readFileSync(path.join(root, relativePath), 'utf8');
@@ -34,6 +35,13 @@ for (const [page, title] of pages) {
   assert(source.includes('data-v3a-auth-page="workbench" hidden'), `页面必须先通过真实登录校验：${page}`);
   assert(source.includes('static/v3a-auth.js'), `页面必须加载 V3a 认证脚本：${page}`);
   assert(source.includes('static/ai-interpreter.js'), `页面必须加载旧工作台交互脚本：${page}`);
+  assert(source.includes('<strong>体验示例</strong>') && source.includes(experienceNotice),
+    `功能演示页必须明确标注体验示例：${page}`);
+  assert(source.includes('id="v3a-workbench-error" hidden') &&
+    source.includes('id="v3a-workbench-error-message"'),
+    `受保护页面必须包含非白屏错误边界：${page}`);
+  assert(!/V1\.1|V2 Dry-run|Static Demo|Prototype|Emma|解读师/.test(source),
+    `用户可见页面仍包含研发历史或旧角色文案：${page}`);
   assert(source.includes(`<h1>${title}</h1>`) || source.includes(`<h1>${title} · 王小明的妈妈</h1>`),
     `页面标题不符合旧工作台栏目：${page}`);
 
@@ -74,11 +82,18 @@ assert(session.includes('id="next-step"') && session.includes('id="prev-step"') 
 assert(session.includes('id="ai-why"') && session.includes('id="ai-say"') && session.includes('id="ai-risk"'),
   'AI 解读助手页必须保留右栏话术渲染容器');
 assert(session.includes('id="generate-plan"') && session.includes('id="credit-modal"'),
-  'AI 解读助手页必须保留生成方案与积分确认交互');
+  'AI 解读助手页必须保留生成方案开放提示');
+assert(session.includes('积分消耗功能将在后续版本开放。') &&
+  !/ZHANGWEI01|确认消耗积分|确认消耗|data-modal-current/.test(session),
+  '未接真实扣费前不得展示假扣积分或硬编码邀请码');
+assert(session.includes('id="v3a-workbench-invite-code"'),
+  'AI 解读助手页必须读取真实邀请码');
 
 const customers = read('ai-interpreter-customers.html');
 assert((customers.match(/class="table-row js-open-session"/g) || []).length >= 3,
   '我的客户页必须保留客户行点击进入解读助手的交互');
+assert(!/data-dryrun-customers|V2 Dry-run/.test(customers),
+  '我的客户页不得保留隐藏的旧模拟客户面板');
 
 const review = read('ai-interpreter-review.html');
 assert(review.includes('data-review-target="waiting"') &&
@@ -99,4 +114,25 @@ assert(workbench.includes('data-v3a-detail="profile"') &&
   '工作台右上角身份、积分、邀请码必须可点击查看详情');
 assert(workbench.includes('id="v3a-workbench-detail-modal"'), '工作台必须包含账号详情弹窗');
 
-console.log('PASS: AI interpreter workbench pages, protected routes, nav links, and interaction hooks');
+const interactions = read('static/ai-interpreter.js');
+assert(!/localStorage|getCreditBalance|setCreditBalance|aipiwen_interpreter_demo_credit_balance|ZHANGWEI01/.test(interactions),
+  '真实工作台交互脚本不得运行本地 Mock 积分或硬编码邀请码');
+
+const authSource = read('static/v3a-auth.js');
+const creditLabelBlock = authSource.match(/const creditTypeLabels = \{([\s\S]*?)\n    \};/);
+assert(creditLabelBlock, '前端积分类型标签块缺失');
+const frontendCreditTypes = Array.from(creditLabelBlock[1].matchAll(/^\s+([A-Z_]+):/gm))
+  .map((match) => match[1])
+  .sort();
+const creditMigration = read('supabase/migrations/004_v3a_phase_c1a_core_tables.sql');
+const databaseConstraint = creditMigration.match(
+  /add constraint credit_logs_type_check\s+check \(type in \(([^)]+)\)\)/
+);
+assert(databaseConstraint, '数据库积分类型约束缺失');
+const databaseCreditTypes = Array.from(databaseConstraint[1].matchAll(/'([A-Z_]+)'/g))
+  .map((match) => match[1])
+  .sort();
+assert(JSON.stringify(frontendCreditTypes) === JSON.stringify(databaseCreditTypes),
+  `前端与数据库积分类型不一致：front=${frontendCreditTypes.join(',')} db=${databaseCreditTypes.join(',')}`);
+
+console.log('PASS: hardened AI interpreter pages, example boundaries, protected routes, and real-data guards');

@@ -8,6 +8,7 @@
   const validRoles = new Set(['advisor', 'agent', 'center']);
   const validChannelIdentities = new Set(['', 'branch_company', 'service_center', 'collection_center', 'ordinary_advisor']);
   const autoAdvisorChannelIdentities = new Set(['', 'ordinary_advisor']);
+  const inviteCodePattern = /^[A-Z0-9-]{3,40}$/;
   const validPractitionerTypes = new Set([
     'independent',
     'organization',
@@ -36,7 +37,18 @@
   }
 
   function normalize(value) {
-    return String(value || '').trim();
+    return String(value ?? '').trim();
+  }
+
+  function inviteCodeFromLocation() {
+    const inviteCode = normalize(new URLSearchParams(window.location.search).get('invite')).toUpperCase();
+    return inviteCodePattern.test(inviteCode) ? inviteCode : '';
+  }
+
+  function withInviteCode(path) {
+    const inviteCode = inviteCodeFromLocation();
+    if (!inviteCode) return path;
+    return `${path}${path.includes('?') ? '&' : '?'}invite=${encodeURIComponent(inviteCode)}`;
   }
 
   function showMessage(selector, message) {
@@ -111,13 +123,13 @@
 
   function routeByStatus(me, messageSelector) {
     if (me?.passwordReset) {
-      window.location.href = '/advisor-register.html?set_password=1';
+      window.location.href = withInviteCode('/advisor-register.html?set_password=1');
       return;
     }
     if (!me?.user) {
-      window.location.href = me?.requiresPasswordSetup
+      window.location.href = withInviteCode(me?.requiresPasswordSetup
         ? '/advisor-register.html?set_password=1'
-        : '/advisor-register.html';
+        : '/advisor-register.html');
       return;
     }
     const { role, status } = me.user;
@@ -451,7 +463,10 @@
     if (!form) return;
     const practitionerType = form.elements.practitionerType;
     const practitionerTypeNote = form.elements.practitionerTypeNote;
+    const inviteCode = form.elements.inviteCode;
     const practitionerTypeNoteRow = $('#v3a-practitioner-other-note-row');
+    const incomingInviteCode = inviteCodeFromLocation();
+    if (inviteCode && incomingInviteCode) inviteCode.value = incomingInviteCode;
 
     function syncPractitionerTypeNote() {
       const needsNote = practitionerType?.value === 'other';
@@ -613,21 +628,8 @@
       : `${window.location.origin}/login.html?invite=${encodeURIComponent(inviteCode)}`;
     const creditTypeLabels = {
       REGISTER_BONUS: '注册体验积分',
-      INVITE_REGISTER: '邀请新指导师注册',
-      INVITE_FIRST_USE: '被邀请人首次解读',
-      INVITE_CERTIFIED: '被邀请人认证开通',
       MANUAL_GRANT: '平台人工加分',
-      MANUAL_DEDUCT: '平台人工扣分',
-      EMMA_GRANT: 'Emma 手动加分',
-      EMMA_DEDUCT: 'Emma 手动扣分',
-      SYSTEM_ADJUST: '系统调整',
-      CREDIT_PURCHASE: '充值购买积分',
-      CREDIT_RECHARGE: '充值购买积分',
-      RECHARGE: '充值购买积分',
-      TOP_UP: '充值购买积分',
-      BUY_CREDITS: '充值购买积分',
-      SERVICE_CONSUME: '解读服务扣费',
-      REPORT_CONSUME: '报告服务扣费'
+      MANUAL_DEDUCT: '平台人工扣分'
     };
 
     function closeDetail() {
@@ -675,7 +677,7 @@
         <div class="credit-detail-item">
           <div>
             <strong>暂无积分流水</strong>
-            <small>积分收入、支出、充值和邀请奖励产生后会在这里显示。</small>
+            <small>积分收入或支出产生后会在这里显示。</small>
           </div>
           <span>--</span>
         </div>
@@ -824,8 +826,18 @@
       initMobileNavigation();
       document.body.hidden = false;
     } catch (error) {
+      const shell = $('.app-shell');
+      const errorShell = $('#v3a-workbench-error');
+      if (shell) shell.hidden = true;
+      if (errorShell) errorShell.hidden = false;
+      setText(
+        '#v3a-workbench-error-message',
+        error.status === 401
+          ? '登录状态已失效，正在返回登录页。'
+          : '账号信息暂时无法加载，请稍后重试。'
+      );
+      document.body.hidden = false;
       if (error.status === 401) window.location.href = '/login.html';
-      else window.location.replace('/login.html?service_unavailable=1');
     }
   }
 

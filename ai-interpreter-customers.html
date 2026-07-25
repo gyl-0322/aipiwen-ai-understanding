@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>我的客户 · AIPIWEN指导师工作台</title>
-  <meta name="description" content="AIPIWEN AI解读师助手 V1.1 静态 Demo 客户列表">
+  <meta name="description" content="AIPIWEN 指导师工作台客户体验页面">
   <link rel="stylesheet" href="static/ai-interpreter.css">
   <script src="static/v3a-auth.js" defer></script>
   <script src="static/ai-interpreter.js" defer></script>
@@ -25,7 +25,7 @@
         </svg>
         <div>
           <p class="brand-title">AIPIWEN指导师工作台</p>
-          <div class="brand-subtitle">AI解读师助手 V1.1</div>
+          <div class="brand-subtitle">AI成长理解工作台</div>
         </div>
       </a>
       <nav class="nav" aria-label="主导航">
@@ -37,7 +37,7 @@
         <a class="nav-link" data-page="cases" href="ai-interpreter-cases.html"><span>✦</span><span>优秀案例沉淀</span></a>
       </nav>
       <div class="sidebar-note">
-        客户列表为 mock 展示。V1.1 不接真实 CRM、不做客户通知、不写入数据库。
+        客户列表为功能体验示例，不会写入正式业务数据。
       </div>
     </aside>
 
@@ -46,13 +46,18 @@
         <div>
           <p class="eyebrow">My Customers</p>
           <h1>我的客户</h1>
-          <p>一线解读师只看自己名下客户；客户本人不进入本系统。</p>
+          <p>一线指导师只看自己名下客户；客户本人不进入本系统。</p>
         </div>
         <div class="top-actions">
           <button class="btn ghost" type="button">导出当前筛选</button>
           <a class="btn primary" href="ai-interpreter-session.html">进入解读助手</a>
         </div>
       </header>
+
+      <section class="notice" aria-label="体验示例说明" style="margin-bottom:16px">
+        <strong>体验示例</strong>
+        <p>当前展示为功能演示数据，正式业务数据将在后续版本接入。</p>
+      </section>
 
       <section class="module">
         <div class="searchbar" role="search">
@@ -74,20 +79,6 @@
           <span class="tag">解读状态：全部</span>
           <span class="tag">日期范围：近 30 天</span>
         </div>
-      </section>
-
-      <section class="table-card customer-table" data-dryrun-customers-panel hidden style="margin-top:16px">
-        <div class="card-header" style="padding:16px 16px 0">
-          <div class="card-title">
-            <h2>V2 Dry-run 模拟客户</h2>
-            <small>当前本机已创建 <span data-dryrun-customers-count>0</span> 位模拟客户</small>
-          </div>
-          <a class="btn primary" href="ai-interpreter-session.html">进入解读助手</a>
-        </div>
-        <div class="table-head">
-          <span>客户</span><span>来源</span><span>归属</span><span>绑定方式</span><span>报告摘要</span><span>解读状态</span><span>关注问题</span><span>操作</span>
-        </div>
-        <div data-dryrun-customers-list></div>
       </section>
 
       <section class="layout-grid cols-aside" style="margin-top:16px">
@@ -121,7 +112,7 @@
               <h2>客户详情预览</h2>
               <small>当前选中：王小明 · 儿童天赋报告</small>
             </div>
-            <span class="status info">Mock</span>
+            <span class="status info">体验示例</span>
           </div>
           <div class="data-list">
             <div class="data-item"><span>年龄 / 年级</span><strong>8 岁 / 二年级</strong></div>
@@ -145,5 +136,17 @@
       </section>
     </main>
   </div>
+
+  <main class="public-shell auth-shell" id="v3a-workbench-error" hidden>
+    <section class="module auth-card">
+      <p class="eyebrow">AIPIWEN 指导师工作台</p>
+      <h1>工作台暂时无法打开</h1>
+      <p id="v3a-workbench-error-message" role="alert">账号信息暂时无法加载，请稍后重试。</p>
+      <div class="top-actions">
+        <a class="btn primary" href="">重新加载</a>
+        <a class="btn ghost" href="/login.html">返回登录</a>
+      </div>
+    </section>
+  </main>
 </body>
 </html>

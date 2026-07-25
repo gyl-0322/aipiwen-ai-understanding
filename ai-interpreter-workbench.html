@@ -26,7 +26,7 @@
         </svg>
         <div>
           <p class="brand-title">AIPIWEN指导师工作台</p>
-          <div class="brand-subtitle">AI解读师助手 V1.1</div>
+          <div class="brand-subtitle">AI成长理解工作台</div>
         </div>
       </a>
       <nav class="nav" aria-label="主导航">
@@ -67,6 +67,11 @@
       </header>
       <p class="dryrun-error" id="v3a-workbench-message" role="status" aria-live="polite" hidden></p>
 
+      <section class="notice" aria-label="体验示例说明" style="margin-bottom:16px">
+        <strong>体验示例</strong>
+        <p>当前展示为功能演示数据，正式业务数据将在后续版本接入。</p>
+      </section>
+
       <section class="layout-grid cols-3" aria-label="今日概览">
         <div class="card metric cyan">
           <div class="metric-value">3</div>
@@ -81,7 +86,7 @@
         <div class="card metric blue">
           <div class="metric-value">2</div>
           <div class="metric-label">本周待完成训练</div>
-          <p>含 V1.1 新增“数值解释安全度”评分项。</p>
+          <p>含“数值解释安全度”评分项。</p>
         </div>
       </section>
 
@@ -113,7 +118,7 @@
           </div>
           <div class="notice" style="margin-top:14px">
             <strong>客户如何进入我的工作台</strong>
-            <p>客户可通过解读师邀请链接、采集中心二维码、总部公海分配或手动绑定进入当前解读师名下；真实客户管理会在后续版本接入。</p>
+            <p>客户可通过指导师邀请链接、采集中心二维码、总部公海分配或手动绑定进入当前指导师名下。本模块当前为功能体验示例。</p>
           </div>
         </div>
 
@@ -167,7 +172,7 @@
             </div>
           </div>
           <div class="notice">
-            <strong>2026-07-08 V1.1 解读流程更新</strong>
+            <strong>2026-07-08 解读流程更新</strong>
             <p>标准流程调整为 8 步，新增 TRC / ATD / 左右脑独立步骤，右栏新增“为什么这样讲”。</p>
           </div>
           <div class="notice">
@@ -183,6 +188,18 @@
       </section>
     </main>
   </div>
+
+  <main class="public-shell auth-shell" id="v3a-workbench-error" hidden>
+    <section class="module auth-card">
+      <p class="eyebrow">AIPIWEN 指导师工作台</p>
+      <h1>工作台暂时无法打开</h1>
+      <p id="v3a-workbench-error-message" role="alert">账号信息暂时无法加载，请稍后重试。</p>
+      <div class="top-actions">
+        <a class="btn primary" href="">重新加载</a>
+        <a class="btn ghost" href="/login.html">返回登录</a>
+      </div>
+    </section>
+  </main>
 
   <div class="modal-layer" id="v3a-workbench-detail-modal" aria-hidden="true">
     <div class="modal-card workbench-detail-modal" role="dialog" aria-modal="true" aria-labelledby="v3a-workbench-detail-title">

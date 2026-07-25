@@ -201,6 +201,7 @@ function createHarness(options = {}) {
     }
   };
   const practitionerTypeNoteField = { value: formData.practitionerTypeNote || '', required: false, tabIndex: 0 };
+  const inviteCodeField = { value: formData.inviteCode || '', tabIndex: 0 };
   const practitionerTypeNoteRow = { hidden: true };
   const form = {
     classList: createClassList(),
@@ -214,13 +215,14 @@ function createHarness(options = {}) {
       otp: { value: formData.otp || '' },
       practitionerType: practitionerTypeField,
       practitionerTypeNote: practitionerTypeNoteField,
+      inviteCode: inviteCodeField,
       acceptedRules: { checked: options.acceptedRules !== false }
     },
     querySelector(selector) {
       if (selector === 'button[type="submit"]') return loginButton;
       return null;
     },
-    querySelectorAll() { return [sendButton, loginButton, practitionerTypeField, practitionerTypeNoteField]; },
+    querySelectorAll() { return [sendButton, loginButton, practitionerTypeField, practitionerTypeNoteField, inviteCodeField]; },
     setAttribute(name, value) { this.attributes[name] = String(value); },
     addEventListener(type, handler) {
       if (type === 'submit') this._submit = handler;
@@ -234,6 +236,9 @@ function createHarness(options = {}) {
     addEventListener(type, handler) { if (type === 'click') this._click = handler; }
   };
   const sidebar = null;
+  const workbenchShell = { hidden: false };
+  const workbenchError = { hidden: true };
+  const workbenchErrorMessage = { textContent: '' };
 
   function defaultPayload(action, requestBody = {}) {
     if (action === 'capabilities') {
@@ -300,6 +305,8 @@ function createHarness(options = {}) {
     ['#v3a-practitioner-other-note-row', page === 'register' ? practitionerTypeNoteRow : null],
     ['#v3a-pending-message', page === 'pending' ? message : null],
     ['#v3a-workbench-message', page === 'workbench' ? message : null],
+    ['#v3a-workbench-error', page === 'workbench' ? workbenchError : null],
+    ['#v3a-workbench-error-message', page === 'workbench' ? workbenchErrorMessage : null],
     ['#v3a-verified-phone', page === 'register' ? texts.verifiedPhone : null],
     ['#v3a-current-role', page === 'pending' ? texts.currentRole : null],
     ['#v3a-current-status', page === 'pending' ? texts.currentStatus : null],
@@ -311,7 +318,8 @@ function createHarness(options = {}) {
     ['#v3a-workbench-role', page === 'workbench' ? texts.workbenchRole : null],
     ['#v3a-workbench-balance', page === 'workbench' ? texts.workbenchBalance : null],
     ['#v3a-workbench-invite-code', page === 'workbench' ? texts.workbenchInviteCode : null],
-    ['.sidebar', sidebar]
+    ['.sidebar', sidebar],
+    ['.app-shell', page === 'workbench' ? workbenchShell : null]
   ]);
   const document = {
     body: { dataset: { v3aAuthPage: page }, hidden: page === 'workbench' },
@@ -334,6 +342,7 @@ function createHarness(options = {}) {
     get() { cookieAccesses.push({ operation: 'get' }); return ''; },
     set(value) { cookieAccesses.push({ operation: 'set', value: String(value) }); }
   });
+  location.origin = APP_ORIGIN;
   const window = { location };
   for (const forbidden of ['supabase', 'AIPIWEN_V3A_SUPABASE', 'AIPIWEN_V3A_PHONE_OTP_ENABLED']) {
     Object.defineProperty(window, forbidden, {
@@ -381,6 +390,7 @@ function createHarness(options = {}) {
     practitionerTypeField,
     practitionerTypeNoteField,
     practitionerTypeNoteRow,
+    inviteCodeField,
     message,
     texts,
     location,
@@ -389,6 +399,9 @@ function createHarness(options = {}) {
     cookieAccesses,
     body: document.body,
     sidebar,
+    workbenchShell,
+    workbenchError,
+    workbenchErrorMessage,
     tickIntervals(seconds = 1) {
       for (let second = 0; second < seconds; second += 1) {
         [...intervals.values()].forEach(({ callback }) => callback());
@@ -607,6 +620,15 @@ async function run() {
   assert.equal(harness.location.href, '/advisor-register.html', '无业务记录必须进入申请资料页');
   assertBrowserIsolation(harness);
 
+  harness = createHarness({
+    locationSearch: '?invite=ABC123',
+    verifyMe: emptyMe()
+  });
+  await submit(harness);
+  assert.equal(harness.location.href, '/advisor-register.html?invite=ABC123',
+    '登录链接中的邀请码必须透传到申请资料页');
+  assertBrowserIsolation(harness);
+
   for (const testCase of [
     { me: completeMe('pending'), expected: '/advisor-pending.html' },
     { me: completeMe('active', 'advisor'), expected: '/ai-interpreter-workbench.html' },
@@ -701,6 +723,16 @@ async function run() {
   }
   assert.equal(harness.location.href, '/ai-interpreter-workbench.html',
     '普通指导师必须自动开通后进入工作台');
+  assertBrowserIsolation(harness);
+
+  harness = createHarness({ page: 'register', locationSearch: '?invite=ABC123' });
+  await settle();
+  assert.equal(harness.inviteCodeField.value, 'ABC123',
+    '申请资料页必须自动填入登录链接中的邀请码');
+  await submit(harness);
+  request = actionCalls(harness, 'submit_application')[0];
+  assert.equal(request.body.inviteCode, 'ABC123',
+    '提交申请时必须把保留的邀请码传给 BFF/RPC');
   assertBrowserIsolation(harness);
 
   const activeAdvisorOnRegister = completeMe('active', 'advisor');
@@ -830,6 +862,14 @@ async function run() {
   assert.equal(harness.location.href, '/login.html', '工作台退出后必须返回统一登录页');
   assertBrowserIsolation(harness);
 
+  const zeroCreditAdvisor = completeMe('active', 'advisor');
+  zeroCreditAdvisor.wallet = { balance: 0 };
+  harness = createHarness({ page: 'workbench', me: zeroCreditAdvisor });
+  await settle();
+  assert.equal(harness.texts.workbenchBalance.textContent, '0',
+    '真实积分余额为 0 时必须显示 0，不得回退为待同步');
+  assertBrowserIsolation(harness);
+
   harness = createHarness({ page: 'workbench', me: completeMe('pending') });
   await settle();
   assert.equal(harness.body.hidden, true, '非 active 身份不得看到工作台内容');
@@ -845,7 +885,9 @@ async function run() {
     failures: { me: { status: 401, body: { ok: false, error: '请先登录。', code: 'UNAUTHENTICATED' } } }
   });
   await settle();
-  assert.equal(harness.body.hidden, true, '未登录时不得闪现工作台内容');
+  assert.equal(harness.body.hidden, false, 'Session 异常时必须恢复 body，避免错误白屏');
+  assert.equal(harness.workbenchShell.hidden, true, 'Session 异常时不得暴露工作台内容');
+  assert.equal(harness.workbenchError.hidden, false, 'Session 异常时必须显示安全错误边界');
   assert.equal(harness.location.href, '/login.html');
 
   harness = createHarness({
@@ -853,9 +895,11 @@ async function run() {
     failures: { me: { status: 503, body: { ok: false, error: '账号服务暂时不可用。', code: 'UPSTREAM_UNAVAILABLE' } } }
   });
   await settle();
-  assert.equal(harness.body.hidden, true, '账号服务异常时也不得显示工作台壳层');
-  assert.equal(harness.location.href, '/login.html?service_unavailable=1',
-    '账号服务异常必须回到统一登录页并保留安全状态标识');
+  assert.equal(harness.body.hidden, false, '账号服务异常时必须恢复 body，避免错误白屏');
+  assert.equal(harness.workbenchShell.hidden, true, '账号服务异常时不得显示工作台壳层');
+  assert.equal(harness.workbenchError.hidden, false, '账号服务异常时必须显示错误边界');
+  assert.equal(harness.workbenchErrorMessage.textContent, '账号信息暂时无法加载，请稍后重试。');
+  assert.equal(harness.location.href, '', '账号服务异常时应停留并允许用户重新加载');
 
   console.log('PASS: V3a browser BFF, HttpOnly isolation, phone login, registration, and protected workbench contracts');
 }

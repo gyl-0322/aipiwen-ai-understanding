@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>解读训练 · AIPIWEN指导师工作台</title>
-  <meta name="description" content="AIPIWEN AI解读师助手 V1.1 静态 Demo 解读训练">
+  <meta name="description" content="AIPIWEN 指导师工作台解读训练体验页面">
   <link rel="stylesheet" href="static/ai-interpreter.css">
   <script src="static/v3a-auth.js" defer></script>
   <script src="static/ai-interpreter.js" defer></script>
@@ -25,7 +25,7 @@
         </svg>
         <div>
           <p class="brand-title">AIPIWEN指导师工作台</p>
-          <div class="brand-subtitle">AI解读师助手 V1.1</div>
+          <div class="brand-subtitle">AI成长理解工作台</div>
         </div>
       </a>
       <nav class="nav" aria-label="主导航">
@@ -37,7 +37,7 @@
         <a class="nav-link" data-page="cases" href="ai-interpreter-cases.html"><span>✦</span><span>优秀案例沉淀</span></a>
       </nav>
       <div class="sidebar-note">
-        训练评分、标准答案、表达纠偏均为 mock 展示，不保存学员输入。
+        训练评分、标准答案、表达纠偏均为功能体验示例，不保存学员输入。
       </div>
     </aside>
 
@@ -54,6 +54,11 @@
         </div>
       </header>
 
+      <section class="notice" aria-label="体验示例说明" style="margin-bottom:16px">
+        <strong>体验示例</strong>
+        <p>当前展示为功能演示数据，正式业务数据将在后续版本接入。</p>
+      </section>
+
       <section class="layout-grid cols-3">
         <div class="card metric cyan">
           <div class="metric-value">2/5</div>
@@ -69,7 +74,7 @@
         <div class="card metric amber">
           <div class="metric-value">80%</div>
           <div class="metric-label">数值解释安全度</div>
-          <p>V1.1 新增评分项：检查是否正确传达“数值没有好坏”。</p>
+          <p>评分项检查是否正确传达“数值没有好坏”。</p>
         </div>
       </section>
 
@@ -143,7 +148,7 @@
             <div class="score-item"><span>行动建议质量</span><div class="bar"><span style="width:83%"></span></div><strong>83%</strong></div>
             <div class="score-item"><span>数值解释安全度</span><div class="bar"><span style="width:80%"></span></div><strong>80%</strong></div>
           </div>
-          <p class="footer-note">评分为静态 mock，用于展示训练模块结构，不代表真实学员成绩。</p>
+          <p class="footer-note">评分为体验示例，用于展示训练模块结构，不代表真实学员成绩。</p>
         </div>
 
         <aside class="module">
@@ -154,7 +159,7 @@
             </div>
           </div>
           <div class="notice">
-            <strong>解读师原文</strong>
+            <strong>指导师原文</strong>
             <p>“这种类型的人数学能力会比较弱，以后在理科方面可能会遇到困难。”</p>
           </div>
           <ul class="guide-list" style="margin-top:12px">
@@ -169,12 +174,24 @@
         <div class="card-header">
           <div class="card-title">
             <h2>训练案例来源</h2>
-            <small>V1.1 仅做静态演示，不接真实案例库</small>
+            <small>当前仅展示案例来源机制</small>
           </div>
         </div>
-        <p>训练案例可来自总部 Emma 上传的标准案例，也可来自“优秀案例沉淀”管道中的脱敏真实案例。但本 Demo 不做真实数据库、不做真实脱敏、不做真实入库。</p>
+        <p>训练案例可来自平台上传的标准案例，也可来自“优秀案例沉淀”管道中的脱敏案例。当前页面不会执行真实数据库、脱敏或入库操作。</p>
       </section>
     </main>
   </div>
+
+  <main class="public-shell auth-shell" id="v3a-workbench-error" hidden>
+    <section class="module auth-card">
+      <p class="eyebrow">AIPIWEN 指导师工作台</p>
+      <h1>工作台暂时无法打开</h1>
+      <p id="v3a-workbench-error-message" role="alert">账号信息暂时无法加载，请稍后重试。</p>
+      <div class="top-actions">
+        <a class="btn primary" href="">重新加载</a>
+        <a class="btn ghost" href="/login.html">返回登录</a>
+      </div>
+    </section>
+  </main>
 </body>
 </html>

@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>AI解读助手详情页 · AIPIWEN指导师工作台</title>
-  <meta name="description" content="AIPIWEN AI解读师助手 V1.1 静态 Demo 三栏解读工作台">
+  <meta name="description" content="AIPIWEN 指导师工作台 AI 解读助手体验页面">
   <link rel="stylesheet" href="static/ai-interpreter.css">
   <script src="static/v3a-auth.js" defer></script>
   <script src="static/ai-interpreter.js" defer></script>
@@ -25,7 +25,7 @@
         </svg>
         <div>
           <p class="brand-title">AIPIWEN指导师工作台</p>
-          <div class="brand-subtitle">AI解读师助手 V1.1</div>
+          <div class="brand-subtitle">AI成长理解工作台</div>
         </div>
       </a>
       <nav class="nav" aria-label="主导航">
@@ -37,7 +37,7 @@
         <a class="nav-link" data-page="cases" href="ai-interpreter-cases.html"><span>✦</span><span>优秀案例沉淀</span></a>
       </nav>
       <div class="sidebar-note">
-        三栏页为静态 Demo：右栏话术来自前端 mock 数据，不调用真实 AI，不写入解读记录。
+        三栏页为功能体验示例：右栏为预设话术，不调用真实 AI，不写入正式解读记录。
       </div>
     </aside>
 
@@ -46,14 +46,20 @@
         <div>
           <p class="eyebrow">AI Interpreter Session</p>
           <h1>AI解读助手 · 王小明的妈妈</h1>
-          <p>儿童天赋报告 · 入口态 / 进行中模拟 · 当前展示第 ④ 步。</p>
+          <p>儿童天赋报告 · 体验流程 · 当前展示第 ④ 步。</p>
         </div>
         <div class="top-actions">
+          <span class="status info">邀请码：<strong id="v3a-workbench-invite-code">读取中</strong></span>
           <button class="btn primary" id="generate-plan" type="button">生成完整 AI 解读方案</button>
           <button class="btn" type="button">保存进度</button>
           <a class="btn warn" href="ai-interpreter-review.html">提交总部复核</a>
         </div>
       </header>
+
+      <section class="notice" aria-label="体验示例说明" style="margin-bottom:16px">
+        <strong>体验示例</strong>
+        <p>当前展示为功能演示数据，正式业务数据将在后续版本接入。</p>
+      </section>
 
       <section class="session-grid" aria-label="AI解读助手三栏结构">
         <aside class="session-column">
@@ -79,7 +85,7 @@
             <div class="card-header">
               <div class="card-title">
                 <h2>报告摘要</h2>
-                <small>Report OS 数据在此 Demo 中仅做只读展示</small>
+                <small>Report OS 数据在当前体验中仅做只读展示</small>
               </div>
             </div>
             <div class="data-list">
@@ -190,7 +196,7 @@
               <span class="pill">写作业进入状态慢</span>
             </div>
             <p class="footer-note">解读时可结合五大功能区、学习通道和行为模式观察。</p>
-            <textarea class="textarea" style="margin-top:12px" placeholder="解读中客户补充的问题（静态输入框，不保存）"></textarea>
+            <textarea class="textarea" style="margin-top:12px" placeholder="解读中客户补充的问题（体验输入，不保存）"></textarea>
           </div>
         </aside>
 
@@ -273,9 +279,9 @@
             <div class="card-header">
               <div class="card-title">
                 <h2>右栏 · AI辅助话术</h2>
-                <small>随当前步骤切换的 mock 话术</small>
+                <small>随当前步骤切换的体验话术</small>
               </div>
-              <span class="status info">静态 AI</span>
+              <span class="status info">体验示例</span>
             </div>
 
             <section class="ai-section why">
@@ -313,40 +319,33 @@
     </main>
   </div>
 
+  <main class="public-shell auth-shell" id="v3a-workbench-error" hidden>
+    <section class="module auth-card">
+      <p class="eyebrow">AIPIWEN 指导师工作台</p>
+      <h1>工作台暂时无法打开</h1>
+      <p id="v3a-workbench-error-message" role="alert">账号信息暂时无法加载，请稍后重试。</p>
+      <div class="top-actions">
+        <a class="btn primary" href="">重新加载</a>
+        <a class="btn ghost" href="/login.html">返回登录</a>
+      </div>
+    </section>
+  </main>
+
   <div class="modal-layer" id="credit-modal" aria-hidden="true">
     <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="credit-modal-title">
       <div class="card-header">
         <div class="card-title">
-          <h2 id="credit-modal-title">确认消耗积分</h2>
-          <small id="credit-modal-subtitle">静态 mock 扣减，不接真实积分账户</small>
+          <h2 id="credit-modal-title">功能开放提示</h2>
+          <small id="credit-modal-subtitle">当前不会扣减积分</small>
         </div>
         <button class="icon-btn" type="button" data-close-credit-modal aria-label="关闭">×</button>
       </div>
-      <div class="credit-confirm" id="credit-confirm">
-        <div class="data-list">
-          <div class="data-item"><span>操作</span><strong>生成完整 AI 解读方案</strong></div>
-          <div class="data-item"><span>消耗</span><strong>50 积分</strong></div>
-          <div class="data-item"><span>当前余额</span><strong><span data-modal-current>500</span> 积分</strong></div>
-          <div class="data-item"><span>消耗后余额</span><strong><span data-modal-after>450</span> 积分</strong></div>
-        </div>
-        <div class="top-actions" style="margin-top:16px">
-          <button class="btn ghost" type="button" data-close-credit-modal>取消</button>
-          <button class="btn primary" type="button" id="confirm-credit-cost">确认消耗</button>
-        </div>
+      <div class="notice">
+        <strong>积分消耗功能将在后续版本开放。</strong>
+        <p>本次操作不会生成方案，也不会修改真实积分余额或积分流水。</p>
       </div>
-      <div class="credit-insufficient" id="credit-insufficient">
-        <div class="notice">
-          <strong>积分不足</strong>
-          <p>此操作需要 50 积分。当前余额：<span data-modal-low>10</span> 积分。你可以邀请同行注册获得积分。</p>
-        </div>
-        <div class="invite-link-box" style="margin-top:12px">
-          <span>我的邀请链接</span>
-          <code>/r/ZHANGWEI01</code>
-        </div>
-        <div class="top-actions" style="margin-top:16px">
-          <button class="btn primary" type="button" data-copy-invite>复制邀请链接</button>
-          <button class="btn ghost" type="button" data-close-credit-modal>我知道了</button>
-        </div>
+      <div class="top-actions" style="margin-top:16px">
+        <button class="btn primary" type="button" data-close-credit-modal>我知道了</button>
       </div>
     </div>
   </div>

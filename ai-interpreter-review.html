@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>总部复核 / 使用规范 · AIPIWEN指导师工作台</title>
-  <meta name="description" content="AIPIWEN AI解读师助手 V1.1 静态 Demo 总部复核与规范">
+  <meta name="description" content="AIPIWEN 指导师工作台总部复核与使用规范体验页面">
   <link rel="stylesheet" href="static/ai-interpreter.css">
   <script src="static/v3a-auth.js" defer></script>
   <script src="static/ai-interpreter.js" defer></script>
@@ -25,7 +25,7 @@
         </svg>
         <div>
           <p class="brand-title">AIPIWEN指导师工作台</p>
-          <div class="brand-subtitle">AI解读师助手 V1.1</div>
+          <div class="brand-subtitle">AI成长理解工作台</div>
         </div>
       </a>
       <nav class="nav" aria-label="主导航">
@@ -53,6 +53,11 @@
           <a class="btn" href="ai-interpreter-cases.html">标记优秀案例</a>
         </div>
       </header>
+
+      <section class="notice" aria-label="体验示例说明" style="margin-bottom:16px">
+        <strong>体验示例</strong>
+        <p>当前展示为功能演示数据，正式业务数据将在后续版本接入。</p>
+      </section>
 
       <section class="layout-grid cols-aside">
         <div class="module">
@@ -120,8 +125,8 @@
         <div class="table-card review-table">
           <div class="card-header" style="padding:16px 16px 0">
             <div class="card-title">
-              <h2>Emma 视角 · 待处理复核队列</h2>
-              <small>超级管理员可见，V1.1 仅做界面原型</small>
+              <h2>平台审核视角 · 待处理复核队列</h2>
+              <small>超级管理员可见的功能体验示例</small>
             </div>
           </div>
           <div class="table-head">
@@ -142,7 +147,7 @@
           <div class="card-header">
             <div class="card-title">
               <h2>六大禁令</h2>
-              <small>解读师行为准则</small>
+              <small>指导行为规范</small>
             </div>
           </div>
           <div class="mini-grid">
@@ -166,12 +171,24 @@
         <ul class="guide-list">
           <li>解读过程中触发风险词汇库，且提示后仍使用相关表述。</li>
           <li>客户关注问题涉及心理健康、家庭成员关系、重大教育决策、职业重大转变。</li>
-          <li>报告数据显示极端值，且解读师做出超出标准范围的结论。</li>
-          <li>客户出现明显情绪波动或心理困扰，解读师不确定如何回应。</li>
-          <li>解读师主动勾选“提交复核”。</li>
+          <li>报告数据显示极端值，且指导师做出超出标准范围的结论。</li>
+          <li>客户出现明显情绪波动或心理困扰，指导师不确定如何回应。</li>
+          <li>指导师主动勾选“提交复核”。</li>
         </ul>
       </section>
     </main>
   </div>
+
+  <main class="public-shell auth-shell" id="v3a-workbench-error" hidden>
+    <section class="module auth-card">
+      <p class="eyebrow">AIPIWEN 指导师工作台</p>
+      <h1>工作台暂时无法打开</h1>
+      <p id="v3a-workbench-error-message" role="alert">账号信息暂时无法加载，请稍后重试。</p>
+      <div class="top-actions">
+        <a class="btn primary" href="">重新加载</a>
+        <a class="btn ghost" href="/login.html">返回登录</a>
+      </div>
+    </section>
+  </main>
 </body>
 </html>
