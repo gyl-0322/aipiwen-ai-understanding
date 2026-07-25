@@ -1024,6 +1024,19 @@ button.table-row {
   white-space: nowrap;
 }
 
+.invite-rule-card.compact .reward-steps {
+  gap: 8px;
+}
+
+.invite-rule-card.compact .reward-steps div {
+  min-height: 52px;
+  padding: 9px 10px;
+}
+
+.invite-rule-card.compact .footer-note {
+  margin-top: 10px;
+}
+
 .quick-link {
   display: grid;
   gap: 8px;
