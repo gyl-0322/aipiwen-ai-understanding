@@ -139,6 +139,46 @@
       "dest": "/ai-interpreter-workbench.html"
     },
     {
+      "src": "/ai-interpreter-customers.html",
+      "dest": "/ai-interpreter-customers.html"
+    },
+    {
+      "src": "/ai-interpreter-customers",
+      "dest": "/ai-interpreter-customers.html"
+    },
+    {
+      "src": "/ai-interpreter-session.html",
+      "dest": "/ai-interpreter-session.html"
+    },
+    {
+      "src": "/ai-interpreter-session",
+      "dest": "/ai-interpreter-session.html"
+    },
+    {
+      "src": "/ai-interpreter-training.html",
+      "dest": "/ai-interpreter-training.html"
+    },
+    {
+      "src": "/ai-interpreter-training",
+      "dest": "/ai-interpreter-training.html"
+    },
+    {
+      "src": "/ai-interpreter-review.html",
+      "dest": "/ai-interpreter-review.html"
+    },
+    {
+      "src": "/ai-interpreter-review",
+      "dest": "/ai-interpreter-review.html"
+    },
+    {
+      "src": "/ai-interpreter-cases.html",
+      "dest": "/ai-interpreter-cases.html"
+    },
+    {
+      "src": "/ai-interpreter-cases",
+      "dest": "/ai-interpreter-cases.html"
+    },
+    {
       "src": "/admin-applications.html",
       "dest": "/admin-applications.html"
     },

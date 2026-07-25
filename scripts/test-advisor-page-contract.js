@@ -47,12 +47,7 @@ try {
   });
 
   [
-    'ai-interpreter-customers.html',
     'ai-interpreter-report-intake.html',
-    'ai-interpreter-session.html',
-    'ai-interpreter-training.html',
-    'ai-interpreter-review.html',
-    'ai-interpreter-cases.html',
     'static/preview-demo-auth.js',
     'static/preview-report-intake.js'
   ].forEach((previewOnlyPath) => {
@@ -69,6 +64,23 @@ try {
     '模拟客户', '模拟积分', '模拟报告', 'ZHANGWEI01'
   ].forEach((forbiddenCopy) => {
     assert(!workbench.includes(forbiddenCopy), `正式工作台不得包含模拟资产或数据：${forbiddenCopy}`);
+  });
+
+  [
+    'ai-interpreter-customers.html',
+    'ai-interpreter-session.html',
+    'ai-interpreter-training.html',
+    'ai-interpreter-review.html',
+    'ai-interpreter-cases.html'
+  ].forEach((workbenchPath) => {
+    assert(exists(workbenchPath), `正式工作台栏目页缺失：${workbenchPath}`);
+    const pageSource = read(workbenchPath);
+    assert(pageSource.includes('data-v3a-auth-page="workbench" hidden'),
+      `正式工作台栏目页必须先完成真实 Session 校验再显示：${workbenchPath}`);
+    assert(pageSource.includes('static/v3a-auth.js'),
+      `正式工作台栏目页必须加载真实 V3a 认证脚本：${workbenchPath}`);
+    assert(!/static\/dryrun-|preview-demo-auth|preview-report-intake/.test(pageSource),
+      `正式工作台栏目页不得加载 Preview/dry-run 脚本：${workbenchPath}`);
   });
 
   assert(exists('api/v3a-session.js'), 'HttpOnly Session 服务端路由必须存在');
@@ -133,6 +145,16 @@ try {
     '/advisor-pending',
     '/ai-interpreter-workbench.html',
     '/ai-interpreter-workbench',
+    '/ai-interpreter-customers.html',
+    '/ai-interpreter-customers',
+    '/ai-interpreter-session.html',
+    '/ai-interpreter-session',
+    '/ai-interpreter-training.html',
+    '/ai-interpreter-training',
+    '/ai-interpreter-review.html',
+    '/ai-interpreter-review',
+    '/ai-interpreter-cases.html',
+    '/ai-interpreter-cases',
     '/admin-applications.html',
     '/admin-applications'
   ].forEach((requiredRoute) => {

@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>AI解读助手 · AIPIWEN指导师工作台</title>
-  <meta name="description" content="AIPIWEN 指导师工作台 AI 解读助手">
+  <title>AI解读助手详情页 · AIPIWEN指导师工作台</title>
+  <meta name="description" content="AIPIWEN AI解读师助手 V1.1 静态 Demo 三栏解读工作台">
   <link rel="stylesheet" href="static/ai-interpreter.css">
   <script src="static/v3a-auth.js" defer></script>
   <script src="static/ai-interpreter.js" defer></script>
@@ -29,7 +29,7 @@
         </div>
       </a>
       <nav class="nav" aria-label="主导航">
-        <a class="nav-link active" data-page="workbench" href="ai-interpreter-workbench.html"><span>⌂</span><span>工作台首页</span></a>
+        <a class="nav-link" data-page="workbench" href="ai-interpreter-workbench.html"><span>⌂</span><span>工作台首页</span></a>
         <a class="nav-link" data-page="customers" href="ai-interpreter-customers.html"><span>◎</span><span>我的客户</span></a>
         <a class="nav-link" data-page="session" href="ai-interpreter-session.html"><span>◈</span><span>AI解读助手</span></a>
         <a class="nav-link" data-page="training" href="ai-interpreter-training.html"><span>▣</span><span>解读训练</span></a>
@@ -37,7 +37,7 @@
         <a class="nav-link" data-page="cases" href="ai-interpreter-cases.html"><span>✦</span><span>优秀案例沉淀</span></a>
       </nav>
       <div class="sidebar-note">
-        当前为正式账号工作台入口。客户报告、真实 AI 和案例入库会在后续版本接入正式链路。
+        三栏页为静态 Demo：右栏话术来自前端 mock 数据，不调用真实 AI，不写入解读记录。
       </div>
     </aside>
 
@@ -48,27 +48,16 @@
           <h1>AI解读助手 · 王小明的妈妈</h1>
           <p>儿童天赋报告 · 入口态 / 进行中模拟 · 当前展示第 ④ 步。</p>
         </div>
-        <div class="workbench-account-strip" aria-label="当前账号">
-          <div>
-            <span>身份</span>
-            <strong id="v3a-workbench-role">读取中</strong>
-          </div>
-          <div>
-            <span>积分</span>
-            <strong id="v3a-workbench-balance">读取中</strong>
-          </div>
-          <div>
-            <span>邀请码</span>
-            <strong id="v3a-workbench-invite-code">读取中</strong>
-          </div>
-          <button class="btn ghost" id="v3a-workbench-logout" type="button">退出登录</button>
+        <div class="top-actions">
+          <button class="btn primary" id="generate-plan" type="button">生成完整 AI 解读方案</button>
+          <button class="btn" type="button">保存进度</button>
+          <a class="btn warn" href="ai-interpreter-review.html">提交总部复核</a>
         </div>
       </header>
-      <p class="dryrun-error" id="v3a-workbench-message" role="status" aria-live="polite" hidden></p>
 
-      <section class="session-grid" id="assistant-session" aria-label="AI解读助手三栏结构">
+      <section class="session-grid" aria-label="AI解读助手三栏结构">
         <aside class="session-column">
-          <div class="module" id="customer-info">
+          <div class="module">
             <div class="card-header">
               <div class="card-title">
                 <h2>左栏 · 客户信息</h2>
@@ -90,7 +79,7 @@
             <div class="card-header">
               <div class="card-title">
                 <h2>报告摘要</h2>
-                <small>报告数据接入后在这里做只读展示</small>
+                <small>Report OS 数据在此 Demo 中仅做只读展示</small>
               </div>
             </div>
             <div class="data-list">
@@ -201,7 +190,7 @@
               <span class="pill">写作业进入状态慢</span>
             </div>
             <p class="footer-note">解读时可结合五大功能区、学习通道和行为模式观察。</p>
-            <textarea class="textarea" style="margin-top:12px" placeholder="解读中客户补充的问题"></textarea>
+            <textarea class="textarea" style="margin-top:12px" placeholder="解读中客户补充的问题（静态输入框，不保存）"></textarea>
           </div>
         </aside>
 
@@ -284,9 +273,9 @@
             <div class="card-header">
               <div class="card-title">
                 <h2>右栏 · AI辅助话术</h2>
-                <small>随当前步骤切换的辅助话术</small>
+                <small>随当前步骤切换的 mock 话术</small>
               </div>
-              <span class="status info">AI 助手</span>
+              <span class="status info">静态 AI</span>
             </div>
 
             <section class="ai-section why">
@@ -329,7 +318,7 @@
       <div class="card-header">
         <div class="card-title">
           <h2 id="credit-modal-title">确认消耗积分</h2>
-          <small id="credit-modal-subtitle">确认后记录本次体验积分使用</small>
+          <small id="credit-modal-subtitle">静态 mock 扣减，不接真实积分账户</small>
         </div>
         <button class="icon-btn" type="button" data-close-credit-modal aria-label="关闭">×</button>
       </div>
@@ -352,7 +341,7 @@
         </div>
         <div class="invite-link-box" style="margin-top:12px">
           <span>我的邀请链接</span>
-          <code id="v3a-workbench-invite-copy">读取中</code>
+          <code>/r/ZHANGWEI01</code>
         </div>
         <div class="top-actions" style="margin-top:16px">
           <button class="btn primary" type="button" data-copy-invite>复制邀请链接</button>

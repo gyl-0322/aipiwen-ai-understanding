@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>总部复核 / 使用规范 · AIPIWEN指导师工作台</title>
+  <meta name="description" content="AIPIWEN AI解读师助手 V1.1 静态 Demo 总部复核与规范">
+  <link rel="stylesheet" href="static/ai-interpreter.css">
+  <script src="static/v3a-auth.js" defer></script>
+  <script src="static/ai-interpreter.js" defer></script>
+</head>
+<body data-v3a-auth-page="workbench" hidden data-page="review">
+  <div class="app-shell">
+    <aside class="sidebar">
+      <a class="brand" href="ai-interpreter-workbench.html">
+        <svg class="brand-flower" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <circle class="brand-flower-ring" cx="18" cy="18" r="15.5" stroke-width=".9" stroke-dasharray="2.5 6"/>
+          <g class="brand-flower-petals">
+            <ellipse cx="18" cy="12" rx="2.2" ry="6.5" transform="rotate(0 18 18)"/>
+            <ellipse cx="18" cy="12" rx="2.2" ry="6.5" transform="rotate(90 18 18)"/>
+            <ellipse cx="18" cy="12" rx="1.4" ry="5.5" transform="rotate(45 18 18)"/>
+            <ellipse cx="18" cy="12" rx="1.4" ry="5.5" transform="rotate(135 18 18)"/>
+          </g>
+          <circle class="brand-flower-center" cx="18" cy="18" r="3"/>
+        </svg>
+        <div>
+          <p class="brand-title">AIPIWEN指导师工作台</p>
+          <div class="brand-subtitle">AI解读师助手 V1.1</div>
+        </div>
+      </a>
+      <nav class="nav" aria-label="主导航">
+        <a class="nav-link" data-page="workbench" href="ai-interpreter-workbench.html"><span>⌂</span><span>工作台首页</span></a>
+        <a class="nav-link" data-page="customers" href="ai-interpreter-customers.html"><span>◎</span><span>我的客户</span></a>
+        <a class="nav-link" data-page="session" href="ai-interpreter-session.html"><span>◈</span><span>AI解读助手</span></a>
+        <a class="nav-link" data-page="training" href="ai-interpreter-training.html"><span>▣</span><span>解读训练</span></a>
+        <a class="nav-link" data-page="review" href="ai-interpreter-review.html"><span>◇</span><span>总部复核 / 规范</span></a>
+        <a class="nav-link" data-page="cases" href="ai-interpreter-cases.html"><span>✦</span><span>优秀案例沉淀</span></a>
+      </nav>
+      <div class="sidebar-note">
+        复核状态切换为前端静态模拟，不提交真实请求，不通知客户。
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Review & Guardrails</p>
+          <h1>总部复核 / 使用规范</h1>
+          <p>用于展示高风险案例提交、总部反馈、红线规则和新版四条规则。</p>
+        </div>
+        <div class="top-actions">
+          <a class="btn primary" href="ai-interpreter-session.html">提交复核</a>
+          <a class="btn" href="ai-interpreter-cases.html">标记优秀案例</a>
+        </div>
+      </header>
+
+      <section class="layout-grid cols-aside">
+        <div class="module">
+          <div class="card-header">
+            <div class="card-title">
+              <h2>我的复核记录</h2>
+              <small>点击上方标签静态切换复核状态</small>
+            </div>
+          </div>
+          <div class="tabs" aria-label="复核状态模拟">
+            <button class="tab-btn active" type="button" data-review-target="waiting">等待中</button>
+            <button class="tab-btn" type="button" data-review-target="returned">已反馈</button>
+            <button class="tab-btn" type="button" data-review-target="draft">草稿</button>
+          </div>
+          <div class="review-demo-card active" data-review-card="waiting">
+            <div class="notice">
+              <strong>李大伟 · 成人发展规划</strong>
+              <p>提交时间：2026-07-07 14:20。风险标签：心理健康相关表述、职业方向建议。状态：等待总部复核。</p>
+              <div class="tag-row" style="margin-top:10px">
+                <span class="status pending">等待总部复核</span>
+                <span class="tag">不做职业保证</span>
+                <span class="tag">不诊断</span>
+              </div>
+            </div>
+          </div>
+          <div class="review-demo-card" data-review-card="returned">
+            <div class="notice">
+              <strong>陈小红 · 儿童天赋报告</strong>
+              <p>总部建议：弱化“不擅长数学”的绝对表述，改为“在数学相关领域需要更多支持和合适的学习方法”。</p>
+              <div class="tag-row" style="margin-top:10px">
+                <span class="status done">已反馈</span>
+                <span class="tag">表达已纠偏</span>
+              </div>
+            </div>
+          </div>
+          <div class="review-demo-card" data-review-card="draft">
+            <div class="notice">
+              <strong>王小明 · 儿童天赋报告</strong>
+              <p>草稿待提交：客户关注“注意力不集中”和“数学成绩偏弱”，建议完成第⑧步后提交总部复核。</p>
+              <div class="tag-row" style="margin-top:10px">
+                <span class="status info">草稿</span>
+                <span class="tag">第⑧步待完成</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <aside class="module boundary">
+          <div class="card-header">
+            <div class="card-title">
+              <h2>新版四条规则</h2>
+              <small>所有解读服务必须统一使用</small>
+            </div>
+          </div>
+          <ol class="rules-list">
+            <li>数值没有好坏，高有高的特长，低有低的特长</li>
+            <li>不做未来预测，只解释天赋底色 + 后天环境 + 教育培养共同作用</li>
+            <li>不贴标签，不定义“孩子就是一个什么样的人”</li>
+            <li>不与他人比较，只与自己的平均值比较</li>
+          </ol>
+        </aside>
+      </section>
+
+      <section class="layout-grid cols-aside" style="margin-top:16px">
+        <div class="table-card review-table">
+          <div class="card-header" style="padding:16px 16px 0">
+            <div class="card-title">
+              <h2>Emma 视角 · 待处理复核队列</h2>
+              <small>超级管理员可见，V1.1 仅做界面原型</small>
+            </div>
+          </div>
+          <div class="table-head">
+            <span>提交人</span><span>客户</span><span>风险等级</span><span>提交时间</span><span>操作</span>
+          </div>
+          <div class="table-row">
+            <strong>张老师</strong><span>李大伟</span><span class="status risk">高</span><span>07-07 14:20</span><span>处理</span>
+          </div>
+          <div class="table-row">
+            <strong>李代理</strong><span>王小华</span><span class="status pending">中</span><span>07-07 11:00</span><span>处理</span>
+          </div>
+          <div class="table-row">
+            <strong>采集中心 A</strong><span>赵小丽</span><span class="status info">低</span><span>07-06 16:30</span><span>处理</span>
+          </div>
+        </div>
+
+        <div class="module">
+          <div class="card-header">
+            <div class="card-title">
+              <h2>六大禁令</h2>
+              <small>解读师行为准则</small>
+            </div>
+          </div>
+          <div class="mini-grid">
+            <div class="mini-card"><strong>不诊断</strong><p>不得使用医学、心理学诊断术语。</p></div>
+            <div class="mini-card"><strong>不预测</strong><p>不得对未来做确定性预测。</p></div>
+            <div class="mini-card"><strong>不贴标签</strong><p>不得用报告数据定义客户或孩子。</p></div>
+            <div class="mini-card"><strong>不做关系去留判断</strong><p>不得基于报告做关系结论。</p></div>
+            <div class="mini-card"><strong>不做升学/职业保证</strong><p>不得承诺教育路径或职业结果。</p></div>
+            <div class="mini-card"><strong>不让客户看到内部风险标签</strong><p>风险标记和 AI 提示只供内部使用。</p></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="module" style="margin-top:16px">
+        <div class="card-header">
+          <div class="card-title">
+            <h2>触发总部复核的条件</h2>
+            <small>风险控制体系：事前预防、事中拦截、事后追溯</small>
+          </div>
+        </div>
+        <ul class="guide-list">
+          <li>解读过程中触发风险词汇库，且提示后仍使用相关表述。</li>
+          <li>客户关注问题涉及心理健康、家庭成员关系、重大教育决策、职业重大转变。</li>
+          <li>报告数据显示极端值，且解读师做出超出标准范围的结论。</li>
+          <li>客户出现明显情绪波动或心理困扰，解读师不确定如何回应。</li>
+          <li>解读师主动勾选“提交复核”。</li>
+        </ul>
+      </section>
+    </main>
+  </div>
+</body>
+</html>

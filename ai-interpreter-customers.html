@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>我的客户 · AIPIWEN指导师工作台</title>
+  <meta name="description" content="AIPIWEN AI解读师助手 V1.1 静态 Demo 客户列表">
+  <link rel="stylesheet" href="static/ai-interpreter.css">
+  <script src="static/v3a-auth.js" defer></script>
+  <script src="static/ai-interpreter.js" defer></script>
+</head>
+<body data-v3a-auth-page="workbench" hidden data-page="customers">
+  <div class="app-shell">
+    <aside class="sidebar">
+      <a class="brand" href="ai-interpreter-workbench.html">
+        <svg class="brand-flower" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <circle class="brand-flower-ring" cx="18" cy="18" r="15.5" stroke-width=".9" stroke-dasharray="2.5 6"/>
+          <g class="brand-flower-petals">
+            <ellipse cx="18" cy="12" rx="2.2" ry="6.5" transform="rotate(0 18 18)"/>
+            <ellipse cx="18" cy="12" rx="2.2" ry="6.5" transform="rotate(90 18 18)"/>
+            <ellipse cx="18" cy="12" rx="1.4" ry="5.5" transform="rotate(45 18 18)"/>
+            <ellipse cx="18" cy="12" rx="1.4" ry="5.5" transform="rotate(135 18 18)"/>
+          </g>
+          <circle class="brand-flower-center" cx="18" cy="18" r="3"/>
+        </svg>
+        <div>
+          <p class="brand-title">AIPIWEN指导师工作台</p>
+          <div class="brand-subtitle">AI解读师助手 V1.1</div>
+        </div>
+      </a>
+      <nav class="nav" aria-label="主导航">
+        <a class="nav-link" data-page="workbench" href="ai-interpreter-workbench.html"><span>⌂</span><span>工作台首页</span></a>
+        <a class="nav-link" data-page="customers" href="ai-interpreter-customers.html"><span>◎</span><span>我的客户</span></a>
+        <a class="nav-link" data-page="session" href="ai-interpreter-session.html"><span>◈</span><span>AI解读助手</span></a>
+        <a class="nav-link" data-page="training" href="ai-interpreter-training.html"><span>▣</span><span>解读训练</span></a>
+        <a class="nav-link" data-page="review" href="ai-interpreter-review.html"><span>◇</span><span>总部复核 / 规范</span></a>
+        <a class="nav-link" data-page="cases" href="ai-interpreter-cases.html"><span>✦</span><span>优秀案例沉淀</span></a>
+      </nav>
+      <div class="sidebar-note">
+        客户列表为 mock 展示。V1.1 不接真实 CRM、不做客户通知、不写入数据库。
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">My Customers</p>
+          <h1>我的客户</h1>
+          <p>一线解读师只看自己名下客户；客户本人不进入本系统。</p>
+        </div>
+        <div class="top-actions">
+          <button class="btn ghost" type="button">导出当前筛选</button>
+          <a class="btn primary" href="ai-interpreter-session.html">进入解读助手</a>
+        </div>
+      </header>
+
+      <section class="module">
+        <div class="searchbar" role="search">
+          <input class="field" type="search" placeholder="搜索客户姓名 / 手机号 / 报告类型">
+          <select class="select" aria-label="筛选解读状态">
+            <option>全部状态</option>
+            <option>待解读</option>
+            <option>已完成</option>
+            <option>待复核</option>
+          </select>
+          <select class="select" aria-label="排序方式">
+            <option>最近解读时间</option>
+            <option>客户姓名</option>
+            <option>报告生成时间</option>
+          </select>
+        </div>
+        <div class="tag-row">
+          <span class="tag">报告类型：儿童天赋报告</span>
+          <span class="tag">解读状态：全部</span>
+          <span class="tag">日期范围：近 30 天</span>
+        </div>
+      </section>
+
+      <section class="table-card customer-table" data-dryrun-customers-panel hidden style="margin-top:16px">
+        <div class="card-header" style="padding:16px 16px 0">
+          <div class="card-title">
+            <h2>V2 Dry-run 模拟客户</h2>
+            <small>当前本机已创建 <span data-dryrun-customers-count>0</span> 位模拟客户</small>
+          </div>
+          <a class="btn primary" href="ai-interpreter-session.html">进入解读助手</a>
+        </div>
+        <div class="table-head">
+          <span>客户</span><span>来源</span><span>归属</span><span>绑定方式</span><span>报告摘要</span><span>解读状态</span><span>关注问题</span><span>操作</span>
+        </div>
+        <div data-dryrun-customers-list></div>
+      </section>
+
+      <section class="layout-grid cols-aside" style="margin-top:16px">
+        <div class="table-card customer-table">
+          <div class="table-head">
+            <span>客户</span><span>来源</span><span>归属</span><span>绑定方式</span><span>最近解读</span><span>状态</span><span>风险关注</span><span>操作</span>
+          </div>
+          <button class="table-row js-open-session" type="button">
+            <strong>王小明妈妈</strong><span>张老师专属链接</span><span>张老师</span><span>邀请链接</span><span>2026-07-08</span><span class="status done">已完成</span><span>学习 / 注意力</span><span>进入</span>
+          </button>
+          <button class="table-row js-open-session" type="button">
+            <strong>李大伟</strong><span>AIPIWEN.cn 自然访问</span><span>总部待分配</span><span>公海客户</span><span>2026-07-07</span><span class="status pending">待复核</span><span>职业方向</span><span>进入</span>
+          </button>
+          <button class="table-row js-open-session" type="button">
+            <strong>陈小芳</strong><span>西安采集中心二维码</span><span>西安采集中心</span><span>中心二维码</span><span>2026-07-05</span><span class="status info">待解读</span><span>学习通道</span><span>进入</span>
+          </button>
+          <button class="table-row js-open-session" type="button">
+            <strong>张小花</strong><span>报告绑定码 AIP-8F29K</span><span>李老师</span><span>绑定码</span><span>2026-06-30</span><span class="status done">已完成</span><span>亲子沟通</span><span>进入</span>
+          </button>
+          <button class="table-row js-open-session" type="button">
+            <strong>刘建国</strong><span>张老师专属链接</span><span>张老师</span><span>邀请链接</span><span>2026-06-28</span><span class="status done">已完成</span><span>效率提升</span><span>进入</span>
+          </button>
+          <button class="table-row js-open-session" type="button">
+            <strong>赵小丽</strong><span>AIPIWEN.cn 自然访问</span><span>总部待分配</span><span>公海客户</span><span>2026-06-26</span><span class="status pending">待复核</span><span>家庭关系</span><span>进入</span>
+          </button>
+        </div>
+
+        <aside class="module sticky-column">
+          <div class="card-header">
+            <div class="card-title">
+              <h2>客户详情预览</h2>
+              <small>当前选中：王小明 · 儿童天赋报告</small>
+            </div>
+            <span class="status info">Mock</span>
+          </div>
+          <div class="data-list">
+            <div class="data-item"><span>年龄 / 年级</span><strong>8 岁 / 二年级</strong></div>
+            <div class="data-item"><span>解读对象</span><strong>妈妈</strong></div>
+            <div class="data-item"><span>采集日期</span><strong>2026-06-20</strong></div>
+            <div class="data-item"><span>报告生成</span><strong>2026-07-01</strong></div>
+            <div class="data-item"><span>绑定报告</span><strong>儿童天赋报告</strong></div>
+            <div class="data-item"><span>来源</span><strong>张老师专属链接</strong></div>
+            <div class="data-item"><span>归属</span><strong>张老师</strong></div>
+            <div class="data-item"><span>绑定方式</span><strong>邀请链接</strong></div>
+          </div>
+          <div class="notice" style="margin-top:14px">
+            <strong>客户关注问题</strong>
+            <p>上课注意力不集中、数学成绩偏弱。进入详情页后会作为第⑥步重点回应，并在第⑧步建议复核。</p>
+          </div>
+          <div class="top-actions" style="margin-top:14px; justify-content:flex-start">
+            <a class="btn primary" href="ai-interpreter-session.html">进入 AI解读助手</a>
+            <a class="btn" href="ai-interpreter-review.html">查看复核记录</a>
+          </div>
+        </aside>
+      </section>
+    </main>
+  </div>
+</body>
+</html>

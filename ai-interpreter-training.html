@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>解读训练 · AIPIWEN指导师工作台</title>
+  <meta name="description" content="AIPIWEN AI解读师助手 V1.1 静态 Demo 解读训练">
+  <link rel="stylesheet" href="static/ai-interpreter.css">
+  <script src="static/v3a-auth.js" defer></script>
+  <script src="static/ai-interpreter.js" defer></script>
+</head>
+<body data-v3a-auth-page="workbench" hidden data-page="training">
+  <div class="app-shell">
+    <aside class="sidebar">
+      <a class="brand" href="ai-interpreter-workbench.html">
+        <svg class="brand-flower" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <circle class="brand-flower-ring" cx="18" cy="18" r="15.5" stroke-width=".9" stroke-dasharray="2.5 6"/>
+          <g class="brand-flower-petals">
+            <ellipse cx="18" cy="12" rx="2.2" ry="6.5" transform="rotate(0 18 18)"/>
+            <ellipse cx="18" cy="12" rx="2.2" ry="6.5" transform="rotate(90 18 18)"/>
+            <ellipse cx="18" cy="12" rx="1.4" ry="5.5" transform="rotate(45 18 18)"/>
+            <ellipse cx="18" cy="12" rx="1.4" ry="5.5" transform="rotate(135 18 18)"/>
+          </g>
+          <circle class="brand-flower-center" cx="18" cy="18" r="3"/>
+        </svg>
+        <div>
+          <p class="brand-title">AIPIWEN指导师工作台</p>
+          <div class="brand-subtitle">AI解读师助手 V1.1</div>
+        </div>
+      </a>
+      <nav class="nav" aria-label="主导航">
+        <a class="nav-link" data-page="workbench" href="ai-interpreter-workbench.html"><span>⌂</span><span>工作台首页</span></a>
+        <a class="nav-link" data-page="customers" href="ai-interpreter-customers.html"><span>◎</span><span>我的客户</span></a>
+        <a class="nav-link" data-page="session" href="ai-interpreter-session.html"><span>◈</span><span>AI解读助手</span></a>
+        <a class="nav-link" data-page="training" href="ai-interpreter-training.html"><span>▣</span><span>解读训练</span></a>
+        <a class="nav-link" data-page="review" href="ai-interpreter-review.html"><span>◇</span><span>总部复核 / 规范</span></a>
+        <a class="nav-link" data-page="cases" href="ai-interpreter-cases.html"><span>✦</span><span>优秀案例沉淀</span></a>
+      </nav>
+      <div class="sidebar-note">
+        训练评分、标准答案、表达纠偏均为 mock 展示，不保存学员输入。
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Training</p>
+          <h1>解读训练</h1>
+          <p>通过案例练习、AI 评分、表达纠偏和安全边界测试，加速新人成长。</p>
+        </div>
+        <div class="top-actions">
+          <a class="btn primary" href="ai-interpreter-session.html">进入模拟解读</a>
+          <a class="btn" href="ai-interpreter-cases.html">查看案例来源</a>
+        </div>
+      </header>
+
+      <section class="layout-grid cols-3">
+        <div class="card metric cyan">
+          <div class="metric-value">2/5</div>
+          <div class="metric-label">本周训练完成</div>
+          <div class="progress-line"><span style="width:40%"></span></div>
+          <p>本周重点：新版 8 步流程完整度。</p>
+        </div>
+        <div class="card metric green">
+          <div class="metric-value">82</div>
+          <div class="metric-label">AI 评分均分</div>
+          <p>流程完整度优秀，风险识别仍需加强。</p>
+        </div>
+        <div class="card metric amber">
+          <div class="metric-value">80%</div>
+          <div class="metric-label">数值解释安全度</div>
+          <p>V1.1 新增评分项：检查是否正确传达“数值没有好坏”。</p>
+        </div>
+      </section>
+
+      <section class="layout-grid cols-2" style="margin-top:16px">
+        <div class="module">
+          <div class="card-header">
+            <div class="card-title">
+              <h2>案例练习</h2>
+              <small>系统分配模拟案例 + 脱敏真实案例的概念展示</small>
+            </div>
+            <span class="status info">训练版三栏</span>
+          </div>
+          <div class="notice">
+            <strong>儿童天赋报告解读 · 听觉型学习者</strong>
+            <p>进度 100%。练习重点：第④步 TRC / ATD / 左右脑，解释底层数据。</p>
+            <div class="tag-row" style="margin-top:10px">
+              <span class="status done">已完成</span>
+              <span class="tag">标准答案已解锁</span>
+              <span class="tag">真实反馈片段</span>
+            </div>
+          </div>
+          <div class="notice">
+            <strong>青少年学业压力场景</strong>
+            <p>进度 60%。练习重点：客户追问“以后该学文科还是理科”时的边界回应。</p>
+            <div class="tag-row" style="margin-top:10px">
+              <span class="status pending">进行中</span>
+              <span class="tag">安全边界</span>
+            </div>
+          </div>
+          <div class="notice">
+            <strong>成人职业发展解读</strong>
+            <p>尚未开始。练习重点：不做职业保证，只解释特质底色和环境共同作用。</p>
+            <div class="tag-row" style="margin-top:10px">
+              <span class="status">待开始</span>
+              <span class="tag">成人自测</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="module">
+          <div class="card-header">
+            <div class="card-title">
+              <h2>安全边界测试</h2>
+              <small>高风险场景专项练习</small>
+            </div>
+            <span class="status risk">重点训练</span>
+          </div>
+          <ul class="guide-list">
+            <li>客户问“我孩子是不是有多动症”：识别诊断类陷阱，不做医学判断。</li>
+            <li>客户问“TA 以后该学文科还是理科”：回避替客户做教育决策。</li>
+            <li>报告某项指标较低，客户很担忧：用建设性语言替代负面解读。</li>
+            <li>客户问“这个数值和同龄人比怎么样”：拒绝横向比较，引导关注自身特质。</li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="layout-grid cols-aside" style="margin-top:16px">
+        <div class="module">
+          <div class="card-header">
+            <div class="card-title">
+              <h2>AI 评分卡</h2>
+              <small>练习：儿童天赋报告解读 · 听觉型学习者</small>
+            </div>
+            <span class="status done">82 / 100</span>
+          </div>
+          <div class="score-grid">
+            <div class="score-item"><span>流程完整度</span><div class="bar"><span style="width:95%"></span></div><strong>95%</strong></div>
+            <div class="score-item"><span>话术准确性</span><div class="bar"><span style="width:78%"></span></div><strong>78%</strong></div>
+            <div class="score-item"><span>共情表达</span><div class="bar"><span style="width:88%"></span></div><strong>88%</strong></div>
+            <div class="score-item"><span>风险识别</span><div class="bar"><span style="width:62%"></span></div><strong>62%</strong></div>
+            <div class="score-item"><span>行动建议质量</span><div class="bar"><span style="width:83%"></span></div><strong>83%</strong></div>
+            <div class="score-item"><span>数值解释安全度</span><div class="bar"><span style="width:80%"></span></div><strong>80%</strong></div>
+          </div>
+          <p class="footer-note">评分为静态 mock，用于展示训练模块结构，不代表真实学员成绩。</p>
+        </div>
+
+        <aside class="module">
+          <div class="card-header">
+            <div class="card-title">
+              <h2>表达纠偏</h2>
+              <small>风险词汇和规则违反提示</small>
+            </div>
+          </div>
+          <div class="notice">
+            <strong>解读师原文</strong>
+            <p>“这种类型的人数学能力会比较弱，以后在理科方面可能会遇到困难。”</p>
+          </div>
+          <ul class="guide-list" style="margin-top:12px">
+            <li>“数学能力会比较弱”：绝对判断 + 贴标签，违反“不贴标签”。</li>
+            <li>“以后在理科方面可能会遇到困难”：预测表达，违反“不做未来预测”。</li>
+            <li>建议替换为：在数学相关场景中，可以用更多动手和可视化辅助方式支持孩子理解。</li>
+          </ul>
+        </aside>
+      </section>
+
+      <section class="module boundary" style="margin-top:16px">
+        <div class="card-header">
+          <div class="card-title">
+            <h2>训练案例来源</h2>
+            <small>V1.1 仅做静态演示，不接真实案例库</small>
+          </div>
+        </div>
+        <p>训练案例可来自总部 Emma 上传的标准案例，也可来自“优秀案例沉淀”管道中的脱敏真实案例。但本 Demo 不做真实数据库、不做真实脱敏、不做真实入库。</p>
+      </section>
+    </main>
+  </div>
+</body>
+</html>
