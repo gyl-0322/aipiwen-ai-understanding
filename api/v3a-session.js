@@ -212,7 +212,7 @@ async function readCurrentApplication(config, session) {
     } : null
   };
   if (user.status === 'active' && validRoles.has(user.role)) {
-    const [wallets, inviteCodes] = await Promise.all([
+    const [wallets, inviteCodes, creditLogs] = await Promise.all([
       selectRows(config, session.record.accessToken, 'credit_wallets', {
         select: 'balance',
         user_id: `eq.${user.id}`,
@@ -223,11 +223,31 @@ async function readCurrentApplication(config, session) {
         user_id: `eq.${user.id}`,
         status: 'eq.active',
         limit: 1
+      }),
+      selectRows(config, session.record.accessToken, 'credit_logs', {
+        select: 'id,type,amount,balance_before,balance_after,note,idempotency_key,created_at',
+        user_id: `eq.${user.id}`,
+        order: 'created_at.desc',
+        limit: 50
       })
     ]);
     const balance = Number(wallets[0]?.balance);
     current.wallet = Number.isSafeInteger(balance) && balance >= 0 ? { balance } : null;
     current.inviteCode = normalize(inviteCodes[0]?.code) || null;
+    current.creditLogs = creditLogs.map((row) => ({
+      id: row.id,
+      type: row.type,
+      amount: Number(row.amount),
+      balanceBefore: Number(row.balance_before),
+      balanceAfter: Number(row.balance_after),
+      note: row.note || null,
+      idempotencyKey: row.idempotency_key || null,
+      createdAt: row.created_at
+    })).filter((row) =>
+      Number.isSafeInteger(row.amount) &&
+      Number.isSafeInteger(row.balanceBefore) &&
+      Number.isSafeInteger(row.balanceAfter)
+    );
   }
   return current;
 }

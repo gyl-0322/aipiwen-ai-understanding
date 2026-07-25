@@ -606,10 +606,29 @@
     const city = me.profile?.city || me.user.city || '未设置';
     const status = me.user.status || 'active';
     const balance = normalize(me.wallet?.balance) || '0';
+    const creditLogs = Array.isArray(me.creditLogs) ? me.creditLogs : [];
     const inviteCode = normalize(me.inviteCode) || '待生成';
     const inviteUrl = inviteCode === '待生成'
       ? ''
       : `${window.location.origin}/login.html?invite=${encodeURIComponent(inviteCode)}`;
+    const creditTypeLabels = {
+      REGISTER_BONUS: '注册体验积分',
+      INVITE_REGISTER: '邀请新指导师注册',
+      INVITE_FIRST_USE: '被邀请人首次解读',
+      INVITE_CERTIFIED: '被邀请人认证开通',
+      MANUAL_GRANT: '平台人工加分',
+      MANUAL_DEDUCT: '平台人工扣分',
+      EMMA_GRANT: 'Emma 手动加分',
+      EMMA_DEDUCT: 'Emma 手动扣分',
+      SYSTEM_ADJUST: '系统调整',
+      CREDIT_PURCHASE: '充值购买积分',
+      CREDIT_RECHARGE: '充值购买积分',
+      RECHARGE: '充值购买积分',
+      TOP_UP: '充值购买积分',
+      BUY_CREDITS: '充值购买积分',
+      SERVICE_CONSUME: '解读服务扣费',
+      REPORT_CONSUME: '报告服务扣费'
+    };
 
     function closeDetail() {
       modal.classList.remove('open');
@@ -633,27 +652,42 @@
     function renderCredits() {
       title.textContent = '积分明细';
       subtitle.textContent = '当前余额与入账记录';
+      const rows = creditLogs;
+      const ledger = rows.length ? rows.map((row) => {
+        const amount = Number(row.amount) || 0;
+        const direction = amount >= 0 ? '收入' : '支出';
+        const signedAmount = `${amount > 0 ? '+' : ''}${amount}`;
+        const label = creditTypeLabels[row.type] || row.type || '积分变动';
+        const note = normalize(row.note) || direction;
+        const balanceBefore = Number.isFinite(Number(row.balanceBefore)) ? row.balanceBefore : '-';
+        const balanceAfter = Number.isFinite(Number(row.balanceAfter)) ? row.balanceAfter : '-';
+        return `
+          <div class="credit-detail-item ${amount >= 0 ? 'is-income' : 'is-expense'}">
+            <div>
+              <strong>${escapeHtml(label)}</strong>
+              <small>${escapeHtml(note)} · ${escapeHtml(formatTime(row.createdAt))}</small>
+              <small>余额 ${escapeHtml(balanceBefore)} → ${escapeHtml(balanceAfter)}</small>
+            </div>
+            <em>${escapeHtml(signedAmount)}</em>
+          </div>
+        `;
+      }).join('') : `
+        <div class="credit-detail-item">
+          <div>
+            <strong>暂无积分流水</strong>
+            <small>积分收入、支出、充值和邀请奖励产生后会在这里显示。</small>
+          </div>
+          <span>--</span>
+        </div>
+      `;
       body.innerHTML = `
         <div class="workbench-detail-section">
           <div class="data-list">
             <div class="data-item"><span>当前积分</span><strong>${escapeHtml(balance)}</strong></div>
-            <div class="data-item"><span>积分用途</span><strong>工作台解读服务</strong></div>
+            <div class="data-item"><span>流水范围</span><strong>最近 ${escapeHtml(String(rows.length))} 条</strong></div>
           </div>
           <div class="credit-detail-list">
-            <div class="credit-detail-item">
-              <div>
-                <strong>注册体验积分</strong>
-                <small>REGISTER_BONUS · 普通指导师自动开通</small>
-              </div>
-              <em>+500</em>
-            </div>
-            <div class="credit-detail-item">
-              <div>
-                <strong>邀请奖励记录</strong>
-                <small>后续邀请新人、完成解读、认证开通等奖励会在这里逐条显示。</small>
-              </div>
-              <span>待产生</span>
-            </div>
+            ${ledger}
           </div>
         </div>
       `;

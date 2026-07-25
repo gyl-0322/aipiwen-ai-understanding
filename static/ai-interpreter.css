@@ -500,10 +500,17 @@ p {
   display: grid;
   grid-template-columns: 1fr auto;
   gap: 8px 16px;
+  align-items: start;
   padding: 12px;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: rgba(255, 255, 255, .035);
+}
+
+.credit-detail-item > div {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
 }
 
 .credit-detail-item strong {
@@ -520,6 +527,10 @@ p {
   color: var(--green);
   font-style: normal;
   font-weight: 900;
+}
+
+.credit-detail-item.is-expense em {
+  color: #ff9b9b;
 }
 
 .qr-detail-grid {

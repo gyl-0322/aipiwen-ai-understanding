@@ -236,6 +236,19 @@ function createFetch(options = {}) {
       if (businessStatus !== 'active') throw new Error('pending 用户不得读取钱包');
       return response(200, [{ balance: options.walletBalance ?? 500 }]);
     }
+    if (url.pathname === '/rest/v1/credit_logs') {
+      if (businessStatus !== 'active') throw new Error('pending 用户不得读取积分流水');
+      return response(200, options.creditLogs || [{
+        id: '11111111-1111-4111-8111-111111111111',
+        type: 'REGISTER_BONUS',
+        amount: 500,
+        balance_before: 0,
+        balance_after: options.walletBalance ?? 500,
+        note: '普通指导师自动开通',
+        idempotency_key: 'REGISTER_BONUS:test:AUTO_ADVISOR_ACTIVATION',
+        created_at: '2026-07-15T00:00:00.000Z'
+      }]);
+    }
     if (url.pathname === '/rest/v1/invite_codes') {
       if (businessStatus !== 'active') throw new Error('pending 用户不得读取邀请码');
       return response(200, [{ code: options.inviteCode || 'ADV-ABCDEFGH' }]);
@@ -859,7 +872,7 @@ async function run() {
   upstream = supabaseCalls(lifecycleFetch.calls.slice(mark));
   let refreshCalls = upstream.filter(({ url }) => new URL(url).pathname === '/auth/v1/token');
   assert.equal(refreshCalls.length, 0, 'access token 尚有 60 秒以上有效期时不得刷新');
-  assert.equal(upstream.some(({ url }) => ['/rest/v1/credit_wallets', '/rest/v1/invite_codes']
+  assert.equal(upstream.some(({ url }) => ['/rest/v1/credit_wallets', '/rest/v1/credit_logs', '/rest/v1/invite_codes']
     .includes(new URL(url).pathname)), false, 'pending 用户不得查询钱包或邀请码');
   sessionRecord = assertEncryptedKv(lifecycleFetch.kvStore, sid);
 
@@ -883,10 +896,22 @@ async function run() {
   const activeMe = payload(activeResult.res).me;
   assert.deepStrictEqual(JSON.parse(JSON.stringify(activeMe.wallet)), { balance: 500 });
   assert.equal(activeMe.inviteCode, 'ADV-ABCDEFGH');
+  assert.deepStrictEqual(JSON.parse(JSON.stringify(activeMe.creditLogs)), [{
+    id: '11111111-1111-4111-8111-111111111111',
+    type: 'REGISTER_BONUS',
+    amount: 500,
+    balanceBefore: 0,
+    balanceAfter: 500,
+    note: '普通指导师自动开通',
+    idempotencyKey: 'REGISTER_BONUS:test:AUTO_ADVISOR_ACTIVATION',
+    createdAt: '2026-07-15T00:00:00.000Z'
+  }]);
   const activeAssetPaths = supabaseCalls(activeFetch.calls.slice(activeMark))
     .map(({ url }) => new URL(url).pathname);
   assert.equal(activeAssetPaths.filter((value) => value === '/rest/v1/credit_wallets').length, 1,
     'active 用户只能读取一次 own wallet');
+  assert.equal(activeAssetPaths.filter((value) => value === '/rest/v1/credit_logs').length, 1,
+    'active 用户只能读取一次 own credit logs');
   assert.equal(activeAssetPaths.filter((value) => value === '/rest/v1/invite_codes').length, 1,
     'active 用户只能读取一次 own active invite code');
 
@@ -911,6 +936,8 @@ async function run() {
   assert.equal(reboundPayload.me.user.status, 'active');
   assert.deepStrictEqual(JSON.parse(JSON.stringify(reboundPayload.me.wallet)), { balance: 500 });
   assert.equal(reboundPayload.me.inviteCode, 'ADV-ABCDEFGH');
+  assert.equal(reboundPayload.me.creditLogs.length, 1,
+    '恢复后的 active 用户必须带回自己的积分流水');
   const reboundRpcCalls = supabaseCalls(reboundFetch.calls)
     .filter(({ url }) => new URL(url).pathname === '/rest/v1/rpc/v3a_rebind_verified_phone_account');
   assert.equal(reboundRpcCalls.length, 1, '同手机号错绑恢复只能调用一次受控 rebind RPC');
