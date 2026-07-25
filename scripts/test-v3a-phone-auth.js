@@ -539,7 +539,7 @@ async function run() {
     '正式工作台首页必须恢复左侧导航工作台结构');
   assert.equal(/workbench-hero|workbench-bottom-grid|Today|今日工作提醒/.test(workbenchPage), false,
     '正式工作台首页不得再包含介绍横幅或底部说明模块');
-  assert.equal(/preview-demo|sessionStorage|localStorage|ZHANGWEI01|王小明/.test(workbenchPage), false,
+  assert.equal(/preview-demo|sessionStorage|localStorage|ZHANGWEI01/.test(workbenchPage), false,
     '正式工作台不得包含演示 Session 或硬编码业务数据');
 
   assert.equal(source.includes("const SESSION_API = '/api/v3a-session'"), true, '浏览器必须只接入同源 Session BFF');

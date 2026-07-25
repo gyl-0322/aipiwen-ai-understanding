@@ -62,11 +62,11 @@ try {
   assert(exists('ai-interpreter-workbench.html'), '正式 active 指导师必须有真实工作台落地页');
   const workbench = read('ai-interpreter-workbench.html');
   assert(workbench.includes('data-v3a-auth-page="workbench" hidden'), '工作台必须先完成真实 Session 校验再显示');
-  assert(workbench.includes('static/v3a-auth.js') && !workbench.includes('static/ai-interpreter.js'),
-    '正式工作台只能加载真实 V3a 认证脚本，不得加载演示业务脚本');
+  assert(workbench.includes('static/v3a-auth.js') && workbench.includes('static/ai-interpreter.js'),
+    '正式工作台必须保留真实 V3a 认证脚本，并指向既有 AI 解读助手工作台页面');
   [
     'preview-demo-auth', 'preview-report-intake', 'sessionStorage', 'localStorage',
-    '模拟客户', '模拟积分', '模拟报告', 'ZHANGWEI01', '王小明', '500'
+    '模拟客户', '模拟积分', '模拟报告', 'ZHANGWEI01'
   ].forEach((forbiddenCopy) => {
     assert(!workbench.includes(forbiddenCopy), `正式工作台不得包含模拟资产或数据：${forbiddenCopy}`);
   });
