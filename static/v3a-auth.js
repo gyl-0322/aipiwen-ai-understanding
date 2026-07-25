@@ -51,6 +51,15 @@
     if (node) node.textContent = normalize(value) || fallback;
   }
 
+  function escapeHtml(value) {
+    return normalize(value)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
   function setBusy(form, busy) {
     form?.querySelectorAll('button, input, select').forEach((node) => {
       node.disabled = busy;
@@ -585,6 +594,152 @@
     }
   }
 
+  function initWorkbenchDetails(me) {
+    const modal = $('#v3a-workbench-detail-modal');
+    const title = $('#v3a-workbench-detail-title');
+    const subtitle = $('#v3a-workbench-detail-subtitle');
+    const body = $('#v3a-workbench-detail-body');
+    if (!modal || !title || !subtitle || !body) return;
+
+    const role = roleLabels[me.user.role] || me.user.role || '指导师';
+    const displayName = me.profile?.nickname || me.user.displayName || '已验证账号';
+    const city = me.profile?.city || me.user.city || '未设置';
+    const status = me.user.status || 'active';
+    const balance = normalize(me.wallet?.balance) || '0';
+    const inviteCode = normalize(me.inviteCode) || '待生成';
+    const inviteUrl = inviteCode === '待生成'
+      ? ''
+      : `${window.location.origin}/login.html?invite=${encodeURIComponent(inviteCode)}`;
+
+    function closeDetail() {
+      modal.classList.remove('open');
+      modal.setAttribute('aria-hidden', 'true');
+      body.innerHTML = '';
+    }
+
+    function renderProfile() {
+      title.textContent = '身份资料';
+      subtitle.textContent = '当前登录指导师账号';
+      body.innerHTML = `
+        <div class="workbench-detail-section data-list">
+          <div class="data-item"><span>昵称 / 从业名</span><strong>${escapeHtml(displayName)}</strong></div>
+          <div class="data-item"><span>所在城市</span><strong>${escapeHtml(city)}</strong></div>
+          <div class="data-item"><span>账号状态</span><strong>${escapeHtml(status)}</strong></div>
+          <div class="data-item"><span>身份</span><strong>${escapeHtml(role)}</strong></div>
+        </div>
+      `;
+    }
+
+    function renderCredits() {
+      title.textContent = '积分明细';
+      subtitle.textContent = '当前余额与入账记录';
+      body.innerHTML = `
+        <div class="workbench-detail-section">
+          <div class="data-list">
+            <div class="data-item"><span>当前积分</span><strong>${escapeHtml(balance)}</strong></div>
+            <div class="data-item"><span>积分用途</span><strong>工作台解读服务</strong></div>
+          </div>
+          <div class="credit-detail-list">
+            <div class="credit-detail-item">
+              <div>
+                <strong>注册体验积分</strong>
+                <small>REGISTER_BONUS · 普通指导师自动开通</small>
+              </div>
+              <em>+500</em>
+            </div>
+            <div class="credit-detail-item">
+              <div>
+                <strong>邀请奖励记录</strong>
+                <small>后续邀请新人、完成解读、认证开通等奖励会在这里逐条显示。</small>
+              </div>
+              <span>待产生</span>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function syncQrDownload() {
+      const qrNode = $('#v3a-workbench-qr');
+      const download = $('#v3a-workbench-qr-download');
+      if (!qrNode || !download) return;
+      const canvas = qrNode.querySelector('canvas');
+      const image = qrNode.querySelector('img');
+      if (canvas) download.href = canvas.toDataURL('image/png');
+      else if (image) download.href = image.src;
+    }
+
+    function renderQr() {
+      const qrNode = $('#v3a-workbench-qr');
+      if (!qrNode || !inviteUrl) return;
+      qrNode.innerHTML = '';
+      if (window.QRCode) {
+        new window.QRCode(qrNode, {
+          text: inviteUrl,
+          width: 168,
+          height: 168,
+          colorDark: '#0b111b',
+          colorLight: '#ffffff',
+          correctLevel: window.QRCode.CorrectLevel.M
+        });
+        window.setTimeout(syncQrDownload, 50);
+      } else {
+        qrNode.textContent = '二维码加载失败，请复制邀请链接。';
+      }
+    }
+
+    function renderInvite() {
+      title.textContent = '邀请码';
+      subtitle.textContent = '扫码或下载二维码邀请新指导师';
+      body.innerHTML = `
+        <div class="workbench-detail-section qr-detail-grid">
+          <div class="qr-box" id="v3a-workbench-qr">正在生成二维码</div>
+          <div class="data-list">
+            <div class="data-item"><span>邀请码</span><strong>${escapeHtml(inviteCode)}</strong></div>
+            <div class="invite-link-box">
+              <span>邀请链接</span>
+              <code>${escapeHtml(inviteUrl || '邀请码生成后可用')}</code>
+            </div>
+            <div class="top-actions" style="justify-content:flex-start">
+              <button class="btn ghost" type="button" data-v3a-copy-invite ${inviteUrl ? '' : 'disabled'}>复制链接</button>
+              <a class="btn primary" id="v3a-workbench-qr-download" href="#" download="AIPIWEN-邀请码-${escapeHtml(inviteCode)}.png">下载二维码</a>
+            </div>
+          </div>
+        </div>
+      `;
+      renderQr();
+      body.querySelector('[data-v3a-copy-invite]')?.addEventListener('click', async () => {
+        try {
+          await navigator.clipboard?.writeText(inviteUrl);
+          showMessage('#v3a-workbench-message', '邀请链接已复制。');
+        } catch {
+          showMessage('#v3a-workbench-message', '复制失败，请手动复制邀请链接。');
+        }
+      });
+    }
+
+    function openDetail(type) {
+      showMessage('#v3a-workbench-message', '');
+      if (type === 'profile') renderProfile();
+      if (type === 'credits') renderCredits();
+      if (type === 'invite') renderInvite();
+      modal.classList.add('open');
+      modal.setAttribute('aria-hidden', 'false');
+      modal.querySelector('[data-v3a-detail-close]')?.focus();
+    }
+
+    document.querySelectorAll('[data-v3a-detail]').forEach((button) => {
+      button.addEventListener('click', () => openDetail(button.dataset.v3aDetail));
+    });
+    modal.querySelector('[data-v3a-detail-close]')?.addEventListener('click', closeDetail);
+    modal.addEventListener('click', (event) => {
+      if (event.target === modal) closeDetail();
+    });
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && modal.classList.contains('open')) closeDetail();
+    });
+  }
+
   function initMobileNavigation() {
     const sidebar = $('.sidebar');
     const nav = sidebar?.querySelector('.nav');
@@ -625,16 +780,10 @@
         routeByStatus(me, messageSelector);
         return;
       }
-      setText('#v3a-workbench-name', me.profile?.nickname || me.user.displayName, '已验证账号');
-      setText('#v3a-workbench-city', me.profile?.city || me.user.city, '未设置');
-      setText('#v3a-workbench-status', me.user.status, 'active');
       setText('#v3a-workbench-role', roleLabels[me.user.role] || me.user.role, '已激活');
-      setText('#v3a-workbench-role-label', roleLabels[me.user.role] || me.user.role, '读取中');
       setText('#v3a-workbench-balance', me.wallet?.balance, '待同步');
       setText('#v3a-workbench-invite-code', me.inviteCode, '待生成');
-      setText('#v3a-workbench-balance-copy', me.wallet?.balance, '待同步');
-      setText('#v3a-workbench-invite-copy', me.inviteCode, '待生成');
-      setText('#v3a-workbench-invite-inline', me.inviteCode, '待生成');
+      initWorkbenchDetails(me);
       initMobileNavigation();
       document.body.hidden = false;
     } catch (error) {

@@ -6,6 +6,7 @@
   <title>AIPIWEN指导师工作台</title>
   <meta name="description" content="AIPIWEN 指导师工作台首页">
   <link rel="stylesheet" href="static/ai-interpreter.css">
+  <script src="https://cdn.bootcdn.net/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" defer></script>
   <script src="static/v3a-auth.js" defer></script>
   <script src="static/ai-interpreter.js" defer></script>
 </head>
@@ -49,50 +50,22 @@
           <p>把一份报告转化为客户听得懂、用得上、风险可控的专业解读。</p>
         </div>
         <div class="workbench-account-strip" aria-label="当前账号">
-          <div>
+          <button class="workbench-chip" type="button" data-v3a-detail="profile" aria-label="查看身份资料">
             <span>身份</span>
             <strong id="v3a-workbench-role">读取中</strong>
-          </div>
-          <div>
+          </button>
+          <button class="workbench-chip" type="button" data-v3a-detail="credits" aria-label="查看积分明细">
             <span>积分</span>
             <strong id="v3a-workbench-balance">读取中</strong>
-          </div>
-          <div>
+          </button>
+          <button class="workbench-chip" type="button" data-v3a-detail="invite" aria-label="查看邀请码二维码">
             <span>邀请码</span>
             <strong id="v3a-workbench-invite-code">读取中</strong>
-          </div>
+          </button>
           <button class="btn ghost" id="v3a-workbench-logout" type="button">退出登录</button>
         </div>
       </header>
       <p class="dryrun-error" id="v3a-workbench-message" role="status" aria-live="polite" hidden></p>
-
-      <section class="module" aria-label="当前账号状态">
-        <div class="card-header">
-          <div class="card-title">
-            <h2>当前工作台账号</h2>
-            <small>真实账号数据来自当前登录会话</small>
-          </div>
-          <span class="status info">已登录</span>
-        </div>
-        <div class="dryrun-summary-grid">
-          <div>
-            <span>昵称</span>
-            <strong id="v3a-workbench-name">读取中</strong>
-          </div>
-          <div>
-            <span>城市</span>
-            <strong id="v3a-workbench-city">读取中</strong>
-          </div>
-          <div>
-            <span>账号状态</span>
-            <strong id="v3a-workbench-status">读取中</strong>
-          </div>
-          <div>
-            <span>身份</span>
-            <strong id="v3a-workbench-role-label">读取中</strong>
-          </div>
-        </div>
-      </section>
 
       <section class="layout-grid cols-3" aria-label="今日概览">
         <div class="card metric cyan">
@@ -112,43 +85,7 @@
         </div>
       </section>
 
-      <section class="layout-grid cols-aside" style="margin-top:16px">
-        <div class="module credit-card">
-          <div class="card-header">
-            <div class="card-title">
-              <h2>积分账户</h2>
-              <small>真实账号数据来自当前登录会话</small>
-            </div>
-            <span class="status info">体验额度</span>
-          </div>
-          <div class="credit-overview">
-            <div>
-              <span>当前积分</span>
-              <strong id="v3a-workbench-balance-copy">读取中</strong>
-            </div>
-            <div>
-              <span>账号权益</span>
-              <strong>已开通</strong>
-            </div>
-            <div>
-              <span>积分用途</span>
-              <strong>解读服务</strong>
-            </div>
-            <div>
-              <span>邀请码</span>
-              <strong id="v3a-workbench-invite-copy">读取中</strong>
-            </div>
-          </div>
-          <div class="invite-link-box">
-            <span>我的邀请码</span>
-            <code id="v3a-workbench-invite-inline">读取中</code>
-          </div>
-          <div class="top-actions" style="justify-content:flex-start; margin-top:14px">
-            <a class="btn primary" href="ai-interpreter-session.html">进入 AI 解读助手</a>
-            <a class="btn ghost" href="ai-interpreter-customers.html">查看我的客户</a>
-          </div>
-        </div>
-
+      <section class="layout-grid" style="margin-top:16px">
         <div class="module invite-rule-card">
           <div class="card-header">
             <div class="card-title">
@@ -264,6 +201,19 @@
         </div>
       </section>
     </main>
+  </div>
+
+  <div class="modal-layer" id="v3a-workbench-detail-modal" aria-hidden="true">
+    <div class="modal-card workbench-detail-modal" role="dialog" aria-modal="true" aria-labelledby="v3a-workbench-detail-title">
+      <div class="card-header">
+        <div class="card-title">
+          <h2 id="v3a-workbench-detail-title">账号详情</h2>
+          <small id="v3a-workbench-detail-subtitle">当前登录账号</small>
+        </div>
+        <button class="icon-btn" type="button" data-v3a-detail-close aria-label="关闭">×</button>
+      </div>
+      <div id="v3a-workbench-detail-body"></div>
+    </div>
   </div>
 </body>
 </html>

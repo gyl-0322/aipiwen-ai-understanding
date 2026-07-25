@@ -11,6 +11,9 @@ const pages = [
   ['ai-interpreter-cases.html', '优秀案例沉淀']
 ];
 const allowedMissing = new Set(['advisor-dryrun-new-customer.html']);
+const allowedExternalScripts = new Set([
+  'https://cdn.bootcdn.net/ajax/libs/qrcodejs/1.0.0/qrcode.min.js'
+]);
 
 function read(relativePath) {
   return fs.readFileSync(path.join(root, relativePath), 'utf8');
@@ -41,6 +44,10 @@ for (const [page, title] of pages) {
 
   const scripts = Array.from(source.matchAll(/src="([^"]+)"/g)).map((match) => match[1]);
   for (const script of scripts) {
+    if (/^https:\/\//.test(script)) {
+      assert(allowedExternalScripts.has(script), `页面加载了未登记的外部脚本：${page} -> ${script}`);
+      continue;
+    }
     assert(exists(script), `页面脚本指向不存在文件：${page} -> ${script}`);
   }
 }
@@ -82,5 +89,14 @@ assert(review.includes('data-review-card="waiting"') &&
   review.includes('data-review-card="returned"') &&
   review.includes('data-review-card="draft"'),
   '总部复核页必须保留状态卡片');
+
+const workbench = read('ai-interpreter-workbench.html');
+assert(!workbench.includes('<h2>当前工作台账号</h2>'), '工作台首页不应再展示重复的当前账号卡片');
+assert(!workbench.includes('<h2>积分账户</h2>'), '工作台首页不应再展示重复的积分账户卡片');
+assert(workbench.includes('data-v3a-detail="profile"') &&
+  workbench.includes('data-v3a-detail="credits"') &&
+  workbench.includes('data-v3a-detail="invite"'),
+  '工作台右上角身份、积分、邀请码必须可点击查看详情');
+assert(workbench.includes('id="v3a-workbench-detail-modal"'), '工作台必须包含账号详情弹窗');
 
 console.log('PASS: AI interpreter workbench pages, protected routes, nav links, and interaction hooks');

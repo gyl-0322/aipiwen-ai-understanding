@@ -442,7 +442,8 @@ p {
   max-width: 620px;
 }
 
-.workbench-account-strip div {
+.workbench-account-strip div,
+.workbench-chip {
   min-width: 104px;
   min-height: 48px;
   display: grid;
@@ -452,6 +453,17 @@ p {
   border: 1px solid rgba(149, 173, 211, .16);
   border-radius: 8px;
   background: rgba(255, 255, 255, .035);
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+}
+
+.workbench-chip:hover,
+.workbench-chip:focus-visible {
+  border-color: rgba(82, 213, 232, .52);
+  background: rgba(82, 213, 232, .08);
+  outline: none;
 }
 
 .workbench-account-strip span {
@@ -467,6 +479,70 @@ p {
   font-weight: 900;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.workbench-detail-modal {
+  width: min(620px, 100%);
+}
+
+.workbench-detail-section {
+  display: grid;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.credit-detail-list {
+  display: grid;
+  gap: 10px;
+}
+
+.credit-detail-item {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px 16px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, .035);
+}
+
+.credit-detail-item strong {
+  color: var(--text);
+}
+
+.credit-detail-item span,
+.credit-detail-item small {
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.credit-detail-item em {
+  color: var(--green);
+  font-style: normal;
+  font-weight: 900;
+}
+
+.qr-detail-grid {
+  display: grid;
+  grid-template-columns: 190px minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.qr-box {
+  min-height: 190px;
+  display: grid;
+  place-items: center;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.qr-box img,
+.qr-box canvas {
+  width: 168px;
+  height: 168px;
 }
 
 .workbench-hero {
@@ -2191,8 +2267,13 @@ body[data-page="advisor"] .value-card {
     justify-content: stretch;
   }
 
-  .workbench-account-strip div {
+  .workbench-account-strip div,
+  .workbench-chip {
     flex: 1 1 140px;
+  }
+
+  .qr-detail-grid {
+    grid-template-columns: 1fr;
   }
 
   .workbench-entry {
