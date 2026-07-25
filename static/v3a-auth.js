@@ -694,13 +694,16 @@
       body.innerHTML = `
         <div class="workbench-detail-section qr-detail-grid">
           <div class="qr-box" id="v3a-workbench-qr">正在生成二维码</div>
-          <div class="data-list">
-            <div class="data-item"><span>邀请码</span><strong>${escapeHtml(inviteCode)}</strong></div>
-            <div class="invite-link-box">
+          <div class="invite-detail-panel">
+            <div class="invite-code-display">
+              <span>邀请码</span>
+              <strong>${escapeHtml(inviteCode)}</strong>
+            </div>
+            <div class="invite-url-field">
               <span>邀请链接</span>
               <code>${escapeHtml(inviteUrl || '邀请码生成后可用')}</code>
             </div>
-            <div class="top-actions" style="justify-content:flex-start">
+            <div class="top-actions invite-actions">
               <button class="btn ghost" type="button" data-v3a-copy-invite ${inviteUrl ? '' : 'disabled'}>复制链接</button>
               <a class="btn primary" id="v3a-workbench-qr-download" href="#" download="AIPIWEN-邀请码-${escapeHtml(inviteCode)}.png">下载二维码</a>
             </div>
