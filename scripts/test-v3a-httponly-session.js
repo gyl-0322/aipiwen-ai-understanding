@@ -9,9 +9,10 @@ const vm = require('vm');
 const sourcePath = path.join(__dirname, '..', 'api', 'v3a-session.js');
 const source = fs.readFileSync(sourcePath, 'utf8');
 
-const PREVIEW_REF = 'lmjriqncuopgxwyudfee';
-const PRODUCTION_REF = 'tysbwijizgebnrazxpvo';
-const PREVIEW_URL = `https://${PREVIEW_REF}.supabase.co`;
+const SESSION_PROJECT_REF = 'session-test-project';
+const ALTERNATE_PROJECT_REF = 'session-alternate-project';
+const SESSION_SUPABASE_URL = `https://${SESSION_PROJECT_REF}.supabase.co`;
+const ALTERNATE_SUPABASE_URL = `https://${ALTERNATE_PROJECT_REF}.supabase.co`;
 const ALLOWED_ORIGIN = 'https://preview.aipiwen.cn';
 const DEPLOYMENT_HOST = 'aipiwen-ai-understanding-a5lprbyl2-guo-yanling-s-projects.vercel.app';
 const DEPLOYMENT_ORIGIN = `https://${DEPLOYMENT_HOST}`;
@@ -37,8 +38,6 @@ const ALLOWED_ENV = new Set([
   'NEXT_PUBLIC_SUPABASE_URL',
   'NEXT_PUBLIC_SUPABASE_ANON_KEY',
   'V3A_SUPABASE_PROJECT_REF',
-  'VERCEL_ENV',
-  'VERCEL_TARGET_ENV',
   'V3A_ALLOWED_ORIGIN',
   'V3A_ALLOWED_ORIGINS',
   'VERCEL_URL',
@@ -50,13 +49,11 @@ const ALLOWED_ENV = new Set([
   'UPSTASH_REDIS_REST_TOKEN'
 ]);
 
-function previewEnv(overrides = {}) {
+function sessionEnv(overrides = {}) {
   return {
-    V3A_SUPABASE_URL: PREVIEW_URL,
+    V3A_SUPABASE_URL: SESSION_SUPABASE_URL,
     V3A_SUPABASE_ANON_KEY: ANON_KEY,
-    V3A_SUPABASE_PROJECT_REF: PREVIEW_REF,
-    VERCEL_ENV: 'preview',
-    VERCEL_TARGET_ENV: 'preview',
+    V3A_SUPABASE_PROJECT_REF: SESSION_PROJECT_REF,
     V3A_ALLOWED_ORIGIN: ALLOWED_ORIGIN,
     VERCEL_URL: DEPLOYMENT_HOST,
     V3A_SESSION_ENCRYPTION_KEY: SESSION_ENCRYPTION_KEY,
@@ -147,7 +144,8 @@ function createFetch(options = {}) {
       throw new Error(`Unexpected KV path: ${url.pathname}`);
     }
 
-    assert.equal(url.origin, PREVIEW_URL, '所有 Supabase 请求必须固定在 Preview 项目');
+    assert.equal(url.origin, options.supabaseUrl || SESSION_SUPABASE_URL,
+      '所有 Supabase 请求必须固定在环境声明的项目');
     if (/\/auth\/v1\/admin\/users\/?$/.test(url.pathname)) {
       throw new Error('Session API must never create an admin Auth user');
     }
@@ -375,7 +373,7 @@ function createResponse() {
 
 async function invoke(options = {}) {
   const fetchStub = options.fetchStub || createFetch();
-  const env = options.env || previewEnv();
+  const env = options.env || sessionEnv();
   const loaded = options.loaded || loadHandler(env, fetchStub);
   const { handler, envReads } = loaded;
   const defaultHeaders = options.method === 'POST'
@@ -534,8 +532,8 @@ function kvCommands(calls) {
     .flatMap(({ body }) => Array.isArray(body?.[0]) ? body : [body]);
 }
 
-function supabaseCalls(calls) {
-  return calls.filter(({ url }) => new URL(url).origin === PREVIEW_URL);
+function supabaseCalls(calls, supabaseUrl = SESSION_SUPABASE_URL) {
+  return calls.filter(({ url }) => new URL(url).origin === supabaseUrl);
 }
 
 function restMutations(calls) {
@@ -566,7 +564,7 @@ function assertPrivateRateKeys(fetchStub, scopes, identifiers) {
 }
 
 async function run() {
-  const enabledEnv = previewEnv({ V3A_PHONE_OTP_ENABLED: 'true' });
+  const enabledEnv = sessionEnv({ V3A_PHONE_OTP_ENABLED: 'true' });
   let result;
 
   assert.equal(/auth\/v1\/admin\/users|admin\.createUser|auth\.admin\.createUser|\.signUp\s*\(/.test(source), false,
@@ -578,21 +576,35 @@ async function run() {
   assert.equal(source.includes('V3A_SESSION_SECRET'), false,
     'Session 加密只能使用统一的 V3A_SESSION_ENCRYPTION_KEY');
 
+  const alternateFetchStub = createFetch({ supabaseUrl: ALTERNATE_SUPABASE_URL });
+  const alternateResult = await invoke({
+    method: 'POST',
+    action: 'request_otp',
+    body: { phone: PHONE },
+    headers: otpHeaders('203.0.113.8'),
+    env: sessionEnv({
+      V3A_SUPABASE_URL: ALTERNATE_SUPABASE_URL,
+      V3A_SUPABASE_PROJECT_REF: ALTERNATE_PROJECT_REF,
+      V3A_PHONE_OTP_ENABLED: 'true'
+    }),
+    fetchStub: alternateFetchStub
+  });
+  assert.equal(alternateResult.res.statusCode, 200,
+    '任意环境的 Supabase URL 与 Project Ref 一致时必须通过');
+  assert.equal(supabaseCalls(alternateFetchStub.calls, ALTERNATE_SUPABASE_URL).length, 1,
+    '替代环境只能请求其声明的 Supabase URL');
+
   for (const env of [
-    previewEnv({ V3A_SUPABASE_URL: `https://${PRODUCTION_REF}.supabase.co`, V3A_SUPABASE_PROJECT_REF: PRODUCTION_REF }),
-    previewEnv({ V3A_SUPABASE_URL: `https://${PRODUCTION_REF}.supabase.co` }),
-    previewEnv({ V3A_SUPABASE_PROJECT_REF: PRODUCTION_REF }),
-    previewEnv({ V3A_SUPABASE_PROJECT_REF: 'another-project-ref' }),
-    previewEnv({ VERCEL_ENV: 'production' }),
-    previewEnv({ VERCEL_TARGET_ENV: 'production' }),
-    previewEnv({ V3A_ALLOWED_ORIGIN: `${ALLOWED_ORIGIN}/path` }),
-    previewEnv({ V3A_ALLOWED_ORIGIN: '', VERCEL_URL: '' }),
-    previewEnv({ VERCEL_URL: 'preview.aipiwen.cn' }),
-    previewEnv({ VERCEL_URL: `${DEPLOYMENT_HOST}/path` }),
-    previewEnv({ V3A_SESSION_ENCRYPTION_KEY: '' }),
-    previewEnv({ V3A_SESSION_ENCRYPTION_KEY: Buffer.alloc(31, 7).toString('base64') }),
-    previewEnv({ V3A_SESSION_ENCRYPTION_KEY: 'not-valid-base64!' }),
-    previewEnv({ KV_REST_API_URL: '', KV_REST_API_TOKEN: '' })
+    sessionEnv({ V3A_SUPABASE_URL: ALTERNATE_SUPABASE_URL }),
+    sessionEnv({ V3A_SUPABASE_PROJECT_REF: ALTERNATE_PROJECT_REF }),
+    sessionEnv({ V3A_ALLOWED_ORIGIN: `${ALLOWED_ORIGIN}/path` }),
+    sessionEnv({ V3A_ALLOWED_ORIGIN: '', VERCEL_URL: '' }),
+    sessionEnv({ VERCEL_URL: 'preview.aipiwen.cn' }),
+    sessionEnv({ VERCEL_URL: `${DEPLOYMENT_HOST}/path` }),
+    sessionEnv({ V3A_SESSION_ENCRYPTION_KEY: '' }),
+    sessionEnv({ V3A_SESSION_ENCRYPTION_KEY: Buffer.alloc(31, 7).toString('base64') }),
+    sessionEnv({ V3A_SESSION_ENCRYPTION_KEY: 'not-valid-base64!' }),
+    sessionEnv({ KV_REST_API_URL: '', KV_REST_API_TOKEN: '' })
   ]) {
     const fetchStub = createFetch();
     const result = await invoke({
@@ -602,28 +614,26 @@ async function run() {
       env: { ...env, V3A_PHONE_OTP_ENABLED: 'true' },
       fetchStub
     });
-    assert.equal(result.res.statusCode, 503, '无效 Preview、Origin、KV 或 Session encryption key 配置必须返回 503');
+    assert.equal(result.res.statusCode, 503, 'URL/ref 错配、Origin、KV 或 Session encryption key 配置无效时必须返回 503');
     assert.equal(fetchStub.calls.length, 0, '配置门禁失败时不得发起任何网络请求');
   }
 
-  const genericSupabaseEnv = previewEnv({ V3A_PHONE_OTP_ENABLED: 'true' });
-  genericSupabaseEnv.NEXT_PUBLIC_SUPABASE_URL = genericSupabaseEnv.V3A_SUPABASE_URL;
-  genericSupabaseEnv.NEXT_PUBLIC_SUPABASE_ANON_KEY = genericSupabaseEnv.V3A_SUPABASE_ANON_KEY;
-  delete genericSupabaseEnv.V3A_SUPABASE_URL;
-  delete genericSupabaseEnv.V3A_SUPABASE_ANON_KEY;
-  let genericFetchStub = createFetch();
-  let genericResult = await invoke({
+  const missingPrivateUrlEnv = sessionEnv({ V3A_PHONE_OTP_ENABLED: 'true' });
+  missingPrivateUrlEnv.NEXT_PUBLIC_SUPABASE_URL = missingPrivateUrlEnv.V3A_SUPABASE_URL;
+  delete missingPrivateUrlEnv.V3A_SUPABASE_URL;
+  let missingPrivateUrlFetchStub = createFetch();
+  let missingPrivateUrlResult = await invoke({
     method: 'POST',
     action: 'request_otp',
     body: { phone: PHONE },
     headers: otpHeaders('203.0.113.9'),
-    env: genericSupabaseEnv,
-    fetchStub: genericFetchStub
+    env: missingPrivateUrlEnv,
+    fetchStub: missingPrivateUrlFetchStub
   });
-  assert.equal(genericResult.res.statusCode, 200,
-    'Preview 必须可安全复用现有 NEXT_PUBLIC Supabase URL/anon key');
-  assert.equal(supabaseCalls(genericFetchStub.calls).length, 1,
-    '通用 Preview Supabase 变量只能触发一次 OTP 上游请求');
+  assert.equal(missingPrivateUrlResult.res.statusCode, 503,
+    '服务端必须显式配置 V3A_SUPABASE_URL');
+  assert.equal(missingPrivateUrlFetchStub.calls.length, 0,
+    '缺少私有 Supabase URL 时不得发起上游请求');
 
   for (const action of ['request_otp', 'verify_otp']) {
     for (const headers of [{}, { origin: `${ALLOWED_ORIGIN}/` }, { origin: `${ALLOWED_ORIGIN}.evil` }]) {
@@ -633,7 +643,7 @@ async function run() {
         action,
         body: action === 'request_otp' ? { phone: PHONE } : { phone: PHONE, token: OTP },
         headers,
-        env: previewEnv({ V3A_PHONE_OTP_ENABLED: 'true' }),
+        env: sessionEnv({ V3A_PHONE_OTP_ENABLED: 'true' }),
         fetchStub
       });
       assert.equal(result.res.statusCode, 403, 'OTP POST 必须匹配允许的 Preview Origin');
@@ -669,7 +679,7 @@ async function run() {
     method: 'POST',
     action: 'request_otp',
     body: { phone: '13800138000' },
-    env: previewEnv({ V3A_PHONE_OTP_ENABLED: 'true' }),
+    env: sessionEnv({ V3A_PHONE_OTP_ENABLED: 'true' }),
     fetchStub
   });
   assert.equal(result.res.statusCode, 200, '短信开关开启后应允许发送 OTP');
@@ -1182,7 +1192,7 @@ async function run() {
   assert.equal(supabaseCalls(aadFetch.calls.slice(mark)).length, 0,
     '跨 SID 搬移密文不得访问 Supabase');
 
-  console.log('PASS: V3a opaque SID, AES-GCM KV, OTP dual rate limits, CSRF, refresh single-flight, Preview gate, and user-RPC contracts');
+  console.log('PASS: V3a opaque SID, AES-GCM KV, OTP dual rate limits, CSRF, refresh single-flight, environment gate, and user-RPC contracts');
 }
 
 run().catch((error) => {

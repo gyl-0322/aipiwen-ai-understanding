@@ -3,8 +3,6 @@
 const crypto = require('crypto');
 const { Webhook } = require('standardwebhooks');
 
-const PREVIEW_PROJECT_REF = 'lmjriqncuopgxwyudfee';
-const PRODUCTION_PROJECT_REF = 'tysbwijizgebnrazxpvo';
 const MAX_BODY_BYTES = 20 * 1024;
 const IDEMPOTENCY_TTL_SECONDS = 10 * 60;
 const HANDLER_DEADLINE_MS = 8500;
@@ -49,14 +47,12 @@ function parseHookSecret(value) {
 
 function getConfig(env = process.env) {
   const projectRef = normalize(env.V3A_SUPABASE_PROJECT_REF);
-  const vercelEnv = normalize(env.VERCEL_ENV);
-  const vercelTargetEnv = normalize(env.VERCEL_TARGET_ENV);
+  const supabaseUrl = normalize(env.V3A_SUPABASE_URL).replace(/\/+$/, '');
   const enabled = env.V3A_SEND_SMS_HOOK_ENABLED === 'true';
   const kvUrl = normalize(env.KV_REST_API_URL).replace(/\/+$/, '');
   const config = {
     projectRef,
-    vercelEnv,
-    vercelTargetEnv,
+    supabaseUrl,
     enabled,
     hookSecret: parseHookSecret(env.V3A_SEND_SMS_HOOK_SECRET),
     accessKeyId: normalize(env.ALIYUN_SMS_ACCESS_KEY_ID),
@@ -68,15 +64,21 @@ function getConfig(env = process.env) {
     kvToken: normalize(env.KV_REST_API_TOKEN)
   };
 
+  let parsedSupabase;
   let parsedKv;
   try {
+    parsedSupabase = new URL(config.supabaseUrl);
     parsedKv = new URL(config.kvUrl);
   } catch {
+    parsedSupabase = null;
     parsedKv = null;
   }
   if (
-    projectRef === PRODUCTION_PROJECT_REF || projectRef !== PREVIEW_PROJECT_REF ||
-    vercelEnv !== 'preview' || vercelTargetEnv !== 'preview' ||
+    !projectRef || !parsedSupabase ||
+    parsedSupabase.protocol !== 'https:' || parsedSupabase.username || parsedSupabase.password || parsedSupabase.port ||
+    parsedSupabase.hostname !== `${projectRef}.supabase.co` ||
+    parsedSupabase.origin !== config.supabaseUrl || parsedSupabase.pathname !== '/' ||
+    parsedSupabase.search || parsedSupabase.hash ||
     !parsedKv || parsedKv.protocol !== 'https:' || parsedKv.username || parsedKv.password || parsedKv.port ||
     parsedKv.origin !== config.kvUrl || parsedKv.pathname !== '/' || parsedKv.search || parsedKv.hash ||
     !config.kvToken || !config.accessKeyId || !config.accessKeySecret ||

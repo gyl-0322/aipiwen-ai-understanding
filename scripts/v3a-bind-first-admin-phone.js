@@ -3,15 +3,32 @@
 
 const readline = require('readline');
 
-const PREVIEW_PROJECT_REF = 'lmjriqncuopgxwyudfee';
-const PRODUCTION_PROJECT_REF = 'tysbwijizgebnrazxpvo';
-const PREVIEW_URL = `https://${PREVIEW_PROJECT_REF}.supabase.co`;
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 class BindingError extends Error {}
 
 function normalize(value) {
   return String(value || '').trim();
+}
+
+function parseSupabaseConfig(env = process.env) {
+  const projectRef = normalize(env.V3A_SUPABASE_PROJECT_REF);
+  const supabaseUrl = normalize(env.V3A_SUPABASE_URL).replace(/\/+$/, '');
+  let parsed;
+  try {
+    parsed = new URL(supabaseUrl);
+  } catch {
+    parsed = null;
+  }
+  if (
+    !projectRef || !parsed || parsed.protocol !== 'https:' ||
+    parsed.username || parsed.password || parsed.port ||
+    parsed.hostname !== `${projectRef}.supabase.co` ||
+    parsed.origin !== supabaseUrl || parsed.pathname !== '/' || parsed.search || parsed.hash
+  ) {
+    throw new BindingError('Supabase 环境配置无效，已停止。');
+  }
+  return { projectRef, supabaseUrl };
 }
 
 function normalizeChinaPhone(value) {
@@ -28,7 +45,7 @@ function maskPhone(phone) {
 }
 
 function validateInputs(anonKey, email, password) {
-  if (!anonKey || anonKey.length > 4096 || /\s/.test(anonKey)) throw new BindingError('Preview anon key 无效。');
+  if (!anonKey || anonKey.length > 4096 || /\s/.test(anonKey)) throw new BindingError('Supabase anon key 无效。');
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 320) throw new BindingError('邮箱格式无效。');
   if (!password || password.length > 1024) throw new BindingError('邮箱账号密码无效。');
 }
@@ -41,10 +58,10 @@ async function readJson(response) {
   }
 }
 
-async function requestJson(fetchImpl, path, { method = 'GET', anonKey, accessToken, body, errorMessage }) {
+async function requestJson(fetchImpl, supabaseUrl, path, { method = 'GET', anonKey, accessToken, body, errorMessage }) {
   let response;
   try {
-    response = await fetchImpl(`${PREVIEW_URL}${path}`, {
+    response = await fetchImpl(`${supabaseUrl}${path}`, {
       method,
       headers: {
         apikey: anonKey,
@@ -62,8 +79,8 @@ async function requestJson(fetchImpl, path, { method = 'GET', anonKey, accessTok
   return payload;
 }
 
-async function syncAndConfirmPublicPhone(fetchImpl, anonKey, accessToken, authUserId, phone) {
-  const syncResult = await requestJson(fetchImpl, '/rest/v1/rpc/v3a_sync_own_first_super_admin_phone', {
+async function syncAndConfirmPublicPhone(fetchImpl, supabaseUrl, anonKey, accessToken, authUserId, phone) {
+  const syncResult = await requestJson(fetchImpl, supabaseUrl, '/rest/v1/rpc/v3a_sync_own_first_super_admin_phone', {
     method: 'POST',
     anonKey,
     accessToken,
@@ -79,7 +96,7 @@ async function syncAndConfirmPublicPhone(fetchImpl, anonKey, accessToken, authUs
     auth_user_id: `eq.${authUserId}`,
     limit: '2'
   });
-  const rows = await requestJson(fetchImpl, `/rest/v1/users?${query.toString()}`, {
+  const rows = await requestJson(fetchImpl, supabaseUrl, `/rest/v1/users?${query.toString()}`, {
     anonKey,
     accessToken,
     errorMessage: '无法回读业务身份手机号，已停止。'
@@ -94,13 +111,14 @@ async function syncAndConfirmPublicPhone(fetchImpl, anonKey, accessToken, authUs
 
 async function bindFirstAdminPhone(options) {
   const fetchImpl = options.fetchImpl || fetch;
+  const { supabaseUrl } = parseSupabaseConfig(options.env || process.env);
   const anonKey = normalize(options.anonKey);
   const email = normalize(options.email).toLowerCase();
   const password = String(options.password || '');
   const phone = normalizeChinaPhone(options.phone);
   validateInputs(anonKey, email, password);
 
-  const auth = await requestJson(fetchImpl, '/auth/v1/token?grant_type=password', {
+  const auth = await requestJson(fetchImpl, supabaseUrl, '/auth/v1/token?grant_type=password', {
     method: 'POST',
     anonKey,
     body: { email, password },
@@ -123,7 +141,7 @@ async function bindFirstAdminPhone(options) {
       auth_user_id: `eq.${authUserId}`,
       limit: '2'
     });
-    const rows = await requestJson(fetchImpl, `/rest/v1/users?${query.toString()}`, {
+    const rows = await requestJson(fetchImpl, supabaseUrl, `/rest/v1/users?${query.toString()}`, {
       anonKey,
       accessToken,
       errorMessage: '无法确认总部管理员映射，已停止。'
@@ -145,7 +163,7 @@ async function bindFirstAdminPhone(options) {
       target_id: `eq.${publicUserId}`,
       limit: '2'
     });
-    const auditRows = await requestJson(fetchImpl, `/rest/v1/admin_audit_logs?${auditQuery.toString()}`, {
+    const auditRows = await requestJson(fetchImpl, supabaseUrl, `/rest/v1/admin_audit_logs?${auditQuery.toString()}`, {
       anonKey,
       accessToken,
       errorMessage: '无法确认首位总部管理员审计标记，已停止。'
@@ -169,7 +187,7 @@ async function bindFirstAdminPhone(options) {
       if (publicUser.phone && publicUser.phone !== phone) {
         throw new BindingError('Auth 与业务身份手机号冲突，已停止；请立即人工核查。');
       }
-      await syncAndConfirmPublicPhone(fetchImpl, anonKey, accessToken, authUserId, phone);
+      await syncAndConfirmPublicPhone(fetchImpl, supabaseUrl, anonKey, accessToken, authUserId, phone);
       return { alreadyBound: true, publicPhoneSynced: true, phoneMasked: maskPhone(phone) };
     }
     if (publicUser.phone !== null) {
@@ -183,7 +201,7 @@ async function bindFirstAdminPhone(options) {
       throw new BindingError('发码前只读预检未确认，已停止。');
     }
 
-    const update = await requestJson(fetchImpl, '/auth/v1/user', {
+    const update = await requestJson(fetchImpl, supabaseUrl, '/auth/v1/user', {
       method: 'PUT',
       anonKey,
       accessToken,
@@ -203,7 +221,7 @@ async function bindFirstAdminPhone(options) {
       : options.otp);
     if (!/^[0-9]{6}$/.test(otp)) throw new BindingError('请输入 6 位短信验证码。');
 
-    const verified = await requestJson(fetchImpl, '/auth/v1/verify', {
+    const verified = await requestJson(fetchImpl, supabaseUrl, '/auth/v1/verify', {
       method: 'POST',
       anonKey,
       accessToken,
@@ -219,10 +237,10 @@ async function bindFirstAdminPhone(options) {
       throw new BindingError('换绑结果未能证明是同一 Auth UUID，已停止；请立即人工核查。');
     }
     logoutAccessToken = normalize(verified.access_token);
-    await syncAndConfirmPublicPhone(fetchImpl, anonKey, logoutAccessToken, authUserId, phone);
+    await syncAndConfirmPublicPhone(fetchImpl, supabaseUrl, anonKey, logoutAccessToken, authUserId, phone);
     return { alreadyBound: false, publicPhoneSynced: true, phoneMasked: maskPhone(phone) };
   } finally {
-    await requestJson(fetchImpl, '/auth/v1/logout?scope=local', {
+    await requestJson(fetchImpl, supabaseUrl, '/auth/v1/logout?scope=local', {
       method: 'POST',
       anonKey,
       accessToken: logoutAccessToken,
@@ -269,20 +287,20 @@ function promptSecret(label) {
 }
 
 async function main() {
-  if (!process.argv.includes('--preview-write-approved')) {
-    throw new BindingError('缺少 --preview-write-approved；本工具会发送短信并修改 Preview Auth，已停止。');
+  if (!process.argv.includes('--environment-write-approved')) {
+    throw new BindingError('缺少 --environment-write-approved；本工具会发送短信并修改当前环境 Auth，已停止。');
   }
-  process.stdout.write(`TARGET_PROJECT_REF=${PREVIEW_PROJECT_REF}\nPRODUCTION_PROJECT_REF=${PRODUCTION_PROJECT_REF}\n`);
-  const projectRef = normalize(await promptVisible('请再次输入 TARGET_PROJECT_REF：'));
-  if (projectRef !== PREVIEW_PROJECT_REF || projectRef === PRODUCTION_PROJECT_REF) {
-    throw new BindingError('目标不是固定 Preview Project Ref，已停止。');
+  parseSupabaseConfig(process.env);
+  const approval = normalize(await promptVisible('确认当前环境已获写入批准后输入 ENVIRONMENT_APPROVED：'));
+  if (approval !== 'ENVIRONMENT_APPROVED') {
+    throw new BindingError('当前环境写入未确认，已停止。');
   }
 
   let anonKey = normalize(process.env.V3A_SUPABASE_ANON_KEY);
   let password = '';
   let otp = '';
   try {
-    if (!anonKey) anonKey = await promptSecret('请输入 Preview anon key（不会显示或保存）：');
+    if (!anonKey) anonKey = await promptSecret('请输入 Supabase anon key（不会显示或保存）：');
     const email = await promptVisible('请输入现有 super_admin 邮箱：');
     password = await promptSecret('请输入现有邮箱账号密码（不会显示或保存）：');
     const phone = await promptVisible('请输入要绑定的中国大陆手机号：');
@@ -322,10 +340,8 @@ if (require.main === module) {
 }
 
 module.exports = {
-  PREVIEW_PROJECT_REF,
-  PRODUCTION_PROJECT_REF,
-  PREVIEW_URL,
   BindingError,
+  parseSupabaseConfig,
   normalizeChinaPhone,
   bindFirstAdminPhone
 };

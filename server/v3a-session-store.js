@@ -1,7 +1,5 @@
 const crypto = require('crypto');
 
-const PREVIEW_PROJECT_REF = 'lmjriqncuopgxwyudfee';
-const PRODUCTION_PROJECT_REF = 'tysbwijizgebnrazxpvo';
 const COOKIE_NAME = '__Host-aipiwen_v3a_session';
 const SESSION_TTL_SECONDS = 7 * 24 * 60 * 60;
 const REFRESH_SKEW_MS = 60 * 1000;
@@ -53,7 +51,7 @@ function parseHttpsOrigin(value, code = 'SESSION_CONFIG_INVALID') {
   return url.origin;
 }
 
-function previewDeploymentOrigin(vercelUrl) {
+function deploymentOrigin(vercelUrl) {
   const origin = parseHttpsOrigin(vercelUrl);
   if (!origin) return '';
   const hostname = new URL(origin).hostname;
@@ -67,27 +65,23 @@ function parseAllowedOrigins(env) {
   const origins = [
     normalize(env.V3A_ALLOWED_ORIGIN),
     ...normalize(env.V3A_ALLOWED_ORIGINS).split(',').map(normalize),
-    previewDeploymentOrigin(env.VERCEL_URL)
+    deploymentOrigin(env.VERCEL_URL)
   ].filter(Boolean).map((value) => parseHttpsOrigin(value));
   return [...new Set(origins)];
 }
 
 function getConfig() {
-  const supabaseUrl = normalize(
-    process.env.V3A_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL
-  ).replace(/\/+$/, '');
+  const supabaseUrl = normalize(process.env.V3A_SUPABASE_URL).replace(/\/+$/, '');
   const anonKey = normalize(
     process.env.V3A_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
   );
   const projectRef = normalize(process.env.V3A_SUPABASE_PROJECT_REF);
-  const vercelEnv = normalize(process.env.VERCEL_ENV);
-  const vercelTargetEnv = normalize(process.env.VERCEL_TARGET_ENV);
   const allowedOrigins = parseAllowedOrigins(process.env);
   const kvUrl = normalize(process.env.KV_REST_API_URL).replace(/\/+$/, '');
   const kvToken = normalize(process.env.KV_REST_API_TOKEN);
   const phoneOtpEnabled = process.env.V3A_PHONE_OTP_ENABLED === 'true';
   if (!supabaseUrl || !anonKey || !projectRef || allowedOrigins.length === 0 || !kvUrl || !kvToken) {
-    throw new HttpError(503, '手机号登录服务尚未完成 Preview 配置。', 'SESSION_SERVICE_NOT_CONFIGURED');
+    throw new HttpError(503, '手机号登录服务尚未完成环境配置。', 'SESSION_SERVICE_NOT_CONFIGURED');
   }
   let parsedSupabase;
   let parsedKv;
@@ -98,10 +92,8 @@ function getConfig() {
     throw new HttpError(503, '手机号登录服务项目校验未通过。', 'SESSION_CONFIG_INVALID');
   }
   if (
-    projectRef === PRODUCTION_PROJECT_REF || projectRef !== PREVIEW_PROJECT_REF ||
-    vercelEnv !== 'preview' || vercelTargetEnv !== 'preview' ||
     parsedSupabase.protocol !== 'https:' || parsedSupabase.username || parsedSupabase.password || parsedSupabase.port ||
-    parsedSupabase.hostname !== `${PREVIEW_PROJECT_REF}.supabase.co` ||
+    parsedSupabase.hostname !== `${projectRef}.supabase.co` ||
     parsedSupabase.origin !== supabaseUrl || parsedSupabase.pathname !== '/' || parsedSupabase.search || parsedSupabase.hash ||
     parsedKv.protocol !== 'https:' || !parsedKv.hostname || parsedKv.username || parsedKv.password || parsedKv.port ||
     parsedKv.origin !== kvUrl || parsedKv.pathname !== '/' || parsedKv.search || parsedKv.hash
@@ -522,8 +514,6 @@ async function destroySession(config, sid) {
 
 module.exports = {
   COOKIE_NAME,
-  PREVIEW_PROJECT_REF,
-  PRODUCTION_PROJECT_REF,
   SESSION_TTL_SECONDS,
   HttpError,
   getConfig,

@@ -11,9 +11,10 @@ const source = fs.readFileSync(sourcePath, 'utf8');
 const adminPage = fs.readFileSync(path.join(__dirname, '..', 'admin-applications.html'), 'utf8');
 const adminClient = fs.readFileSync(path.join(__dirname, '..', 'static', 'v3a-admin.js'), 'utf8');
 
-const PREVIEW_REF = 'lmjriqncuopgxwyudfee';
-const PRODUCTION_REF = 'tysbwijizgebnrazxpvo';
-const PREVIEW_URL = `https://${PREVIEW_REF}.supabase.co`;
+const ADMIN_PROJECT_REF = 'admin-test-project';
+const ALTERNATE_PROJECT_REF = 'admin-alternate-project';
+const ADMIN_SUPABASE_URL = `https://${ADMIN_PROJECT_REF}.supabase.co`;
+const ALTERNATE_SUPABASE_URL = `https://${ALTERNATE_PROJECT_REF}.supabase.co`;
 const ALLOWED_ORIGIN = 'https://preview.aipiwen.cn';
 const DEPLOYMENT_HOST = 'aipiwen-ai-understanding-a5lprbyl2-guo-yanling-s-projects.vercel.app';
 const DEPLOYMENT_ORIGIN = `https://${DEPLOYMENT_HOST}`;
@@ -44,8 +45,6 @@ const ALLOWED_ENV = new Set([
   'NEXT_PUBLIC_SUPABASE_URL',
   'NEXT_PUBLIC_SUPABASE_ANON_KEY',
   'SUPABASE_SERVICE_ROLE_KEY',
-  'VERCEL_ENV',
-  'VERCEL_TARGET_ENV',
   'V3A_ALLOWED_ORIGIN',
   'V3A_ALLOWED_ORIGINS',
   'VERCEL_URL',
@@ -53,21 +52,20 @@ const ALLOWED_ENV = new Set([
   'V3A_PHONE_OTP_ENABLED'
 ]);
 
-function previewEnv(reviewWritesEnabled = 'false') {
+function adminEnv(reviewWritesEnabled = 'false', overrides = {}) {
   return {
-    V3A_SUPABASE_URL: PREVIEW_URL,
+    V3A_SUPABASE_URL: ADMIN_SUPABASE_URL,
     V3A_SUPABASE_ANON_KEY: ANON_KEY,
     V3A_SUPABASE_SERVICE_ROLE_KEY: SERVICE_KEY,
-    V3A_SUPABASE_PROJECT_REF: PREVIEW_REF,
-    VERCEL_ENV: 'preview',
-    VERCEL_TARGET_ENV: 'preview',
+    V3A_SUPABASE_PROJECT_REF: ADMIN_PROJECT_REF,
     V3A_ADMIN_REVIEW_WRITES_ENABLED: reviewWritesEnabled,
     V3A_ALLOWED_ORIGIN: ALLOWED_ORIGIN,
     VERCEL_URL: DEPLOYMENT_HOST,
     KV_REST_API_URL: KV_URL,
     KV_REST_API_TOKEN: KV_TOKEN,
     V3A_SESSION_ENCRYPTION_KEY: ENCRYPTION_KEY,
-    V3A_PHONE_OTP_ENABLED: 'false'
+    V3A_PHONE_OTP_ENABLED: 'false',
+    ...overrides
   };
 }
 
@@ -416,7 +414,7 @@ function createResponse() {
 async function invoke(options = {}) {
   const fetchStub = options.fetchStub || createFetch(options.fetchOptions);
   const loaded = loadHandler({
-    env: options.env || previewEnv(),
+    env: options.env || adminEnv(),
     fetchStub
   });
   const method = options.method || 'GET';
@@ -512,7 +510,7 @@ function assertEncryptedServerSessionFlow(calls, res) {
   assert.equal(refreshUrl.searchParams.get('grant_type'), 'refresh_token',
     'Session 刷新必须使用 refresh_token grant');
   assert.equal(headerValue(refresh.init.headers, 'apikey'), ANON_KEY,
-    'Session 刷新只能使用 Preview anon key');
+    'Session 刷新只能使用当前环境 anon key');
   assert.match(String(headerValue(refresh.init.headers, 'content-type') || ''), /^application\/json\b/i,
     'Session 刷新必须发送 JSON');
   assert.deepStrictEqual(JSON.parse(JSON.stringify(JSON.parse(refresh.init.body))), {
@@ -563,21 +561,21 @@ function assertEncryptedServerSessionFlow(calls, res) {
     'KV Session TTL 必须受 7 天 absolute expiry 限制');
 
   const userCalls = calls.filter(({ url }) => new URL(url).pathname === '/auth/v1/user');
-  assert.equal(userCalls.length, 1, '刷新后必须向 Preview Auth 校验 access token');
+  assert.equal(userCalls.length, 1, '刷新后必须向当前环境 Auth 校验 access token');
   assert.equal(userCalls[0].method, 'GET');
   assert.equal(headerValue(userCalls[0].init.headers, 'apikey'), ANON_KEY,
-    'Auth 用户校验只能使用 Preview anon key');
+    'Auth 用户校验只能使用当前环境 anon key');
   assert.equal(headerValue(userCalls[0].init.headers, 'authorization'), `Bearer ${ACCESS_TOKEN}`,
     'Auth 用户校验必须使用刚刷新得到的 access token');
   assert.equal(calls.indexOf(kvRead) < calls.indexOf(refresh), true,
-    '必须先从 KV 取出 Session，再刷新 Preview Auth');
+    '必须先从 KV 取出 Session，再刷新当前环境 Auth');
   assert.equal(calls.indexOf(refresh) < calls.indexOf(userCalls[0]), true,
     '必须先刷新 Session，再校验 Auth 用户');
   assert.equal(calls.indexOf(userCalls[0]) < calls.indexOf(kvWrite), true,
-    '必须在 Preview Auth 用户校验成功后才更新加密 KV Session');
+    '必须在当前环境 Auth 用户校验成功后才更新加密 KV Session');
   const supabaseCalls = calls.filter(({ url }) => new URL(url).origin !== KV_URL);
-  assert.equal(supabaseCalls.every(({ url }) => new URL(url).origin === PREVIEW_URL), true,
-    '除专用 KV 外，管理端所有上游请求必须停留在 Preview Supabase');
+  assert.equal(supabaseCalls.every(({ url }) => new URL(url).origin === ADMIN_SUPABASE_URL), true,
+    '除专用 KV 外，管理端所有上游请求必须停留在环境声明的 Supabase');
   assert.equal(res.headers['set-cookie'], undefined,
     '普通管理请求只能更新服务端 KV，不得重发 SID 或把 Supabase token 写入 Cookie');
   assert.equal(JSON.stringify(res.headers).includes(ACCESS_TOKEN), false);
@@ -750,73 +748,59 @@ async function run() {
   assert.equal(headerValue(browserPost.init.headers, 'cookie'), undefined,
     '浏览器审核写请求不得手工拼接 HttpOnly cookie');
 
+  let alternateAdminResult = await invoke({
+    action: 'list_applications',
+    env: adminEnv('false', {
+      V3A_SUPABASE_URL: ALTERNATE_SUPABASE_URL,
+      V3A_SUPABASE_PROJECT_REF: ALTERNATE_PROJECT_REF
+    })
+  });
+  assert.equal(alternateAdminResult.res.statusCode, 200,
+    '任意环境的 Supabase URL 与 Project Ref 一致时管理读取必须通过');
+
   for (const env of [
+    adminEnv('false', { V3A_SUPABASE_URL: ALTERNATE_SUPABASE_URL }),
+    adminEnv('false', { V3A_SUPABASE_PROJECT_REF: ALTERNATE_PROJECT_REF }),
     {
-      ...previewEnv(),
-      V3A_SUPABASE_URL: `https://${PRODUCTION_REF}.supabase.co`,
-      V3A_SUPABASE_PROJECT_REF: PRODUCTION_REF
-    },
-    {
-      ...previewEnv(),
-      V3A_SUPABASE_URL: `https://${PRODUCTION_REF}.supabase.co`,
-      V3A_SUPABASE_PROJECT_REF: PREVIEW_REF
-    },
-    {
-      ...previewEnv(),
-      V3A_SUPABASE_PROJECT_REF: 'another-project-ref'
-    },
-    {
-      ...previewEnv(),
-      VERCEL_ENV: 'production'
-    },
-    {
-      ...previewEnv(),
-      VERCEL_TARGET_ENV: 'production'
-    },
-    {
-      ...previewEnv(),
+      ...adminEnv(),
       VERCEL_URL: 'preview.aipiwen.cn'
     },
     {
-      ...previewEnv(),
+      ...adminEnv(),
       VERCEL_URL: `${DEPLOYMENT_HOST}/path`
     }
   ]) {
     const fetchStub = createFetch();
     const { res } = await invoke({ action: 'list_applications', env, fetchStub });
-    assert.equal(res.statusCode, 503, 'Production、非 Preview 或 URL/ref 不一致必须返回 503');
+    assert.equal(res.statusCode, 503, 'URL/ref 不一致或部署 URL 无效时必须返回 503');
     assert.equal(fetchStub.calls.length, 0, '项目门禁失败时绝不能发起 fetch');
   }
 
-  const genericAdminEnv = previewEnv();
-  genericAdminEnv.NEXT_PUBLIC_SUPABASE_URL = genericAdminEnv.V3A_SUPABASE_URL;
-  genericAdminEnv.NEXT_PUBLIC_SUPABASE_ANON_KEY = genericAdminEnv.V3A_SUPABASE_ANON_KEY;
-  genericAdminEnv.SUPABASE_SERVICE_ROLE_KEY = genericAdminEnv.V3A_SUPABASE_SERVICE_ROLE_KEY;
-  delete genericAdminEnv.V3A_SUPABASE_URL;
-  delete genericAdminEnv.V3A_SUPABASE_ANON_KEY;
-  delete genericAdminEnv.V3A_SUPABASE_SERVICE_ROLE_KEY;
-  let genericAdminResult = await invoke({ action: 'list_applications', env: genericAdminEnv });
-  assert.equal(genericAdminResult.res.statusCode, 200,
-    'Preview 必须可安全复用现有 Supabase URL、anon key 与 service role key');
+  const missingPrivateUrlEnv = adminEnv();
+  missingPrivateUrlEnv.NEXT_PUBLIC_SUPABASE_URL = missingPrivateUrlEnv.V3A_SUPABASE_URL;
+  delete missingPrivateUrlEnv.V3A_SUPABASE_URL;
+  let missingPrivateUrlResult = await invoke({ action: 'list_applications', env: missingPrivateUrlEnv });
+  assert.equal(missingPrivateUrlResult.res.statusCode, 503,
+    '管理端必须显式配置 V3A_SUPABASE_URL');
 
   for (const invalidSupabaseUrl of [
-    `https://user:pass@${PREVIEW_REF}.supabase.co`,
-    `${PREVIEW_URL}/rest`,
-    `${PREVIEW_URL}?target=other`,
-    `${PREVIEW_URL}#fragment`
+    `https://user:pass@${ADMIN_PROJECT_REF}.supabase.co`,
+    `${ADMIN_SUPABASE_URL}/rest`,
+    `${ADMIN_SUPABASE_URL}?target=other`,
+    `${ADMIN_SUPABASE_URL}#fragment`
   ]) {
     const fetchStub = createFetch();
     const { res } = await invoke({
       action: 'list_applications',
-      env: { ...previewEnv(), V3A_SUPABASE_URL: invalidSupabaseUrl },
+      env: { ...adminEnv(), V3A_SUPABASE_URL: invalidSupabaseUrl },
       fetchStub
     });
-    assert.equal(res.statusCode, 503, 'Supabase URL 必须精确匹配 canonical Preview origin');
+    assert.equal(res.statusCode, 503, 'Supabase URL 必须精确匹配环境声明的 canonical origin');
     assert.equal(fetchStub.calls.length, 0, 'Supabase URL 非 canonical 时不得发起 fetch');
   }
 
   for (const missingName of REQUIRED_ADMIN_ENV) {
-    const env = previewEnv();
+    const env = adminEnv();
     delete env[missingName];
     const fetchStub = createFetch();
     const { res } = await invoke({ action: 'list_applications', env, fetchStub });
@@ -832,7 +816,7 @@ async function run() {
     const fetchStub = createFetch();
     const { res } = await invoke({
       action: 'list_applications',
-      env: { ...previewEnv(), V3A_SESSION_ENCRYPTION_KEY: invalidKey },
+      env: { ...adminEnv(), V3A_SESSION_ENCRYPTION_KEY: invalidKey },
       fetchStub
     });
     assert.equal(res.statusCode, 503, 'Session encryption key 必须是严格 32-byte base64');
@@ -849,7 +833,7 @@ async function run() {
     const fetchStub = createFetch();
     const { res } = await invoke({
       action: 'list_applications',
-      env: { ...previewEnv(), KV_REST_API_URL: invalidKvUrl },
+      env: { ...adminEnv(), KV_REST_API_URL: invalidKvUrl },
       fetchStub
     });
     assert.equal(res.statusCode, 503, 'KV Session URL 必须是无 userinfo/path/query/hash 的 HTTPS origin');
@@ -892,7 +876,7 @@ async function run() {
   assert.equal(result.res.statusCode, 401, 'KV 中不存在 opaque SID 必须返回 401');
   assert.equal(result.fetchStub.calls.filter(({ url }) => new URL(url).origin === KV_URL).length, 1,
     '不存在的 Session 只能读取一次 KV');
-  assert.equal(result.fetchStub.calls.some(({ url }) => new URL(url).origin === PREVIEW_URL), false,
+  assert.equal(result.fetchStub.calls.some(({ url }) => new URL(url).origin === ADMIN_SUPABASE_URL), false,
     'KV Session 不存在时不得访问 Supabase');
   assertClearedSessionCookie(result.res);
 
@@ -903,7 +887,7 @@ async function run() {
     fetchOptions: { kvEnvelope: tamperedEnvelope }
   });
   assert.equal(result.res.statusCode, 401, '被篡改的加密 Session 必须返回 401');
-  assert.equal(result.fetchStub.calls.some(({ url }) => new URL(url).origin === PREVIEW_URL), false,
+  assert.equal(result.fetchStub.calls.some(({ url }) => new URL(url).origin === ADMIN_SUPABASE_URL), false,
     '加密 Session 验证失败时不得访问 Supabase');
   assertClearedSessionCookie(result.res);
 
@@ -912,7 +896,7 @@ async function run() {
     fetchOptions: { sessionRecord: sessionRecord({ absoluteExpiresAt: Date.now() - 1000 }) }
   });
   assert.equal(result.res.statusCode, 401, '超过 absolute expiry 的 Session 必须返回 401');
-  assert.equal(result.fetchStub.calls.some(({ url }) => new URL(url).origin === PREVIEW_URL), false,
+  assert.equal(result.fetchStub.calls.some(({ url }) => new URL(url).origin === ADMIN_SUPABASE_URL), false,
     'Session 绝对过期时不得访问 Supabase');
   assertClearedSessionCookie(result.res);
 
@@ -934,7 +918,7 @@ async function run() {
       action: 'approve_application',
       body: { applicationId: APPLICATION_ID },
       headers,
-      env: previewEnv('true')
+      env: adminEnv('true')
     });
     assert.equal(result.res.statusCode, 403, '管理端 POST 缺少或不精确匹配 Origin 必须返回 403');
     assert.equal(result.fetchStub.calls.length, 0, 'Origin 校验必须发生在 KV Session 读取和写入之前');
@@ -952,11 +936,11 @@ async function run() {
       action: 'approve_application',
       body: { applicationId: APPLICATION_ID },
       headers,
-      env: previewEnv('true')
+      env: adminEnv('true')
     });
     assert.equal(result.res.statusCode, 403,
       `管理端 POST 缺少或错误 X-CSRF-Token 必须返回 403，实际 ${result.res.statusCode}`);
-    assert.equal(result.fetchStub.calls.some(({ url }) => new URL(url).origin === PREVIEW_URL), false,
+    assert.equal(result.fetchStub.calls.some(({ url }) => new URL(url).origin === ADMIN_SUPABASE_URL), false,
       'CSRF 校验失败时不得访问 Supabase');
     assert.equal(result.fetchStub.calls.some((call) =>
       String(kvCommand(call)[0]).toUpperCase() === 'SET'), false,
@@ -1020,7 +1004,7 @@ async function run() {
     method: 'POST',
     action: 'approve_application',
     body: { applicationId: APPLICATION_ID },
-    env: previewEnv('true')
+    env: adminEnv('true')
   });
   assert.equal(result.res.statusCode, 200, '批准 pending 申请应成功');
   assert.equal(result.res.body.message, '平台准入审核通过', '批准响应必须使用正式用户可读文案');
@@ -1053,7 +1037,7 @@ async function run() {
       'content-type': 'application/json',
       'sec-fetch-site': 'same-origin'
     },
-    env: previewEnv('true')
+    env: adminEnv('true')
   });
   assert.equal(result.res.statusCode, 200, '当前 Vercel Preview 部署域名必须可通过管理端同源写校验');
   assert.equal(reviewMutationCalls(result.fetchStub.calls).length, 1,
@@ -1063,7 +1047,7 @@ async function run() {
     method: 'POST',
     action: 'approve_application',
     body: { applicationId: APPLICATION_ID, reviewer_id: ADMIN_USER_ID },
-    env: previewEnv('true')
+    env: adminEnv('true')
   });
   assert.equal(result.res.statusCode, 400, '批准请求不得接受前端传入的 reviewer_id');
   assert.equal(reviewMutationCalls(result.fetchStub.calls).length, 0,
@@ -1073,7 +1057,7 @@ async function run() {
     method: 'POST',
     action: 'approve_application',
     body: { applicationId: APPROVED_APPLICATION_ID },
-    env: previewEnv('true')
+    env: adminEnv('true')
   });
   assert.equal(result.res.statusCode, 200, '已批准申请重放必须进入 RPC 幂等分支');
   assert.equal(result.res.body.alreadyProcessed, true, '已批准重放必须返回 alreadyProcessed');
@@ -1086,7 +1070,7 @@ async function run() {
     method: 'POST',
     action: 'approve_application',
     body: { applicationId: REJECTED_APPLICATION_ID },
-    env: previewEnv('true')
+    env: adminEnv('true')
   });
   assert.equal(result.res.statusCode, 400, '已驳回申请不得进入 approve RPC');
   assert.equal(reviewMutationCalls(result.fetchStub.calls).length, 0,
@@ -1097,7 +1081,7 @@ async function run() {
     method: 'POST',
     action: 'reject_application',
     body: { applicationId: APPLICATION_ID, reason },
-    env: previewEnv('true')
+    env: adminEnv('true')
   });
   assert.equal(result.res.statusCode, 200, '驳回 pending 申请应成功');
   assert.equal(result.res.body.message, '平台准入审核驳回', '驳回应答必须使用正式用户可读文案');
@@ -1118,7 +1102,7 @@ async function run() {
     method: 'POST',
     action: 'reject_application',
     body: { applicationId: APPLICATION_ID, reason, reviewer_id: ADMIN_USER_ID },
-    env: previewEnv('true')
+    env: adminEnv('true')
   });
   assert.equal(result.res.statusCode, 400, '驳回请求不得接受前端传入的 reviewer_id');
   assert.equal(reviewMutationCalls(result.fetchStub.calls).length, 0,
@@ -1128,7 +1112,7 @@ async function run() {
     method: 'POST',
     action: 'reject_application',
     body: { applicationId: APPLICATION_ID, reason: '过'.repeat(501) },
-    env: previewEnv('true')
+    env: adminEnv('true')
   });
   assert.equal(result.res.statusCode, 400, '超长驳回原因必须在调用 RPC 前拒绝');
   assert.equal(reviewMutationCalls(result.fetchStub.calls).length, 0, '超长驳回原因不得产生写请求');
@@ -1148,14 +1132,14 @@ async function run() {
     action: 'reject_application',
     body: { applicationId: APPLICATION_ID, reason },
     fetchOptions: { rpcFailure: upstreamLeak },
-    env: previewEnv('true')
+    env: adminEnv('true')
   });
   assert.equal(result.res.statusCode >= 500, true, '底层 RPC 错误必须返回服务端错误');
   assertNoSensitivePayload(result.res.body);
   assert.equal(JSON.stringify(result.res.body).includes('database internal failure'), false,
     'RPC 错误不得泄露底层错误信息');
 
-  console.log('PASS: V3a admin opaque Session, CSRF, Preview gate, masking, pending-only reads, and RPC-only review contracts');
+  console.log('PASS: V3a admin opaque Session, CSRF, environment gate, masking, pending-only reads, and RPC-only review contracts');
 }
 
 run().catch((error) => {

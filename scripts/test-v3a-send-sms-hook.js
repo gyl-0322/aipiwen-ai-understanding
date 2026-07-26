@@ -8,8 +8,10 @@ const { Readable } = require('stream');
 const { Webhook } = require('standardwebhooks');
 const { createHandler, sendAliyunSms } = require('../server/v3a-sms-hook');
 
-const PREVIEW_REF = 'lmjriqncuopgxwyudfee';
-const PRODUCTION_REF = 'tysbwijizgebnrazxpvo';
+const HOOK_PROJECT_REF = 'sms-hook-test-project';
+const ALTERNATE_PROJECT_REF = 'sms-hook-alternate-project';
+const HOOK_SUPABASE_URL = `https://${HOOK_PROJECT_REF}.supabase.co`;
+const ALTERNATE_SUPABASE_URL = `https://${ALTERNATE_PROJECT_REF}.supabase.co`;
 const KV_URL = 'https://kv-sms-hook.test';
 const KV_TOKEN = 'TEST_KV_TOKEN_NOT_REAL';
 const ACCESS_KEY_ID = 'TEST_ACCESS_KEY_ID_NOT_REAL';
@@ -21,8 +23,7 @@ const SECRET = Buffer.from('test-standard-webhook-secret-32b').toString('base64'
 const PAYLOAD = JSON.stringify({ user: { phone: PHONE }, sms: { otp: OTP } });
 const ENV_KEYS = [
   'V3A_SUPABASE_PROJECT_REF',
-  'VERCEL_ENV',
-  'VERCEL_TARGET_ENV',
+  'V3A_SUPABASE_URL',
   'V3A_SEND_SMS_HOOK_ENABLED',
   'V3A_SEND_SMS_HOOK_SECRET',
   'ALIYUN_SMS_ACCESS_KEY_ID',
@@ -34,11 +35,10 @@ const ENV_KEYS = [
   'KV_REST_API_TOKEN'
 ];
 
-function previewEnv(overrides = {}) {
+function hookEnv(overrides = {}) {
   return {
-    V3A_SUPABASE_PROJECT_REF: PREVIEW_REF,
-    VERCEL_ENV: 'preview',
-    VERCEL_TARGET_ENV: 'preview',
+    V3A_SUPABASE_PROJECT_REF: HOOK_PROJECT_REF,
+    V3A_SUPABASE_URL: HOOK_SUPABASE_URL,
     V3A_SEND_SMS_HOOK_ENABLED: 'true',
     V3A_SEND_SMS_HOOK_SECRET: `v1,whsec_${SECRET}`,
     ALIYUN_SMS_ACCESS_KEY_ID: ACCESS_KEY_ID,
@@ -78,7 +78,7 @@ function createKvFetch(options = {}) {
   const store = new Map();
   const calls = [];
   const fetchStub = async (url, init = {}) => {
-    assert.equal(url, KV_URL, 'Hook 只能访问专用 Preview KV');
+    assert.equal(url, KV_URL, 'Hook 只能访问当前环境专用 KV');
     assert.equal(init.method, 'POST');
     assert.equal(init.headers?.Authorization, `Bearer ${KV_TOKEN}`);
     const command = JSON.parse(init.body);
@@ -178,7 +178,7 @@ async function invoke(handler, req) {
 }
 
 async function testValidAndDuplicate() {
-  await withEnv(previewEnv(), async () => {
+  await withEnv(hookEnv(), async () => {
     const harness = createHarness();
     const first = await invoke(harness.handler, signedRequest());
     const duplicate = await invoke(harness.handler, signedRequest());
@@ -194,7 +194,7 @@ async function testValidAndDuplicate() {
     assert.equal(chunked.statusCode, 200, '多 chunk 原始请求体必须保持验签字节不变');
     assert.equal(harness.sends.length, 2, '重复 webhook 不得重复发送短信');
     assert.deepStrictEqual(harness.sends[0].sms, { phone: '13800138000', otp: OTP });
-    assert.equal(harness.sends[0].config.projectRef, PREVIEW_REF);
+    assert.equal(harness.sends[0].config.projectRef, HOOK_PROJECT_REF);
     const kvText = JSON.stringify(harness.fetch.calls);
     assert(!kvText.includes(PHONE) && !kvText.includes('13800138000') && !kvText.includes(OTP),
       'KV key/value 不得包含手机号或 OTP');
@@ -202,7 +202,7 @@ async function testValidAndDuplicate() {
 }
 
 async function testSupabaseChinaPhoneFormats() {
-  await withEnv(previewEnv(), async () => {
+  await withEnv(hookEnv(), async () => {
     const harness = createHarness();
     const formats = [PHONE, `86${LOCAL_PHONE}`];
     for (const [index, phone] of formats.entries()) {
@@ -218,7 +218,7 @@ async function testSupabaseChinaPhoneFormats() {
 }
 
 async function testConcurrentClaim() {
-  await withEnv(previewEnv(), async () => {
+  await withEnv(hookEnv(), async () => {
     const fetch = createKvFetch();
     let markStarted;
     let releaseProvider;
@@ -246,7 +246,7 @@ async function testConcurrentClaim() {
 }
 
 async function testReplayConflict() {
-  await withEnv(previewEnv(), async () => {
+  await withEnv(hookEnv(), async () => {
     const harness = createHarness();
     await invoke(harness.handler, signedRequest({ webhookId: 'msg_same_id' }));
     const changed = JSON.stringify({ user: { phone: '+8613900139000' }, sms: { otp: '654321' } });
@@ -257,7 +257,7 @@ async function testReplayConflict() {
 }
 
 async function testSignatureAndPayloadRejections() {
-  await withEnv(previewEnv(), async () => {
+  await withEnv(hookEnv(), async () => {
     const harness = createHarness();
     const badSignature = await invoke(harness.handler, signedRequest({ signature: 'v1,invalid' }));
     assert.equal(badSignature.statusCode, 401);
@@ -278,7 +278,7 @@ async function testSignatureAndPayloadRejections() {
 }
 
 async function testMethodAndSizeRejections() {
-  await withEnv(previewEnv(), async () => {
+  await withEnv(hookEnv(), async () => {
     const harness = createHarness();
     const wrongMethod = await invoke(harness.handler, signedRequest({ method: 'GET' }));
     assert.equal(wrongMethod.statusCode, 405);
@@ -293,7 +293,7 @@ async function testMethodAndSizeRejections() {
 }
 
 async function testProviderFailureSemantics() {
-  await withEnv(previewEnv(), async () => {
+  await withEnv(hookEnv(), async () => {
     const rejected = createHarness({ providerResults: [false, true] });
     const first = await invoke(rejected.handler, signedRequest({ webhookId: 'msg_rejected' }));
     const retry = await invoke(rejected.handler, signedRequest({ webhookId: 'msg_rejected' }));
@@ -310,13 +310,23 @@ async function testProviderFailureSemantics() {
   });
 }
 
-async function testPreviewAndConfigurationGates() {
+async function testEnvironmentAndConfigurationGates() {
+  await withEnv(hookEnv({
+    V3A_SUPABASE_PROJECT_REF: ALTERNATE_PROJECT_REF,
+    V3A_SUPABASE_URL: ALTERNATE_SUPABASE_URL
+  }), async () => {
+    const harness = createHarness();
+    const result = await invoke(harness.handler, signedRequest());
+    assert.equal(result.statusCode, 200,
+      '任意环境的 Supabase URL 与 Project Ref 一致时短信 Hook 必须通过');
+    assert.equal(harness.sends.length, 1);
+  });
+
   const cases = [
-    previewEnv({ V3A_SUPABASE_PROJECT_REF: PRODUCTION_REF }),
-    previewEnv({ V3A_SUPABASE_PROJECT_REF: 'other-project-ref' }),
-    previewEnv({ VERCEL_ENV: 'production', VERCEL_TARGET_ENV: 'production' }),
-    previewEnv({ VERCEL_TARGET_ENV: 'production' }),
-    previewEnv({ V3A_SEND_SMS_HOOK_ENABLED: 'false' })
+    hookEnv({ V3A_SUPABASE_URL: ALTERNATE_SUPABASE_URL }),
+    hookEnv({ V3A_SUPABASE_PROJECT_REF: ALTERNATE_PROJECT_REF }),
+    hookEnv({ V3A_SUPABASE_URL: '' }),
+    hookEnv({ V3A_SEND_SMS_HOOK_ENABLED: 'false' })
   ];
   for (const env of cases) {
     await withEnv(env, async () => {
@@ -328,7 +338,7 @@ async function testPreviewAndConfigurationGates() {
     });
   }
 
-  await withEnv(previewEnv(), async () => {
+  await withEnv(hookEnv(), async () => {
     const fetch = createKvFetch({ fail: true });
     const harness = createHarness({ fetch });
     const result = await invoke(harness.handler, signedRequest({ webhookId: 'msg_kv_down' }));
@@ -336,7 +346,7 @@ async function testPreviewAndConfigurationGates() {
     assert.equal(harness.sends.length, 0, 'KV claim 失败时不得发送短信');
   });
 
-  await withEnv(previewEnv(), async () => {
+  await withEnv(hookEnv(), async () => {
     const fetch = (_url, init) => new Promise((resolve, reject) => {
       init.signal.addEventListener('abort', () => reject(new Error('aborted')), { once: true });
     });
@@ -348,7 +358,7 @@ async function testPreviewAndConfigurationGates() {
     assert.equal(harness.sends.length, 0);
   });
 
-  await withEnv(previewEnv(), async () => {
+  await withEnv(hookEnv(), async () => {
     const fetch = async () => ({
       ok: true,
       json() { return new Promise(() => {}); }
@@ -361,7 +371,7 @@ async function testPreviewAndConfigurationGates() {
     assert.equal(harness.sends.length, 0);
   });
 
-  await withEnv(previewEnv(), async () => {
+  await withEnv(hookEnv(), async () => {
     const baseFetch = createKvFetch();
     const fetch = (url, init) => {
       const command = JSON.parse(init.body);
@@ -378,7 +388,7 @@ async function testPreviewAndConfigurationGates() {
     assert.equal(harness.sends.length, 1);
   });
 
-  await withEnv(previewEnv(), async () => {
+  await withEnv(hookEnv(), async () => {
     const fetch = createKvFetch();
     let sends = 0;
     const handler = createHandler({
@@ -445,7 +455,7 @@ async function testAliyunAdapterContract() {
 }
 
 async function testNoSensitiveOutputAndContracts() {
-  await withEnv(previewEnv(), async () => {
+  await withEnv(hookEnv(), async () => {
     const harness = createHarness({ providerResults: [false] });
     const result = await invoke(harness.handler, signedRequest({ webhookId: 'msg_safe_error' }));
     assert.deepStrictEqual(result.payload, {
@@ -461,8 +471,10 @@ async function testNoSensitiveOutputAndContracts() {
   const serverSource = fs.readFileSync(path.join(__dirname, '..', 'server', 'v3a-sms-hook.js'), 'utf8');
   assert(apiSource.includes('bodyParser: false'), 'Webhook 必须显式禁用请求体解析');
   assert(!serverSource.includes('console.'), 'Webhook 不得记录手机号、OTP 或供应商错误详情');
-  assert(serverSource.includes("projectRef === PRODUCTION_PROJECT_REF || projectRef !== PREVIEW_PROJECT_REF"),
-    'Webhook 必须硬锁 Preview 并拒绝 Production');
+  assert(serverSource.includes('parsedSupabase.hostname !== `${projectRef}.supabase.co`'),
+    'Webhook 必须验证 Supabase URL hostname 与环境 Project Ref 一致');
+  assert(!serverSource.includes('VERCEL_ENV') && !serverSource.includes('VERCEL_TARGET_ENV'),
+    'Webhook 不得按 Vercel Preview/Production 名称分支');
 }
 
 async function main() {
@@ -473,10 +485,10 @@ async function main() {
   await testSignatureAndPayloadRejections();
   await testMethodAndSizeRejections();
   await testProviderFailureSemantics();
-  await testPreviewAndConfigurationGates();
+  await testEnvironmentAndConfigurationGates();
   await testAliyunAdapterContract();
   await testNoSensitiveOutputAndContracts();
-  console.log('PASS: Preview-only Supabase Send SMS Hook is verified with replay protection and zero real sends');
+  console.log('PASS: environment-isolated Supabase Send SMS Hook is verified with replay protection and zero real sends');
 }
 
 main().catch((error) => {

@@ -3,12 +3,15 @@
 
 const assert = require('assert');
 const {
-  PREVIEW_PROJECT_REF,
-  PRODUCTION_PROJECT_REF,
-  PREVIEW_URL,
+  parseSupabaseConfig,
   normalizeChinaPhone,
   bindFirstAdminPhone
 } = require('./v3a-bind-first-admin-phone');
+
+const BINDING_PROJECT_REF = 'binding-test-project';
+const BINDING_SUPABASE_URL = `https://${BINDING_PROJECT_REF}.supabase.co`;
+process.env.V3A_SUPABASE_PROJECT_REF = BINDING_PROJECT_REF;
+process.env.V3A_SUPABASE_URL = BINDING_SUPABASE_URL;
 
 const AUTH_USER_ID = '40000000-0000-4000-8000-000000000001';
 const OTHER_USER_ID = '40000000-0000-4000-8000-000000000002';
@@ -32,7 +35,7 @@ function createFetch(options = {}) {
     const url = new URL(String(input));
     const body = init.body ? JSON.parse(init.body) : undefined;
     calls.push({ url, init, body });
-    assert.equal(url.origin, PREVIEW_URL, '工具只能连接固定 Preview URL');
+    assert.equal(url.origin, BINDING_SUPABASE_URL, '工具只能连接环境声明的 Supabase URL');
     assert.equal(init.headers.apikey, ANON_KEY);
 
     if (url.pathname === '/auth/v1/token') {
@@ -107,9 +110,14 @@ async function expectBlocked(options, expectedMessage) {
 }
 
 async function run() {
-  assert.equal(PREVIEW_PROJECT_REF, 'lmjriqncuopgxwyudfee');
-  assert.equal(PRODUCTION_PROJECT_REF, 'tysbwijizgebnrazxpvo');
-  assert.notEqual(PREVIEW_PROJECT_REF, PRODUCTION_PROJECT_REF);
+  assert.deepStrictEqual(parseSupabaseConfig(process.env), {
+    projectRef: BINDING_PROJECT_REF,
+    supabaseUrl: BINDING_SUPABASE_URL
+  });
+  assert.throws(() => parseSupabaseConfig({
+    V3A_SUPABASE_PROJECT_REF: 'binding-other-project',
+    V3A_SUPABASE_URL: BINDING_SUPABASE_URL
+  }), /Supabase 环境配置无效/);
   assert.equal(normalizeChinaPhone('138 0013 8000'), PHONE);
   assert.equal(normalizeChinaPhone('8613800138000'), PHONE);
 
@@ -151,8 +159,8 @@ async function run() {
   assert.deepStrictEqual(sync.body, {}, '同步 RPC 不得接收手机号或 UUID 参数');
   assert.equal(sync.init.headers.Authorization, `Bearer ${VERIFIED_ACCESS_TOKEN}`,
     '业务身份同步必须使用 phone_change 成功后签发的新身份');
-  assert.equal(fetchStub.calls.some((call) => call.url.origin.includes(PRODUCTION_PROJECT_REF)), false,
-    '任何请求都不得连接 Production');
+  assert.equal(fetchStub.calls.every((call) => call.url.origin === BINDING_SUPABASE_URL), true,
+    '任何请求都不得离开环境声明的 Supabase URL');
 
   fetchStub = createFetch({ existingPhone: PHONE });
   const alreadyBound = await bindFirstAdminPhone({
@@ -268,7 +276,7 @@ async function run() {
     beforePhoneChange: async () => true, afterPhoneChange: async () => true
   }, '现有邮箱账号认证失败，已停止。');
 
-  console.log('PASS: first super_admin phone binding stays on Preview, preserves UUID, and gates both prechecks');
+  console.log('PASS: first super_admin phone binding stays in the declared environment, preserves UUID, and gates both prechecks');
 }
 
 run().catch((error) => {

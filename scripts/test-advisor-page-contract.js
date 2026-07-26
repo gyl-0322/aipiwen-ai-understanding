@@ -107,7 +107,8 @@ try {
       '浏览器认证不得访问 /api/v3a-session 以外的 API');
     assert(!/supabase|AIPIWEN_V3A_SUPABASE|createClient|getSession|signInWithOtp|verifyOtp|persistSession/i.test(v3aAuth),
       '浏览器认证不得依赖 Supabase SDK 或浏览器端 Supabase 配置');
-    assert(!v3aAuth.includes('lmjriqncuopgxwyudfee'), '浏览器认证不得包含 Preview Project Ref');
+    assert(!/https:\/\/[a-z0-9-]+\.supabase\.co/i.test(v3aAuth),
+      '浏览器认证不得包含任何 Supabase Project URL');
     assert(!/access[_A-Za-z]*token|refresh[_A-Za-z]*token/i.test(v3aAuth),
       '浏览器认证不得读取、保存或发送 Supabase access/refresh token');
     assert(!v3aAuth.includes('localStorage') && !v3aAuth.includes('sessionStorage'),

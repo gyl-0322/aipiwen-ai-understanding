@@ -6,15 +6,15 @@
 
 本流程不是空 Preview 的当前初始化路径。空 Preview 的首位管理员统一通过 Phone OTP 完成 Auth 验证，再使用 012 `public.v3a_create_first_super_admin_from_phone_auth(uuid, text)` 初始化；不要求邮箱或邮箱验证。009 migration 只保留历史记录，其初始化函数由 012 删除；011 仅服务已经存在的旧账号。
 
-工具只允许连接 Preview `lmjriqncuopgxwyudfee`。Production `tysbwijizgebnrazxpvo` 禁止连接。工具不读取 service role，不保存或打印邮箱密码、验证码、anon key、access token 或 refresh token。
+工具只连接当前环境通过 `V3A_SUPABASE_PROJECT_REF` 与 `V3A_SUPABASE_URL` 声明的 Supabase；两者不一致时立即停止。工具不保存或打印 Project Ref、邮箱密码、验证码、anon key、access token 或 refresh token。
 
 仅在处理上述历史账号时，真正运行工具会发送一条短信，并对 Preview Auth 执行手机号换绑；必须另行确认后才能运行：
 
 ```text
-node scripts/v3a-bind-first-admin-phone.js --preview-write-approved
+node scripts/v3a-bind-first-admin-phone.js --environment-write-approved
 ```
 
-本文件不记录真实邮箱、手机号、UUID 或任何凭据。只在 Supabase Preview SQL Editor 临时替换下面的占位符。
+本文件不记录真实邮箱、手机号、UUID、Project Ref 或任何凭据。只在当前已批准环境的 Supabase SQL Editor 临时替换下面的占位符。
 `TARGET_PHONE_E164` 必须替换为完整的 `+86` E.164 手机号。
 
 ## 只读预检 A：发送验证码之前
@@ -83,6 +83,6 @@ select
 - `auth.users.phone` 与 `public.users.phone` 均为同一个目标 E.164 手机号，`phone_confirmed_at` 非空。
 - 011 写入一条不含手机号的 `BIND_SUPER_ADMIN_PHONE` 审计，并且重复执行不重复写手机号或审计。
 - 之后从统一 `login.html` 进行 Phone OTP 登录，仍路由到 `admin-applications.html`。
-- 全程没有创建第二个 Auth 用户，也没有连接 Production。
+- 全程没有创建第二个 Auth 用户，也没有连接当前环境声明之外的 Supabase。
 
 如果旧邮箱账号没有可用密码、出现遗留 `phone_change`、预检数字不符或验证结果 UUID 不一致，结论只能是 `BLOCKED`，交由人工核查。
