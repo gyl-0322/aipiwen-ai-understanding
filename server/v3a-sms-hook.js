@@ -315,7 +315,8 @@ function createHandler(dependencies = {}) {
           deadlineAt,
           responseBufferMs
         );
-      } catch {
+      } catch (err) {
+        console.error('[sms-hook] Aliyun SDK error:', err?.code || err?.message || String(err));
         throw new HookError(503, 'SMS_PROVIDER_UNAVAILABLE');
       }
       if (!accepted) {
