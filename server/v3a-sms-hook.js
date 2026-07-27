@@ -242,7 +242,7 @@ function setHeaders(res) {
   res.setHeader('Allow', 'POST');
 }
 
-function respond(res, statusCode) {
+function respond(res, statusCode, code) {
   if (statusCode === 200) return res.status(200).json({});
   const message = statusCode === 405
     ? 'Method not allowed.'
@@ -251,7 +251,9 @@ function respond(res, statusCode) {
       : statusCode === 409
         ? '短信请求状态冲突，请重新获取验证码。'
         : '短信发送暂时不可用，请稍后重试。';
-  return res.status(statusCode).json({ error: { http_code: statusCode, message } });
+  const body = { error: { http_code: statusCode, message } };
+  if (statusCode === 503 && typeof code === 'string' && code.length <= 80) body.error.code = code;
+  return res.status(statusCode).json(body);
 }
 
 async function runProviderWithinDeadline(operation, deadlineAt, responseBufferMs) {
@@ -331,7 +333,7 @@ function createHandler(dependencies = {}) {
       const safe = error instanceof HookError
         ? error
         : new HookError(500, 'SMS_HOOK_ERROR');
-      return respond(res, safe.statusCode);
+      return respond(res, safe.statusCode, safe.code);
     }
   };
 }
