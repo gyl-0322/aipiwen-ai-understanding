@@ -279,7 +279,7 @@
     },
     {
       "src": "/",
-      "dest": "/login.html"
+      "dest": "/homepage.html"
     },
     {
       "src": "/(.*)",
