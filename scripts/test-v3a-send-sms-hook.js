@@ -162,6 +162,7 @@ function createHarness(options = {}) {
   const fetch = options.fetch || createKvFetch();
   const sends = [];
   const diagnostics = [];
+  const providerDiagnostics = [];
   const providerResults = [...(options.providerResults || [true])];
   const sendSms = async (config, sms, outId) => {
     sends.push({ config, sms, outId });
@@ -170,7 +171,14 @@ function createHarness(options = {}) {
     return result;
   };
   const logDiagnostic = (code) => diagnostics.push(code);
-  return { fetch, sends, diagnostics, handler: createHandler({ fetch, sendSms, logDiagnostic }) };
+  const logProviderDiagnostic = (code) => providerDiagnostics.push(code);
+  return {
+    fetch,
+    sends,
+    diagnostics,
+    providerDiagnostics,
+    handler: createHandler({ fetch, sendSms, logDiagnostic, logProviderDiagnostic })
+  };
 }
 
 async function invoke(handler, req) {
@@ -313,6 +321,8 @@ async function testProviderFailureSemantics() {
       'SMS_PROVIDER_UNAVAILABLE',
       'SMS_SEND_IN_PROGRESS'
     ], '诊断日志只能记录白名单内部错误码');
+    assert.deepStrictEqual(uncertain.providerDiagnostics, ['ALIYUN_UNKNOWN'],
+      '未知供应商异常不得输出异常消息');
   });
 }
 
@@ -475,15 +485,26 @@ async function testNoSensitiveOutputAndContracts() {
 
   await withEnv(hookEnv(), async () => {
     const providerError = new Error(`${PHONE} ${OTP} ${ACCESS_KEY_SECRET}`);
+    providerError.code = 'InvalidAccessKeyId.NotFound';
     const harness = createHarness({ providerResults: [providerError] });
     const result = await invoke(harness.handler, signedRequest({ webhookId: 'msg_safe_diagnostic' }));
     assert.equal(result.statusCode, 503);
     assert.equal(result.payload?.error?.code, 'SMS_PROVIDER_UNAVAILABLE');
     assert.deepStrictEqual(harness.diagnostics, ['SMS_PROVIDER_UNAVAILABLE']);
-    const diagnosticText = JSON.stringify(harness.diagnostics);
+    assert.deepStrictEqual(harness.providerDiagnostics, ['InvalidAccessKeyId.NotFound']);
+    const diagnosticText = JSON.stringify([harness.diagnostics, harness.providerDiagnostics]);
     for (const secret of [PHONE, '13800138000', OTP, SECRET, ACCESS_KEY_ID, ACCESS_KEY_SECRET, KV_TOKEN]) {
       assert(!diagnosticText.includes(secret), '诊断日志不得泄露手机号、OTP 或任何凭据');
     }
+  });
+
+  await withEnv(hookEnv(), async () => {
+    const providerError = new Error('test');
+    providerError.code = ACCESS_KEY_ID;
+    const harness = createHarness({ providerResults: [providerError] });
+    await invoke(harness.handler, signedRequest({ webhookId: 'msg_reject_credential_like_code' }));
+    assert.deepStrictEqual(harness.providerDiagnostics, ['ALIYUN_UNKNOWN'],
+      '疑似凭据内容不得作为供应商错误码输出');
   });
 
   const apiSource = fs.readFileSync(path.join(__dirname, '..', 'api', 'v3a-send-sms-hook.js'), 'utf8');
@@ -491,7 +512,10 @@ async function testNoSensitiveOutputAndContracts() {
   assert(apiSource.includes('bodyParser: false'), 'Webhook 必须显式禁用请求体解析');
   assert(serverSource.includes("console.error('[sms-hook]', code)"),
     'Webhook 只允许记录白名单内部错误码');
-  assert(!serverSource.includes('err?.') && !serverSource.includes('error.message') && !serverSource.includes('String(err)'),
+  assert(serverSource.includes("console.error('[sms-hook-provider]', code)"),
+    'Webhook 只允许记录白名单供应商错误码');
+  assert(!serverSource.includes('err?.') && !serverSource.includes('error.message') &&
+    !serverSource.includes('providerError.message') && !serverSource.includes('String(err)'),
     'Webhook 不得记录供应商异常详情');
   assert(serverSource.includes('parsedSupabase.hostname !== `${projectRef}.supabase.co`'),
     'Webhook 必须验证 Supabase URL hostname 与环境 Project Ref 一致');

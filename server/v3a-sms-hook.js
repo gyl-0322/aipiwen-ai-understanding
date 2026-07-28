@@ -19,6 +19,15 @@ const DIAGNOSTIC_CODES = new Set([
   'SMS_PROVIDER_REJECTED',
   'SMS_HOOK_ERROR'
 ]);
+const ALIYUN_PROVIDER_CODE_PATTERNS = [
+  /^(?:InvalidAccessKeyId|InvalidSecurityToken|MissingSecurityToken)(?:[._-][A-Za-z0-9_-]+)*$/,
+  /^(?:SignatureDoesNotMatch|Unauthorized)$/,
+  /^Forbidden(?:[._-][A-Za-z0-9_-]+)*$/,
+  /^isv\.[A-Z0-9_]+$/,
+  /^SDK\.[A-Za-z0-9_.-]+$/,
+  /^(?:Invalid|Missing)Parameter(?:[._-][A-Za-z0-9_-]+)*$/,
+  /^(?:ETIMEDOUT|ECONNRESET|ENOTFOUND|EAI_AGAIN|UND_ERR_CONNECT_TIMEOUT|ABORT_ERR)$/
+];
 
 class HookError extends Error {
   constructor(statusCode, code) {
@@ -270,6 +279,16 @@ function safeDiagnosticCode(code) {
   return DIAGNOSTIC_CODES.has(code) ? code : 'SMS_HOOK_ERROR';
 }
 
+function safeProviderDiagnosticCode(error) {
+  if (error instanceof HookError && error.code === 'SMS_HOOK_DEADLINE_EXCEEDED') {
+    return error.code;
+  }
+  const code = normalize(error?.code);
+  return ALIYUN_PROVIDER_CODE_PATTERNS.some((pattern) => pattern.test(code))
+    ? code
+    : 'ALIYUN_UNKNOWN';
+}
+
 async function runProviderWithinDeadline(operation, deadlineAt, responseBufferMs) {
   const remaining = deadlineAt - Date.now() - responseBufferMs;
   if (remaining <= 0) throw new HookError(503, 'SMS_HOOK_DEADLINE_EXCEEDED');
@@ -293,6 +312,8 @@ function createHandler(dependencies = {}) {
   const minProviderBudgetMs = dependencies.minProviderBudgetMs || MIN_PROVIDER_BUDGET_MS;
   const logDiagnostic = dependencies.logDiagnostic ||
     ((code) => console.error('[sms-hook]', code));
+  const logProviderDiagnostic = dependencies.logProviderDiagnostic ||
+    ((code) => console.error('[sms-hook-provider]', code));
 
   return async function handler(req, res) {
     setHeaders(res);
@@ -331,7 +352,8 @@ function createHandler(dependencies = {}) {
           deadlineAt,
           responseBufferMs
         );
-      } catch {
+      } catch (providerError) {
+        logProviderDiagnostic(safeProviderDiagnosticCode(providerError));
         throw new HookError(503, 'SMS_PROVIDER_UNAVAILABLE');
       }
       if (!accepted) {
