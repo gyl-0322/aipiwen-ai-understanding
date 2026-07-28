@@ -161,6 +161,7 @@ function createRes() {
 function createHarness(options = {}) {
   const fetch = options.fetch || createKvFetch();
   const sends = [];
+  const diagnostics = [];
   const providerResults = [...(options.providerResults || [true])];
   const sendSms = async (config, sms, outId) => {
     sends.push({ config, sms, outId });
@@ -168,7 +169,8 @@ function createHarness(options = {}) {
     if (result instanceof Error) throw result;
     return result;
   };
-  return { fetch, sends, handler: createHandler({ fetch, sendSms }) };
+  const logDiagnostic = (code) => diagnostics.push(code);
+  return { fetch, sends, diagnostics, handler: createHandler({ fetch, sendSms, logDiagnostic }) };
 }
 
 async function invoke(handler, req) {
@@ -307,6 +309,10 @@ async function testProviderFailureSemantics() {
     assert.equal(timeout.statusCode, 503);
     assert.equal(blockedRetry.statusCode, 503, '结果不明时必须保留 claim，禁止盲目重发');
     assert.equal(uncertain.sends.length, 1);
+    assert.deepStrictEqual(uncertain.diagnostics, [
+      'SMS_PROVIDER_UNAVAILABLE',
+      'SMS_SEND_IN_PROGRESS'
+    ], '诊断日志只能记录白名单内部错误码');
   });
 }
 
@@ -467,10 +473,26 @@ async function testNoSensitiveOutputAndContracts() {
     }
   });
 
+  await withEnv(hookEnv(), async () => {
+    const providerError = new Error(`${PHONE} ${OTP} ${ACCESS_KEY_SECRET}`);
+    const harness = createHarness({ providerResults: [providerError] });
+    const result = await invoke(harness.handler, signedRequest({ webhookId: 'msg_safe_diagnostic' }));
+    assert.equal(result.statusCode, 503);
+    assert.equal(result.payload?.error?.code, 'SMS_PROVIDER_UNAVAILABLE');
+    assert.deepStrictEqual(harness.diagnostics, ['SMS_PROVIDER_UNAVAILABLE']);
+    const diagnosticText = JSON.stringify(harness.diagnostics);
+    for (const secret of [PHONE, '13800138000', OTP, SECRET, ACCESS_KEY_ID, ACCESS_KEY_SECRET, KV_TOKEN]) {
+      assert(!diagnosticText.includes(secret), '诊断日志不得泄露手机号、OTP 或任何凭据');
+    }
+  });
+
   const apiSource = fs.readFileSync(path.join(__dirname, '..', 'api', 'v3a-send-sms-hook.js'), 'utf8');
   const serverSource = fs.readFileSync(path.join(__dirname, '..', 'server', 'v3a-sms-hook.js'), 'utf8');
   assert(apiSource.includes('bodyParser: false'), 'Webhook 必须显式禁用请求体解析');
-  assert(!serverSource.includes('console.'), 'Webhook 不得记录手机号、OTP 或供应商错误详情');
+  assert(serverSource.includes("console.error('[sms-hook]', code)"),
+    'Webhook 只允许记录白名单内部错误码');
+  assert(!serverSource.includes('err?.') && !serverSource.includes('error.message') && !serverSource.includes('String(err)'),
+    'Webhook 不得记录供应商异常详情');
   assert(serverSource.includes('parsedSupabase.hostname !== `${projectRef}.supabase.co`'),
     'Webhook 必须验证 Supabase URL hostname 与环境 Project Ref 一致');
   assert(!serverSource.includes('VERCEL_ENV') && !serverSource.includes('VERCEL_TARGET_ENV'),

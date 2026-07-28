@@ -9,6 +9,16 @@ const HANDLER_DEADLINE_MS = 8500;
 const KV_TIMEOUT_MS = 650;
 const RESPONSE_BUFFER_MS = 250;
 const MIN_PROVIDER_BUDGET_MS = 6000;
+const DIAGNOSTIC_CODES = new Set([
+  'SMS_HOOK_CONFIG_INVALID',
+  'SMS_HOOK_DISABLED',
+  'SMS_HOOK_DEADLINE_EXCEEDED',
+  'SMS_IDEMPOTENCY_UNAVAILABLE',
+  'SMS_SEND_IN_PROGRESS',
+  'SMS_PROVIDER_UNAVAILABLE',
+  'SMS_PROVIDER_REJECTED',
+  'SMS_HOOK_ERROR'
+]);
 
 class HookError extends Error {
   constructor(statusCode, code) {
@@ -256,6 +266,10 @@ function respond(res, statusCode, code) {
   return res.status(statusCode).json(body);
 }
 
+function safeDiagnosticCode(code) {
+  return DIAGNOSTIC_CODES.has(code) ? code : 'SMS_HOOK_ERROR';
+}
+
 async function runProviderWithinDeadline(operation, deadlineAt, responseBufferMs) {
   const remaining = deadlineAt - Date.now() - responseBufferMs;
   if (remaining <= 0) throw new HookError(503, 'SMS_HOOK_DEADLINE_EXCEEDED');
@@ -277,6 +291,8 @@ function createHandler(dependencies = {}) {
   const handlerDeadlineMs = dependencies.handlerDeadlineMs || HANDLER_DEADLINE_MS;
   const responseBufferMs = dependencies.responseBufferMs || RESPONSE_BUFFER_MS;
   const minProviderBudgetMs = dependencies.minProviderBudgetMs || MIN_PROVIDER_BUDGET_MS;
+  const logDiagnostic = dependencies.logDiagnostic ||
+    ((code) => console.error('[sms-hook]', code));
 
   return async function handler(req, res) {
     setHeaders(res);
@@ -315,8 +331,7 @@ function createHandler(dependencies = {}) {
           deadlineAt,
           responseBufferMs
         );
-      } catch (err) {
-        console.error('[sms-hook] Aliyun SDK error:', err?.code || err?.message || String(err));
+      } catch {
         throw new HookError(503, 'SMS_PROVIDER_UNAVAILABLE');
       }
       if (!accepted) {
@@ -334,7 +349,9 @@ function createHandler(dependencies = {}) {
       const safe = error instanceof HookError
         ? error
         : new HookError(500, 'SMS_HOOK_ERROR');
-      return respond(res, safe.statusCode, safe.code);
+      const diagnosticCode = safeDiagnosticCode(safe.code);
+      if (safe.statusCode >= 500) logDiagnostic(diagnosticCode);
+      return respond(res, safe.statusCode, diagnosticCode);
     }
   };
 }
