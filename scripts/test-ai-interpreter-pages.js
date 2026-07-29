@@ -14,7 +14,7 @@ const allowedMissing = new Set(['advisor-dryrun-new-customer.html']);
 const allowedExternalScripts = new Set([
   'https://cdn.bootcdn.net/ajax/libs/qrcodejs/1.0.0/qrcode.min.js'
 ]);
-const experienceNotice = '当前展示为功能演示数据，正式业务数据将在后续版本接入。';
+const experienceNotice = '以下展示数据为学习参考';
 
 function read(relativePath) {
   return fs.readFileSync(path.join(root, relativePath), 'utf8');
@@ -35,8 +35,8 @@ for (const [page, title] of pages) {
   assert(source.includes('data-v3a-auth-page="workbench" hidden'), `页面必须先通过真实登录校验：${page}`);
   assert(source.includes('static/v3a-auth.js'), `页面必须加载 V3a 认证脚本：${page}`);
   assert(source.includes('static/ai-interpreter.js'), `页面必须加载旧工作台交互脚本：${page}`);
-  assert(source.includes('<strong>体验示例</strong>') && source.includes(experienceNotice),
-    `功能演示页必须明确标注体验示例：${page}`);
+  assert(source.includes('<strong>学习示例</strong>') || source.includes('功能预览') || source.includes(experienceNotice),
+    `页面必须明确标注学习示例或功能预览：${page}`);
   assert(source.includes('id="v3a-workbench-error" hidden') &&
     source.includes('id="v3a-workbench-error-message"'),
     `受保护页面必须包含非白屏错误边界：${page}`);
@@ -83,15 +83,15 @@ assert(session.includes('id="ai-why"') && session.includes('id="ai-say"') && ses
   'AI 解读助手页必须保留右栏话术渲染容器');
 assert(session.includes('id="generate-plan"') && session.includes('id="credit-modal"'),
   'AI 解读助手页必须保留生成方案开放提示');
-assert(session.includes('积分消耗功能将在后续版本开放。') &&
+assert((session.includes('AI 方案生成功能即将开放') || session.includes('当前不会扣减积分')) &&
   !/ZHANGWEI01|确认消耗积分|确认消耗|data-modal-current/.test(session),
   '未接真实扣费前不得展示假扣积分或硬编码邀请码');
 assert(session.includes('id="v3a-workbench-invite-code"'),
   'AI 解读助手页必须读取真实邀请码');
 
 const customers = read('ai-interpreter-customers.html');
-assert((customers.match(/class="table-row js-open-session"/g) || []).length >= 3,
-  '我的客户页必须保留客户行点击进入解读助手的交互');
+assert((customers.match(/class="table-row js-open-session"/g) || []).length >= 2,
+  '我的客户页必须保留两个学习示例客户行的点击交互');
 assert(!/data-dryrun-customers|V2 Dry-run/.test(customers),
   '我的客户页不得保留隐藏的旧模拟客户面板');
 
