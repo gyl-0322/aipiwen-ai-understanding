@@ -9,6 +9,8 @@
   <script src="/js/error-tracker.js" defer></script>
   <script src="static/v3a-auth.js" defer></script>
   <script src="static/ai-interpreter.js" defer></script>
+  <script src="https://cdn.bootcdn.net/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" defer></script>
+  <script src="static/v3a-attribution.js" defer></script>
 </head>
 <body data-v3a-auth-page="workbench" hidden data-page="customers">
   <div class="app-shell">
@@ -38,7 +40,7 @@
         <a class="nav-link" data-page="cases" href="ai-interpreter-cases.html"><span>✦</span><span>优秀案例沉淀</span></a>
       </nav>
       <div class="sidebar-note">
-        以下展示为客户列表功能预览，数据为学习示例。
+        真实客户与学习示例分区展示，便于熟悉工作台。
       </div>
     </aside>
 
@@ -50,14 +52,47 @@
           <p>一线指导师只看自己名下客户；客户本人不进入本系统。</p>
         </div>
         <div class="top-actions">
-          <button class="btn ghost" type="button">导出当前筛选</button>
+          <button class="btn ghost" id="v3a-attribution-qr" type="button" disabled>客户归属二维码</button>
+          <button class="btn primary" id="v3a-customer-upload" type="button" disabled>替客户上传报告</button>
           <a class="btn primary" href="ai-interpreter-session.html">进入解读助手</a>
         </div>
       </header>
 
-      <section class="notice" aria-label="学习示例说明" style="margin-bottom:16px">
-        <strong>学习示例</strong>
-        <p>以下展示为客户列表功能预览。真实客户功能正在准备中，敬请期待。</p>
+      <section class="notice" aria-label="客户列表说明" style="margin-bottom:16px">
+        <strong>客户归属已启用</strong>
+        <p>真实客户显示在“我的真实客户”中；页面下方保留两条学习示例，帮助您熟悉列表。</p>
+      </section>
+
+      <section class="module" id="v3a-real-customers" aria-labelledby="v3a-real-customers-title" style="margin-bottom:16px">
+        <div class="card-header">
+          <div class="card-title"><h2 id="v3a-real-customers-title">我的真实客户</h2><small>仅显示当前账号名下客户</small></div>
+          <span class="status info" id="v3a-real-customers-count">读取中</span>
+        </div>
+        <p class="dryrun-error" id="v3a-real-customers-error" role="status" aria-live="polite" hidden></p>
+        <div class="table-card customer-table" id="v3a-real-customers-table" hidden>
+          <div class="table-head" aria-hidden="true">
+            <span>客户</span><span>来源</span><span>归属</span><span>报告数</span><span>最近报告</span><span>状态</span><span>创建时间</span><span>操作</span>
+          </div>
+          <div id="v3a-real-customers-list" aria-live="polite"></div>
+        </div>
+        <div class="notice" id="v3a-real-customers-empty" hidden>
+          <strong>暂无真实客户</strong>
+          <p>可以生成客户归属二维码，或点击“替客户上传报告”。</p>
+        </div>
+      </section>
+
+      <section class="module" id="v3a-attribution-panel" aria-labelledby="v3a-attribution-title" hidden style="margin-bottom:16px">
+        <div class="card-header">
+          <div class="card-title"><h2 id="v3a-attribution-title">客户归属二维码</h2><small>一次使用，24 小时内有效</small></div>
+          <button class="btn ghost" id="v3a-attribution-close" type="button">关闭</button>
+        </div>
+        <div class="layout-grid cols-aside">
+          <div id="v3a-attribution-qr-image" aria-label="客户归属二维码"></div>
+          <div>
+            <p>请让客户扫码打开唯一报告上传入口。报告完成后会自动进入您的客户列表。</p>
+            <p id="v3a-attribution-url" style="overflow-wrap:anywhere;margin-top:10px"></p>
+          </div>
+        </div>
       </section>
 
       <section class="module">
@@ -94,8 +129,8 @@
             <strong>陈小芳</strong><span>西安采集中心二维码</span><span>西安采集中心</span><span>中心二维码</span><span>2026-07-05</span><span class="status info">待解读</span><span>学习通道</span><span>进入</span>
           </button>
           <div class="notice" style="margin:16px">
-            <strong>还没有真实客户？</strong>
-            <p>上方两行为学习示例，帮助您提前了解客户列表的展示方式。真实客户功能正在准备中。</p>
+            <strong>学习示例</strong>
+            <p>上方两行为学习示例，不代表您的真实客户或真实归属。</p>
           </div>
         </div>
 

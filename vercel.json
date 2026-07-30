@@ -43,6 +43,18 @@
       "dest": "/api/generate-report"
     },
     {
+      "src": "/api/v3a-customers",
+      "dest": "/api/v3a-attribution?action=customers"
+    },
+    {
+      "src": "/api/v3a-admin/unassigned",
+      "dest": "/api/v3a-admin?action=unassigned"
+    },
+    {
+      "src": "/api/v3a-admin/assign",
+      "dest": "/api/v3a-admin?action=assign"
+    },
+    {
       "src": "/api/(.*)",
       "dest": "/api/$1"
     },
@@ -187,6 +199,14 @@
       "dest": "/admin-applications.html"
     },
     {
+      "src": "/admin-unassigned.html",
+      "dest": "/admin-unassigned.html"
+    },
+    {
+      "src": "/admin-unassigned",
+      "dest": "/admin-unassigned.html"
+    },
+    {
       "src": "/behavior-input.html",
       "headers": {
         "Location": "/child-chat.html"
@@ -317,6 +337,13 @@
     },
     "api/v3a-admin.js": {
       "maxDuration": 30
+    },
+    "api/v3a-attribution.js": {
+      "maxDuration": 15
+    },
+    "api/v3a-report-import.js": {
+      "maxDuration": 60,
+      "regions": ["iad1"]
     }
   },
   "crons": [

@@ -11,6 +11,95 @@
 const crypto = require('crypto');
 const { redisGet, redisSet, creditReferral, callClaude, MODEL_DEEP, MODEL_FREE, getOpenid } = require('./_lib');
 
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const ATTRIBUTION_TOKEN_PATTERN = /^[0-9a-f]{32}$/;
+
+class AttributionInputError extends Error {
+  constructor(message, code) {
+    super(message);
+    this.code = code;
+  }
+}
+
+function normalizeAttributionInput(body) {
+  const rawToken = String(body?.attributionToken || '').trim().toLowerCase();
+  if (rawToken && !ATTRIBUTION_TOKEN_PATTERN.test(rawToken)) {
+    throw new AttributionInputError('客户归属链接无效', 'INVALID_ATTRIBUTION_TOKEN');
+  }
+  const rawIdempotencyKey = String(body?.idempotencyKey || '').trim();
+  if (rawToken && !UUID_PATTERN.test(rawIdempotencyKey)) {
+    throw new AttributionInputError('报告请求标识无效', 'INVALID_IDEMPOTENCY_KEY');
+  }
+  return {
+    token: rawToken || null,
+    idempotencyKey: UUID_PATTERN.test(rawIdempotencyKey) ? rawIdempotencyKey : crypto.randomUUID()
+  };
+}
+
+function getAttributionConfig() {
+  const supabaseUrl = String(process.env.V3A_SUPABASE_URL || '').trim().replace(/\/+$/, '');
+  const projectRef = String(process.env.V3A_SUPABASE_PROJECT_REF || '').trim();
+  const serviceRoleKey = String(process.env.V3A_SUPABASE_SERVICE_ROLE_KEY || '').trim();
+  let parsed;
+  try {
+    parsed = new URL(supabaseUrl);
+  } catch {
+    throw new AttributionInputError('客户归属服务尚未完成配置', 'ATTRIBUTION_NOT_CONFIGURED');
+  }
+  if (
+    !projectRef || !serviceRoleKey || parsed.protocol !== 'https:' || parsed.username || parsed.password || parsed.port ||
+    parsed.hostname !== `${projectRef}.supabase.co` || parsed.origin !== supabaseUrl ||
+    parsed.pathname !== '/' || parsed.search || parsed.hash
+  ) {
+    throw new AttributionInputError('客户归属服务尚未完成配置', 'ATTRIBUTION_NOT_CONFIGURED');
+  }
+  return { supabaseUrl, serviceRoleKey };
+}
+
+const ATTRIBUTION_RPC_ERRORS = {
+  INVALID_ATTRIBUTION_TOKEN: [400, '客户归属链接无效'],
+  ATTRIBUTION_TOKEN_EXPIRED: [410, '客户归属链接已过期'],
+  ATTRIBUTION_TOKEN_EXHAUSTED: [409, '客户归属链接已使用'],
+  ATTRIBUTION_TOKEN_REVOKED: [410, '客户归属链接已失效'],
+  ATTRIBUTION_ADVISOR_UNAVAILABLE: [409, '该指导师暂时无法接收客户'],
+  IDEMPOTENCY_PAYLOAD_MISMATCH: [409, '重复请求内容不一致']
+};
+
+async function storeAttribution(config, input) {
+  let response;
+  try {
+    response = await fetch(`${config.supabaseUrl}/rest/v1/rpc/v3a_store_attributed_report`, {
+      method: 'POST',
+      headers: {
+        apikey: config.serviceRoleKey,
+        Authorization: `Bearer ${config.serviceRoleKey}`,
+        Accept: 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(input)
+    });
+  } catch {
+    throw new AttributionInputError('客户归属服务暂时不可用', 'ATTRIBUTION_UPSTREAM_UNAVAILABLE');
+  }
+  let payload = null;
+  try { payload = await response.json(); } catch {}
+  if (!response.ok) {
+    const marker = typeof payload?.message === 'string' ? payload.message : '';
+    const mapped = ATTRIBUTION_RPC_ERRORS[marker];
+    const error = new AttributionInputError(
+      mapped?.[1] || '客户归属暂时无法保存',
+      marker || 'ATTRIBUTION_TRANSACTION_FAILED'
+    );
+    error.statusCode = mapped?.[0] || 502;
+    throw error;
+  }
+  const result = Array.isArray(payload) ? payload[0] : payload;
+  if (!result || !/^[0-9a-f]{8}$/.test(String(result.reportStoreId || ''))) {
+    throw new AttributionInputError('客户归属暂时无法保存', 'ATTRIBUTION_TRANSACTION_FAILED');
+  }
+  return result;
+}
+
 // ── 案例库索引（Upstash list，max 2000 条）──────────────────────────────────
 function kvUrl()   { return process.env.KV_REST_API_URL   || process.env.REDIS_URL  || ''; }
 function kvToken() { return process.env.KV_REST_API_TOKEN || ''; }
@@ -815,26 +904,65 @@ async function handleReportStore(req, res) {
     const { sections, engineResult, fingers, name, age } = body;
     if (!sections?.length || !engineResult) return res.status(400).json({ ok: false, error: '缺少 sections 或 engineResult' });
 
-    const id = crypto.randomBytes(4).toString('hex');
+    let attributionInput;
+    try {
+      attributionInput = normalizeAttributionInput(body);
+    } catch (error) {
+      return res.status(400).json({ ok: false, error: error.message, code: error.code });
+    }
+
+    const proposedId = crypto.randomBytes(4).toString('hex');
     const ageNum = age ? Number(age) || null : null;
-    const nameStr = name ? String(name).slice(0, 40) : null;
+    const nameStr = name ? String(name).trim().slice(0, 40) : '未命名客户';
+    let attribution;
+    try {
+      const config = getAttributionConfig();
+      attribution = await storeAttribution(config, {
+        p_token: attributionInput.token,
+        p_idempotency_key: attributionInput.idempotencyKey,
+        p_report_store_id: proposedId,
+        p_display_name: nameStr || '未命名客户',
+        p_age_at_report: ageNum,
+        p_structured_input: { engineResult, fingers: fingers || [] },
+        p_generated_report: { sections }
+      });
+    } catch (error) {
+      const statusCode = Number(error?.statusCode) || (error?.code === 'ATTRIBUTION_NOT_CONFIGURED' ? 503 : 502);
+      return res.status(statusCode).json({
+        ok: false,
+        error: error?.message || '客户归属暂时无法保存',
+        code: error?.code || 'ATTRIBUTION_TRANSACTION_FAILED'
+      });
+    }
+
+    const id = attribution.reportStoreId;
     // 完整报告：TTL 1年（原30天）
-    await redisSet(`report:${id}`, { sections, engineResult, fingers: fingers || [], name: nameStr, age: ageNum, createdAt: Date.now(), ip }, 365 * 86400);
+    await redisSet(`report:${id}`, {
+      sections,
+      engineResult,
+      fingers: fingers || [],
+      name: nameStr,
+      age: ageNum,
+      source: attribution.source,
+      advisor_id: attribution.advisorUserId || null,
+      advisor_client_id: attribution.clientId,
+      advisor_report_id: attribution.reportId,
+      createdAt: Date.now(),
+      ip
+    }, 365 * 86400);
     // 案例库索引：只存摘要（不含完整 sections，节省空间）
     pushCaseIndex({
       id,
       type:     engineResult?.主性格类型 || null,
       key:      engineResult?.key || null,
       age:      ageNum,
-      name:     nameStr,
       channel:  engineResult?.学习通道?.主通道 || null,
       brain:    engineResult?.左右脑?.结论 || null,
       mType:    engineResult?.叠加特质?.M型 || false,
       plusR:    engineResult?.叠加特质?.逆向思维R || false,
-      ip,
       createdAt: Date.now(),
     });
-    return res.status(200).json({ ok: true, id });
+    return res.status(200).json({ ok: true, id, source: attribution.source });
   }
 
   if (req.method === 'GET') {
@@ -858,7 +986,12 @@ async function handleReportStore(req, res) {
 
     const report = await redisGet(`report:${id}`).catch(() => null);
     if (!report) return res.status(404).json({ ok: false, error: '报告不存在或已过期' });
-    return res.status(200).json({ ok: true, report });
+    const publicReport = { ...report };
+    delete publicReport.advisor_id;
+    delete publicReport.advisor_client_id;
+    delete publicReport.advisor_report_id;
+    delete publicReport.ip;
+    return res.status(200).json({ ok: true, report: publicReport });
   }
 
   return res.status(405).json({ ok: false, error: 'Method not allowed' });
@@ -986,4 +1119,11 @@ module.exports = async function handler(req, res) {
     raw,
     requiredModules: requiredMods,
   });
+};
+
+module.exports._test = {
+  normalizeAttributionInput,
+  getAttributionConfig,
+  storeAttribution,
+  handleReportStore
 };

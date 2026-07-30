@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AIPIWEN 无归属客户池</title>
+  <meta name="description" content="AIPIWEN 总部无归属客户只读列表">
+  <link rel="stylesheet" href="static/ai-interpreter.css">
+  <style>
+    .admin-shell{width:min(1180px,calc(100% - 48px))}.unassigned-table .table-head,.unassigned-table .table-row{grid-template-columns:1.1fr .7fr .65fr 1fr 1fr}.admin-empty{padding:32px 18px;text-align:center}@media(max-width:760px){.admin-shell{width:min(100% - 28px,1180px)}.unassigned-table{overflow-x:auto}.unassigned-table .table-head,.unassigned-table .table-row{min-width:760px}.admin-shell .public-nav{align-items:flex-start;flex-direction:column}}
+  </style>
+  <script src="/js/error-tracker.js" defer></script>
+  <script src="static/v3a-admin-unassigned.js" defer></script>
+</head>
+<body data-v3a-admin-page="unassigned" data-page="admin-unassigned">
+  <main class="public-shell admin-shell">
+    <nav class="public-nav" aria-label="总部客户归属导航">
+      <a class="brand" href="admin-unassigned.html">
+        <svg class="brand-flower" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <circle class="brand-flower-ring" cx="18" cy="18" r="15.5" stroke-width=".9" stroke-dasharray="2.5 6"/>
+          <g class="brand-flower-petals"><ellipse cx="18" cy="12" rx="2.2" ry="6.5"/><ellipse cx="18" cy="12" rx="2.2" ry="6.5" transform="rotate(90 18 18)"/><ellipse cx="18" cy="12" rx="1.4" ry="5.5" transform="rotate(45 18 18)"/><ellipse cx="18" cy="12" rx="1.4" ry="5.5" transform="rotate(135 18 18)"/></g>
+          <circle class="brand-flower-center" cx="18" cy="18" r="3"/>
+        </svg>
+        <div><p class="brand-title">AIPIWEN 无归属客户池</p><div class="brand-subtitle">总部客户归属管理 · MVP 只读</div></div>
+      </a>
+      <div class="top-actions">
+        <a class="btn ghost" href="admin-applications.html">返回准入审核</a>
+        <button class="btn" id="v3a-unassigned-refresh" type="button">刷新</button>
+      </div>
+    </nav>
+
+    <section class="module" id="v3a-unassigned-gate" aria-live="polite">
+      <span class="status pending" id="v3a-unassigned-gate-badge">权限检查中</span>
+      <h1 id="v3a-unassigned-gate-title">正在验证平台超级管理员账号</h1>
+      <p id="v3a-unassigned-gate-message">仅 active super_admin 可以查看无归属客户。</p>
+      <a class="btn ghost" href="login.html">前往统一登录</a>
+    </section>
+
+    <section id="v3a-unassigned-workspace" hidden>
+      <div class="module metric amber" style="margin-bottom:16px">
+        <span class="metric-label">当前无归属客户</span>
+        <strong id="v3a-unassigned-count">0</strong>
+        <small>source = unguided 且当前未分配</small>
+      </div>
+      <p class="dryrun-error" id="v3a-unassigned-error" role="status" aria-live="polite" hidden></p>
+      <section class="table-card unassigned-table" aria-labelledby="v3a-unassigned-title">
+        <div class="card-header" style="padding:16px 16px 0">
+          <div class="card-title"><h2 id="v3a-unassigned-title">无归属客户</h2><small>本阶段只读查看，不在页面执行分配</small></div>
+          <span class="status info">只读</span>
+        </div>
+        <div class="table-head" aria-hidden="true"><span>客户</span><span>报告数</span><span>报告状态</span><span>客户创建时间</span><span>最近报告时间</span></div>
+        <div id="v3a-unassigned-list" aria-live="polite"></div>
+        <div class="admin-empty" id="v3a-unassigned-empty" hidden><strong>当前没有无归属客户</strong></div>
+      </section>
+    </section>
+  </main>
+</body>
+</html>

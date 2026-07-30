@@ -185,7 +185,14 @@ const RPC_ERROR_MAP = {
   APPLICATION_NOT_PENDING: [400, '该申请已不处于 pending 状态。', 'APPLICATION_NOT_PENDING'],
   APPLICATION_RELATED_DATA_NOT_PENDING: [400, '申请关联状态不一致。', 'APPLICATION_NOT_PENDING'],
   APPLICATION_PROFILE_NOT_PENDING: [400, '申请资料已不处于 pending 状态。', 'APPLICATION_NOT_PENDING'],
-  REJECTION_REASON_TOO_SHORT: [400, '驳回原因至少需要 10 个字符。', 'REASON_REQUIRED']
+  REJECTION_REASON_TOO_SHORT: [400, '驳回原因至少需要 10 个字符。', 'REASON_REQUIRED'],
+  ASSIGN_CLIENT_FORBIDDEN: [403, '无权执行客户归属操作。', 'FORBIDDEN'],
+  CLIENT_NOT_FOUND: [404, '未找到该客户。', 'CLIENT_NOT_FOUND'],
+  CLIENT_ALREADY_ASSIGNED: [409, '该客户已被分配。', 'CLIENT_ALREADY_ASSIGNED'],
+  CLIENT_NOT_ASSIGNABLE: [409, '该客户不在无归属池。', 'CLIENT_NOT_ASSIGNABLE'],
+  TARGET_ADVISOR_NOT_ACTIVE: [400, '目标指导师不存在或未激活。', 'TARGET_ADVISOR_NOT_ACTIVE'],
+  REASON_REQUIRED: [400, '请填写归属调整原因。', 'REASON_REQUIRED'],
+  REASON_TOO_LONG: [400, '归属调整原因不能超过 500 个字符。', 'REASON_TOO_LONG']
 };
 
 function requireExactBodyKeys(body, allowedKeys) {
@@ -350,6 +357,76 @@ async function rejectApplication(config, admin, applicationId, reason) {
   return normalizeRejectionResult(result);
 }
 
+async function listUnassignedClients(config) {
+  const clients = await selectRows(config, 'advisor_clients', {
+    select: 'id,display_name,source,created_at',
+    source: 'eq.unguided',
+    advisor_user_id: 'is.null',
+    archived_at: 'is.null',
+    order: 'created_at.asc',
+    limit: 200
+  });
+  if (clients.length === 0) return [];
+
+  const clientIds = clients.map((client) => client.id).join(',');
+  const reports = await selectRows(config, 'advisor_reports', {
+    select: 'id,advisor_client_id,status,created_at',
+    advisor_client_id: `in.(${clientIds})`,
+    order: 'created_at.desc',
+    limit: 500
+  });
+  const reportsByClient = new Map();
+  for (const report of reports) {
+    if (!reportsByClient.has(report.advisor_client_id)) reportsByClient.set(report.advisor_client_id, []);
+    reportsByClient.get(report.advisor_client_id).push({
+      id: report.id,
+      status: report.status,
+      createdAt: report.created_at
+    });
+  }
+  return clients.map((client) => ({
+    id: client.id,
+    displayName: client.display_name,
+    source: client.source,
+    createdAt: client.created_at,
+    reports: reportsByClient.get(client.id) || []
+  }));
+}
+
+function validateAssignmentBody(body) {
+  requireExactBodyKeys(body, ['clientId', 'targetAdvisorUserId', 'reason']);
+  const clientId = String(body?.clientId || '');
+  const targetAdvisorUserId = String(body?.targetAdvisorUserId || '');
+  const reason = String(body?.reason || '').trim();
+  if (!UUID_PATTERN.test(clientId)) {
+    throw new HttpError(400, 'clientId 格式无效。', 'INVALID_CLIENT_ID');
+  }
+  if (!UUID_PATTERN.test(targetAdvisorUserId)) {
+    throw new HttpError(400, 'targetAdvisorUserId 格式无效。', 'INVALID_ADVISOR_ID');
+  }
+  if (!reason) {
+    throw new HttpError(400, '请填写归属调整原因。', 'REASON_REQUIRED');
+  }
+  if (Array.from(reason).length > 500) {
+    throw new HttpError(400, '归属调整原因不能超过 500 个字符。', 'REASON_TOO_LONG');
+  }
+  return { clientId, targetAdvisorUserId, reason };
+}
+
+async function assignClient(config, admin, body) {
+  const input = validateAssignmentBody(body);
+  const result = await callRpc(config, 'v3a_assign_advisor_client', {
+    p_admin_user_id: admin.id,
+    p_client_id: input.clientId,
+    p_target_advisor_user_id: input.targetAdvisorUserId,
+    p_reason: input.reason
+  });
+  if (!result?.clientId || !result?.advisorUserId || !result?.auditLogId) {
+    throw new HttpError(500, '客户归属事务返回结果无效。', 'TRANSACTION_FAILED');
+  }
+  return { ok: true, assignment: result };
+}
+
 module.exports = async function handler(req, res) {
   setPrivateHeaders(res);
   res.setHeader('Allow', 'GET, POST');
@@ -385,6 +462,16 @@ module.exports = async function handler(req, res) {
       const application = await getApplication(config, applicationId);
       return res.status(200).json({ ok: true, application, csrfToken: session.csrfToken });
     }
+    if (req.method === 'GET' && action === 'unassigned') {
+      const clients = await listUnassignedClients(config);
+      return res.status(200).json({
+        ok: true,
+        admin: { displayName: admin.display_name || '平台超级管理员' },
+        clients,
+        total: clients.length,
+        csrfToken: session.csrfToken
+      });
+    }
     if (req.method === 'POST' && action === 'approve_application') {
       requireReviewWritesEnabled(config);
       const body = readRequestBody(req);
@@ -405,6 +492,10 @@ module.exports = async function handler(req, res) {
       }
       return res.status(200).json(await rejectApplication(config, admin, applicationId, body.reason));
     }
+    if (req.method === 'POST' && action === 'assign') {
+      const body = readRequestBody(req);
+      return res.status(200).json(await assignClient(config, admin, body));
+    }
     throw new HttpError(400, '不支持的 action。', 'INVALID_ACTION');
   } catch (error) {
     if (error?.code === 'UNAUTHENTICATED') clearSessionCookie(res);
@@ -414,3 +505,5 @@ module.exports = async function handler(req, res) {
     return res.status(statusCode).json({ ok: false, error: message, code });
   }
 };
+
+module.exports._test = { validateAssignmentBody, listUnassignedClients, assignClient };
