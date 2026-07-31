@@ -65,6 +65,20 @@ html,body{height:100%;overflow:hidden;background:#060810;
 .s1-title{font-family:Georgia,'Noto Serif SC',serif;font-size:24px;font-weight:700;
   text-align:center;margin-bottom:8px;}
 .s1-sub{font-size:13px;color:var(--dim);text-align:center;margin-bottom:32px;line-height:1.7;}
+.service-code-card{width:100%;margin:-14px 0 18px;padding:12px;border:1px solid var(--border);
+  border-radius:14px;background:rgba(255,255,255,.035);}
+.service-code-toggle{width:100%;border:0;background:transparent;color:var(--amber);font-size:13px;
+  font-family:inherit;cursor:pointer;text-align:left;padding:0;}
+.service-code-entry{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;margin-top:10px;}
+.service-code-entry input{min-width:0;height:42px;border:1px solid var(--border);border-radius:10px;
+  background:rgba(255,255,255,.05);color:var(--text);font:600 14px/1 inherit;padding:0 12px;
+  text-transform:uppercase;letter-spacing:.08em;}
+.service-code-entry button{height:42px;border:0;border-radius:10px;background:var(--amber);color:var(--bg);
+  font-family:inherit;font-weight:700;padding:0 14px;cursor:pointer;}
+.service-code-entry button:disabled{opacity:.55;cursor:default;}
+.service-code-status{min-height:18px;margin:8px 0 0;color:var(--dim);font-size:12px;line-height:1.5;}
+.service-code-status[data-state="valid"]{color:#7bd7b2;}
+.service-code-status[data-state="error"]{color:#ff9f91;}
 .dropzone{width:100%;border:1.5px dashed rgba(194,105,42,.4);border-radius:20px;
   padding:36px 24px;display:flex;flex-direction:column;align-items:center;gap:12px;
   cursor:pointer;transition:border-color .2s,background .2s;position:relative;
@@ -413,6 +427,14 @@ button, a, .must-item, .fp-option-card, .back-btn, .issue-chip {
   <div class="s1-body">
     <div class="s1-title">上传总表页</div>
     <div class="s1-sub">上传皮纹测评报告的<strong>总表页</strong>图片<br>AI 自动读取十指数据</div>
+    <div class="service-code-card" id="advisor-service-code-card">
+      <button class="service-code-toggle" id="advisor-service-code-toggle" type="button">已有指导师服务码？点击填写</button>
+      <div class="service-code-entry" id="advisor-service-code-entry" hidden>
+        <input id="advisor-service-code-input" type="text" inputmode="text" maxlength="14" autocomplete="off" placeholder="例如 A1B2-C3D4-E5" aria-label="指导师服务码">
+        <button id="advisor-service-code-verify" type="button">确认</button>
+      </div>
+      <p class="service-code-status" id="advisor-service-code-status" role="status" aria-live="polite"></p>
+    </div>
     <div class="dropzone" id="dropzone">
       <input type="file" id="file-gallery" accept="image/*">
       <div class="dz-icon">📄</div>
@@ -760,12 +782,69 @@ let ST = {
 let _refToken = null;
 try { _refToken = localStorage.getItem('aipiwen_ref') || null; } catch(e) {}
 // 客户归属 token 只在当前 URL 生命周期内使用，不写入本地存储。
-const _attributionToken = (() => {
+let _attributionToken = (() => {
   try {
     const token = new URL(location.href).searchParams.get('token') || '';
     return /^[0-9a-f]{32}$/i.test(token) ? token.toLowerCase() : null;
   } catch(e) { return null; }
 })();
+function _normalizeServiceCode(value) {
+  return String(value || '').trim().toUpperCase().replace(/[ -]/g, '');
+}
+function _setAttributionStatus(message, state = '') {
+  const node = qs('#advisor-service-code-status');
+  node.textContent = message || '';
+  node.dataset.state = state;
+}
+function _showServiceCodeEntry() {
+  qs('#advisor-service-code-entry').hidden = false;
+  qs('#advisor-service-code-input').focus();
+}
+async function _validateAttributionToken() {
+  if (!_attributionToken) return;
+  try {
+    const response = await fetch(`/api/v3a-attribution?action=validate&token=${encodeURIComponent(_attributionToken)}`);
+    const payload = await response.json();
+    if (!response.ok || payload?.ok !== true || payload?.valid !== true) {
+      _setAttributionStatus('指导师归属链接无效或已过期，请填写新的服务码。', 'error');
+      _showServiceCodeEntry();
+      return;
+    }
+    const displayName = String(payload.advisor?.displayName || 'AIPIWEN指导师').slice(0, 40);
+    _setAttributionStatus(`本次报告将由“${displayName}”提供后续服务。`, 'valid');
+    qs('#advisor-service-code-toggle').hidden = true;
+  } catch {
+    _setAttributionStatus('暂时无法确认指导师归属，请稍后重试。', 'error');
+  }
+}
+async function _validateServiceCode() {
+  const input = qs('#advisor-service-code-input');
+  const button = qs('#advisor-service-code-verify');
+  const serviceCode = _normalizeServiceCode(input.value);
+  if (!/^[0-9A-F]{10}$/.test(serviceCode)) {
+    _setAttributionStatus('请输入 10 位指导师服务码。', 'error');
+    return;
+  }
+  button.disabled = true;
+  _setAttributionStatus('正在确认指导师…');
+  try {
+    const response = await fetch(`/api/v3a-attribution?action=validate&code=${encodeURIComponent(serviceCode)}`);
+    const payload = await response.json();
+    if (!response.ok || payload?.ok !== true || payload?.valid !== true || !/^[0-9a-f]{32}$/.test(payload.attributionToken || '')) {
+      _setAttributionStatus('服务码无效、已过期或已使用，请向指导师重新获取。', 'error');
+      return;
+    }
+    _attributionToken = payload.attributionToken;
+    input.value = `${serviceCode.slice(0, 4)}-${serviceCode.slice(4, 8)}-${serviceCode.slice(8)}`;
+    input.disabled = true;
+    const displayName = String(payload.advisor?.displayName || 'AIPIWEN指导师').slice(0, 40);
+    _setAttributionStatus(`已确认：本次报告将由“${displayName}”提供后续服务。`, 'valid');
+  } catch {
+    _setAttributionStatus('服务码暂时无法验证，请稍后重试。', 'error');
+  } finally {
+    button.disabled = false;
+  }
+}
 const _attributionIdempotencyKey = (() => {
   if (crypto.randomUUID) return crypto.randomUUID();
   const bytes = crypto.getRandomValues(new Uint8Array(16));
@@ -895,6 +974,12 @@ function handleFile(file) {
   qs('#' + id).addEventListener('change', e => handleFile(e.target.files[0]));
 });
 const dz = qs('#dropzone');
+qs('#advisor-service-code-toggle').addEventListener('click', _showServiceCodeEntry);
+qs('#advisor-service-code-verify').addEventListener('click', _validateServiceCode);
+qs('#advisor-service-code-input').addEventListener('input', () => {
+  if (!qs('#advisor-service-code-input').disabled) _attributionToken = null;
+});
+if (_attributionToken) _validateAttributionToken();
 dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag'); });
 dz.addEventListener('dragleave', () => dz.classList.remove('drag'));
 dz.addEventListener('drop', e => {
@@ -903,6 +988,10 @@ dz.addEventListener('drop', e => {
 });
 
 qs('#s1-extract-btn').addEventListener('click', async () => {
+  if (qs('#advisor-service-code-input').value.trim() && !_attributionToken) {
+    _setAttributionStatus('请先确认指导师服务码，或清空服务码后作为无归属客户继续。', 'error');
+    return;
+  }
   const btn = qs('#s1-extract-btn');
   btn.disabled = true;
   btn.textContent = '识别中…';

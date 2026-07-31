@@ -25,6 +25,10 @@
     const date = new Date(value);
     return Number.isNaN(date.getTime()) ? '-' : date.toLocaleString('zh-CN', { hour12: false });
   }
+  function formatServiceCode(value) {
+    const code = String(value || '').replace(/[^0-9A-F]/gi, '').toUpperCase();
+    return code.length === 10 ? `${code.slice(0, 4)}-${code.slice(4, 8)}-${code.slice(8)}` : '';
+  }
   function cell(text, strong) {
     const node = document.createElement(strong ? 'strong' : 'span');
     node.textContent = String(text ?? '-');
@@ -136,6 +140,10 @@
       });
     }
     $('#v3a-attribution-url').textContent = url;
+    const serviceCode = formatServiceCode(payload.serviceCode);
+    $('#v3a-attribution-service-code').textContent = serviceCode || '-';
+    $('#v3a-attribution-code-copy').disabled = !serviceCode;
+    $('#v3a-attribution-code-copy').dataset.serviceCode = serviceCode;
     $('#v3a-attribution-panel').hidden = false;
   }
 
@@ -143,6 +151,17 @@
   $('#v3a-attribution-qr')?.addEventListener('click', showQr);
   $('#v3a-attribution-close')?.addEventListener('click', () => {
     $('#v3a-attribution-panel').hidden = true;
+  });
+  $('#v3a-attribution-code-copy')?.addEventListener('click', async (event) => {
+    const button = event.currentTarget;
+    const serviceCode = button.dataset.serviceCode || '';
+    if (!serviceCode) return;
+    try {
+      await navigator.clipboard.writeText(serviceCode);
+      button.textContent = '已复制';
+    } catch {
+      showError('服务码复制失败，请手工记录。');
+    }
   });
   loadCustomers();
 })();

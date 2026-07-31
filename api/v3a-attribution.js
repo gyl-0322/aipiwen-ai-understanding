@@ -13,10 +13,12 @@ const {
   loadSession,
   resolveSession,
   requireCsrf,
+  consumeRateLimit,
   readJson
 } = require('../server/v3a-session-store');
 
 const TOKEN_PATTERN = /^[0-9a-f]{32}$/;
+const SERVICE_CODE_PATTERN = /^[0-9A-F]{10}$/;
 
 function restUrl(config, table, params) {
   const url = new URL(`${config.supabaseUrl}/rest/v1/${table}`);
@@ -72,6 +74,20 @@ function normalizeToken(value) {
   return token;
 }
 
+function normalizeServiceCode(value) {
+  const code = String(value || '').trim().toUpperCase().replace(/[ -]/g, '');
+  if (!SERVICE_CODE_PATTERN.test(code)) {
+    throw new HttpError(400, '指导师服务码无效。', 'INVALID_ATTRIBUTION_SERVICE_CODE');
+  }
+  return code;
+}
+
+function requestIp(req) {
+  const forwarded = String(req.headers?.['x-forwarded-for'] || '').split(',')[0].trim();
+  const candidate = forwarded || String(req.headers?.['x-real-ip'] || '').trim() || String(req.socket?.remoteAddress || '').trim();
+  return candidate.slice(0, 128) || 'unknown';
+}
+
 function publicAdvisor(payload) {
   if (payload?.valid !== true) {
     return { valid: false, code: String(payload?.code || 'INVALID_ATTRIBUTION_TOKEN') };
@@ -82,6 +98,12 @@ function publicAdvisor(payload) {
     expiresAt: payload.expiresAt || null,
     remainingUses: Number.isInteger(payload.remainingUses) ? payload.remainingUses : null
   };
+}
+
+function publicServiceCode(payload) {
+  const result = publicAdvisor(payload);
+  if (result.valid !== true) return result;
+  return { ...result, attributionToken: normalizeToken(payload?.attributionToken) };
 }
 
 async function callRpc(config, accessToken, functionName, body, publicMessage) {
@@ -172,7 +194,24 @@ async function handler(req, res) {
     const action = String(req.query?.action || (req.method === 'GET' ? 'customers' : ''));
 
     if (req.method === 'GET' && action === 'validate') {
-      const token = normalizeToken(req.query?.token);
+      const hasToken = String(req.query?.token || '').trim() !== '';
+      const hasServiceCode = String(req.query?.code || '').trim() !== '';
+      if (hasToken === hasServiceCode) {
+        throw new HttpError(400, '请提供一种客户归属凭证。', 'INVALID_ATTRIBUTION_CREDENTIAL');
+      }
+      if (hasServiceCode) {
+        await consumeRateLimit(config, 'attribution-service-code-validate-ip', requestIp(req), 20, 600);
+        const serviceCode = normalizeServiceCode(req.query.code);
+        const result = await callRpc(
+          config,
+          null,
+          'v3a_validate_attribution_service_code',
+          { p_service_code: serviceCode },
+          '指导师服务码暂时无法验证。'
+        );
+        return res.status(200).json({ ok: true, ...publicServiceCode(result) });
+      }
+      const token = normalizeToken(req.query.token);
       const result = await callRpc(
         config,
         null,
@@ -220,9 +259,11 @@ async function handler(req, res) {
         '客户归属链接暂时无法创建。'
       );
       const token = normalizeToken(result?.token);
+      const serviceCode = normalizeServiceCode(result?.serviceCode);
       return res.status(201).json({
         ok: true,
         token,
+        serviceCode,
         uploadPath: `/report-upload.html?token=${encodeURIComponent(token)}`,
         expiresAt: result?.expiresAt || null,
         maxUses: 1
@@ -239,4 +280,12 @@ async function handler(req, res) {
 }
 
 module.exports = handler;
-module.exports._test = { normalizeToken, publicAdvisor, restUrl, listCustomers };
+module.exports._test = {
+  normalizeToken,
+  normalizeServiceCode,
+  requestIp,
+  publicAdvisor,
+  publicServiceCode,
+  restUrl,
+  listCustomers
+};
