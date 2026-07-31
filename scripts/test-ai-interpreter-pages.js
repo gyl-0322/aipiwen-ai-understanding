@@ -74,6 +74,24 @@ for (const [page] of pages) {
   for (const navLink of navLinks) {
     assert(source.includes(`href="${navLink}"`), `左侧导航缺少链接：${page} -> ${navLink}`);
   }
+  const duplicateQuickLinks = Array.from(
+    source.matchAll(/<a class="[^"]*\bbtn\b[^"]*"[^>]*href="(ai-interpreter-[^"]+\.html)"/g)
+  );
+  assert(duplicateQuickLinks.length === 0,
+    `页面不得用快捷按钮重复左侧导航：${page} -> ${duplicateQuickLinks.map((match) => match[1]).join(',')}`);
+}
+
+const allWorkbenchPages = pages.map(([page]) => read(page)).join('\n');
+for (const orphanLabel of [
+  '保存进度',
+  '暂停解读',
+  '进入模拟解读',
+  '查看案例来源',
+  '标记为优秀案例',
+  '查看入库规则'
+]) {
+  assert(!allWorkbenchPages.includes(`>${orphanLabel}<`),
+    `工作台不得保留无真实处理逻辑的按钮：${orphanLabel}`);
 }
 
 const session = read('ai-interpreter-session.html');
@@ -86,14 +104,20 @@ assert(session.includes('id="generate-plan"') && session.includes('id="credit-mo
 assert((session.includes('AI 方案生成功能即将开放') || session.includes('当前不会扣减积分')) &&
   !/ZHANGWEI01|确认消耗积分|确认消耗|data-modal-current/.test(session),
   '未接真实扣费前不得展示假扣积分或硬编码邀请码');
-assert(session.includes('id="v3a-workbench-invite-code"'),
-  'AI 解读助手页必须读取真实邀请码');
+assert(!session.includes('id="v3a-workbench-invite-code"') && !session.includes('邀请码：'),
+  'AI 解读助手页顶部不得重复展示邀请码');
 
 const customers = read('ai-interpreter-customers.html');
 assert((customers.match(/class="table-row js-open-session"/g) || []).length >= 2,
   '我的客户页必须保留两个学习示例客户行的点击交互');
 assert(!/data-dryrun-customers|V2 Dry-run/.test(customers),
   '我的客户页不得保留隐藏的旧模拟客户面板');
+assert(!/class="btn[^"]*"[^>]*>进入(?: AI)?解读助手</.test(customers),
+  '我的客户页不得重复展示左侧导航已有的解读助手入口');
+
+const training = read('ai-interpreter-training.html');
+assert(!training.includes('进入模拟解读') && !training.includes('查看案例来源'),
+  '解读训练页顶部不得重复展示模拟解读或案例来源入口');
 
 const review = read('ai-interpreter-review.html');
 assert(review.includes('data-review-target="waiting"') &&

@@ -15,6 +15,7 @@ const reportStoreSource = read('api/generate-report.js');
 const adminSource = read('api/v3a-admin.js');
 const uploadPage = read('report-upload.html');
 const customersPage = read('ai-interpreter-customers.html');
+const attributionClient = read('static/v3a-attribution.js');
 const adminPage = read('admin-unassigned.html');
 const adminClient = read('static/v3a-admin-unassigned.js');
 const vercel = JSON.parse(read('vercel.json'));
@@ -123,8 +124,19 @@ check(adminTest.validateAssignmentBody({ clientId: uuid, targetAdvisorUserId: uu
 throwsCode(() => adminTest.validateAssignmentBody({ clientId: uuid, targetAdvisorUserId: uuid, reason: '' }),
   'REASON_REQUIRED', '归属调整必须记录原因');
 
-match(customersPage, /替客户上传报告/, '客户页必须提供替客户上传入口');
-match(customersPage, /客户归属二维码/, '客户页必须提供客户归属二维码入口');
+match(customersPage, /id="v3a-customer-upload"[^>]*>代客户上传报告</,
+  '客户页必须提供用户可理解的代上传入口');
+match(customersPage, /id="v3a-attribution-qr"[^>]*>客户扫码上传</,
+  '客户页必须提供用户可理解的扫码入口');
+noMatch(customersPage, /class="btn[^"]*"[^>]*>进入(?: AI)?解读助手</,
+  '客户页不得重复展示左侧导航已有的解读助手入口');
+noMatch(customersPage,
+  /一线指导师只看自己名下客户|客户本人不进入本系统|仅显示当前账号名下客户|客户归属已启用|真实客户与学习示例分区展示|不代表您的真实客户或真实归属|第⑥步|第⑧步/,
+  '客户前台不得暴露权限、数据归属或内部流程设计规则');
+noMatch(customersPage, />归属<|>绑定方式</,
+  '客户前台字段不得使用后台数据模型术语');
+noMatch(attributionClient, /归属二维码|指导师录入|总部分配|当前指导师/,
+  '真实客户列表不得渲染后台归属术语');
 match(adminPage, /data-v3a-admin-page="unassigned"/, '无归属池页面必须标记管理页面');
 match(adminClient, /\/api\/v3a-admin\/unassigned/, '无归属池页面必须调用受控 API');
 noMatch(adminClient, /\/assign|method:\s*'POST'/, 'MVP 页面必须保持只读');

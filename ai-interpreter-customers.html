@@ -40,7 +40,7 @@
         <a class="nav-link" data-page="cases" href="ai-interpreter-cases.html"><span>✦</span><span>优秀案例沉淀</span></a>
       </nav>
       <div class="sidebar-note">
-        真实客户与学习示例分区展示，便于熟悉工作台。
+        在这里查看客户报告，继续解读与跟进服务。
       </div>
     </aside>
 
@@ -49,49 +49,48 @@
         <div>
           <p class="eyebrow">My Customers</p>
           <h1>我的客户</h1>
-          <p>一线指导师只看自己名下客户；客户本人不进入本系统。</p>
+          <p>集中查看客户报告，开始解读并记录后续服务。</p>
         </div>
         <div class="top-actions">
-          <button class="btn ghost" id="v3a-attribution-qr" type="button" disabled>客户归属二维码</button>
-          <button class="btn primary" id="v3a-customer-upload" type="button" disabled>替客户上传报告</button>
-          <a class="btn primary" href="ai-interpreter-session.html">进入解读助手</a>
+          <button class="btn ghost" id="v3a-attribution-qr" type="button" disabled>客户扫码上传</button>
+          <button class="btn primary" id="v3a-customer-upload" type="button" disabled>代客户上传报告</button>
         </div>
       </header>
 
       <section class="notice" aria-label="客户列表说明" style="margin-bottom:16px">
-        <strong>客户归属已启用</strong>
-        <p>真实客户显示在“我的真实客户”中；页面下方保留两条学习示例，帮助您熟悉列表。</p>
+        <strong>添加客户</strong>
+        <p>邀请客户扫码上传报告，或由您代为上传；完成后可在这里查看。</p>
       </section>
 
       <section class="module" id="v3a-real-customers" aria-labelledby="v3a-real-customers-title" style="margin-bottom:16px">
         <div class="card-header">
-          <div class="card-title"><h2 id="v3a-real-customers-title">我的真实客户</h2><small>仅显示当前账号名下客户</small></div>
+          <div class="card-title"><h2 id="v3a-real-customers-title">我的客户</h2><small>客户报告与服务进度</small></div>
           <span class="status info" id="v3a-real-customers-count">读取中</span>
         </div>
         <p class="dryrun-error" id="v3a-real-customers-error" role="status" aria-live="polite" hidden></p>
         <div class="table-card customer-table" id="v3a-real-customers-table" hidden>
           <div class="table-head" aria-hidden="true">
-            <span>客户</span><span>来源</span><span>归属</span><span>报告数</span><span>最近报告</span><span>状态</span><span>创建时间</span><span>操作</span>
+            <span>客户</span><span>客户来源</span><span>服务指导师</span><span>报告数</span><span>最近报告</span><span>状态</span><span>创建时间</span><span>操作</span>
           </div>
           <div id="v3a-real-customers-list" aria-live="polite"></div>
         </div>
         <div class="notice" id="v3a-real-customers-empty" hidden>
-          <strong>暂无真实客户</strong>
-          <p>可以生成客户归属二维码，或点击“替客户上传报告”。</p>
+          <strong>暂无客户报告</strong>
+          <p>可以生成客户上传二维码，或点击“代客户上传报告”。</p>
         </div>
       </section>
 
       <section class="module" id="v3a-attribution-panel" aria-labelledby="v3a-attribution-title" hidden style="margin-bottom:16px">
         <div class="card-header">
-          <div class="card-title"><h2 id="v3a-attribution-title">客户归属二维码</h2><small>一次使用，24 小时内有效</small></div>
+          <div class="card-title"><h2 id="v3a-attribution-title">客户上传二维码</h2><small>一次使用，24 小时内有效</small></div>
           <button class="btn ghost" id="v3a-attribution-close" type="button">关闭</button>
         </div>
         <div class="layout-grid cols-aside">
-          <div id="v3a-attribution-qr-image" aria-label="客户归属二维码"></div>
+          <div id="v3a-attribution-qr-image" aria-label="客户上传二维码"></div>
           <div>
             <p>请让客户扫码打开唯一报告上传入口。报告完成后会自动进入您的客户列表。</p>
             <div class="invite-code-display" style="margin-top:14px">
-              <span>指导师服务码（客户从首页上传时填写）</span>
+              <span>服务码（客户从首页上传时填写）</span>
               <strong id="v3a-attribution-service-code">-</strong>
             </div>
             <button class="btn ghost" id="v3a-attribution-code-copy" type="button" disabled style="margin-top:10px">复制服务码</button>
@@ -125,17 +124,17 @@
       <section class="layout-grid cols-aside" style="margin-top:16px">
         <div class="table-card customer-table">
           <div class="table-head">
-            <span>客户</span><span>来源</span><span>归属</span><span>绑定方式</span><span>最近解读</span><span>状态</span><span>风险关注</span><span>操作</span>
+            <span>客户</span><span>客户来源</span><span>服务指导师</span><span>加入方式</span><span>最近解读</span><span>状态</span><span>风险关注</span><span>操作</span>
           </div>
           <button class="table-row js-open-session" type="button">
-            <strong>王小明妈妈</strong><span>张老师专属链接</span><span>张老师</span><span>邀请链接</span><span>2026-07-08</span><span class="status done">已完成</span><span>学习 / 注意力</span><span>进入</span>
+            <strong>王小明妈妈</strong><span>张老师专属链接</span><span>张老师</span><span>专属链接</span><span>2026-07-08</span><span class="status done">已完成</span><span>学习 / 注意力</span><span>进入</span>
           </button>
           <button class="table-row js-open-session" type="button">
-            <strong>陈小芳</strong><span>西安采集中心二维码</span><span>西安采集中心</span><span>中心二维码</span><span>2026-07-05</span><span class="status info">待解读</span><span>学习通道</span><span>进入</span>
+            <strong>陈小芳</strong><span>西安采集中心二维码</span><span>西安采集中心</span><span>扫码进入</span><span>2026-07-05</span><span class="status info">待解读</span><span>学习通道</span><span>进入</span>
           </button>
           <div class="notice" style="margin:16px">
             <strong>学习示例</strong>
-            <p>上方两行为学习示例，不代表您的真实客户或真实归属。</p>
+            <p>上方两行为学习示例，仅用于帮助您了解页面操作。</p>
           </div>
         </div>
 
@@ -152,18 +151,14 @@
             <div class="data-item"><span>解读对象</span><strong>妈妈</strong></div>
             <div class="data-item"><span>采集日期</span><strong>2026-06-20</strong></div>
             <div class="data-item"><span>报告生成</span><strong>2026-07-01</strong></div>
-            <div class="data-item"><span>绑定报告</span><strong>儿童天赋报告</strong></div>
-            <div class="data-item"><span>来源</span><strong>张老师专属链接</strong></div>
-            <div class="data-item"><span>归属</span><strong>张老师</strong></div>
-            <div class="data-item"><span>绑定方式</span><strong>邀请链接</strong></div>
+            <div class="data-item"><span>客户报告</span><strong>儿童天赋报告</strong></div>
+            <div class="data-item"><span>客户来源</span><strong>张老师专属链接</strong></div>
+            <div class="data-item"><span>服务指导师</span><strong>张老师</strong></div>
+            <div class="data-item"><span>加入方式</span><strong>专属链接</strong></div>
           </div>
           <div class="notice" style="margin-top:14px">
             <strong>客户关注问题</strong>
-            <p>上课注意力不集中、数学成绩偏弱。进入详情页后会作为第⑥步重点回应，并在第⑧步建议复核。</p>
-          </div>
-          <div class="top-actions" style="margin-top:14px; justify-content:flex-start">
-            <a class="btn primary" href="ai-interpreter-session.html">进入 AI解读助手</a>
-            <a class="btn" href="ai-interpreter-review.html">查看复核记录</a>
+            <p>上课注意力不集中、数学成绩偏弱。解读时可围绕这些关注点提供回应和后续建议。</p>
           </div>
         </aside>
       </section>

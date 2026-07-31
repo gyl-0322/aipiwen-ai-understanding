@@ -69,7 +69,7 @@ async function requireActiveAdvisor(config, req) {
 function normalizeToken(value) {
   const token = String(value || '').trim().toLowerCase();
   if (!TOKEN_PATTERN.test(token)) {
-    throw new HttpError(400, '客户归属链接无效。', 'INVALID_ATTRIBUTION_TOKEN');
+    throw new HttpError(400, '客户上传链接无效。', 'INVALID_ATTRIBUTION_TOKEN');
   }
   return token;
 }
@@ -197,7 +197,7 @@ async function handler(req, res) {
       const hasToken = String(req.query?.token || '').trim() !== '';
       const hasServiceCode = String(req.query?.code || '').trim() !== '';
       if (hasToken === hasServiceCode) {
-        throw new HttpError(400, '请提供一种客户归属凭证。', 'INVALID_ATTRIBUTION_CREDENTIAL');
+        throw new HttpError(400, '请提供一种客户上传凭证。', 'INVALID_ATTRIBUTION_CREDENTIAL');
       }
       if (hasServiceCode) {
         await consumeRateLimit(config, 'attribution-service-code-validate-ip', requestIp(req), 20, 600);
@@ -217,7 +217,7 @@ async function handler(req, res) {
         null,
         'v3a_validate_attribution_token',
         { p_token: token },
-        '客户归属链接暂时无法验证。'
+        '客户上传链接暂时无法验证。'
       );
       return res.status(200).json({ ok: true, ...publicAdvisor(result) });
     }
@@ -256,7 +256,7 @@ async function handler(req, res) {
         session.record.accessToken,
         'v3a_create_attribution_token',
         { p_max_uses: 1 },
-        '客户归属链接暂时无法创建。'
+        '客户上传入口暂时无法创建。'
       );
       const token = normalizeToken(result?.token);
       const serviceCode = normalizeServiceCode(result?.serviceCode);

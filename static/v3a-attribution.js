@@ -6,10 +6,10 @@
   let csrfToken = '';
   let busy = false;
   const sourceLabels = {
-    advisor_qr: '归属二维码',
-    advisor_import: '指导师录入',
-    unguided: '总部分配',
-    invite_link: '历史邀请链接'
+    advisor_qr: '客户扫码',
+    advisor_import: '代客户上传',
+    unguided: '平台转入',
+    invite_link: '历史链接'
   };
   const statusLabels = {
     ready: '已生成',
@@ -80,7 +80,7 @@
       row.append(
         cell(client.displayName, true),
         cell(sourceLabels[client.source] || client.source),
-        cell('当前指导师'),
+        cell('由我服务'),
         cell(reports.length),
         cell(formatTime(latest?.createdAt)),
         cell(statusLabels[latest?.status] || (latest ? latest.status : '暂无报告')),
@@ -109,7 +109,7 @@
         },
         body: '{}'
       });
-      return await readPayload(response, '客户归属链接暂时无法创建。');
+      return await readPayload(response, '客户上传入口暂时无法创建。');
     } catch (error) {
       showError(error.message);
       return null;
