@@ -561,7 +561,7 @@ const SYSTEM_PROMPT = `你是 AIPIWEN 天赋底色解读 AI，拥有完整的皮
 - 必给板块必须严格按指定标题输出，不允许删除、合并、改名、调序
 - 每个必给板块内部必须固定三段：①是什么 ②对当前用户意味着什么 ③怎么应用到学习/行为/沟通
 - 五大功能必须拆成五个独立板块：精神功能、思维功能、体觉功能、听觉功能、视觉功能；禁止合并成一页。
-- issue 板块内部用 ①为什么会这样 ②怎么应对 ③积极意义 标记三段
+- issue 板块必须按具体问题使用下方专属结构，允许 2-4 段；禁止所有问题统一套用“为什么会这样 / 怎么应对 / 未来可期”
 - 直接开始正文，禁止任何开场白（"收到""好的""当然"等）`;
 
 // ── 构建用户消息（引擎数据 + 格式规范） ────────────────────────────────
@@ -604,7 +604,7 @@ function buildUserMessage(engineResult, age, name, requiredModules, selectedIssu
   // ⚠️ 同源一致：可选问题里的职业/能力类只能延伸必给模块2的结论，不得重新判断高低
   // 用 dedupedIssues（已去掉与必给重复项），避免 AI 收到冗余格式指令
   const issueFormatGuide = dedupedIssues.length > 0
-    ? `\n【问题模块格式（每个 issue 严格三段式）】\n` + dedupedIssues.map(issue => {
+    ? `\n【问题模块格式（每个 issue 按问题类型独立组织）】\n` + dedupedIssues.map(issue => {
         if (兴趣班板块Names.has(issue)) {
           // 职业/能力类延伸问题：必须在必给模块2结论基础上展开，禁止重新判断高低
           return `===issue:${issue}===
@@ -613,7 +613,7 @@ function buildUserMessage(engineResult, age, name, requiredModules, selectedIssu
 ②怎么办：（针对"${issue}"给出3-4条具体可选路径，引用官方职业/方向映射，今天就能落地）
 ③积极意义：（这个方向的长期价值和潜在优势，1-2句）`;
         }
-        return `===issue:${issue}===\n①为什么会这样（机制解释，基于具体手指/类型/通道/ATD，2-3句）\n②怎么应对（可执行动作，明天就能做，2-4条）\n③积极意义（潜力/优势，让用户看到这不是问题本身，2句）`;
+        return `===issue:${issue}===\n${issuePromptGuide(issue)}`;
       }).join('\n\n')
     : '';
 
@@ -803,17 +803,278 @@ function coreModuleFallback(title, engineResult) {
   ]).join('\n\n');
 }
 
-function issueFallback(issueTitle) {
-  const subject = issueTitle || '这个问题';
+function classifyIssueType(issueTitle) {
+  const text = String(issueTitle || '');
+  const has = (...words) => words.some(word => text.includes(word));
+
+  if (has('ADHD', '多动症', '抑郁', '焦虑症', '心理疾病', '精神问题', '诊断')) return 'high_risk_diagnosis';
+  if (has('录用', '淘汰', '分班', '筛选', '分层')) return 'screening_decision';
+  if (has('升学', '名校', '志愿', '专业', '保证成功')) return 'education_decision';
+  if (has('伴侣', '婚姻', '分手', '在一起', '关系去留')) return 'relationship_decision';
+  if (has('父母', '三观', '亲子', '顶嘴', '叛逆', '沟通', '相处')) return 'parent_child_communication';
+  if (has('文理', '选科', '天赋更偏')) return 'learning_direction';
+  if (has('偏科', '学习方法', '阅读', '记忆', '学习方式', '科目')) return 'learning_method';
+  if (has('主动', '内驱', '拖拉', '磨蹭', '作业', '不想学', '手机', '游戏', '不启动')) return 'homework_dragging';
+  if (has('焦虑', '情绪', '生气', '输不起', '压力', '崩溃', '害怕', '哭')) return 'emotion_regulation';
+  if (has('朋友', '人际', '同学', '老师', '课堂', '社交')) return 'social_relationship';
+  if (has('职业', '工作', '转型', '事业', '创业')) return 'career_direction';
+  return 'self_understanding';
+}
+
+function issuePromptGuide(issueTitle) {
+  const type = classifyIssueType(issueTitle);
+  const guides = {
+    learning_direction: '①学习入口：（结合学习通道、左右脑或功能区，说明哪些信息入口更顺）\n②现实验证：（对照不同科目的听课、做题和持续投入表现）\n③试法建议：（给一个两周内可完成的小型学习验证，不直接定文理方向）\n④继续观察：（指出最值得补充的一次科目表现）',
+    learning_method: '①学习入口：（结合学习通道、左右脑或功能区，说明真正可能卡在哪里）\n②观察与试法：（给观察清单和可执行的学习方法，不直接定文理方向）\n③校正线索：（说明如何用真实学习反馈校正报告线索，不硬写励志结论）\n④继续观察：（指出最值得补充的一次作业、考试或课堂场景）',
+    homework_dragging: '①行为翻译：（说明这不只是懒或不听话，结合年龄和启动节奏）\n②第一个动作：（给1-3个足够小、明天能做的动作）\n③可发展的力量：（说明谨慎、怕错或想做好如何被正确支持）\n④继续观察：（指出要观察的具体任务场景）',
+    emotion_regulation: '①情绪信号：（说明情绪可能在提醒什么，不诊断、不贴标签）\n②当下承接：（给降速、确认感受和下一步动作）\n③后续观察：（只说明持续时间、触发场景和影响范围，不轻率包装成优势）\n④支持边界：（如持续影响生活，温和建议人工或专业支持）',
+    parent_child_communication: '①具体场景：（把对错判断还原成一次真实冲突）\n②双方在守什么：（说明边界、尊重、安全感或自主需要）\n③对话入口：（给下一次可以直接使用的开场和一个具体请求）\n④继续观察：（建议从最典型的一次冲突继续拆）',
+    relationship_decision: '①边界说明：（不判断关系去留，说明报告能看什么、不能看什么）\n②冲突拆解：（回到一次具体冲突，看双方需求和表达）\n③观察维度：（说明现实边界、尊重和沟通是否可调整）\n④人工承接：（重大关系决定建议人工复核）',
+    education_decision: '①参考边界：（不保证升学，不替用户做决定）\n②可用线索：（结合学习入口、承压节奏和现实成绩）\n③小型验证：（把选择拆成课程、访谈或体验等低风险试法）\n④人工承接：（指出还需补充的成绩、资源和候选方向）',
+    career_direction: '①现实卡点：（结合当前人生阶段说明耗能和发挥场景）\n②低成本试错：（给副项目、访谈或任务模拟等验证方式）\n③能力组合：（说明优势组合，不保证职业结果）\n④继续观察：（建议补充当前工作和候选方向）',
+    social_relationship: '①场景定位：（区分表达慢、敏感、边界或不知道如何开始）\n②低压力入口：（给一个可以实际练习的社交动作）\n③现实反馈：（说明如何观察动作是否有效，不要求立刻变外向）\n④继续观察：（建议补充一个具体人际场景）',
+    high_risk_diagnosis: '①安全边界：（明确报告不能判断心理、医学或疾病）\n②情况整理：（只整理表现、持续时间、频率和影响范围）\n③专业支持：（如持续影响生活，建议寻求合适专业支持；不要写积极意义）\n④人工承接：（不得输出诊断结论）',
+    screening_decision: '①安全边界：（明确报告不能用于录用、淘汰、分班或筛选）\n②可参考范围：（仅讨论已授权情况下的协作或学习支持方式）\n③禁止结论：（不输出人员处置建议）\n④人工承接：（高风险场景转人工复核）',
+    self_understanding: '①共鸣入口：（贴住用户原话，说明可能卡在哪里）\n②低风险动作：（给一个现实中能验证的小动作）\n③校正线索：（提醒这不是定型，要用现实反馈校正）\n④继续观察：（建议补充最典型的一次场景）',
+  };
+  return guides[type] || guides.self_understanding;
+}
+
+function buildIssuePresentation(issueTitle, parts) {
+  const type = classifyIssueType(issueTitle);
+  const combine = (...values) => values.filter(Boolean).join('\n\n');
+  const configs = {
+    learning_direction: {
+      mode: 'learning_direction',
+      cards: [
+        ['先看哪种学习入口更顺', parts.why],
+        ['用真实科目表现来验证', combine(parts.how, parts.future)],
+      ],
+    },
+    learning_method: {
+      mode: 'learning_diagnosis',
+      cards: [
+        ['先找真正卡住的环节', parts.why],
+        ['换一种入口试一周', parts.how],
+        ['用变化校正方法', parts.future],
+      ],
+    },
+    homework_dragging: {
+      mode: 'behavior_breakdown',
+      cards: [
+        ['这不只是“不想做”', parts.why],
+        ['先从第一个小动作开始', parts.how],
+        ['被看见后会长成的力量', parts.future],
+      ],
+    },
+    emotion_regulation: {
+      mode: 'emotion_support',
+      cards: [
+        ['先看情绪在提醒什么', parts.why],
+        ['当下可以怎样接住', combine(parts.how, parts.future)],
+      ],
+    },
+    parent_child_communication: {
+      mode: 'relationship_communication',
+      cards: [
+        ['先把“对错”换成具体场景', parts.why],
+        ['双方可能各自在守什么', parts.future],
+        ['下一次对话可以这样开始', parts.how],
+      ],
+    },
+    relationship_decision: {
+      mode: 'relationship_boundary',
+      cards: [
+        ['先不急着判断去留', parts.why],
+        ['回到一次具体冲突', parts.how],
+        ['真正值得继续观察的事', parts.future],
+      ],
+    },
+    education_decision: {
+      mode: 'decision_boundary',
+      cards: [
+        ['报告能帮你看什么', parts.why],
+        ['把决定拆成小验证', parts.how],
+        ['还要一起考虑什么', parts.future],
+      ],
+    },
+    career_direction: {
+      mode: 'career_exploration',
+      cards: [
+        ['先看什么在消耗你', parts.why],
+        ['做一次低成本验证', parts.how],
+        ['把优势组合看完整', parts.future],
+      ],
+    },
+    social_relationship: {
+      mode: 'social_scene',
+      cards: [
+        ['先定位卡住的场景', parts.why],
+        ['给自己一个低压力入口', combine(parts.how, parts.future)],
+      ],
+    },
+    high_risk_diagnosis: {
+      mode: 'professional_support',
+      cards: [
+        ['这个问题不能由报告判断', parts.why],
+        ['建议先整理这些具体情况', parts.how],
+      ],
+    },
+    screening_decision: {
+      mode: 'screening_boundary',
+      cards: [
+        ['报告不能替代筛选决定', parts.why],
+        ['可以安全参考的范围', parts.how],
+      ],
+    },
+    self_understanding: {
+      mode: 'self_understanding',
+      cards: [
+        ['你可能卡在这里', parts.why],
+        ['先试一个低风险动作', combine(parts.how, parts.future)],
+      ],
+    },
+  };
+  const config = configs[type] || configs.self_understanding;
   return {
-    why: `这个问题不能只看表面行为，需要放回当前年龄阶段、TRC容量、ATD反应节奏、左右脑处理风格和五个功能区一起来看。很多时候，外在表现只是结果，背后真正影响的是启动方式、承压方式、信息输入方式和沟通环境是否匹配。`,
+    issueType: type,
+    answerMode: config.mode,
+    answerCards: config.cards
+      .filter(([, body]) => String(body || '').trim())
+      .map(([title, body]) => ({ title, body: String(body).trim() })),
+  };
+}
+
+function issueContentSimilarity(a, b) {
+  const normalize = value => String(value || '')
+    .replace(/「[^」]*」/g, '')
+    .replace(/[\s\p{P}\p{S}]/gu, '');
+  const grams = value => {
+    const text = normalize(value);
+    const set = new Set();
+    for (let i = 0; i < text.length - 2; i += 1) set.add(text.slice(i, i + 3));
+    return set;
+  };
+  const left = grams(a);
+  const right = grams(b);
+  if (!left.size || !right.size) return 0;
+  let overlap = 0;
+  left.forEach(item => { if (right.has(item)) overlap += 1; });
+  return (2 * overlap) / (left.size + right.size);
+}
+
+function isGenericIssueContent(parts) {
+  const text = `${parts?.why || ''}\n${parts?.how || ''}\n${parts?.future || ''}`;
+  return [
+    '不能只看表面行为，需要放回',
+    '先从一个低风险、能马上执行的小动作开始',
+    '这个问题背后通常也藏着一部分优势',
+  ].filter(phrase => text.includes(phrase)).length >= 2;
+}
+
+function issueFallback(issueTitle, tier = 'adult') {
+  const subject = issueTitle || '这个问题';
+  const text = String(subject);
+  const has = (...words) => words.some(w => text.includes(w));
+  const isChild = ['preschool', 'school', 'junior_teen', 'senior_teen'].includes(tier);
+  const isTeen = ['junior_teen', 'senior_teen'].includes(tier);
+  const stage = isTeen ? '青春期和升学压力阶段'
+    : isChild ? '当前成长阶段'
+      : ['young_adult', 'adult'].includes(tier) ? '当前学习、职业和关系阶段'
+        : '当前人生阶段';
+  const person = isChild ? '孩子' : '你';
+  const reader = isChild ? '家长' : '本人';
+
+  if (has('文理', '选科', '天赋更偏')) {
+    return {
+      why: `「${subject}」不能只看一门课现在分数高低。它更像是在问：${person}更容易从哪种信息入口进入学习，是逻辑推理更顺、图像空间更顺，还是需要听觉复述、身体操作来帮忙。放在${stage}，还要看课程压力、老师讲法、作业形式和最近信心是否被消耗。`,
+      how: `先做一个小型观察：选两门最有代表性的科目，分别看${person}是“听得懂但做不出”，还是“题会做但不愿开始”，或是“有兴趣但持续不久”。再把学习方式换一换：逻辑强的科目先建公式和步骤，图像强的内容先画图，听觉强的内容用讲题复述，体觉参与强的内容用动手和演示。处理「${subject}」时，先试两周，不急着下定论。`,
+      future: `偏科背后不一定是短板，也可能是入口没有对上。真正值得保留的是${person}已经显露出来的理解方式：有的孩子靠结构，有的靠画面，有的靠讲出来，有的靠做一遍。把入口找准，比简单说“适合文科/理科”更稳。`,
+      cta: isChild ? '可以先拿最近一次作业或考试场景来看，别急着替孩子定方向。' : '可以先拿最近一个学习或选择场景来看，别急着把自己定型。'
+    };
+  }
+
+  if (has('偏科', '学习方法', '科目')) {
+    return {
+      why: `「${subject}」更像是学习入口和训练方法的问题，不一定说明${person}能力差。偏科常常发生在“听课入口、做题入口、复盘入口”不一致的时候：课堂上好像懂了，作业一变形就卡；或者能背下来，却不会迁移到题目里。放在${stage}，还要看老师讲法、作业难度和最近是否因为挫败而先关上了学习通道。`,
+      how: `先不要一次改所有科目，挑最卡的一科做三步：第一，把错题分成“没听懂、会但慢、粗心、不会迁移”四类；第二，换一种输入方式，能画图就画图，能讲题就讲出来，能动手就做一遍；第三，每天只追一个小改进，比如先把第一题做出来。处理「${subject}」时，重点不是加时长，而是换入口。`,
+      future: `学习方法调对以后，原来所谓的偏科可能会慢慢露出优势：有的孩子不是不适合理科，而是需要先看结构；有的不是不适合文科，而是需要先找到表达框架。稳定的学习力，是从找到自己的入口开始的。`,
+      cta: '可以先拿一门最卡的科目和最近一次错题表现来拆。'
+    };
+  }
+
+  if (has('升学', '名校', '专业', '志愿', '路线', '方向')) {
+    return {
+      why: `「${subject}」牵涉的是方向选择，不适合用报告直接给保证。报告能帮忙看的，是${person}在哪些能力入口更省力、在哪些压力场景容易卡住、哪种学习和环境更容易持续。放在${stage}，现实成绩、兴趣稳定度、家庭资源和试错成本也必须一起看。`,
+      how: `先把选择拆成三层：第一，哪些科目或活动让${person}更容易进入状态；第二，哪些任务虽然重要但明显消耗过大；第三，哪些方向可以用一次课程、一次访谈或一次真实体验去验证。不要只问“冲名校还是选专业”，先做一个低风险的小验证，再决定要不要加码。`,
+      future: `方向不是保证书，而是逐步校准出来的路线。报告里真正有价值的，是帮${reader}看见${person}更可能长期投入的方式、承压边界和需要补足的支持条件。这样做选择会更稳，也不容易被一时焦虑带着跑。`,
+      cta: '如果要继续看，可以把候选方向、当前成绩和最担心的卡点放在一起拆。'
+    };
+  }
+
+  if (has('父母', '三观', '亲子', '顶嘴', '叛逆', '沟通', '相处')) {
+    return {
+      why: `「${subject}」表面像是态度问题，背后常常是节奏、边界和表达方式撞在一起。尤其在${stage}，${person}一边需要被理解，一边又想保留自己的判断；${reader}越急着纠正，对方越容易先防御，再沟通。`,
+      how: `先不要从“谁对谁错”开始，可以从最近一次冲突复盘：当时谁先急了、哪句话让对方关上门、真正争的是规则、尊重、自由，还是安全感。下一次沟通先只说一个具体请求，比如“今晚先完成第一步”，不要连续讲道理，也不要把一次行为上升成人品或未来。`,
+      future: `这类冲突里也有积极面：有主见、敏感、想被尊重、想证明自己，都是可以被引导的力量。只要沟通方式从压服变成拆场景，很多对抗会慢慢变成可谈、可商量、可合作。`,
+      cta: '可以先选一次最典型的冲突场景，我们从那一句话开始拆。'
+    };
+  }
+
+  if (has('主动', '内驱', '拖拉', '磨蹭', '作业', '不想学', '手机', '游戏')) {
+    return {
+      why: `「${subject}」不一定是懒，也可能是启动困难、反馈太远、任务颗粒度太大，或者压力一上来就先回避。放在${stage}，越是被催、被比较、被连续否定，越容易把学习和压力绑定在一起。`,
+      how: `先把目标缩到“第一步”：不是写完全部作业，而是打开本子、写第一题、计时十分钟。再把反馈放近一点，让${person}知道自己完成了什么。手机或游戏问题也不要只靠没收，可以先约定时间、触发条件和替代动作，让规则具体到能执行。`,
+      future: `拖拉和不主动背后，常常也藏着谨慎、怕错、想做好，或者对兴趣和成就感很敏感。方法对了，这些特质不一定拖后腿，反而能慢慢转成稳定的自我管理。`,
+      cta: '可以先把最近一次拖拉/不启动的具体场景告诉我。'
+    };
+  }
+
+  if (has('焦虑', '情绪', '生气', '输不起', '压力', '崩溃', '害怕')) {
+    return {
+      why: `「${subject}」先不要急着解释成脆弱或不懂事。很多情绪反应，是因为信息量、期待、失败感和身体疲惫一起压上来，超过了当下能承接的节奏。放在${stage}，情绪往往不是问题本身，而是在提醒我们哪里已经超载。`,
+      how: `先观察三个点：这种反应通常发生在什么任务前后，持续多久，结束后${person}是后悔、逃开，还是还能复盘。应对时先降速，不急着讲道理；可以用短句确认感受，再给一个小动作，比如喝水、离开现场三分钟、只处理下一步。`,
+      future: `情绪敏感也可能代表觉察快、在意结果、对环境变化很灵。被好好看见以后，它不一定是麻烦，也可能转成更细腻的表达、更强的同理心和更好的自我调节。`,
+      cta: '如果这种状态反复影响睡眠、学习或生活，建议人工一起看具体场景。'
+    };
+  }
+
+  if (has('朋友', '人际', '同学', '老师', '课堂', '社交')) {
+    return {
+      why: `「${subject}」不能只看会不会说话。它还和听觉接收、视觉观察、反应速度、边界感和自我保护方式有关。放在${stage}，一个人在人际里卡住，可能是表达慢，也可能是太敏感、太想被接纳，或不知道怎么开始。`,
+      how: `先选一个具体关系场景：是交朋友、被误会、怕老师，还是课堂不敢表达。再给一个可执行动作，比如提前准备一句开场白、把想说的话写下来、先找一个低压力对象练习。不要要求一下子变外向，先让${person}有一个安全的成功经验。`,
+      future: `人际能力不是天生固定的。观察力、共情、谨慎、慢热、表达欲，都可以在合适场景里变成优势。关键不是逼自己变成别人，而是找到更舒服、更有效的连接方式。`,
+      cta: '可以先从一个具体的人际场景开始看。'
+    };
+  }
+
+  if (has('职业', '工作', '转型', '事业', '创业')) {
+    return {
+      why: `「${subject}」不能由报告替你做决定，但可以帮你看清：什么类型的任务更耗能，什么场景更容易让你发挥，压力下你是先冲、先想、先退，还是先照顾关系。放在${stage}，方向选择还要结合经历、资源和现实约束。`,
+      how: `先不要直接推翻现状，可以做小范围验证：列出当前工作里最消耗的三件事、最有成就感的三件事，再找一个低成本试错动作，比如副项目、访谈、短课程或一周任务模拟。报告只提供理解线索，真正的选择要用现实反馈校准。`,
+      future: `职业优势往往不是单一能力，而是能力组合：目标感、思维方式、沟通方式、身体节奏和环境匹配度。看清组合以后，选择会更像调整路线，而不是赌博。`,
+      cta: '可以把当前职业卡点和候选方向放在一起，我帮你拆成可验证的小步骤。'
+    };
+  }
+
+  if (has('伴侣', '婚姻', '关系', '分手', '在一起')) {
+    return {
+      why: `「${subject}」不适合直接用报告判断去留。关系里的卡点通常不是谁好谁坏，而是需求、节奏、表达和边界没有对齐。报告可以帮你看沟通方式差异，但不能替你做重大关系决定。`,
+      how: `先选一个具体冲突，不要泛泛讨论“合不合适”。看那次冲突里，双方各自在要什么：安全感、尊重、自由、确定性，还是被看见。下一步只做一个低风险动作，比如换一种提问方式、约定冷静时间、把需求说成请求而不是评价。`,
+      future: `关系里的差异不一定都是坏事，有些差异会带来互补，有些差异需要边界。真正值得保留的，是你能不能更清楚地表达自己，也更准确地听懂对方。`,
+      cta: '如果要继续看，建议从一次具体冲突开始，而不是直接问该不该继续。'
+    };
+  }
+
+  return {
+    why: `「${subject}」不能只看表面行为，需要放回${stage}、TRC容量、ATD反应节奏、左右脑处理风格和五个功能区一起看。很多时候，外在表现只是结果，背后真正影响的是启动方式、承压方式、信息输入方式和沟通环境是否匹配。`,
     how: `先从一个低风险、能马上执行的小动作开始：把要求说得更具体，把任务拆成更小一步，把反馈放近一点，并连续观察1-2周变化。处理「${subject}」时，不急着评价对错，先确认当下最卡的是理解、节奏、情绪、身体状态，还是沟通方式。`,
     future: `这个问题背后通常也藏着一部分优势：谨慎、敏感、反应快、有主见、想做好，或对环境很有觉察。只要方法对了，它不一定是阻碍，也可能慢慢转化成更稳定的自我管理、学习适应和关系沟通能力。`,
     cta: '想继续深聊这个问题，可以把具体场景告诉我。'
   };
 }
 
-function normalizeSections(sections, requiredModules, selectedIssues, engineResult) {
+function normalizeSections(sections, requiredModules, selectedIssues, engineResult, tier = 'adult') {
   const byTitle = new Map();
   for (const sec of sections) {
     if (!sec?.title || byTitle.has(sec.title)) continue;
@@ -831,24 +1092,36 @@ function normalizeSections(sections, requiredModules, selectedIssues, engineResu
   });
 
   const includedIssues = new Set();
+  const issueFingerprints = [];
   for (const sec of sections) {
     if (!sec?.title || requiredModules.includes(sec.title)) continue;
     if (sec.type !== 'issue') continue;
-    const fallback = issueFallback(sec.title);
-    normalized.push({
-      ...sec,
-      type: 'issue',
+    const fallback = issueFallback(sec.title, tier);
+    let parts = {
       why: (sec.why || '').trim() || fallback.why,
       how: (sec.how || '').trim() || fallback.how,
       future: (sec.future || '').trim() || fallback.future,
       cta: (sec.cta || '').trim() || fallback.cta,
+    };
+    const fingerprint = `${parts.why}\n${parts.how}\n${parts.future}`;
+    if (isGenericIssueContent(parts)
+      || issueFingerprints.some(previous => issueContentSimilarity(previous, fingerprint) >= 0.72)) {
+      parts = fallback;
+    }
+    issueFingerprints.push(`${parts.why}\n${parts.how}\n${parts.future}`);
+    normalized.push({
+      ...sec,
+      type: 'issue',
+      ...parts,
+      ...buildIssuePresentation(sec.title, parts),
     });
     includedIssues.add(sec.title);
   }
 
   for (const title of selectedIssues) {
     if (!title || requiredModules.includes(title) || includedIssues.has(title)) continue;
-    normalized.push({ title, type: 'issue', ...issueFallback(title) });
+    const parts = issueFallback(title, tier);
+    normalized.push({ title, type: 'issue', ...parts, ...buildIssuePresentation(title, parts) });
     includedIssues.add(title);
   }
 
@@ -1097,7 +1370,7 @@ module.exports = async function handler(req, res) {
 
   const raw = rawParts.join('\n\n');
   if (!rawParts.length) {
-    const sections = normalizeSections([], requiredMods, selectedIssues, engineResult);
+    const sections = normalizeSections([], requiredMods, selectedIssues, engineResult, tier);
     return res.status(200).json({
       ok: true,
       degraded: true,
@@ -1109,7 +1382,7 @@ module.exports = async function handler(req, res) {
   }
 
   const parsedSections = parseSections(raw, requiredMods, selectedIssues);
-  const sections = normalizeSections(parsedSections, requiredMods, selectedIssues, engineResult);
+  const sections = normalizeSections(parsedSections, requiredMods, selectedIssues, engineResult, tier);
 
   return res.status(200).json({
     ok:true,

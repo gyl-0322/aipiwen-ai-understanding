@@ -15,7 +15,11 @@ function assert(condition, message) {
 }
 
 const start = apiSource.indexOf('function classifyIssueType');
-const end = apiSource.indexOf('const FUNCTION_MODULE_FINGER_REQUIREMENTS', start);
+const apiEndCandidates = [
+  apiSource.indexOf('const FUNCTION_MODULE_FINGER_REQUIREMENTS', start),
+  apiSource.indexOf('function normalizeSections', start),
+].filter(index => index > start);
+const end = Math.min(...apiEndCandidates);
 assert(start >= 0 && end > start, '无法提取四问卡型选择器');
 
 const sandbox = {};
@@ -27,7 +31,11 @@ this.isGenericIssueContent = isGenericIssueContent;
 this.issueFallback = issueFallback;`, sandbox);
 
 const pageStart = pageSource.indexOf('function getIssueAnswerCards');
-const pageEnd = pageSource.indexOf('function cleanRequiredModuleScaffold', pageStart);
+const pageEndCandidates = [
+  pageSource.indexOf('function cleanRequiredModuleScaffold', pageStart),
+  pageSource.indexOf('function formatContent', pageStart),
+].filter(index => index > pageStart);
+const pageEnd = Math.min(...pageEndCandidates);
 assert(pageStart >= 0 && pageEnd > pageStart, '无法提取网页四问卡片渲染器');
 
 const pageSandbox = {};
