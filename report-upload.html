@@ -3,16 +3,16 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
-<title>AIPIWEN · 专属报告</title>
-<meta name="description" content="上传皮纹测评总表，AI 精确解读天赋数据，生成专属个性化报告。">
+<title>AIPIWEN · 已有资料辅助解读</title>
+<meta name="description" content="上传已有资料或TRC总表，AI辅助整理行为观察线索，生成家庭沟通参考报告。">
 <meta property="og:type" content="website">
-<meta property="og:title" content="AIPIWEN · 专属报告解读">
-<meta property="og:description" content="上传皮纹测评总表，AI 精确解读天赋数据，生成专属个性化报告。">
+<meta property="og:title" content="AIPIWEN · 已有资料辅助解读">
+<meta property="og:description" content="上传已有资料或TRC总表，AI辅助整理行为观察线索，生成家庭沟通参考报告。">
 <meta property="og:image" content="https://www.aipiwen.cn/share/aipiwen-practitioner-card.jpg">
 <!-- og:url 不写死：微信转发含 ?rid= 的链接时，若写死 base URL 微信会剥离 ?rid= 参数，导致收件人打开看到上传页 -->
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="AIPIWEN · 专属报告解读">
-<meta name="twitter:description" content="上传皮纹测评总表，AI 精确解读天赋数据，生成专属个性化报告。">
+<meta name="twitter:title" content="AIPIWEN · 已有资料辅助解读">
+<meta name="twitter:description" content="上传已有资料或TRC总表，AI辅助整理行为观察线索，生成家庭沟通参考报告。">
 <meta name="twitter:image" content="https://www.aipiwen.cn/share/aipiwen-practitioner-card.jpg">
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
@@ -65,6 +65,20 @@ html,body{height:100%;overflow:hidden;background:#060810;
 .s1-title{font-family:Georgia,'Noto Serif SC',serif;font-size:24px;font-weight:700;
   text-align:center;margin-bottom:8px;}
 .s1-sub{font-size:13px;color:var(--dim);text-align:center;margin-bottom:32px;line-height:1.7;}
+.service-code-card{width:100%;margin:-14px 0 18px;padding:12px;border:1px solid var(--border);
+  border-radius:14px;background:rgba(255,255,255,.035);}
+.service-code-toggle{width:100%;border:0;background:transparent;color:var(--amber);font-size:13px;
+  font-family:inherit;cursor:pointer;text-align:left;padding:0;}
+.service-code-entry{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;margin-top:10px;}
+.service-code-entry input{min-width:0;height:42px;border:1px solid var(--border);border-radius:10px;
+  background:rgba(255,255,255,.05);color:var(--text);font:600 14px/1 inherit;padding:0 12px;
+  text-transform:uppercase;letter-spacing:.08em;}
+.service-code-entry button{height:42px;border:0;border-radius:10px;background:var(--amber);color:var(--bg);
+  font-family:inherit;font-weight:700;padding:0 14px;cursor:pointer;}
+.service-code-entry button:disabled{opacity:.55;cursor:default;}
+.service-code-status{min-height:18px;margin:8px 0 0;color:var(--dim);font-size:12px;line-height:1.5;}
+.service-code-status[data-state="valid"]{color:#7bd7b2;}
+.service-code-status[data-state="error"]{color:#ff9f91;}
 .dropzone{width:100%;border:1.5px dashed rgba(194,105,42,.4);border-radius:20px;
   padding:36px 24px;display:flex;flex-direction:column;align-items:center;gap:12px;
   cursor:pointer;transition:border-color .2s,background .2s;position:relative;
@@ -411,8 +425,16 @@ button, a, .must-item, .fp-option-card, .back-btn, .issue-chip {
     </div>
   </div>
   <div class="s1-body">
-    <div class="s1-title">上传总表页</div>
-    <div class="s1-sub">上传皮纹测评报告的<strong>总表页</strong>图片<br>AI 自动读取十指数据</div>
+    <div class="s1-title">上传已有资料</div>
+    <div class="s1-sub">上传已有资料或报告的<strong>总表页</strong>图片<br>AI 辅助读取可见数据，供人工解读参考</div>
+    <div class="service-code-card" id="advisor-service-code-card">
+      <button class="service-code-toggle" id="advisor-service-code-toggle" type="button">已有指导师服务码？点击填写</button>
+      <div class="service-code-entry" id="advisor-service-code-entry" hidden>
+        <input id="advisor-service-code-input" type="text" inputmode="text" maxlength="14" autocomplete="off" placeholder="例如 A1B2-C3D4-E5" aria-label="指导师服务码">
+        <button id="advisor-service-code-verify" type="button">确认</button>
+      </div>
+      <p class="service-code-status" id="advisor-service-code-status" role="status" aria-live="polite"></p>
+    </div>
     <div class="dropzone" id="dropzone">
       <input type="file" id="file-gallery" accept="image/*">
       <div class="dz-icon">📄</div>
@@ -427,7 +449,7 @@ button, a, .must-item, .fp-option-card, .back-btn, .issue-chip {
     <div id="s1-preview"><img id="preview-img" src="" alt=""></div>
     <div id="s1-status"></div>
     <button id="s1-extract-btn" disabled>识别数据 →</button>
-    <div class="s1-tip">图片需清晰显示总表页中的纹型符号和 TRC 数值<br>系统读取后会让你逐项确认</div>
+    <div class="s1-tip">AIPIWEN通过AI辅助行为理解与家庭沟通观察，帮助家长重新认识孩子。<br>本服务不属于医疗诊断、心理测试，不预测孩子未来能力或学业结果。</div>
   </div>
 </div>
 
@@ -528,16 +550,16 @@ button, a, .must-item, .fp-option-card, .back-btn, .issue-chip {
 <!-- Share Modal -->
 <div id="smodal">
   <div class="fp-card" id="poster-card">
-    <div class="fpc-brand">AIPIWEN · 皮纹天赋</div>
+    <div class="fpc-brand">AIPIWEN · 行为观察</div>
     <div class="fpc-fp"><img id="p-fp" src="" alt="" width="150" height="150"></div>
     <div class="fpc-type" id="p-type"></div>
     <div class="fpc-hook" id="p-hook"></div>
     <div class="fpc-tags" id="p-tags"></div>
     <div class="fpc-hr"></div>
-    <div class="fpc-foot">皮纹遗传度 <b>h²高达0.94</b> · 胎儿第13—19周形成 · 终生不变</div>
+    <div class="fpc-foot">指纹纹路稳定 · 仅作行为观察线索 · 不作为正式评估依据</div>
     <div class="fpc-qr-row">
       <div class="fpc-qr-wrap"><div id="p-qr"></div></div>
-      <div class="fpc-qr-hint"><b>扫码测你的天赋</b>aipiwen.cn<br>免费 AI 皮纹分析</div>
+      <div class="fpc-qr-hint"><b>扫码做行为观察</b>aipiwen.cn<br>免费 AI 行为观察体验</div>
     </div>
   </div>
   <div class="smodal-btns">
@@ -583,14 +605,14 @@ const POSTER_HOOKS = {
   w:'别人放弃的地方，\n正是他真正开始的地方。',
   wc:'别人看到的是碎片，\n他看到的是整体。',
   perfect_w:'完美不是终点，\n是他出发的起点。',
-  l:'看见别人，\n是他最深的天赋。',
+  l:'看见别人，\n是他最深的特质。',
   x:'每一张白纸，\n都是他最好的开始。',
   rl:'常说"不对"的孩子，\n最懂得什么是真的对。',
   super_w_a:'能量越大，\n引力越强。',
   super_w_b:'万物皆可整合，\n是他的超能力。',
   super_w_c:'深耕之处，\n自有光芒。',
-  super_l:'托举他人，\n是他与生俱来的天赋。',
-  combo_open:'吸收一切，\n是他的第一天赋。',
+  super_l:'托举他人，\n是他自然流露的特质。',
+  combo_open:'吸收一切，\n是他的第一特质。',
   combo_w_l:'独立又温柔，\n是最难得的底色。',
   combo_w:'融合而不失自我，\n是他的核心力量。'
 };
@@ -610,7 +632,7 @@ const SYM_OPTIONS = [
 
 // ── 问题选项池（按年龄段，可配置常量）── 来源：知识库 00i ─────────────────
 // 规则：0-18 家长视角，18+ 本人视角；每段 10 项按主题分组；最多选 6、至少 1
-// ⚠️ 去重铁律：不得含与必给模块同名/同义的项（天赋底色/职业优势/自我成长等已自动给）
+// ⚠️ 去重铁律：不得含与必给模块同名/同义的项（观察基础/职业优势/自我成长等已自动给）
 const ISSUE_POOL = {
   // 0–6 岁·家长视角（必给已含：兴趣班潜能 · 成长引导）
   seg_0_6: [
@@ -621,7 +643,7 @@ const ISSUE_POOL = {
       '这型孩子最怕家长怎么对他',
     ]},
     { group: '情绪行为', items: [
-      '他坐不住/专注短，是天生还是要管',
+      '他坐不住/专注短，是状态问题还是沟通方式问题',
       '爱哭/认生/敏感，怎么安抚',
     ]},
     { group: '关系引导', items: [
@@ -630,7 +652,7 @@ const ISSUE_POOL = {
     ]},
     { group: '成长启蒙', items: [
       '几岁该立什么习惯（节奏表）',
-      '早期最该保护的天赋火苗是什么',
+      '早期最该保护的兴趣火苗是什么',
     ]},
   ],
   // 7–12 岁·家长视角（必给已含：学科潜能 · 成长引导）
@@ -657,7 +679,7 @@ const ISSUE_POOL = {
   // 13–18 岁·家长/本人视角（必给已含：学科/职业潜能 · 成长引导）
   seg_13_18: [
     { group: '学习升学', items: [
-      '文理/选科，天赋更偏哪边',
+      '文理/选科，行为特点更适合哪类节奏',
       '偏科/学习方法怎么调',
       '学习动机/自驱力不足的根子',
       '升学决策：冲名校还是选适合专业',
@@ -759,6 +781,78 @@ let ST = {
 })();
 let _refToken = null;
 try { _refToken = localStorage.getItem('aipiwen_ref') || null; } catch(e) {}
+// 客户归属 token 只在当前 URL 生命周期内使用，不写入本地存储。
+let _attributionToken = (() => {
+  try {
+    const token = new URL(location.href).searchParams.get('token') || '';
+    return /^[0-9a-f]{32}$/i.test(token) ? token.toLowerCase() : null;
+  } catch(e) { return null; }
+})();
+function _normalizeServiceCode(value) {
+  return String(value || '').trim().toUpperCase().replace(/[ -]/g, '');
+}
+function _setAttributionStatus(message, state = '') {
+  const node = qs('#advisor-service-code-status');
+  node.textContent = message || '';
+  node.dataset.state = state;
+}
+function _showServiceCodeEntry() {
+  qs('#advisor-service-code-entry').hidden = false;
+  qs('#advisor-service-code-input').focus();
+}
+async function _validateAttributionToken() {
+  if (!_attributionToken) return;
+  try {
+    const response = await fetch(`/api/v3a-attribution?action=validate&token=${encodeURIComponent(_attributionToken)}`);
+    const payload = await response.json();
+    if (!response.ok || payload?.ok !== true || payload?.valid !== true) {
+      _setAttributionStatus('指导师归属链接无效或已过期，请填写新的服务码。', 'error');
+      _showServiceCodeEntry();
+      return;
+    }
+    const displayName = String(payload.advisor?.displayName || 'AIPIWEN指导师').slice(0, 40);
+    _setAttributionStatus(`本次报告将由“${displayName}”提供后续服务。`, 'valid');
+    qs('#advisor-service-code-toggle').hidden = true;
+  } catch {
+    _setAttributionStatus('暂时无法确认指导师归属，请稍后重试。', 'error');
+  }
+}
+async function _validateServiceCode() {
+  const input = qs('#advisor-service-code-input');
+  const button = qs('#advisor-service-code-verify');
+  const serviceCode = _normalizeServiceCode(input.value);
+  if (!/^[0-9A-F]{10}$/.test(serviceCode)) {
+    _setAttributionStatus('请输入 10 位指导师服务码。', 'error');
+    return;
+  }
+  button.disabled = true;
+  _setAttributionStatus('正在确认指导师…');
+  try {
+    const response = await fetch(`/api/v3a-attribution?action=validate&code=${encodeURIComponent(serviceCode)}`);
+    const payload = await response.json();
+    if (!response.ok || payload?.ok !== true || payload?.valid !== true || !/^[0-9a-f]{32}$/.test(payload.attributionToken || '')) {
+      _setAttributionStatus('服务码无效、已过期或已使用，请向指导师重新获取。', 'error');
+      return;
+    }
+    _attributionToken = payload.attributionToken;
+    input.value = `${serviceCode.slice(0, 4)}-${serviceCode.slice(4, 8)}-${serviceCode.slice(8)}`;
+    input.disabled = true;
+    const displayName = String(payload.advisor?.displayName || 'AIPIWEN指导师').slice(0, 40);
+    _setAttributionStatus(`已确认：本次报告将由“${displayName}”提供后续服务。`, 'valid');
+  } catch {
+    _setAttributionStatus('服务码暂时无法验证，请稍后重试。', 'error');
+  } finally {
+    button.disabled = false;
+  }
+}
+const _attributionIdempotencyKey = (() => {
+  if (crypto.randomUUID) return crypto.randomUUID();
+  const bytes = crypto.getRandomValues(new Uint8Array(16));
+  bytes[6] = (bytes[6] & 0x0f) | 0x40;
+  bytes[8] = (bytes[8] & 0x3f) | 0x80;
+  const hex = Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('');
+  return `${hex.slice(0,8)}-${hex.slice(8,12)}-${hex.slice(12,16)}-${hex.slice(16,20)}-${hex.slice(20)}`;
+})();
 // 本机邀请 token（分享时用）
 let _myInviteToken = null;
 try { _myInviteToken = localStorage.getItem('aipiwen_invite_token') || null; } catch(e) {}
@@ -783,7 +877,15 @@ async function _saveReportForClient(sections) {
     const r = await fetch('/api/report-store', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ sections, engineResult: ST.engineResult, fingers: ST.fingers, name: ST.name || null, age: ST.age || null }),
+      body: JSON.stringify({
+        sections,
+        engineResult: ST.engineResult,
+        fingers: ST.fingers,
+        name: ST.name || null,
+        age: ST.age || null,
+        attributionToken: _attributionToken,
+        idempotencyKey: _attributionIdempotencyKey,
+      }),
     });
     const d = await r.json();
     if (!d.ok || !d.id) return;
@@ -872,6 +974,12 @@ function handleFile(file) {
   qs('#' + id).addEventListener('change', e => handleFile(e.target.files[0]));
 });
 const dz = qs('#dropzone');
+qs('#advisor-service-code-toggle').addEventListener('click', _showServiceCodeEntry);
+qs('#advisor-service-code-verify').addEventListener('click', _validateServiceCode);
+qs('#advisor-service-code-input').addEventListener('input', () => {
+  if (!qs('#advisor-service-code-input').disabled) _attributionToken = null;
+});
+if (_attributionToken) _validateAttributionToken();
 dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag'); });
 dz.addEventListener('dragleave', () => dz.classList.remove('drag'));
 dz.addEventListener('drop', e => {
@@ -880,6 +988,10 @@ dz.addEventListener('drop', e => {
 });
 
 qs('#s1-extract-btn').addEventListener('click', async () => {
+  if (qs('#advisor-service-code-input').value.trim() && !_attributionToken) {
+    _setAttributionStatus('请先确认指导师服务码，或清空服务码后作为无归属客户继续。', 'error');
+    return;
+  }
   const btn = qs('#s1-extract-btn');
   btn.disabled = true;
   btn.textContent = '识别中…';
@@ -1000,13 +1112,13 @@ qs('#s2-confirm-btn').addEventListener('click', () => {
 /// ─── SCREEN 3: ISSUES ────────────────────────────────────────────────────
 // 必给模块：来源 00i 规则1（按人生阶段定制，模块2随阶段换主题）
 const REQUIRED_BY_STAGE = {
-  preschool:    ['天赋底色','兴趣启蒙与潜能','性格养育引导'],
-  school:       ['天赋底色','学科潜能与兴趣特长','成长引导'],
-  junior_teen:  ['天赋底色','选科与升学/专业方向','成长引导'],
-  senior_teen:  ['天赋底色','选科与升学/专业方向','成长引导'],
-  young_adult:  ['天赋底色','职业起步方向','自我成长'],
-  adult:        ['天赋底色','职业优势与发展','自我成长'],
-  mature_adult: ['天赋底色','职业价值与二次发展','自我成长'],
+  preschool:    ['观察基础','兴趣启蒙与潜能','性格养育引导'],
+  school:       ['观察基础','学科潜能与兴趣特长','成长引导'],
+  junior_teen:  ['观察基础','选科与升学/专业方向','成长引导'],
+  senior_teen:  ['观察基础','选科与升学/专业方向','成长引导'],
+  young_adult:  ['观察基础','职业起步方向','自我成长'],
+  adult:        ['观察基础','职业优势与发展','自我成长'],
+  mature_adult: ['观察基础','职业价值与二次发展','自我成长'],
 };
 
 function buildIssuesScreen() {
@@ -1144,8 +1256,8 @@ let RV = { cur: 0, total: 0, slides: [] };
 function getThemeConfig(ageTier) {
   return {
     preschool:    { theme:'preschool',   badge:'学龄前',   deco:'🌟 ✨ 🌈', finMsg:'每一根手指，都是宇宙给你的礼物。',   icon:{ foundation:'🌱', required:'💡', issue:'🤔' } },
-    school:       { theme:'school',      badge:'小学阶段', deco:'📚 🔭 🎯', finMsg:'你的天赋，是最好的学习地图。',       icon:{ foundation:'🧩', required:'📖', issue:'🙋' } },
-    junior_teen:  { theme:'junior_teen', badge:'初中阶段', deco:'⚡ 🔮 🎮', finMsg:'你的大脑，天生为突破而来。',         icon:{ foundation:'🧠', required:'🔑', issue:'💬' } },
+    school:       { theme:'school',      badge:'小学阶段', deco:'📚 🔭 🎯', finMsg:'真实观察，是最好的学习地图。',       icon:{ foundation:'🧩', required:'📖', issue:'🙋' } },
+    junior_teen:  { theme:'junior_teen', badge:'初中阶段', deco:'⚡ 🔮 🎮', finMsg:'理解自己，是突破的起点。',         icon:{ foundation:'🧠', required:'🔑', issue:'💬' } },
     senior_teen:  { theme:'senior_teen', badge:'高中阶段', deco:'',         finMsg:'洞见自我，是所有成就的起点。',       icon:{ foundation:'◈',  required:'▸',  issue:'◉' } },
     adult:        { theme:'adult',       badge:'成人报告', deco:'',         finMsg:'了解自己，是最有价值的投资。',       icon:{ foundation:'◈',  required:'▸',  issue:'◉' } },
     mature_adult: { theme:'adult',       badge:'成人报告', deco:'',         finMsg:'了解自己，是最有价值的投资。',       icon:{ foundation:'◈',  required:'▸',  issue:'◉' } },
@@ -1232,6 +1344,46 @@ function issueBody(body, titleTxt, issueTitle) {
   return cleaned || issueFallback(titleTxt, issueTitle);
 }
 
+function getIssueAnswerCards(sec) {
+  const serverCards = Array.isArray(sec?.answerCards)
+    ? sec.answerCards.filter(card => card && String(card.title || '').trim() && String(card.body || '').trim())
+    : [];
+  if (serverCards.length) return serverCards;
+
+  const title = String(sec?.title || '');
+  const has = (...words) => words.some(word => title.includes(word));
+  const combine = (...values) => values.filter(Boolean).join('\n\n');
+  let cards;
+  if (has('文理', '选科', '天赋更偏')) {
+    cards = [['先看哪种学习入口更顺', sec.why], ['用真实科目表现来验证', combine(sec.how, sec.future)]];
+  } else if (has('偏科', '学习方法', '阅读', '记忆', '学习方式', '科目')) {
+    cards = [['先找真正卡住的环节', sec.why], ['换一种入口试一周', sec.how], ['用变化校正方法', sec.future]];
+  } else if (has('升学', '名校', '志愿', '专业', '保证成功')) {
+    cards = [['报告能帮你看什么', sec.why], ['把决定拆成小验证', sec.how], ['还要一起考虑什么', sec.future]];
+  } else if (has('父母', '三观', '亲子', '顶嘴', '叛逆', '沟通', '相处')) {
+    cards = [['先把“对错”换成具体场景', sec.why], ['双方可能各自在守什么', sec.future], ['下一次对话可以这样开始', sec.how]];
+  } else if (has('伴侣', '婚姻', '分手', '在一起', '关系去留')) {
+    cards = [['先不急着判断去留', sec.why], ['回到一次具体冲突', sec.how], ['真正值得继续观察的事', sec.future]];
+  } else if (has('主动', '内驱', '拖拉', '磨蹭', '作业', '不想学', '手机', '游戏', '不启动')) {
+    cards = [['这不只是“不想做”', sec.why], ['先从第一个小动作开始', sec.how], ['被看见后会长成的力量', sec.future]];
+  } else if (has('ADHD', '多动症', '抑郁', '焦虑症', '心理疾病', '精神问题', '诊断')) {
+    cards = [['这个问题不能由报告判断', sec.why], ['建议先整理这些具体情况', sec.how]];
+  } else if (has('录用', '淘汰', '分班', '筛选', '分层')) {
+    cards = [['报告不能替代筛选决定', sec.why], ['可以安全参考的范围', sec.how]];
+  } else if (has('焦虑', '情绪', '生气', '输不起', '压力', '崩溃', '害怕', '哭')) {
+    cards = [['先看情绪在提醒什么', sec.why], ['当下可以怎样接住', combine(sec.how, sec.future)]];
+  } else if (has('朋友', '人际', '同学', '老师', '课堂', '社交')) {
+    cards = [['先定位卡住的场景', sec.why], ['给自己一个低压力入口', combine(sec.how, sec.future)]];
+  } else if (has('职业', '工作', '转型', '事业', '创业')) {
+    cards = [['先看什么在消耗你', sec.why], ['做一次低成本验证', sec.how], ['把优势组合看完整', sec.future]];
+  } else {
+    cards = [['你可能卡在这里', sec.why], ['先试一个低风险动作', combine(sec.how, sec.future)]];
+  }
+  return cards
+    .filter(([, body]) => String(body || '').trim())
+    .map(([cardTitle, body]) => ({ title: cardTitle, body: String(body).trim() }));
+}
+
 // ── 正文内容格式化（加高亮块） ─────────────────────────────────────────
 function formatContent(text) {
   text = cleanSourceTraces(text || '');
@@ -1272,7 +1424,7 @@ function buildReportFlipBook(sections) {
   const cfg  = getThemeConfig(tier);
   const imgKey = KEY2IMG[E?.key || 'w'] || 'whorl';
   const fpSrc  = FP_IMGS[imgKey];
-  const type   = E?.主性格类型 || '天赋型';
+  const type   = E?.主性格类型 || '观察型';
   const reportId = `FP-${new Date().getFullYear()}-${(E?.key||'w').toUpperCase().slice(0,2)}${Math.floor(Math.random()*900+100)}`;
 
   // 把主题应用到 #s4
@@ -1326,23 +1478,16 @@ function buildReportFlipBook(sections) {
     if (sec.type === 'issue') {
       const icon = cfg.icon.issue;
       const eyebrow = `${icon} 专项解读 · ${secNum}`;
+      const answerCards = getIssueAnswerCards(sec);
       slide.dataset.sub = '家长关注';
       slide.innerHTML = `
         <div class="sec-eyebrow">${eyebrow}</div>
         <div class="sec-h">${sec.title}</div>
         <div class="fp-parts">
-          <div class="fp-part">
-            <div class="fp-badge"><div class="fp-badge-n">1</div><div class="fp-badge-t">为什么会这样</div></div>
-            <div class="fp-text">${formatContent(issueBody(sec.why, '为什么会这样', sec.title))}</div>
-          </div>
-          <div class="fp-part">
-            <div class="fp-badge"><div class="fp-badge-n">2</div><div class="fp-badge-t">怎么应对</div></div>
-            <div class="fp-text">${formatContent(issueBody(sec.how, '怎么应对', sec.title))}</div>
-          </div>
-          <div class="fp-part">
-            <div class="fp-badge"><div class="fp-badge-n">3</div><div class="fp-badge-t">未来可期</div></div>
-            <div class="fp-text">${formatContent(issueBody(sec.future, '未来可期', sec.title))}</div>
-          </div>
+          ${answerCards.map((card, cardIndex) => `<div class="fp-part">
+            <div class="fp-badge"><div class="fp-badge-n">${cardIndex + 1}</div><div class="fp-badge-t">${card.title}</div></div>
+            <div class="fp-text">${formatContent(card.body)}</div>
+          </div>`).join('')}
           <button class="fp-cta-btn" onclick="window.location='/child-chat.html'">
             <span>💬 ${sec.cta || '还想深聊？继续问我'}</span>
           </button>
@@ -1350,8 +1495,8 @@ function buildReportFlipBook(sections) {
     } else {
       const isFoundation = sec.type === 'foundation';
       const icon = isFoundation ? cfg.icon.foundation : cfg.icon.required;
-      const label = isFoundation ? `${icon} 必读 · 天赋地基` : `${icon} 专项 · ${secNum}`;
-      slide.dataset.sub = isFoundation ? '天赋地基' : '必给模块';
+      const label = isFoundation ? `${icon} 必读 · 观察基础` : `${icon} 专项 · ${secNum}`;
+      slide.dataset.sub = isFoundation ? '观察基础' : '必给模块';
       // 提取关键词（从内容中找 **加粗** 词）
       const kwMatches = (sec.content||'').match(/\*\*(.+?)\*\*/g) || [];
       const kws = kwMatches.slice(0,4).map(k => k.replace(/\*\*/g,''));
@@ -1530,7 +1675,7 @@ async function generateReportPDF(btnEl) {
   const E   = ST.engineResult;
   const cfg = getThemeConfig(ST.ageTier || 'adult');
   const fpSrc  = FP_IMGS[KEY2IMG[E?.key||'w'] || 'whorl'];
-  const type   = E?.主性格类型 || '天赋型';
+  const type   = E?.主性格类型 || '观察型';
   const reportId = `FP-${new Date().getFullYear()}-${(E?.key||'w').toUpperCase().slice(0,2)}${Math.floor(Math.random()*900+100)}`;
   const sections = RV.sections || [];
   const bf = `-apple-system,'PingFang SC','Noto Sans SC',sans-serif`; // body font
@@ -1551,7 +1696,7 @@ async function generateReportPDF(btnEl) {
   }
   function pFtr() {
     return `<div style="padding:9px 24px 11px;border-top:1px solid ${th.border};text-align:center;">
-      <div style="font-size:8.5px;color:${th.faint};letter-spacing:.1em;font-family:${bf};">皮纹测评专属报告 · AIPIWEN.CN</div>
+      <div style="font-size:8.5px;color:${th.faint};letter-spacing:.1em;font-family:${bf};">行为观察辅助报告 · AIPIWEN.CN</div>
     </div>`;
   }
   function wrap(inner) {
@@ -1687,7 +1832,7 @@ async function generateReportPDF(btnEl) {
   // ── 内容页（必给/issue）────────────────────────────────────────────────────
   function buildContent(sec, n) {
     const isIssue = sec.type === 'issue', isFound = sec.type === 'foundation';
-    const label = isFound ? '★ 必读 · 天赋地基' : isIssue ? '◉ 专项解读' : '▸ 专项';
+    const label = isFound ? '★ 必读 · 观察基础' : isIssue ? '◉ 专项解读' : '▸ 专项';
     // 关键词 pill 徽章（从 **加粗** 词提取）
     const kwMatches = ((isIssue ? (sec.why||'')+(sec.how||'')+(sec.future||'') : sec.content||''))
                       .match(/\*\*(.+?)\*\*/g) || [];
@@ -1712,9 +1857,7 @@ async function generateReportPDF(btnEl) {
     }
     const bodyHTML = isIssue
       ? `<div style="display:flex;flex-direction:column;gap:9px;">
-          ${issueCard(1, '为什么会这样', sec.why)}
-          ${issueCard(2, '怎么应对', sec.how)}
-          ${issueCard(3, '未来可期', sec.future)}
+          ${getIssueAnswerCards(sec).map((card, index) => issueCard(index + 1, card.title, card.body)).join('')}
         </div>`
       : fmtPDF(sec.content || '', th, bf);
     return wrap(`
@@ -1989,7 +2132,7 @@ function openDeepChat() {
 
   // 构建报告摘要，含性格类型关键词 → guest-chat.js 自动注入完整 TRC 知识库
   const summary = [
-    `【皮纹天赋报告数据·深聊上下文】`,
+    `【行为观察报告数据·深聊上下文】`,
     name  ? `姓名：${name}` : '',
     age   ? `年龄：${age}岁` : '',
     type  ? `性格主类型：${type}${E.叠加特质?.逆向思维R ? '（含逆向思维叠加）' : ''}` : '',
@@ -1999,7 +2142,7 @@ function openDeepChat() {
     fn.总TRC                 ? `TRC总分：${fn.总TRC}，均值：${fn.个人均值}` : '',
     atd.值                   ? `ATD：${atd.值}°（${atd.分区}）` : '',
     (fn.精神 || fn.思维)     ? `五功能区——精神:${fn.精神} 思维:${fn.思维} 体觉:${fn.体觉} 听觉:${fn.听觉} 视觉:${fn.视觉}` : '',
-    `（用户刚看完以上皮纹报告，希望继续追问深入了解天赋特征）`,
+    `（用户刚看完以上观察报告，希望继续追问深入了解行为特点）`,
   ].filter(Boolean).join('\n');
 
   try { sessionStorage.setItem('aipiwen_report_deepchat', summary); } catch(e) {}

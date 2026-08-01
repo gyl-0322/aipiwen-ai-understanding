@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AIPIWEN指导师工作台</title>
+  <meta name="description" content="AIPIWEN 指导师工作台首页">
+  <link rel="stylesheet" href="static/ai-interpreter.css">
+  <script src="/js/error-tracker.js" defer></script>
+  <script src="https://cdn.bootcdn.net/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" defer></script>
+  <script src="static/v3a-auth.js" defer></script>
+  <script src="static/ai-interpreter.js" defer></script>
+</head>
+<body data-v3a-auth-page="workbench" hidden data-page="workbench">
+  <div class="app-shell">
+    <aside class="sidebar">
+      <a class="brand" href="ai-interpreter-workbench.html" aria-label="AIPIWEN指导师工作台">
+        <svg class="brand-flower" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <circle class="brand-flower-ring" cx="18" cy="18" r="15.5" stroke-width=".9" stroke-dasharray="2.5 6"/>
+          <g class="brand-flower-petals">
+            <ellipse cx="18" cy="12" rx="2.2" ry="6.5" transform="rotate(0 18 18)"/>
+            <ellipse cx="18" cy="12" rx="2.2" ry="6.5" transform="rotate(90 18 18)"/>
+            <ellipse cx="18" cy="12" rx="1.4" ry="5.5" transform="rotate(45 18 18)"/>
+            <ellipse cx="18" cy="12" rx="1.4" ry="5.5" transform="rotate(135 18 18)"/>
+          </g>
+          <circle class="brand-flower-center" cx="18" cy="18" r="3"/>
+        </svg>
+        <div>
+          <p class="brand-title">AIPIWEN指导师工作台</p>
+          <div class="brand-subtitle">AI成长理解工作台</div>
+        </div>
+      </a>
+      <nav class="nav" aria-label="主导航">
+        <a class="nav-link" data-page="workbench" href="ai-interpreter-workbench.html"><span>⌂</span><span>工作台首页</span></a>
+        <a class="nav-link" data-page="customers" href="ai-interpreter-customers.html"><span>◎</span><span>我的客户</span></a>
+        <a class="nav-link" data-page="session" href="ai-interpreter-session.html"><span>◈</span><span>AI解读助手</span></a>
+        <a class="nav-link" data-page="training" href="ai-interpreter-training.html"><span>▣</span><span>解读训练</span></a>
+        <a class="nav-link" data-page="review" href="ai-interpreter-review.html"><span>◇</span><span>总部复核 / 规范</span></a>
+        <a class="nav-link" data-page="cases" href="ai-interpreter-cases.html"><span>✦</span><span>优秀案例沉淀</span></a>
+      </nav>
+      <div class="sidebar-note">
+        工作台持续更新中，部分功能展示为学习示例。
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Workbench Overview</p>
+          <h1>AIPIWEN指导师工作台</h1>
+          <p>把一份报告转化为客户听得懂、用得上、风险可控的专业解读。</p>
+        </div>
+        <div class="workbench-account-strip" aria-label="当前账号">
+          <button class="workbench-chip" type="button" data-v3a-detail="profile" aria-label="查看身份资料">
+            <span>身份</span>
+            <strong id="v3a-workbench-role">读取中</strong>
+          </button>
+          <button class="workbench-chip" type="button" data-v3a-detail="credits" aria-label="查看积分明细">
+            <span>积分</span>
+            <strong id="v3a-workbench-balance">读取中</strong>
+          </button>
+          <button class="workbench-chip" type="button" data-v3a-detail="invite" aria-label="查看邀请码二维码">
+            <span>邀请码</span>
+            <strong id="v3a-workbench-invite-code">读取中</strong>
+          </button>
+          <button class="btn ghost" id="v3a-workbench-logout" type="button">退出登录</button>
+        </div>
+      </header>
+      <p class="dryrun-error" id="v3a-workbench-message" role="status" aria-live="polite" hidden></p>
+
+      <section class="notice" aria-label="学习示例说明" style="margin-bottom:16px">
+        <strong>学习示例</strong>
+        <p>以下展示数据为学习参考，帮助您了解工作台各项功能的使用方式。</p>
+      </section>
+
+      <section class="layout-grid cols-3" aria-label="今日概览">
+        <div class="card metric cyan">
+          <div class="metric-value">3</div>
+          <div class="metric-label">今日待解读客户</div>
+          <p>2 位儿童天赋报告，1 位成人发展规划。</p>
+        </div>
+        <div class="card metric amber">
+          <div class="metric-value">1</div>
+          <div class="metric-label">待提交或等待复核</div>
+          <p>含“注意力不集中 / 数学成绩偏弱”敏感关注点。</p>
+        </div>
+        <div class="card metric blue">
+          <div class="metric-value">2</div>
+          <div class="metric-label">本周待完成训练</div>
+          <p>含“数值解释安全度”评分项。</p>
+        </div>
+      </section>
+
+      <section class="layout-grid cols-aside" style="margin-top:16px">
+        <div class="module">
+          <div class="card-header">
+            <div class="card-title">
+              <h2>客户服务概览</h2>
+              <small>客户如何添加到工作台</small>
+            </div>
+          </div>
+          <div class="source-grid">
+            <div class="source-item">
+              <span>客户扫码上传</span>
+              <strong>3</strong>
+            </div>
+            <div class="source-item">
+              <span>服务中心转入</span>
+              <strong>5</strong>
+            </div>
+            <div class="source-item">
+              <span>平台协助添加</span>
+              <strong>2</strong>
+            </div>
+            <div class="source-item">
+              <span>代客户上传</span>
+              <strong>1</strong>
+            </div>
+          </div>
+          <div class="notice" style="margin-top:14px">
+            <strong>客户进入方式</strong>
+            <p>通过客户扫码上传、代客户上传或平台协助添加的客户，会显示在“我的客户”中。以下为学习示例数据。</p>
+          </div>
+        </div>
+
+        <div class="module invite-rule-card compact">
+          <div class="card-header">
+            <div class="card-title">
+              <h2>邀请奖励</h2>
+              <small>有效邀请分阶段入账</small>
+            </div>
+          </div>
+          <div class="reward-steps">
+            <div><span>1</span><strong>注册</strong><em>+100</em></div>
+            <div><span>2</span><strong>首次解读</strong><em>+100</em></div>
+            <div><span>3</span><strong>认证开通</strong><em>+300</em></div>
+          </div>
+          <p class="footer-note">以平台实际入账记录为准。</p>
+        </div>
+      </section>
+
+      <section class="layout-grid cols-aside" style="margin-top:16px">
+        <div class="table-card recent-table">
+          <div class="card-header" style="padding:16px 16px 0">
+            <div class="card-title">
+              <h2>最近解读记录</h2>
+              <small>点击客户可进入 AI 解读助手详情页</small>
+            </div>
+          </div>
+          <div class="table-head">
+            <span>客户</span><span>报告类型</span><span>解读时间</span><span>状态</span><span>操作</span>
+          </div>
+          <a class="table-row" href="ai-interpreter-session.html">
+            <strong>王小明的妈妈</strong><span>儿童天赋报告</span><span>2026-07-08 10:30</span><span class="status done">已完成</span><span>进入</span>
+          </a>
+          <a class="table-row" href="ai-interpreter-session.html">
+            <strong>李大伟</strong><span>成人发展规划</span><span>2026-07-07 14:20</span><span class="status pending">待复核</span><span>进入</span>
+          </a>
+          <a class="table-row" href="ai-interpreter-session.html">
+            <strong>陈小芳</strong><span>学习通道评估</span><span>2026-07-07 09:15</span><span class="status done">已完成</span><span>进入</span>
+          </a>
+          <a class="table-row" href="ai-interpreter-session.html">
+            <strong>张小花</strong><span>全脑开发报告</span><span>2026-07-05 16:40</span><span class="status info">待解读</span><span>进入</span>
+          </a>
+        </div>
+
+        <div class="module announcement">
+          <div class="card-header">
+            <div class="card-title">
+              <h2>总部公告</h2>
+              <small>规范更新与训练提醒</small>
+            </div>
+          </div>
+          <div class="notice">
+            <strong>2026-07-08 解读流程更新</strong>
+            <p>标准流程调整为 8 步，新增 TRC / ATD / 左右脑独立步骤，右栏新增“为什么这样讲”。</p>
+          </div>
+          <div class="notice">
+            <strong>新版四条规则已统一</strong>
+            <ol class="rules-list">
+              <li>数值没有好坏，高有高的特长，低有低的特长</li>
+              <li>不做未来预测，只解释天赋底色 + 后天环境 + 教育培养共同作用</li>
+              <li>不贴标签，不定义“孩子就是一个什么样的人”</li>
+              <li>不与他人比较，只与自己的平均值比较</li>
+            </ol>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <main class="public-shell auth-shell" id="v3a-workbench-error" hidden>
+    <section class="module auth-card" id="v3a-workbench-error-shell">
+      <p class="eyebrow">AIPIWEN 指导师工作台</p>
+      <h1>工作台暂时无法打开</h1>
+      <p id="v3a-workbench-error-message" role="alert">账号信息暂时无法加载，请稍后重试。</p>
+      <div class="top-actions">
+        <a class="btn primary" href="">重新加载</a>
+        <a class="btn ghost" href="/login.html">返回登录</a>
+      </div>
+    </section>
+  </main>
+
+  <div class="modal-layer" id="v3a-workbench-detail-modal" aria-hidden="true">
+    <div class="modal-card workbench-detail-modal" role="dialog" aria-modal="true" aria-labelledby="v3a-workbench-detail-title">
+      <div class="card-header">
+        <div class="card-title">
+          <h2 id="v3a-workbench-detail-title">账号详情</h2>
+          <small id="v3a-workbench-detail-subtitle">当前登录账号</small>
+        </div>
+        <button class="icon-btn" type="button" data-v3a-detail-close aria-label="关闭">×</button>
+      </div>
+      <div id="v3a-workbench-detail-body"></div>
+    </div>
+  </div>
+</body>
+</html>

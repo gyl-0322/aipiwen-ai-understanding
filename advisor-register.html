@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>提交指导师申请 · AIPIWEN</title>
+  <meta name="description" content="AIPIWEN 指导师工作台申请资料">
+  <link rel="stylesheet" href="static/ai-interpreter.css">
+  <script src="/js/error-tracker.js" defer></script>
+  <script src="static/v3a-auth.js" defer></script>
+</head>
+<body data-v3a-auth-page="register">
+  <main class="public-shell auth-shell">
+    <nav class="public-nav" aria-label="指导师申请导航">
+      <a class="brand" href="advisor.html">
+        <svg class="brand-flower" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <circle class="brand-flower-ring" cx="18" cy="18" r="15.5" stroke-width=".9" stroke-dasharray="2.5 6"/>
+          <g class="brand-flower-petals">
+            <ellipse cx="18" cy="12" rx="2.2" ry="6.5" transform="rotate(0 18 18)"/>
+            <ellipse cx="18" cy="12" rx="2.2" ry="6.5" transform="rotate(90 18 18)"/>
+            <ellipse cx="18" cy="12" rx="1.4" ry="5.5" transform="rotate(45 18 18)"/>
+            <ellipse cx="18" cy="12" rx="1.4" ry="5.5" transform="rotate(135 18 18)"/>
+          </g>
+          <circle class="brand-flower-center" cx="18" cy="18" r="3"/>
+        </svg>
+        <div>
+          <p class="brand-title">AIPIWEN指导师工作台</p>
+          <div class="brand-subtitle">申请资料</div>
+        </div>
+      </a>
+      <a class="btn ghost" id="v3a-register-home-link" href="/login.html?home=1">返回首页</a>
+    </nav>
+
+    <section class="register-layout">
+      <div class="module register-card">
+        <p class="eyebrow">Advisor Application</p>
+        <h1>完成账号开通</h1>
+
+        <form class="form-grid register-form" id="v3a-password-setup-form" hidden>
+          <label>设置密码
+            <input class="field" name="password" type="password" autocomplete="new-password" minlength="8" required placeholder="至少 8 位，包含字母和数字">
+          </label>
+          <label>再次输入密码
+            <input class="field" name="passwordConfirm" type="password" autocomplete="new-password" minlength="8" required placeholder="请再次输入密码">
+          </label>
+          <p class="dryrun-error" id="v3a-password-setup-message" role="status" aria-live="polite" hidden></p>
+          <button class="btn primary" type="submit">保存密码</button>
+        </form>
+
+        <form class="form-grid register-form" id="v3a-register-form" hidden>
+          <label>昵称 / 从业名
+            <input class="field" name="displayName" type="text" required minlength="2" maxlength="80" placeholder="用于审核与工作台展示">
+          </label>
+          <label>城市
+            <input class="field" name="city" type="text" required maxlength="80" placeholder="例如：上海">
+          </label>
+          <label>代理身份（可选）
+            <select class="field" name="channelIdentity">
+              <option value="">暂不选择</option>
+              <option value="branch_company">分公司</option>
+              <option value="service_center">服务中心</option>
+              <option value="collection_center">采集中心</option>
+              <option value="ordinary_advisor">普通指导师</option>
+            </select>
+          </label>
+          <label>从业类型
+            <select class="field" name="practitionerType" required>
+              <option value="independent">独立从业者</option>
+              <option value="organization">机构从业者</option>
+              <option value="education_family">教育/家庭教育从业者</option>
+              <option value="psychological_consulting">心理咨询服务从业者</option>
+              <option value="child_growth_quality">儿童成长/素质教育从业者</option>
+              <option value="assessment_collection">测评/采集服务从业者</option>
+              <option value="other">其他</option>
+            </select>
+          </label>
+          <label id="v3a-practitioner-other-note-row" hidden>其他从业类型说明
+            <input class="field" name="practitionerTypeNote" type="text" maxlength="80" placeholder="例如：企业培训、公益项目、社区服务等">
+          </label>
+          <label>邀请码（可选）
+            <input class="field" name="inviteCode" type="text" maxlength="40" placeholder="如有邀请码可填写">
+          </label>
+          <label class="check-line">
+            <input name="acceptedRules" type="checkbox" required>
+            <span>
+              我已阅读并同意
+              <a href="advisor-agreement.html" target="_blank" rel="noopener">从业者协议</a>
+              和
+              <a href="advisor-rules.html" target="_blank" rel="noopener">工作台内四条规则</a>
+            </span>
+          </label>
+          <p class="dryrun-error" id="v3a-register-message" role="status" aria-live="polite" hidden></p>
+          <button class="btn primary" type="submit">提交申请</button>
+        </form>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

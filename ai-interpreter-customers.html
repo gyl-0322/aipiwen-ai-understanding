@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>我的客户 · AIPIWEN指导师工作台</title>
+  <meta name="description" content="AIPIWEN 指导师工作台客户体验页面">
+  <link rel="stylesheet" href="static/ai-interpreter.css">
+  <script src="/js/error-tracker.js" defer></script>
+  <script src="static/v3a-auth.js" defer></script>
+  <script src="static/ai-interpreter.js" defer></script>
+  <script src="https://cdn.bootcdn.net/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" defer></script>
+  <script src="static/v3a-attribution.js" defer></script>
+</head>
+<body data-v3a-auth-page="workbench" hidden data-page="customers">
+  <div class="app-shell">
+    <aside class="sidebar">
+      <a class="brand" href="ai-interpreter-workbench.html">
+        <svg class="brand-flower" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <circle class="brand-flower-ring" cx="18" cy="18" r="15.5" stroke-width=".9" stroke-dasharray="2.5 6"/>
+          <g class="brand-flower-petals">
+            <ellipse cx="18" cy="12" rx="2.2" ry="6.5" transform="rotate(0 18 18)"/>
+            <ellipse cx="18" cy="12" rx="2.2" ry="6.5" transform="rotate(90 18 18)"/>
+            <ellipse cx="18" cy="12" rx="1.4" ry="5.5" transform="rotate(45 18 18)"/>
+            <ellipse cx="18" cy="12" rx="1.4" ry="5.5" transform="rotate(135 18 18)"/>
+          </g>
+          <circle class="brand-flower-center" cx="18" cy="18" r="3"/>
+        </svg>
+        <div>
+          <p class="brand-title">AIPIWEN指导师工作台</p>
+          <div class="brand-subtitle">AI成长理解工作台</div>
+        </div>
+      </a>
+      <nav class="nav" aria-label="主导航">
+        <a class="nav-link" data-page="workbench" href="ai-interpreter-workbench.html"><span>⌂</span><span>工作台首页</span></a>
+        <a class="nav-link" data-page="customers" href="ai-interpreter-customers.html"><span>◎</span><span>我的客户</span></a>
+        <a class="nav-link" data-page="session" href="ai-interpreter-session.html"><span>◈</span><span>AI解读助手</span></a>
+        <a class="nav-link" data-page="training" href="ai-interpreter-training.html"><span>▣</span><span>解读训练</span></a>
+        <a class="nav-link" data-page="review" href="ai-interpreter-review.html"><span>◇</span><span>总部复核 / 规范</span></a>
+        <a class="nav-link" data-page="cases" href="ai-interpreter-cases.html"><span>✦</span><span>优秀案例沉淀</span></a>
+      </nav>
+      <div class="sidebar-note">
+        在这里查看客户报告，继续解读与跟进服务。
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">My Customers</p>
+          <h1>我的客户</h1>
+          <p>集中查看客户报告，开始解读并记录后续服务。</p>
+        </div>
+        <div class="top-actions">
+          <button class="btn ghost" id="v3a-attribution-qr" type="button" disabled>客户扫码上传</button>
+          <button class="btn primary" id="v3a-customer-upload" type="button" disabled>代客户上传报告</button>
+        </div>
+      </header>
+
+      <section class="notice" aria-label="客户列表说明" style="margin-bottom:16px">
+        <strong>添加客户</strong>
+        <p>邀请客户扫码上传报告，或由您代为上传；完成后可在这里查看。</p>
+      </section>
+
+      <section class="module" id="v3a-real-customers" aria-labelledby="v3a-real-customers-title" style="margin-bottom:16px">
+        <div class="card-header">
+          <div class="card-title"><h2 id="v3a-real-customers-title">我的客户</h2><small>客户报告与服务进度</small></div>
+          <span class="status info" id="v3a-real-customers-count">读取中</span>
+        </div>
+        <p class="dryrun-error" id="v3a-real-customers-error" role="status" aria-live="polite" hidden></p>
+        <div class="table-card customer-table" id="v3a-real-customers-table" hidden>
+          <div class="table-head" aria-hidden="true">
+            <span>客户</span><span>客户来源</span><span>服务指导师</span><span>报告数</span><span>最近报告</span><span>状态</span><span>创建时间</span><span>操作</span>
+          </div>
+          <div id="v3a-real-customers-list" aria-live="polite"></div>
+        </div>
+        <div class="notice" id="v3a-real-customers-empty" hidden>
+          <strong>暂无客户报告</strong>
+          <p>可以生成客户上传二维码，或点击“代客户上传报告”。</p>
+        </div>
+      </section>
+
+      <section class="module" id="v3a-attribution-panel" aria-labelledby="v3a-attribution-title" hidden style="margin-bottom:16px">
+        <div class="card-header">
+          <div class="card-title"><h2 id="v3a-attribution-title">客户上传二维码</h2><small>一次使用，24 小时内有效</small></div>
+          <button class="btn ghost" id="v3a-attribution-close" type="button">关闭</button>
+        </div>
+        <div class="layout-grid cols-aside">
+          <div id="v3a-attribution-qr-image" aria-label="客户上传二维码"></div>
+          <div>
+            <p>请让客户扫码打开唯一报告上传入口。报告完成后会自动进入您的客户列表。</p>
+            <div class="invite-code-display" style="margin-top:14px">
+              <span>服务码（客户从首页上传时填写）</span>
+              <strong id="v3a-attribution-service-code">-</strong>
+            </div>
+            <button class="btn ghost" id="v3a-attribution-code-copy" type="button" disabled style="margin-top:10px">复制服务码</button>
+            <p id="v3a-attribution-url" style="overflow-wrap:anywhere;margin-top:10px"></p>
+          </div>
+        </div>
+      </section>
+
+      <section class="module">
+        <div class="searchbar" role="search">
+          <input class="field" type="search" placeholder="搜索客户姓名 / 手机号 / 报告类型">
+          <select class="select" aria-label="筛选解读状态">
+            <option>全部状态</option>
+            <option>待解读</option>
+            <option>已完成</option>
+            <option>待复核</option>
+          </select>
+          <select class="select" aria-label="排序方式">
+            <option>最近解读时间</option>
+            <option>客户姓名</option>
+            <option>报告生成时间</option>
+          </select>
+        </div>
+        <div class="tag-row">
+          <span class="tag">报告类型：儿童天赋报告</span>
+          <span class="tag">解读状态：全部</span>
+          <span class="tag">日期范围：近 30 天</span>
+        </div>
+      </section>
+
+      <section class="layout-grid cols-aside" style="margin-top:16px">
+        <div class="table-card customer-table">
+          <div class="table-head">
+            <span>客户</span><span>客户来源</span><span>服务指导师</span><span>加入方式</span><span>最近解读</span><span>状态</span><span>风险关注</span><span>操作</span>
+          </div>
+          <button class="table-row js-open-session" type="button">
+            <strong>王小明妈妈</strong><span>张老师专属链接</span><span>张老师</span><span>专属链接</span><span>2026-07-08</span><span class="status done">已完成</span><span>学习 / 注意力</span><span>进入</span>
+          </button>
+          <button class="table-row js-open-session" type="button">
+            <strong>陈小芳</strong><span>西安采集中心二维码</span><span>西安采集中心</span><span>扫码进入</span><span>2026-07-05</span><span class="status info">待解读</span><span>学习通道</span><span>进入</span>
+          </button>
+          <div class="notice" style="margin:16px">
+            <strong>学习示例</strong>
+            <p>上方两行为学习示例，仅用于帮助您了解页面操作。</p>
+          </div>
+        </div>
+
+        <aside class="module sticky-column">
+          <div class="card-header">
+            <div class="card-title">
+              <h2>客户详情预览</h2>
+              <small>当前选中：王小明 · 儿童天赋报告</small>
+            </div>
+            <span class="status info">学习示例</span>
+          </div>
+          <div class="data-list">
+            <div class="data-item"><span>年龄 / 年级</span><strong>8 岁 / 二年级</strong></div>
+            <div class="data-item"><span>解读对象</span><strong>妈妈</strong></div>
+            <div class="data-item"><span>采集日期</span><strong>2026-06-20</strong></div>
+            <div class="data-item"><span>报告生成</span><strong>2026-07-01</strong></div>
+            <div class="data-item"><span>客户报告</span><strong>儿童天赋报告</strong></div>
+            <div class="data-item"><span>客户来源</span><strong>张老师专属链接</strong></div>
+            <div class="data-item"><span>服务指导师</span><strong>张老师</strong></div>
+            <div class="data-item"><span>加入方式</span><strong>专属链接</strong></div>
+          </div>
+          <div class="notice" style="margin-top:14px">
+            <strong>客户关注问题</strong>
+            <p>上课注意力不集中、数学成绩偏弱。解读时可围绕这些关注点提供回应和后续建议。</p>
+          </div>
+        </aside>
+      </section>
+    </main>
+  </div>
+
+  <main class="public-shell auth-shell" id="v3a-workbench-error" hidden>
+    <section class="module auth-card">
+      <p class="eyebrow">AIPIWEN 指导师工作台</p>
+      <h1>工作台暂时无法打开</h1>
+      <p id="v3a-workbench-error-message" role="alert">账号信息暂时无法加载，请稍后重试。</p>
+      <div class="top-actions">
+        <a class="btn primary" href="">重新加载</a>
+        <a class="btn ghost" href="/login.html">返回登录</a>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

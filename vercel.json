@@ -43,6 +43,18 @@
       "dest": "/api/generate-report"
     },
     {
+      "src": "/api/v3a-customers",
+      "dest": "/api/v3a-attribution?action=customers"
+    },
+    {
+      "src": "/api/v3a-admin/unassigned",
+      "dest": "/api/v3a-admin?action=unassigned"
+    },
+    {
+      "src": "/api/v3a-admin/assign",
+      "dest": "/api/v3a-admin?action=assign"
+    },
+    {
       "src": "/api/(.*)",
       "dest": "/api/$1"
     },
@@ -84,11 +96,115 @@
     },
     {
       "src": "/advisor.html",
-      "dest": "/advisor.html"
+      "dest": "/login.html"
     },
     {
       "src": "/advisor",
-      "dest": "/advisor.html"
+      "dest": "/login.html"
+    },
+    {
+      "src": "/login.html",
+      "dest": "/login.html"
+    },
+    {
+      "src": "/login",
+      "dest": "/login.html"
+    },
+    {
+      "src": "/advisor-register.html",
+      "dest": "/advisor-register.html"
+    },
+    {
+      "src": "/advisor-register",
+      "dest": "/advisor-register.html"
+    },
+    {
+      "src": "/advisor-agreement.html",
+      "dest": "/advisor-agreement.html"
+    },
+    {
+      "src": "/advisor-agreement",
+      "dest": "/advisor-agreement.html"
+    },
+    {
+      "src": "/advisor-rules.html",
+      "dest": "/advisor-rules.html"
+    },
+    {
+      "src": "/advisor-rules",
+      "dest": "/advisor-rules.html"
+    },
+    {
+      "src": "/advisor-pending.html",
+      "dest": "/advisor-pending.html"
+    },
+    {
+      "src": "/advisor-pending",
+      "dest": "/advisor-pending.html"
+    },
+    {
+      "src": "/ai-interpreter-workbench.html",
+      "dest": "/ai-interpreter-workbench.html"
+    },
+    {
+      "src": "/ai-interpreter-workbench",
+      "dest": "/ai-interpreter-workbench.html"
+    },
+    {
+      "src": "/ai-interpreter-customers.html",
+      "dest": "/ai-interpreter-customers.html"
+    },
+    {
+      "src": "/ai-interpreter-customers",
+      "dest": "/ai-interpreter-customers.html"
+    },
+    {
+      "src": "/ai-interpreter-session.html",
+      "dest": "/ai-interpreter-session.html"
+    },
+    {
+      "src": "/ai-interpreter-session",
+      "dest": "/ai-interpreter-session.html"
+    },
+    {
+      "src": "/ai-interpreter-training.html",
+      "dest": "/ai-interpreter-training.html"
+    },
+    {
+      "src": "/ai-interpreter-training",
+      "dest": "/ai-interpreter-training.html"
+    },
+    {
+      "src": "/ai-interpreter-review.html",
+      "dest": "/ai-interpreter-review.html"
+    },
+    {
+      "src": "/ai-interpreter-review",
+      "dest": "/ai-interpreter-review.html"
+    },
+    {
+      "src": "/ai-interpreter-cases.html",
+      "dest": "/ai-interpreter-cases.html"
+    },
+    {
+      "src": "/ai-interpreter-cases",
+      "dest": "/ai-interpreter-cases.html"
+    },
+    {
+      "src": "/admin-applications.html",
+      "dest": "/admin-applications.html"
+    },
+    {
+      "src": "/admin-applications",
+      "dest": "/admin-applications.html"
+    },
+    {
+      "src": "/admin-unassigned.html",
+      "dest": "/admin-unassigned.html"
+    },
+    {
+      "src": "/admin-unassigned",
+      "dest": "/admin-unassigned.html"
     },
     {
       "src": "/behavior-input.html",
@@ -210,6 +326,22 @@
       "maxDuration": 60
     },
     "api/generate-report.js": {
+      "maxDuration": 60,
+      "regions": ["iad1"]
+    },
+    "api/v3a-session.js": {
+      "maxDuration": 15
+    },
+    "api/v3a-send-sms-hook.js": {
+      "maxDuration": 12
+    },
+    "api/v3a-admin.js": {
+      "maxDuration": 30
+    },
+    "api/v3a-attribution.js": {
+      "maxDuration": 15
+    },
+    "api/v3a-report-import.js": {
       "maxDuration": 60,
       "regions": ["iad1"]
     }
