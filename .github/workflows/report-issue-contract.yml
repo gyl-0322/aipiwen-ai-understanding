@@ -10,6 +10,7 @@ on:
   push:
     branches:
       - main
+      - 'hotfix/**'
     paths:
       - 'api/generate-report.js'
       - 'report-upload.html'
