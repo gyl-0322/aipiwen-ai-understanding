@@ -3,16 +3,16 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>AI天赋底色速测 · 向导版</title>
-<meta name="description" content="免费天赋底色速测，约10分钟，AI 解读十指纹路对应的先天认知方式与天赋特质。">
+<title>AI孩子行为观察体验 · 向导版</title>
+<meta name="description" content="免费孩子行为观察体验，约10分钟，AI 帮你整理孩子行为特点与家庭沟通线索。">
 <meta property="og:type" content="website">
-<meta property="og:title" content="AI 天赋底色速测 · AIPIWEN">
-<meta property="og:description" content="免费天赋底色速测，约10分钟，AI 解读十指纹路对应的先天认知方式与天赋特质。">
+<meta property="og:title" content="AI 孩子行为观察体验 · AIPIWEN">
+<meta property="og:description" content="免费孩子行为观察体验，约10分钟，AI 帮你整理孩子行为特点与家庭沟通线索。">
 <meta property="og:image" content="https://www.aipiwen.cn/share/aipiwen-practitioner-card.jpg">
 <meta property="og:url" content="https://www.aipiwen.cn/fingerprint-v2-wizard.html">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="AI 天赋底色速测 · AIPIWEN">
-<meta name="twitter:description" content="免费天赋底色速测，约10分钟，AI 解读十指纹路对应的先天认知方式与天赋特质。">
+<meta name="twitter:title" content="AI 孩子行为观察体验 · AIPIWEN">
+<meta name="twitter:description" content="免费孩子行为观察体验，约10分钟，AI 帮你整理孩子行为特点与家庭沟通线索。">
 <meta name="twitter:image" content="https://www.aipiwen.cn/share/aipiwen-practitioner-card.jpg">
 <script src="https://cdn.bootcdn.net/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdn.bootcdn.net/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -110,7 +110,7 @@ body {
 .progress-dot.done { background: var(--amber); }
 .progress-dot.active { background: rgba(194,105,42,.5); }
 
-/* ─── 快速测评工具卡片 ─── */
+/* ─── 快速观察工具卡片 ─── */
 .tools-grid{display:flex;flex-direction:column;gap:12px;padding:0 20px 10px;}
 .tool-card{background:#fff;border:1.5px solid var(--ink-10);border-radius:16px;transition:border-color .2s,box-shadow .2s;text-decoration:none;color:inherit;}
 .tool-card:active{border-color:var(--amber);box-shadow:0 2px 12px rgba(194,105,42,.08);}
@@ -1056,13 +1056,13 @@ body {
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
       返回
     </a>
-    <h1>AI 天赋<em>速测</em></h1>
-    <p>指尖携带的遗传密码 · 揭示与生俱来的天赋图谱</p>
+    <h1>AI 孩子行为<em>观察</em>体验</h1>
+    <p>从一个真实行为开始 · 形成成长探索观察图景</p>
 
   </div>
 
   <!-- ═══════════════════════════════
-       测评工具箱
+       观察工具箱
   ═══════════════════════════════ -->
   <div class="tools-grid" id="toolsGrid">
 
@@ -1129,20 +1129,20 @@ body {
       </div>
     </div>
 
-    <!-- 3. 天赋底色速测 — 面板里是完整7步向导 -->
+    <!-- 3. 孩子行为观察体验 — 面板里是完整7步向导 -->
     <div class="tool-card" id="tool-fp-card">
       <div class="tool-card-inner" onclick="openTool('fingerprint')">
         <div class="tool-icon">🌀</div>
         <div class="tool-body">
-          <div class="tool-title">天赋底色速测</div>
-          <div class="tool-desc">十指纹型对应大脑功能区。约10分钟。</div>
-          <div class="tool-badge fp">先天基线</div>
+          <div class="tool-title">孩子行为观察体验</div>
+          <div class="tool-desc">记录十指纹型，作为后续行为观察线索。约10分钟。</div>
+          <div class="tool-badge fp">观察线索</div>
           <div class="tool-done-check" id="tool-fp-done">已完成 ✓</div>
         </div>
       </div>
       <div class="tool-panel" id="panel-fingerprint">
         <div class="tool-panel-header">
-          <div class="tool-panel-title">🌀 天赋底色速测</div>
+          <div class="tool-panel-title">🌀 孩子行为观察体验</div>
           <button class="tool-panel-close" onclick="closeTool('fingerprint')">✕</button>
         </div>
 
@@ -1428,7 +1428,7 @@ body {
     <button class="btn-back" onclick="s6Back()">← 返回</button>
     <div class="step-label">第 6 步</div>
     <div class="step-title">确认两个大拇指</div>
-    <div class="step-sub">大拇指是最关键的——它直接决定天赋类型。如果是斗形纹，请选择具体哪种斗。</div>
+    <div class="step-sub">大拇指是本次观察中的重要线索——它帮助判断主要行为特点。如果是斗形纹，请选择具体哪种斗。</div>
 
     <!-- Right thumb -->
     <div class="thumb-confirm">
@@ -1609,7 +1609,7 @@ body {
         <button class="finger-btn" data-fi="9" onclick="s7Toggle(9)"><span class="fi">🤙</span>小指</button>
       </div>
     </div>
-    <button class="btn-primary" onclick="s7Next()">查看我的天赋报告</button>
+    <button class="btn-primary" onclick="s7Next()">查看我的观察报告</button>
     <button class="btn-secondary" onclick="s7None()">其他手指都不是斗，直接看结果</button>
   </div>
 
@@ -1630,7 +1630,7 @@ body {
     <!-- 返回按钮 -->
     <button class="btn-back" onclick="goBack('s7')" style="margin-bottom:8px;">← 返回</button>
     <div class="result-reveal">
-      <div class="result-label">AI 天赋底色分析</div>
+      <div class="result-label">AI 行为观察分析</div>
       <div class="result-type" id="resultType">认知型 W</div>
       <div class="result-tagline" id="resultTagline">主见权威 · 好奇心强 · 探索型</div>
       <div id="upgradeHint" style="display:none;margin-top:8px;padding:8px 12px;background:rgba(255,180,0,.12);border-left:3px solid #f0a500;border-radius:6px;font-size:12px;color:#a07000;line-height:1.5;"></div>
@@ -1640,19 +1640,19 @@ body {
 
     <!-- Upsell → report-upload.html -->
     <div class="upsell-card">
-      <div class="upsell-eyebrow">精确完整版</div>
+      <div class="upsell-eyebrow">完整参考版</div>
       <div class="upsell-title">上传总表<br>解锁你的专属报告</div>
-      <div class="upsell-sub">速测只能看到类型轮廓。上传10指TRC总表，AI精确计算五大功能区、学习通道、ATD反应速度，真正拴在数据上的解读。</div>
+      <div class="upsell-sub">体验版只能看到观察轮廓。上传10指TRC总表，AI辅助整理五大功能区、学习通道和ATD反应速度，作为人工沟通参考。</div>
       <div class="upsell-vs">
         <div class="uv-col">
-          <div class="uv-head">现在 · 速测版</div>
+          <div class="uv-head">现在 · 体验版</div>
           <div class="uv-item"><span class="uv-dot">·</span>主性格类型</div>
-          <div class="uv-item"><span class="uv-dot">·</span>基础优势标签</div>
+          <div class="uv-item"><span class="uv-dot">·</span>行为特点关注点</div>
           <div class="uv-item"><span class="uv-dot">·</span>学习风格方向</div>
         </div>
         <div class="uv-col hi">
           <div class="uv-head">完整版 · 解锁后</div>
-          <div class="uv-item"><span class="uv-dot">✓</span>精确五大功能区</div>
+          <div class="uv-item"><span class="uv-dot">✓</span>五大功能区参考</div>
           <div class="uv-item"><span class="uv-dot">✓</span>学习通道占比</div>
           <div class="uv-item"><span class="uv-dot">✓</span>ATD反应速度</div>
           <div class="uv-item"><span class="uv-dot">✓</span>高频问题四段式解读</div>
@@ -1664,14 +1664,14 @@ body {
 
     <!-- Lead magnet -->
     <div class="lead-box">
-      <h3>还有问题？直接问天赋指导师</h3>
-      <div class="lead-sub">选兴趣班、设计学习环境、如何和孩子沟通——天赋指导师结合你的天赋类型给出具体建议。</div>
-      <a class="kfid-btn" href="https://work.weixin.qq.com/kfid/kfc6ce446e6e057c683" target="_blank" rel="noopener" onclick="wecomeClick(event, this.href)">💬 点击联系天赋指导师</a>
+      <h3>还有问题？直接问成长沟通顾问</h3>
+      <div class="lead-sub">选兴趣班、设计学习环境、如何和孩子沟通——成长沟通顾问结合你的观察结果给出具体建议。</div>
+      <a class="kfid-btn" href="https://work.weixin.qq.com/kfid/kfc6ce446e6e057c683" target="_blank" rel="noopener" onclick="wecomeClick(event, this.href)">💬 点击联系成长沟通顾问</a>
     </div>
 
     <div class="result-actions">
       <button class="btn-share" onclick="generatePoster()">生成分享海报</button>
-      <button class="btn-retry" onclick="resetWizard()">重新测试</button>
+      <button class="btn-retry" onclick="resetWizard()">重新观察</button>
     </div>
   </div>
 
@@ -1745,19 +1745,19 @@ body {
     <div class="fp-card-header">
       <div>
         <div class="fp-card-brand-name">AIPIWEN</div>
-        <div class="fp-card-brand-sub">天赋底色分析</div>
+        <div class="fp-card-brand-sub">行为观察分析</div>
       </div>
       <div class="fp-card-report">
-        <div class="fp-card-report-label">测评报告</div>
+        <div class="fp-card-report-label">观察报告</div>
         <div class="fp-card-report-id" id="pReportId">FP-2026-W001</div>
       </div>
     </div>
     <div class="fp-card-fp" id="pFpWrap"></div>
-    <div class="fp-card-type-label">天赋类型</div>
+    <div class="fp-card-type-label">行为特点类型</div>
     <div class="fp-card-type-name" id="pType"></div>
     <div class="fp-card-hook" id="pHook"></div>
     <div class="fp-card-tags" id="pTags"></div>
-    <div class="fp-card-sci">皮纹遗传度 h²高达0.94 · 胎儿第13—19周形成 · 终生不变</div>
+    <div class="fp-card-sci">指纹纹路稳定 · 仅作行为观察线索 · 不作为正式评估依据</div>
     <div class="fp-card-footer">
       <div>
         <div class="fp-card-cta-main">你家孩子是什么类型？</div>
@@ -2151,7 +2151,7 @@ function s6UpdateBtn() {
   const btn = document.getElementById('s6-btn');
   btn.disabled = !(rt && lt);
   // 快速通道路径直接出结果，不进 S7，按钮文字相应调整
-  btn.textContent = state.allTenWhorls ? '确认，查看我的天赋报告' : '确认，看其他手指的斗';
+  btn.textContent = state.allTenWhorls ? '确认，查看我的观察报告' : '确认，看其他手指的斗';
 }
 
 function s6Back() {
@@ -2269,16 +2269,16 @@ function generateReport(result) {
 
   if (key === 'rl') {
     talents = '逆向思维 · 创意爆发 · 独特视角 · 挑战常规';
-    advantage = '<p>你的大脑天生与众不同。反箕纹赋予你<strong>逆向思考</strong>的超能力——当别人都在往东走时，你自然而然会想"为什么不能往西？"这不是叛逆，这是天赋。你擅长发现别人看不到的角度，在艺术创作、程序调试、策略规划等领域往往能给出令人惊叹的方案。</p><p>你的质疑不是破坏性的，而是建设性的——1880年英国医生亨利·福尔兹正是靠这种"反向思考"，在《自然》期刊上质疑了当时所有主流鉴定方法，开创了现代指纹科学。指纹科学的进步，从来都是由"逆思型"人推动的。</p>';
+    advantage = '<p>你的思考方式很有自己的节奏。反箕纹提示你可能更容易进入<strong>逆向思考</strong>——当别人都在往东走时，你自然而然会想"为什么不能往西？"这不是叛逆，而是值得观察的行为特点。你擅长发现别人看不到的角度，在艺术创作、程序调试、策略规划等领域往往能给出令人惊叹的方案。</p><p>你的质疑不是破坏性的，而是建设性的——1880年英国医生亨利·福尔兹正是靠这种"反向思考"，在《自然》期刊上质疑了当时所有主流鉴定方法，开创了现代指纹科学。指纹科学的进步，从来都是由"逆思型"人推动的。</p>';
     learning = '<p><strong>项目式学习</strong>最适合你。与其按部就班听课，不如直接上手做项目——编程、设计、写作、实验都行。<strong>允许质疑</strong>：当你问"为什么要这样做"时，这是在深度学习，不是捣乱。<strong>给选择权</strong>：让自己决定学习顺序和方式，效果远超被动接受。</p>';
     career = '<p><strong>推荐方向：</strong>产品经理、UI/UX设计师、独立开发者、创意总监、数据科学家、创业者。这些角色都需要"看到别人看不到的"能力，正是你的核心优势。</p>';
     advice = '<p><strong>给家长的建议：</strong>请珍惜这份独特性！当孩子总是问"为什么"、总是想"反过来试试"时，不要急着纠正。<strong>保护好奇心 > 强调服从</strong>。给他/她一个可以自由探索的空间，你会发现惊喜。逆思型的孩子需要的是"对话者"而不是"管理者"。</p>';
-    source = '指纹科学本身的进步，由逆思型先驱推动——1880年亨利·福尔兹在《自然》期刊质疑传统鉴定方法，开创现代指纹科学。这种质疑天赋，从胎儿第13-19周指纹形成时就已写入你的神经系统。';
+    source = '指纹科学本身的进步，由逆思型先驱推动——1880年亨利·福尔兹在《自然》期刊质疑传统鉴定方法，开创现代指纹科学。这种质疑倾向，可以作为家庭观察和沟通的参考线索。';
   } else if (key === 'super_w_a') {
-    talents = '天生领袖 · 主见极强 · 目标必达 · 王者之气';
-    advantage = '<p>你是十指全斗、两拇指螺旋的极稀有组合——<strong>超级认知A型</strong>。螺旋斗代表最纯粹的"自我驱动"，你天生知道自己要什么，不需要外部认可，只需要结果。</p><p>你的大脑像一台高精度导航仪：锁定目标→规划路径→排除障碍→到达终点。这不是执念，这是天赋。你在团队中自然成为方向定义者，而不是方向执行者。</p>';
+    talents = '目标感强 · 主见清晰 · 行动力强 · 方向意识';
+    advantage = '<p>你是十指全斗、两拇指螺旋的极稀有组合——<strong>超级认知A型</strong>。螺旋斗代表很强的"自我驱动"，你可能很早就会表现出目标意识，不需要太多外部认可，更在意事情是否真正推进。</p><p>你的大脑像一台高精度导航仪：锁定目标→规划路径→排除障碍→到达终点。这不是执念，而是值得善用的行为特点。你在团队中容易成为方向定义者，而不是只做方向执行者。</p>';
     learning = '<p><strong>目标倒推式学习</strong>最有效：先定"我要达到什么成果"，再反推学什么、怎么学。<strong>挑战驱动</strong>：无聊的重复会让你失去动力，需要感受到"这是在征服难题"。<strong>自主决策权</strong>：给你制定学习路径的权力，效果会超乎意料。</p>';
-    career = '<p><strong>推荐方向：</strong>创始人/CEO、律师、外科医生、军事指挥、投资决策。这些角色都需要极强的方向感和决断力——你天生具备。</p>';
+    career = '<p><strong>推荐方向：</strong>创始人/CEO、律师、外科医生、军事指挥、投资决策。这些角色都需要极强的方向感和决断力——你可能更容易展现相关潜力。</p>';
     advice = '<p><strong>给家长的建议：</strong>不要试图"管"这个孩子，试着"合作"。他/她需要知道"为什么"才愿意行动。<strong>给选择权 > 下命令</strong>——哪怕是小事，让孩子自己决定。培养自律，而不是他律。</p>';
     source = '斗形纹（螺旋纹）是马家窑彩陶（约公元前3300年）最常见的纹饰——5000年前，先人已将这种"自我旋转、向心聚焦"的纹路视为力量的象征。你大拇指上的螺旋，与5000年前的彩陶同源。';
   } else if (key === 'super_w_b') {
@@ -2287,24 +2287,24 @@ function generateReport(result) {
     learning = '<p><strong>跨领域连接式学习</strong>最适合你：喜欢把不同领域的知识"接起来"看规律。<strong>目标驱动</strong>同样有效（继承超级认知A特质）。<strong>同时给多条线</strong>：你不怕多任务，反而在多线并行中效率更高。</p>';
     career = '<p><strong>推荐方向：</strong>战略咨询顾问、跨国项目总监、创业合伙人/联合创始人、政策制定者、商业谈判专家。这些角色需要同时驾驭宏观战略与微观执行——正是你的舞台。</p>';
     advice = '<p><strong>给家长的建议：</strong>这个孩子在"复杂"中才能发挥最大价值。不要给他/她过于单一的任务，可以适当"出题"——比如"你来想想这个问题可以怎么解决"。培养全局观，鼓励他/她在不同兴趣之间建立连接。</p>';
-    source = '皮纹遗传度 h²高达0.94（《指纹的奥秘》刘持平，双胞胎研究数据）——你整合多元的天赋，有超过95%来自基因，胎儿第13-19周与大脑神经系统同期形成，终生不变。';
+    source = '皮纹研究提示指纹纹路与个体差异有关，可作为长期观察线索之一。AIPIWEN不把它当作固定结论，而是用于帮助家庭开启更具体的沟通。';
   } else if (key === 'super_w_c') {
     talents = '领袖气质 · 极致审美 · 完美追求 · 卓越标准';
     advantage = '<p><strong>超级认知C型</strong>：十指全斗 + 双拇指孔雀眼，是极其罕见的"领袖力"与"完美力"的组合。你有超级认知A型全部的主见与目标感，同时内置一套极高的标准系统——你的眼睛里容不下"差不多"。</p><p>孔雀眼代表对细节、美感、精度的天然敏感。你看到别人看不出问题的地方，你觉得"还差一点"。这不是挑剔，这是你对卓越的本能追求。</p>';
     learning = '<p><strong>精深式学习</strong>最适合你：宁愿把一件事做到极致，也不愿意浅尝多件。<strong>高标准驱动</strong>：给自己设定"比上次更好"的目标，才能激发真正的动力。<strong>审美和品质感</strong>很重要——学习环境、工具、材料的质量会影响你的状态。</p>';
-    career = '<p><strong>推荐方向：</strong>建筑师、高端产品设计师、医疗精密领域（心外科、显微外科）、艺术总监、奢侈品牌策略、顶级律师。这些角色都要求"近乎完美"的标准——你与生俱来。</p>';
+    career = '<p><strong>推荐方向：</strong>建筑师、高端产品设计师、医疗精密领域（心外科、显微外科）、艺术总监、奢侈品牌策略、顶级律师。这些角色都要求"近乎完美"的标准——你可能更容易进入状态。</p>';
     advice = '<p><strong>给家长的建议：</strong>保护这个孩子对"好"的敏感，但注意引导他/她区分"追求卓越"和"无法接受不完美"的边界。允许过程中的不完美，同时肯定他/她对高标准的坚持。<strong>给他/她做"真正有意义的事"的机会</strong>，他/她不甘平庸。</p>';
-    source = '孔雀眼（双箕斗）是指纹里的"完美几何"——在刘持平《指纹的奥秘》中，它的嵴线计数方式最复杂，计两个三叉点。这种追求极致的天赋，写在你大拇指的螺旋中，终生不变。';
+    source = '孔雀眼（双箕斗）是指纹里的"完美几何"——在刘持平《指纹的奥秘》中，它的嵴线计数方式最复杂，计两个三叉点。这种追求极致的行为特点，可作为家庭长期观察线索。';
   } else if (key === 'w' || key === 'w_mild') {
     talents = '好奇心强 · 主见权威 · 探索欲旺 · 自我驱动';
     advantage = '<p>斗形纹居多意味着你有<strong>强烈的好奇心和主见</strong>。"为什么"是你的口头禅，你不满足于表面答案，总想探究事物的本质。在讨论中，你不是为了赢，而是为了接近真理。</p>';
     learning = '<p><strong>探究式学习</strong>最适合你。与其告诉你答案，不如引导你自己发现答案。<strong>深度阅读</strong>：你适合读有深度的书和文章，而不是碎片化信息。<strong>辩论和讨论</strong>：通过思想碰撞来深化理解。</p>';
-    career = '<p><strong>推荐方向：</strong>研究员、工程师、教授/学者、分析师、科学记者、战略顾问。这些角色需要深度思考和持续探索，与天赋完美匹配。</p>';
+    career = '<p><strong>推荐方向：</strong>研究员、工程师、教授/学者、分析师、科学记者、战略顾问。这些角色需要深度思考和持续探索，可能与这些特质高度匹配。</p>';
     advice = '<p><strong>给家长的建议：</strong>认知型的孩子需要<strong>被认真对待</strong>。当他/她问"为什么"时，不要敷衍。尊重他/她的观点，即使与你不同。辩论是好事，说明孩子在思考。</p>';
     source = '斗形纹在东亚人中比例约45-48%（《指纹的奥秘》），在中国人手中是最常见的纹型之一——5000年前马家窑彩陶上，先人已将螺旋纹视为探索宇宙的符号。你对世界的好奇心，有5000年的渊源。';
   } else if (key === 'super_l') {
     talents = '共情能力强 · 大公无私 · 奉献精神 · 团队核心';
-    advantage = '<p>10个手指都是箕形纹，意味着你有<strong>天然的共情能力和开放心态</strong>。你能敏锐感知他人的情绪和需求，像海绵一样吸收环境和榜样的影响。你是天生的团队润滑剂。</p>';
+    advantage = '<p>10个手指都是箕形纹，提示你可能有<strong>较强的共情能力和开放心态</strong>。你能敏锐感知他人的情绪和需求，像海绵一样吸收环境和榜样的影响。你在团队中常常能起到连接和缓冲作用。</p>';
     learning = '<p><strong>榜样学习法</strong>最适合你。找到一个优秀的榜样（老师、学长、偶像），观察并模仿他/她的方法和态度。<strong>环境很重要</strong>：在积极向上的群体中，你会自然地吸收好的习惯。</p>';
     career = '<p><strong>推荐方向：</strong>教师、心理咨询师、人力资源、客户成功经理、护士、社工。这些角色需要强大的共情能力和服务意识，正是你的核心优势。</p>';
     advice = '<p><strong>给家长的建议：</strong>模仿型的孩子是"环境的产物"。<strong>身教 > 言传</strong>——你想让他/她成为什么样的人，自己先做到。创造温暖、稳定的家庭氛围，给孩子明确的正面榜样。</p>';
@@ -2313,72 +2313,72 @@ function generateReport(result) {
     talents = '善于模仿 · 适应力强 · 团队配合 · 观察入微';
     advantage = '<p>正箕纹居多意味着你有<strong>出色的模仿能力和团队适应性</strong>。你能快速学习和复制优秀的方法，也能敏锐感知团队的节奏和氛围。</p><p>模仿型的你不是"没有创造力"——你的创造力体现在"改进"上：吸收别人的优点后，加入自己的优化，做出更好的版本。</p>';
     learning = '<p><strong>示范+练习</strong>最适合你。先看完整的示范（视频、演示），然后自己跟着做。<strong>找好榜样</strong>：身边有一个优秀的人参考，你的进步速度会惊人。</p>';
-    career = '<p><strong>推荐方向：</strong>运营经理、客户经理、培训师、行政主管、医疗技师、客服主管。这些角色需要快速学习能力、执行力和服务意识，与天赋完美匹配。</p>';
+    career = '<p><strong>推荐方向：</strong>运营经理、客户经理、培训师、行政主管、医疗技师、客服主管。这些角色需要快速学习能力、执行力和服务意识，可能与这些特质高度匹配。</p>';
     advice = '<p><strong>给家长的建议：</strong>模仿型的孩子高度依赖环境。<strong>近朱者赤</strong>——确保他/她身边的人是积极的榜样。表扬具体的行为，而不是笼统的夸奖。给孩子明确的流程和步骤，他/她会照做得很好。</p>';
     source = '汉代竹简契约已使用指印作为身份凭证——刘持平《指纹无谎言》记录了中国人最早将指纹用于"信用传递"的历史。箕纹的开放与信任，是中华契约文化的生物印记。';
   } else if (key === 'x') {
     talents = '踏实肯干 · 海绵学习 · 简单纯粹 · 执行力强';
     advantage = '<p>弧形纹为主意味着你<strong>踏实、专注、不复杂</strong>。你不玩心眼，不绕弯子，说一是一，二是二。在这个充满不确定性的世界里，你的"稳"是最稀缺的品质。</p><p>开放型的你像一块干净的海绵——给你什么你就吸收什么。早期教育和环境对你的影响特别深。</p>';
     learning = '<p><strong>结构化学习</strong>最适合你。清晰的步骤、明确的指令、可量化的目标——这些让你最有安全感。<strong>重复练习</strong>对你很有效，因为你能通过反复来巩固掌握。</p>';
-    career = '<p><strong>推荐方向：</strong>会计师、质检工程师、运营专员、图书馆员、行政主管、技术文档工程师。这些角色需要细致、耐心和执行力，与天赋完美匹配。</p>';
+    career = '<p><strong>推荐方向：</strong>会计师、质检工程师、运营专员、图书馆员、行政主管、技术文档工程师。这些角色需要细致、耐心和执行力，可能与这些特质高度匹配。</p>';
     advice = '<p><strong>给家长的建议：</strong>开放型的孩子需要<strong>稳定的环境</strong>和<strong>明确的规则</strong>。不要突然改变计划或规则。早期建立良好的生活和学习习惯至关重要，因为这些习惯会伴随终身。</p>';
     source = '弧形纹（弓形纹）无三叉点、嵴线计数为零——在《指纹的奥秘》中，它是最"纯净"的形态。马家窑彩陶上就有弧形纹饰，古人称之为"弧纹"，象征稳定与大地。你的踏实，有5000年的根基。';
   } else if (key === 'wc') {
     talents = '双核思维 · 多维整合 · 灵活切换 · 跨界高手';
-    advantage = '<p>两个大拇指都是双斗纹型，赋予你<strong>双核处理器式的整合能力</strong>。你的大脑能同时运行两套逻辑，在不同视角间灵活切换，将看似矛盾的信息整合为统一方案。</p><p>整合型的你天生是"桥梁建造者"：能理解多方立场、找到共识，将不同资源和观点整合为有价值的结果。在团队中你是最擅长"把各方拉到一起"的人。</p>';
+    advantage = '<p>两个大拇指都是双斗纹型，提示你可能具备<strong>双核处理器式的整合能力</strong>。你的大脑能同时运行两套逻辑，在不同视角间灵活切换，将看似矛盾的信息整合为统一方案。</p><p>整合型的你常常像"桥梁建造者"：能理解多方立场、找到共识，将不同资源和观点整合为有价值的结果。在团队中你可能很擅长"把各方拉到一起"。</p>';
     learning = '<p><strong>跨领域连接式学习</strong>最适合你：把不同领域的知识"接起来"发现规律。<strong>多线并行</strong>：你不怕同时推进多个任务，反而在多线中效率更高。学习时主动问"这和我已知的哪些知识有关联？"</p>';
     career = '<p><strong>推荐方向：</strong>战略咨询顾问、跨职能项目经理、产品经理、商业谈判专家、自媒体创作者。这些角色需要整合多方资源、驾驭复杂局面，正是你的舞台。</p>';
     advice = '<p><strong>给家长的建议：</strong>整合型孩子在"复杂"中才能发挥最大价值。不要给过于单一的任务，适当出题——比如"这个问题可以从哪两个角度解决？"培养全局观，鼓励在不同兴趣之间建立连接。</p>';
-    source = '双箕斗（孔雀眼）在分类上是最特殊的斗形纹，兼具斗与箕的特征——《指纹的奥秘》称之为"伴侣性"纹型，两种力量并存。这种整合天赋，染色体与指纹的关系是数学恒定值，终生不变。';
+    source = '双箕斗（孔雀眼）在分类上是最特殊的斗形纹，兼具斗与箕的特征——《指纹的奥秘》称之为"伴侣性"纹型，两种力量并存。这里的整合特点，仅作为观察和沟通参考。';
   } else if (key === 'perfect_w') {
     talents = '极致标准 · 审美敏感 · 追求完美 · 卓越品质';
     advantage = '<p>两个大拇指都是孔雀眼纹型，代表你有<strong>天然的完美主义倾向</strong>。你对细节、质量、美感的敏感度远超常人——眼睛里存在内置的"质量检测仪"，能看到别人注意不到的问题和美。</p><p>这不是挑剔，而是你对卓越的本能追求。你做出的事情往往比别人更精致、更有品质感，因为你无法接受"差不多"。</p>';
     learning = '<p><strong>精深式学习</strong>最适合你：宁愿把一件事做到极致，也不愿浅尝多件。<strong>高标准驱动</strong>：给自己设定"比上次更好"的目标，才能激发真正的动力。学习环境、工具、材料的质量会直接影响你的状态。</p>';
-    career = '<p><strong>推荐方向：</strong>产品/UI/建筑设计师、医疗精密领域、质检总监、艺术总监、高端品牌策划、精英律师。这些角色都要求近乎完美的标准，与你的天赋高度匹配。</p>';
+    career = '<p><strong>推荐方向：</strong>产品/UI/建筑设计师、医疗精密领域、质检总监、艺术总监、高端品牌策划、精英律师。这些角色都要求近乎完美的标准，可能与你的特质高度匹配。</p>';
     advice = '<p><strong>给家长的建议：</strong>保护这个孩子对"好"的敏感，但注意引导区分"追求卓越"和"因不完美而焦虑"的边界。允许过程中的不完美，同时肯定对高标准的坚持。<strong>给他/她做真正有意义的事的机会</strong>，他/她不甘平庸。</p>';
-    source = '孔雀眼是指纹中的"精工之作"——两套嵴线系统并存，形成类似孔雀尾羽的精密图案。马家窑彩陶工匠以极致精度在陶器上复现螺旋纹，正是这种"完美驱动"天赋的5000年前佐证。';
+    source = '孔雀眼是指纹中的"精工之作"——两套嵴线系统并存，形成类似孔雀尾羽的精密图案。马家窑彩陶工匠以极致精度在陶器上复现螺旋纹，可作为理解"高标准驱动"的文化参照。';
   } else if (key === 'combo_w') {
-    talents = '多维认知 · 双重天赋叠加 · 主见 + 兼容并蓄 · 跨类型高手';
-    advantage = '<p>你的两个大拇指属于<strong>不同的斗形纹子类型</strong>——这是"双重认知天赋叠加"的组合。斗形纹本身代表强烈的主见和目标感，而两拇指不同的子类型又赋予你跨维度的视角。</p><p>不同子类型各有侧重：螺旋斗偏"自我主导"，双斗偏"整合多元"，孔雀眼偏"追求完美"。两种特质同时在线，让你既有清晰的核心方向，又具备多维度思考的灵活性。</p>';
+    talents = '多维认知 · 双重特质叠加 · 主见 + 兼容并蓄 · 跨类型高手';
+    advantage = '<p>你的两个大拇指属于<strong>不同的斗形纹子类型</strong>——这是"双重认知特质叠加"的组合。斗形纹本身代表强烈的主见和目标感，而两拇指不同的子类型又赋予你跨维度的视角。</p><p>不同子类型各有侧重：螺旋斗偏"自我主导"，双斗偏"整合多元"，孔雀眼偏"追求完美"。两种特质同时在线，让你既有清晰的核心方向，又具备多维度思考的灵活性。</p>';
     learning = '<p><strong>目标驱动 + 多维连接</strong>是你的最佳模式：先设定清晰目标（来自认知型特质），再在不同知识间建立跨领域联系（来自整合/完美型特质）。<strong>深度与广度并举</strong>——不只是深挖一个方向，而是在多个方向上找到规律和关联。</p>';
-    career = '<p><strong>推荐方向：</strong>战略咨询师、产品负责人、企业创始人、跨职能团队领导、研究型管理者。你的多维天赋让你在需要"既有主见又能整合"的角色中大放异彩。</p>';
+    career = '<p><strong>推荐方向：</strong>战略咨询师、产品负责人、企业创始人、跨职能团队领导、研究型管理者。你的多维特质可能让你在需要"既有主见又能整合"的角色中更容易发挥。</p>';
     advice = '<p><strong>给家长的建议：</strong>这个孩子有两种认知特质叠加，需要多样化的挑战来激活潜能。<strong>同时给深度和广度的学习机会</strong>，观察他/她在哪个维度上展现更大热情，然后重点培养。</p>';
-    source = '两手拇指不同的斗形纹，意味着大脑左右两侧的神经网络发展各有侧重——《指纹的奥秘》指出皮纹遗传度 h²高达0.94，这种"双重认知特质"是真实的先天禀赋，不是培养出来的，也不会消失。';
+    source = '两手拇指不同的斗形纹，提示不同侧重的观察线索可以并存——这种"双重认知特质"更适合通过长期行为观察去确认，而不是一次性下结论。';
   } else if (key === 'combo_w_l') {
     talents = '认知与模仿双驱动 · 灵活善变 · 主见 + 共情 · 多面高手';
-    advantage = '<p>一斗一箕的大拇指组合，赋予你<strong>认知力与模仿力的双重天赋</strong>。你既有斗形纹的主见和目标感，又有箕形纹的适应力和共情能力。</p><p>这让你成为天然的"桥梁人物"：能独立思考、坚持主见，同时也善于感知他人、适应环境。在团队中你既可以定方向，也可以凝聚人心——两种能力都是真实存在的。</p>';
+    advantage = '<p>一斗一箕的大拇指组合，赋予你<strong>认知力与模仿力的双重行为特点</strong>。你既有斗形纹的主见和目标感，又有箕形纹的适应力和共情能力。</p><p>这让你成为天然的"桥梁人物"：能独立思考、坚持主见，同时也善于感知他人、适应环境。在团队中你既可以定方向，也可以凝聚人心——两种能力都是真实存在的。</p>';
     learning = '<p><strong>主动探索 + 榜样学习</strong>交替使用效果最佳。发挥认知型特质去独立探究，再发挥模仿型特质跟随优秀榜样吸收方法。<strong>找到一位好导师</strong>，在引领下发挥你的主见，事半功倍。</p>';
     career = '<p><strong>推荐方向：</strong>产品经理、咨询顾问、团队领导、自媒体创作者、活动策划、创业联合创始人。整合多方资源、适应多变场景——正是你的舞台。</p>';
     advice = '<p><strong>给家长的建议：</strong>这个孩子需要"尊重 + 引导"并重。他/她有自己的想法（斗纹特质），同时高度依赖榜样（箕纹特质）。<strong>以身作则 + 尊重孩子意见</strong>，双管齐下效果最好。</p>';
-    source = '斗与箕是指纹最主要的两大家族——《指纹无谎言》刘持平称之为"大星"与"规则卫星"，有内在的引力关系。一斗一箕的你，两种力量并存，这是先天写定的，不是矛盾，是完整。';
+    source = '斗与箕是指纹最主要的两大家族——《指纹无谎言》刘持平称之为"大星"与"规则卫星"，有内在的引力关系。一斗一箕提示两种力量并存，不是矛盾，而是可被观察和理解的完整性。';
   } else if (key === 'combo_open') {
-    talents = '主导天赋 · 海绵吸收力 · 踏实肯干 · 主见执行兼备';
-    advantage = '<p>你的主导纹型（大拇指）决定了核心天赋方向，而弧形纹出现在食指（或其他手指）上，赋予了你<strong>额外的开放性和落地执行力</strong>。</p><p>弧形纹代表"海绵特质"——高度开放、踏实肯干、乐于吸收。与主导天赋结合，让你既有方向感和主见，又能认真落地执行。这是"想得到 + 做得到"的组合，在实战中极为稀缺。</p>';
-    learning = '<p><strong>先思考后执行</strong>是你的最佳节奏：先发挥主导天赋设定方向，再发挥开放型特质认真落地。<strong>结构化练习</strong>对你很有效（来自弧形纹特质），同时要设定有意义的目标激发主导天赋。</p>';
+    talents = '主导特质 · 海绵吸收力 · 踏实肯干 · 主见执行兼备';
+    advantage = '<p>你的主导纹型（大拇指）提示了核心观察点方向，而弧形纹出现在食指（或其他手指）上，提示你可能有<strong>额外的开放性和落地执行力</strong>。</p><p>弧形纹代表"海绵特质"——高度开放、踏实肯干、乐于吸收。与主导特质结合，让你既有方向感和主见，又能认真落地执行。这是"想得到 + 做得到"的组合，在实战中极为稀缺。</p>';
+    learning = '<p><strong>先思考后执行</strong>是你的最佳节奏：先发挥主导特质设定方向，再发挥开放型特质认真落地。<strong>结构化练习</strong>对你很有效（来自弧形纹特质），同时要设定有意义的目标激发主导特质。</p>';
     career = '<p><strong>推荐方向：</strong>技术负责人、项目执行经理、独立开发者、工程师、医疗专业人才、法务专员。在需要"既有主见又能踏实执行"的角色中你最能发光。</p>';
     advice = '<p><strong>给家长的建议：</strong>这个孩子既有方向感，又愿意踏实去做——是难得的品质组合。<strong>给清晰的目标 + 稳定的执行环境</strong>，不要频繁打断他/她的专注状态。培养把"想法"转化为"行动"的能力。</p>';
-    source = '弧形纹无三叉点、结构最简单——《指纹的奥秘》形容它是"稳定的基石"。你的弧形纹特质与主导天赋的组合，是先天就写好的"理想 + 落地"配方，胎儿第13-19周形成，终生不变。';
+    source = '弧形纹无三叉点、结构最简单——《指纹的奥秘》形容它是"稳定的基石"。弧形纹特质与主导特质的组合，可作为理解"理想 + 落地"节奏的观察参考。';
   } else {
     talents = '多元特质 · 综合发展 · 灵活应变 · 平衡发展';
-    advantage = '<p>你的指纹纹型分布非常均衡，这意味着你拥有<strong>多元化的天赋组合</strong>。你不是单一类型的典型代表，而是多种特质的融合体，在不同场合展现不同优势。</p>';
+    advantage = '<p>你的指纹纹型分布非常均衡，这意味着你拥有<strong>多元化的行为特点组合</strong>。你不是单一类型的典型代表，而是多种特质的融合体，在不同场合展现不同优势。</p>';
     learning = '<p><strong>混合式学习</strong>最适合你。根据不同的内容选择不同的学习方法——理论性的用阅读和思考，实操性的用动手和练习。关注大拇指纹型作为核心性格方向。</p>';
     career = '<p><strong>推荐方向：</strong>项目经理、中小企业经营者、自由职业者等需要综合能力的角色。建议结合大拇指和食指纹型做更精细的职业定位。</p>';
-    advice = '<p><strong>给家长的建议：</strong>组合型的孩子需要<strong>全面的培养</strong>。不要只关注某一方面的发展，而是提供多样化的体验和机会。观察孩子在哪些方面表现出最大的热情和天赋，然后重点支持那些方向。</p>';
-    source = '指纹以100个特征点排列组合，可形成超过10¹⁰种结果——50亿人里找不到重复（《指纹无谎言》）。你的纹型组合独一无二，你的天赋表达方式也因人而异，这正是TRC体系的核心：没有"更好"的类型，只有"更准确"的了解。';
+    advice = '<p><strong>给家长的建议：</strong>组合型的孩子需要<strong>全面的培养</strong>。不要只关注某一方面的发展，而是提供多样化的体验和机会。观察孩子在哪些方面表现出最大的热情和特质，然后重点支持那些方向。</p>';
+    source = '指纹以100个特征点排列组合，可形成超过10¹⁰种结果——50亿人里找不到重复（《指纹无谎言》）。你的纹型组合独一无二，你的行为表达方式也因人而异，这正是TRC体系的核心：没有"更好"的类型，只有"更准确"的了解。';
   }
 
   return `
-<div class="report-section"><h3>核心天赋</h3><div class="advantage-tags">${talents.split('·').map(t=>`<span class="tag tag-primary">${t.trim()}</span>`).join('')}</div></div>
+<div class="report-section"><h3>核心观察点</h3><div class="advantage-tags">${talents.split('·').map(t=>`<span class="tag tag-primary">${t.trim()}</span>`).join('')}</div></div>
 <div class="report-section"><h3>性格优势</h3>${advantage}</div>
 <div class="report-section"><h3>学习风格</h3>${learning}</div>
 <div class="report-section"><h3>发展方向</h3>${career}</div>
 <div class="report-section"><h3>给家长的建议</h3>${advice}</div>
 <div class="report-section" style="background:rgba(var(--accent-rgb,99,102,241),0.04);border-radius:8px;padding:12px 16px;margin-top:4px;border-bottom:none;">
-  <h3 style="font-size:13px;color:var(--ink-40);margin-bottom:8px;">🔬 指纹溯源 · 为什么这是天赋</h3>
+  <h3 style="font-size:13px;color:var(--ink-40);margin-bottom:8px;">🔬 指纹溯源 · 为什么这些线索值得观察</h3>
   <p style="font-size:12px;color:var(--ink-30);line-height:1.7;margin:0 0 8px;">${source}</p>
-  <p style="font-size:11px;color:var(--ink-20);margin:0;">指纹先天形成（胎儿第13-19周）· 皮纹遗传度 h²高达0.94 · 终生不变<br>——《指纹的奥秘》《指纹无谎言》刘持平 / 《世界指纹史》[德]海因德尔</p>
+  <p style="font-size:11px;color:var(--ink-20);margin:0;">指纹纹路稳定 · 行为观察仅供参考 · 不作为正式评估依据<br>——《指纹的奥秘》《指纹无谎言》刘持平 / 《世界指纹史》[德]海因德尔</p>
 </div>
-<div class="report-section" style="border-bottom:none;"><p style="font-size:11px;color:var(--ink-20);text-align:center;">— 本报告由 AI 天赋底色速测生成 —<br>皮纹学仅供参考，不作为正式评估依据<br>${new Date().toLocaleString('zh-CN')}</p></div>
+<div class="report-section" style="border-bottom:none;"><p style="font-size:11px;color:var(--ink-20);text-align:center;">— 本报告由 AI 孩子行为观察体验生成 —<br>皮纹学仅供参考，不作为正式评估依据<br>${new Date().toLocaleString('zh-CN')}</p></div>
 `;
 }
 
@@ -2393,7 +2393,7 @@ function showResult() {
   loadingEl.classList.add('active');
   const container = document.getElementById('analysis-loading-steps');
   container.innerHTML = '';
-  const STEPS = ['读取手指纹路数据…', '识别主纹类型（斗/箕/弧）…', '计算纹路特征组合…', '生成个性化天赋报告…'];
+  const STEPS = ['读取手指纹路数据…', '识别主纹类型（斗/箕/弧）…', '计算纹路特征组合…', '生成个性化观察报告…'];
   let i = 0;
   function addStep() {
     if (i >= STEPS.length) {
@@ -2403,7 +2403,7 @@ function showResult() {
         document.getElementById('resultTagline').textContent = result.tagline;
         const hintEl = document.getElementById('upgradeHint');
         if (result.upgradeHint) {
-          hintEl.textContent = '⚠️ ' + result.upgradeHint + '，上传总表精确分型 →';
+          hintEl.textContent = '⚠️ ' + result.upgradeHint + '，上传总表辅助复核 →';
           hintEl.style.display = 'block';
         } else {
           hintEl.style.display = 'none';
@@ -2506,19 +2506,19 @@ async function generatePoster() {
 
   // humanName = 海报主展示名（人话版）；hook = 钩子标题；benefit = 收益一行
   const PCFG = {
-    rl:        { humanName:'反直觉思考型孩子', hook:'越说越不听？\n这不是叛逆，是天生的逆向思维',          benefit:'了解他反向思考的优势，用对方式才能真正影响他',    color:'#C2692A' },
-    super_w_a: { humanName:'天生领袖型孩子',   hook:'十个斗形指纹 万里挑一\n这种孩子天生就是做决策的人',  benefit:'发现他的领导力天赋，避免用管理代替引导',           color:'#D4891A' },
-    super_w_b: { humanName:'多维整合领袖型孩子',hook:'同时处理多件事\n却比别人更清楚目标在哪里',           benefit:'理解他的多线思维，让他真正发挥整合天赋',           color:'#D4891A' },
-    super_w_c: { humanName:'完美标准领袖型孩子',hook:'追求完美不是挑剔\n是他天生设定的认知标准',          benefit:'读懂完美主义背后的驱动力，别把优势变成负担',        color:'#D4891A' },
+    rl:        { humanName:'反直觉思考型孩子', hook:'越说越不听？\n这可能是逆向思维在表达',          benefit:'了解他反向思考的优势，用对方式才能真正影响他',    color:'#C2692A' },
+    super_w_a: { humanName:'目标感强型孩子',   hook:'十个斗形指纹 万里挑一\n这种孩子常常很有主见',  benefit:'发现他的领导力表现，避免用管理代替引导',           color:'#D4891A' },
+    super_w_b: { humanName:'多维整合领袖型孩子',hook:'同时处理多件事\n却比别人更清楚目标在哪里',           benefit:'理解他的多线思维，让他真正发挥整合行为特点',           color:'#D4891A' },
+    super_w_c: { humanName:'完美标准型孩子',hook:'追求完美不是挑剔\n可能是高标准在表达',          benefit:'读懂完美主义背后的驱动力，别把优势变成负担',        color:'#D4891A' },
     w:         { humanName:'独立主见型孩子',   hook:'孩子总有自己的想法？\n说明他的大脑结构不普通',        benefit:'了解他的思维方式，帮他找到真正适合的学习路径',     color:'#C2692A' },
-    wc:        { humanName:'全局整合型孩子',   hook:'看似什么都想做\n其实他是天生的统筹者',                benefit:'找到他整合信息的天赋，别再逼他只专注一件事',        color:'#C2692A' },
-    perfect_w: { humanName:'高标准完美型孩子', hook:'做事反复修改、永远不满意\n这是天赋，不是缺点',        benefit:'理解完美主义背后的驱动力，不催促不否定才能激发他',  color:'#C2692A' },
-    super_l:   { humanName:'无限接纳型孩子',   hook:'十个正箕纹\n这种孩子天生有无限接纳力',               benefit:'善用他的包容与学习力，引导他找到核心方向',          color:'#C2692A' },
-    l:         { humanName:'超强学习复制型孩子',hook:'学什么像什么\n这种孩子的天赋最被低估',               benefit:'知道他最适合的学习方式，帮他找到值得模仿的榜样',    color:'#C2692A' },
-    x:         { humanName:'踏实执行型孩子',   hook:'不爱出风头、踏实专注\n这种孩子将来最稳',             benefit:'了解他的执行力天赋，别再逼他"表现自己"',           color:'#C2692A' },
-    combo_w:   { humanName:'双重天赋型孩子',   hook:'两种天赋同时存在\n多元潜能等待被激活',               benefit:'找到他真正的优势组合，帮他建立自信',               color:'#C2692A' },
-    combo_w_l: { humanName:'主见学习型孩子',   hook:'主见与学习力并存\n稀有的双重天赋组合',               benefit:'用对方向，他既能独立思考也能快速吸收',              color:'#C2692A' },
-    combo_open:{ humanName:'开放加持型孩子',   hook:'既有主见 又能开放吸收\n这种组合天生适合成长',         benefit:'找到他独特的学习节奏，比单一类型更灵活',           color:'#C2692A' },
+    wc:        { humanName:'全局整合型孩子',   hook:'看似什么都想做\n其实可能是在统筹信息',                benefit:'找到他整合信息的特点，别再逼他只专注一件事',        color:'#C2692A' },
+    perfect_w: { humanName:'高标准完美型孩子', hook:'做事反复修改、永远不满意\n这是行为特点，不是缺点',        benefit:'理解完美主义背后的驱动力，不催促不否定才能激发他',  color:'#C2692A' },
+    super_l:   { humanName:'高度接纳型孩子',   hook:'十个正箕纹\n这种孩子常有很强接纳力',               benefit:'善用他的包容与学习力，引导他找到核心方向',          color:'#C2692A' },
+    l:         { humanName:'学习复制型孩子',hook:'学什么像什么\n这种孩子的学习特点常被低估',               benefit:'知道他最适合的学习方式，帮他找到值得模仿的榜样',    color:'#C2692A' },
+    x:         { humanName:'踏实执行型孩子',   hook:'不爱出风头、踏实专注\n这种孩子需要被看见',             benefit:'了解他的执行力表现，别再逼他"表现自己"',           color:'#C2692A' },
+    combo_w:   { humanName:'双重特质型孩子',   hook:'两种特质同时存在\n多元潜能等待被激活',               benefit:'找到他真正的优势组合，帮他建立自信',               color:'#C2692A' },
+    combo_w_l: { humanName:'主见学习型孩子',   hook:'主见与学习力并存\n值得长期观察的双重特质组合',               benefit:'用对方向，他既能独立思考也能快速吸收',              color:'#C2692A' },
+    combo_open:{ humanName:'开放加持型孩子',   hook:'既有主见 又能开放吸收\n这种组合适合持续成长',         benefit:'找到他独特的学习节奏，比单一类型更灵活',           color:'#C2692A' },
   };
   const cfg = PCFG[result.key] || PCFG['w'];
 
@@ -2534,14 +2534,14 @@ async function generatePoster() {
     w:'别人放弃的地方，\n正是他真正开始的地方。',
     wc:'别人看到的是碎片，\n他看到的是整体。',
     perfect_w:'他眼里没有\u201c够了\u201d，\n只有\u201c还可以更好\u201d。',
-    l:'他是天生的学习者——\n给他榜样，他会超越榜样。',
-    x:'他从不设限，\n所以他的上限，没有人能预测。',
+    l:'他很会学习——\n给他榜样，他会认真吸收。',
+    x:'他从不设限，\n所以不要过早定义他。',
     rl:'他最爱问的问题是：\n\u201c为什么不能反过来？\u201d',
     super_w_a:'有些孩子，\n出生就带着方向感。',
     super_w_b:'左脑逻辑，右脑创意，\n他同时拥有。',
     super_w_c:'完美不是他的目标，\n那是他的起点。',
-    super_l:'他把给予当成天赋，\n而不是负担。',
-    combo_open:'思考越深，吸收越广，\n两种天赋，同向生长。',
+    super_l:'他把给予当成稳定特质，\n而不是负担。',
+    combo_open:'思考越深，吸收越广，\n两种特质，同向生长。',
     combo_w_l:'能独行，也能师从最强，\n两种能力同时开花。',
     combo_w:'深得进去，也出得来，\n这种人，很稀缺。',
   };
@@ -2698,17 +2698,17 @@ function showToast(msg, duration) {
   el._t = setTimeout(() => el.classList.remove('show'), duration || 2800);
 }
 
-// ── 联系点击：先复制天赋类型到剪贴板，再跳转 ──────────────────────
+// ── 联系点击：先复制行为特点类型到剪贴板，再跳转 ──────────────────────
 const WECOM_KFID = 'kfc6ce446e6e057c683';
 function wecomeClick(e, href) {
   if (e) e.preventDefault();
   const r = window._currentResult || {};
   if (window.GT) window.GT.track('wecom_click', { type: r.key || '' });
-  const msg = `您好！我刚完成AIPIWEN天赋底色测评，我的天赋类型是【${r.mainType || ''}】（${r.tagline || ''}），想了解孩子的成长方案。`;
+  const msg = `您好！我刚完成AIPIWEN行为观察体验，我的行为特点类型是【${r.mainType || ''}】（${r.tagline || ''}），想了解孩子的成长方案。`;
   try {
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(msg).then(() => {
-        showToast('✓ 已复制天赋结果，可直接粘贴给天赋指导师');
+        showToast('✓ 已复制观察结果，可直接粘贴给成长沟通顾问');
       }).catch(() => {});
     }
   } catch (e) {}
@@ -2765,7 +2765,7 @@ if (window.GT) GT.track('page_open');
 })();
 </script>
 <script>
-/* ══════ 测评工具箱 JS ══════ */
+/* ══════ 观察工具箱 JS ══════ */
 function openTool(id){
   if(id==='fingerprint'){
     var p=document.getElementById('panel-fingerprint');if(!p)return;
@@ -2834,7 +2834,7 @@ function showVarkResult(){document.getElementById('varkQuiz').style.display='non
   if(vark&&vark.scores){var total=(vark.scores.V||0)+(vark.scores.A||0)+(vark.scores.R||0)+(vark.scores.K||0)||1;var labels={V:'视觉型',A:'听觉型',R:'读写型',K:'动手型'};var top=Object.keys(labels).sort(function(a,b){return(vark.scores[b]||0)-(vark.scores[a]||0)})[0];entries.push({date:vark.date||'',tag:'学习',title:'偏向 '+labels[top],body:'当前学习输入线索中，'+labels[top]+'约占 '+Math.round((vark.scores[top]||0)/total*100)+'%。'})}
 
   var fp=readJSON('aipiwen_fp_result',null);
-  if(fp&&fp.mainType){entries.push({date:fp.date||'',tag:'天赋',title:fp.mainType,body:fp.tagline||'已完成一次天赋底色速测。'})}
+  if(fp&&fp.mainType){entries.push({date:fp.date||'',tag:'观察',title:fp.mainType,body:fp.tagline||'已完成一次孩子行为观察体验。'})}
 
   if(!entries.length){document.getElementById('historyEmpty').style.display='';return}
   document.getElementById('historyEmpty').style.display='none';

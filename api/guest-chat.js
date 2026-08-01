@@ -68,6 +68,36 @@ async function handleLogSession(req, res) {
 // TRC类型参考框架（仅生成一次，复用）
 const TRC_REFERENCE = buildTypeReferenceForPrompt();
 
+const BRAND_LANGUAGE_GUARDRAIL = `
+【AIPIWEN品牌与证据边界（最高优先级）】
+1. 面向用户统一使用“孩子行为观察”“成长探索”“已有资料辅助梳理”“人工沟通参考”等表达。
+2. 历史知识、模板或兼容字段中的旧产品标签、速测/图谱定位、固定类型结论，只用于内部兼容，不得作为产品承诺、结论标题或面向用户的主表达原样输出。
+3. 不得声称皮纹、问答或单次材料能够决定、证明或预测孩子的性格、能力、学业、职业或未来发展。
+4. 所有内容必须说明依据与不确定性；材料不足时明确缺少什么，并建议家长持续观察或与人工顾问沟通。
+5. 不提供诊断，不替代医学、心理、教育等专业评估，也不把观察线索写成确定性结论。
+`;
+
+function alignRuntimeBrandLanguage(value) {
+  return String(value || '')
+    .replace(/天赋底色速测|天赋速测/g, '孩子行为观察体验')
+    .replace(/天赋检测/g, '孩子行为观察')
+    .replace(/天赋图谱/g, '成长观察图谱')
+    .replace(/专业解读/g, '人工辅助梳理')
+    .replace(/皮纹测评报告/g, '已有皮纹报告')
+    .replace(/测评报告/g, '已有报告')
+    .replace(/测评/g, '观察')
+    .replace(/天赋先天写定、终生不变/g, '类型标签仅作观察参考，不作为固定结论')
+    .replace(/从他还在妈妈肚子里的时候就已经写好了/g, '仍需结合长期生活场景验证')
+    .replace(/写在指纹里的/g, '从当前材料中观察到的')
+    .replace(/不会因年龄增长而消失|终生不变/g, '可能随成长与环境变化')
+    .replace(/指纹上没有谎言/g, '单一材料不能替代持续观察')
+    .replace(/天生学习通道/g, '常用学习方式')
+    .replace(/天赋/g, '特质')
+    .replace(/先天/g, '观察到的')
+    .replace(/天生/g, '常见地')
+    .replace(/精准/g, '具体');
+}
+
 // ── 对话日志：保存每次对话到 Redis，供管理员查看 ──────────────────────────────
 async function logConversation(sessionId, context, userMsg, aiReply, ip) {
   if (!sessionId) return;
@@ -193,7 +223,7 @@ module.exports = async function handler(req, res) {
     imageBase64 = null, imageMimeType = 'image/jpeg',
     subjectAge = null,   // 被测者年龄（数字），用于年龄分层解读
     reportSummary = null, // 第一次vision解读后缓存的报告数据摘要，追问时传入
-    evidenceLevel = null, // behavior_only 表示只有行为描述，没有完整测评报告数据
+    evidenceLevel = null, // behavior_only 表示只有行为描述，没有完整已有报告数据
     refToken = null,     // 邀请裂变 token（被邀请人首次使用时传入，给邀请人积分）
   } = payload;
 
@@ -440,10 +470,10 @@ TRC（Total Ridge Count）指纹脊线总数，反映大脑神经元网络密度
 使用时机：当用户描述"孩子记性差""怎么教都记不住""上课不专注"时，引导用户识别孩子的学习通道，给出换通道的具体建议。
 `;
 
-  // 五大功能区知识（来源：《五大功能区精神功能》专业解读文件）
+  // 五大功能区知识（来源：《五大功能区精神功能》参考文件）
   const WU_DA_GONG_NENG = `
 【五大脑区功能解读框架】
-皮纹测评报告中的五大功能区数值，反映大脑五个核心功能区的先天发育状态。每个数值分三级：高于平均值（强势区）、等于平均值（均衡区）、低于平均值（发展区），以及X值（未激活——潜力存在，尚未被激发，需要合适的环境触发）。
+已有皮纹报告中的五大功能区数值，可作为观察五个功能维度的辅助资料。每个数值分三级：高于平均值（强势区）、等于平均值（均衡区）、低于平均值（发展区），以及X值（未激活——潜力存在，尚未被激发，需要合适的环境触发）。
 
 1. 沟通管理/计划判断
 - 高于平均：天生善于表达、主动沟通、擅长规划与判断方向，在群体中自然承担组织协调角色
@@ -571,7 +601,7 @@ ${WU_DA_GONG_NENG}`;
 
   // hasTRCContext=true → 完整知识库（复访用户/长对话）；false → 精简提示（首次/短对话）
   const behaviorOnlyEvidenceRule = isBehaviorOnly
-    ? `\n【证据边界：仅行为描述】\n用户没有上传任何完整测评报告数据。你只能基于用户描述的行为做理解性推测。\n严格禁止输出：ATD值、TRC数值、学习通道占比、五大功能区数值、具体人格类型判定、具体手指/脑区数据。\n如果用户的行为描述让你联想到某种认知或学习倾向，只能用推测语气表达，例如：这可能和反馈节奏、任务启动方式、掌控感或被看见的需求有关。如需进一步校准，可以试试天赋底色速测或上传已有皮纹报告。\n`
+    ? `\n【证据边界：仅行为描述】\n用户没有上传任何完整已有报告数据。你只能基于用户描述的行为做理解性推测。\n严格禁止输出：ATD值、TRC数值、学习通道占比、五大功能区数值、具体人格类型判定、具体手指/脑区数据。\n如果用户的行为描述让你联想到某种认知或学习倾向，只能用推测语气表达，例如：这可能和反馈节奏、任务启动方式、掌控感或被看见的需求有关。如需进一步校准，可以继续进行孩子行为观察体验或上传已有皮纹报告。\n`
     : '';
   const trcContent = isBehaviorOnly ? behaviorOnlyEvidenceRule : (hasTRCContext ? TRC_SECTION : TRC_HINT);
 
@@ -717,7 +747,7 @@ ${trcContent}
 ${NO_FILLER}`,
 
     // ── 报告解读追问模式（非vision，用户已上传报告后的后续对话）─────────────
-    report: `你是AIPIWEN的指纹天赋报告解读专家。用户已上传TRC指纹测评报告，当前正在追问解读内容。
+    report: `你是AIPIWEN的孩子行为观察与成长探索助手。用户已上传TRC指纹报告，当前正在追问已有资料的辅助梳理内容。
 ${ageContextNote}${reportSummarySection}
 ${reportSingleTemplate
   ? `【解读方向：${reportRequestedType}】\n${reportSingleTemplate}`
@@ -740,7 +770,7 @@ ${NO_FILLER}`,
   };
 
   // 视觉模式：读取图片数据 + AIPIWEN语气规范 + 解读模板（精简版，不带完整知识库）
-  const VISION_SYSTEM = `你是AIPIWEN的TRC指纹天赋报告解读专家。用户上传了一张测评报告图片，并选择了一个解读方向。
+  const VISION_SYSTEM = `你是AIPIWEN的孩子行为观察与成长探索助手。用户上传了一张已有报告图片，并选择了一个辅助梳理方向。
 
 【第一步：读取报告数据】
 从图片中提取：被测者姓名/年龄、TRC类型名称、ATD值、三大学习通道占比、五大功能区各项数值（高/等/低/X值）。
@@ -797,7 +827,12 @@ ${NO_FILLER}`;
     } catch (e) { /* 检索失败不影响主流程 */ }
   }
 
-  const systemPrompt = (isVisionMode ? VISION_SYSTEM : (SYSTEM[context] || SYSTEM.child)) + (isBehaviorOnly ? behaviorOnlyEvidenceRule : '') + kbInjection;
+  const systemPrompt = alignRuntimeBrandLanguage(
+    (isVisionMode ? VISION_SYSTEM : (SYSTEM[context] || SYSTEM.child))
+      + (isBehaviorOnly ? behaviorOnlyEvidenceRule : '')
+      + kbInjection
+      + BRAND_LANGUAGE_GUARDRAIL
+  );
 
   // ── 构建消息结构 ──────────────────────────────────────────────────────────────
   const messages = [{ role: 'system', content: systemPrompt }];
@@ -824,7 +859,7 @@ ${NO_FILLER}`;
     if (content?.trim()) {
       userContent.push({ type: 'text', text: content.trim() });
     } else {
-      userContent.push({ type: 'text', text: '请解读这份测评报告。' });
+      userContent.push({ type: 'text', text: '请基于这份已有材料，整理可继续观察与沟通的线索。' });
     }
     messages.push({ role: 'user', content: userContent });
   } else {
@@ -883,7 +918,7 @@ ${NO_FILLER}`;
     business: '我在思考你说的这些。能再说说这个行为在什么情况下最明显吗？',
   };
   const behaviorOnlyDataLeak = isBehaviorOnly && /(ATD|TRC|学习通道|五大功能区|脑区|R[1-5]|[0-9]{2,}\s*分)/i.test(reply || '');
-  const safeBehaviorReply = '从你描述的行为看，这更适合先当作一个行为信号来理解，而不是直接下结论。它可能和孩子当下的反馈节奏、任务启动方式、掌控感或被看见的需求有关。你可以先观察：这个行为通常发生在什么时候、前面发生了什么、孩子最想避开或最想得到什么。下一步建议先做一个小调整：把指责换成具体描述，比如“我看到你现在很烦，我们先把第一步做完”，再观察 1-2 周。如果想进一步校准，可以试试天赋底色速测或上传已有皮纹报告。';
+  const safeBehaviorReply = '从你描述的行为看，这更适合先当作一个行为信号来理解，而不是直接下结论。它可能和孩子当下的反馈节奏、任务启动方式、掌控感或被看见的需求有关。你可以先观察：这个行为通常发生在什么时候、前面发生了什么、孩子最想避开或最想得到什么。下一步建议先做一个小调整：把指责换成具体描述，比如“我看到你现在很烦，我们先把第一步做完”，再观察 1-2 周。如果想进一步校准，可以继续进行孩子行为观察体验或上传已有皮纹报告。';
   const finalReply = behaviorOnlyDataLeak ? safeBehaviorReply : (reply || FALLBACK[context] || FALLBACK.child);
 
   // 异步记录对话日志，不阻塞返回
@@ -942,9 +977,9 @@ async function handleSynthesize(req, res) {
 
   const TRC_REFERENCE = buildTypeReferenceForPrompt();
 
-  const systemPrompt = `你是AIPIWEN的家庭关系系统分析顾问。你的核心信念：家庭是一个有机系统，每一个人的行为模式，都是对这个系统整体运作方式的回应——没有人是孤立的"问题"，每个人都在用自己的方式维持系统的某种平衡。\n\n分析原则：\n- 用系统视角，找到多个场景之间真正的内在联系（不是简单罗列各场景）\n- 识别这个人在所有关系中重复出现的核心模式（角色、情绪策略、未被满足的需求）\n- 找到改变的"杠杆点"：改变这一处，可以同时影响多段关系、多个问题\n- 语气温暖有力，像真正懂关系的朋友，不评判任何人，让用户感到"被看见"和"有希望"\n\n【天赋认知类型（TRC）参考框架】\n${TRC_REFERENCE}\n\n【重要格式要求】禁止用"收到""好的""当然""明白""我来帮你"等开场白。直接输出结构化分析。`;
+  const systemPrompt = alignRuntimeBrandLanguage(`你是AIPIWEN的家庭关系系统分析顾问。你的核心信念：家庭是一个有机系统，每一个人的行为模式，都是对这个系统整体运作方式的回应——没有人是孤立的"问题"，每个人都在用自己的方式维持系统的某种平衡。\n\n分析原则：\n- 用系统视角，找到多个场景之间真正的内在联系（不是简单罗列各场景）\n- 识别这个人在所有关系中重复出现的核心模式（角色、情绪策略、未被满足的需求）\n- 找到改变的"杠杆点"：改变这一处，可以同时影响多段关系、多个问题\n- 语气温暖有力，像真正懂关系的朋友，不评判任何人，让用户感到"被看见"和"有希望"\n\n【行为观察类型（TRC）参考框架】\n${TRC_REFERENCE}\n\n【重要格式要求】禁止用"收到""好的""当然""明白""我来帮你"等开场白。直接输出结构化分析。\n${BRAND_LANGUAGE_GUARDRAIL}`);
 
-  const userPrompt = `以下是同一个用户在不同关系场景下积累的行为洞察记录：\n\n${contextSections}\n\n请从家庭系统视角进行综合分析。\n\n请按以下结构输出（语言要有洞察力和温度，合计400字以内）：\n\n**系统主题**（1-2句话，说出这个人在所有关系中最核心的那个模式）\n\n**跨场景联系**（2-3条，说明这些场景的行为如何相互影响——要有因果逻辑）\n\n**可能的天赋类型**（如果特征明显，用1-3句话点出；不明显可省略）\n\n**优先改变建议**（3条，按杠杆大小排序。每条说明 在哪里改变 + 为什么能同时让多段关系松动 + 一个明天就能做的具体动作）`;
+  const userPrompt = `以下是同一个用户在不同关系场景下积累的行为洞察记录：\n\n${contextSections}\n\n请从家庭系统视角进行综合分析。\n\n请按以下结构输出（语言要有洞察力和温度，合计400字以内）：\n\n**系统主题**（1-2句话，说出这个人在所有关系中最核心的那个模式）\n\n**跨场景联系**（2-3条，说明这些场景的行为如何相互影响——要有因果逻辑）\n\n**可能的观察类型**（如果特征明显，用1-3句话点出；不明显可省略）\n\n**优先改变建议**（3条，按杠杆大小排序。每条说明 在哪里改变 + 为什么能同时让多段关系松动 + 一个明天就能做的具体动作）`;
 
   const messages = [
     { role: 'system', content: systemPrompt },
@@ -965,8 +1000,8 @@ async function handleSynthesize(req, res) {
   if (!reply) return res.status(500).json({ error: 'AI 返回内容为空，请重试' });
 
   const themeMatch       = reply.match(/\*\*系统主题\*\*[：:]?\s*([\s\S]*?)(?=\*\*跨场景联系\*\*|$)/);
-  const connectionsMatch = reply.match(/\*\*跨场景联系\*\*[：:]?\s*([\s\S]*?)(?=\*\*可能的天赋类型\*\*|\*\*优先改变建议\*\*|$)/);
-  const trcTypeMatch     = reply.match(/\*\*可能的天赋类型\*\*[：:]?\s*([\s\S]*?)(?=\*\*优先改变建议\*\*|$)/);
+  const connectionsMatch = reply.match(/\*\*跨场景联系\*\*[：:]?\s*([\s\S]*?)(?=\*\*可能的观察类型\*\*|\*\*优先改变建议\*\*|$)/);
+  const trcTypeMatch     = reply.match(/\*\*可能的观察类型\*\*[：:]?\s*([\s\S]*?)(?=\*\*优先改变建议\*\*|$)/);
   const adviceMatch      = reply.match(/\*\*优先改变建议\*\*[：:]?\s*([\s\S]*?)$/);
 
   return res.status(200).json({
