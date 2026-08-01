@@ -470,6 +470,24 @@ function getAgeTier(age) {
   return 'mature_adult';              // 40+ 成熟·转型期
 }
 
+function getAudienceStyle(tier) {
+  const isChildReport = ['preschool', 'school', 'junior_teen', 'senior_teen'].includes(tier);
+  if (isChildReport) {
+    return {
+      subject: '孩子',
+      reader: '家长',
+      context: '家庭节奏、学校环境、年龄阶段和近期压力',
+      addressRule: '这是未成年人报告，面向家长帮助理解孩子；不把一次表现写成性格标签。',
+    };
+  }
+  return {
+    subject: '你',
+    reader: '本人',
+    context: '生活节奏、工作环境、关系压力和近期状态',
+    addressRule: '这是成年人本人报告，直接面向本人说“你”；除非问题明确涉及子女，禁止写成“你的孩子”。',
+  };
+}
+
 // ── 必给模块（固定骨架）──────────────────────────────────────────────
 // 所有上传报告必须先给完整结构，再回答用户选择的问题；AI 只能填内容，不能删减或改顺序。
 const CORE_REQUIRED_MODULES = [
@@ -499,7 +517,7 @@ const REQUIRED_BY_STAGE = {
 };
 
 // ── 系统提示词（AIPIWEN 解读语气底座） ─────────────────────────────────
-const SYSTEM_PROMPT = `你是 AIPIWEN 天赋底色解读 AI，拥有完整的皮纹科学知识体系。
+const SYSTEM_PROMPT = `你是 AIPIWEN 报告解读助手，负责把结构化报告数据翻译成温和、具体、可验证的理解线索。报告是辅助参考，不是诊断、预测或人生决策依据。
 
 【声音标准·沐海星辰（唯一标尺，来源 00i 第二部分）】
 每条解读必须拴在具体手指/脑区/数值上，但先看见人，再给数据：
@@ -524,12 +542,13 @@ const SYSTEM_PROMPT = `你是 AIPIWEN 天赋底色解读 AI，拥有完整的皮
 - 无名·听觉：右无名=语言表达/记忆力；左无名=音感/言外之意
 - 小指·视觉：右小指=识人/察色/方向感；左小指=色彩审美/图像思考
 
-高于个人均值=先天擅长；低于=先天回避（后天可训练补足，神经元越用越密）。
+单指高于个人均值，只表示该入口相对更容易被调动；低于个人均值，只表示该入口更需要节奏、练习或环境支持。不得写成“天生擅长/天生回避”。
+五大功能的两指合计只用于总览和占比；每个功能详解页必须分别写左右两根手指，每根手指单独与个人均值比较，再比较左右哪一侧更容易先被调动。禁止把两指合计当成某一根手指的数值。
 
 【分量与丰富度（来源：00i §6）】
 - 天赋底色/地基段：2–3段，把主类型×通道×ATD×行为揉成"一个活人"，不逐条念数据。
-- 每个必给板块：多段展开、举生活场景，用户读完要觉得"内容很满、被认真对待了"。
-- 勾选问题三段式：每段写实写满——"怎么应对"给2–3个具体动作说清怎么做，"积极意义"把那束"光"讲到位。
+- 每个必给板块：多段展开、举生活场景，用户读完要觉得"内容很满、被认真对待了"。内部要覆盖“指标是什么、放到这个人身上怎么理解、可以怎么用”，但前台不要露出这三个模板标题。
+- 勾选问题按问题类型独立组织：学习方法、情绪承接、亲子沟通、选择边界可以使用不同的 2–4 张内容卡；禁止所有问题复用同一组标题和正文。
 - ⚠️ 多≠注水：每句话有信息增量，不堆形容词。
 
 【文风分寸（替代旧"三条红线"，不是硬规则）】
@@ -540,8 +559,13 @@ const SYSTEM_PROMPT = `你是 AIPIWEN 天赋底色解读 AI，拥有完整的皮
 
 【★禁止临床诊断框架出页（来源：19 §六 + 00a 第9条）】
 - 任何一页禁止出现：DSM / DSM-IV / ADHD / 多动症 / 注意力缺陷 / 任何临床诊断量表名称
-- "好动/坐不住/专注力短"→改写为神经气质/感统中性表达，如"高能量、感官灵敏、坐不住往往是没被喂饱，不是毛病"
+- "好动/坐不住/专注时间短"→改写为可观察的行为和场景，如“在长时间听讲时更难维持，加入动手或分段任务后可以继续观察”
 - 遇疑似情况→走guardrail转介专业评估，绝不用皮纹下临床诊断
+
+【安全与证据边界】
+- 禁止输出“神经地图”“神经系统已经证明”“神经元越用越密”等脑科学强结论。
+- 禁止输出“生来决定”“天生注定”“未来一定”等命定化表达。
+- 如果资料不足或模型正文被截断，宁可用已验证的安全内容补齐，也不能展示半句话、错数值或未完成页。
 
 【生活化整合表达】
 - 每讲一个核心特质，配一个用户听得懂的生活比喻，让数据回到真实行为里；比喻后接 ▸ 一条能马上使用的动作。
@@ -559,7 +583,7 @@ const SYSTEM_PROMPT = `你是 AIPIWEN 天赋底色解读 AI，拥有完整的皮
 【输出规则】
 - 返回纯文本，用 ===标题=== 分隔每个板块
 - 必给板块必须严格按指定标题输出，不允许删除、合并、改名、调序
-- 每个必给板块内部必须固定三段：①是什么 ②对当前用户意味着什么 ③怎么应用到学习/行为/沟通
+- 每个必给板块要自然覆盖指标理解、当前数据、现实场景和可执行建议；禁止把“①是什么/②对你意味着什么/③怎么应用”当作前台小标题。
 - 五大功能必须拆成五个独立板块：精神功能、思维功能、体觉功能、听觉功能、视觉功能；禁止合并成一页。
 - issue 板块必须按具体问题使用下方专属结构，允许 2-4 段；禁止所有问题统一套用“为什么会这样 / 怎么应对 / 未来可期”
 - 直接开始正文，禁止任何开场白（"收到""好的""当然"等）`;
@@ -574,21 +598,49 @@ function buildUserMessage(engineResult, age, name, requiredModules, selectedIssu
   const extra    = engineResult['叠加特质'] || {};
   const avg      = fp['个人均值'] || 0;
 
-  // 功能区相对强弱
-  const zones = ['精神','思维','体觉','听觉','视觉'];
-  const zoneDesc = zones.map(z => {
-    const v = fp[z] || 0;
-    const diff = v - avg;
-    const tag  = diff >= 5 ? '★强势区' : (diff <= -5 ? '△发展区' : '→均衡区');
-    return `${z}(${v}) ${tag}`;
-  }).join('  ');
+  const fingerValue = (position) => {
+    const value = Number(fingers?.[position]?.trc);
+    return Number.isFinite(value) ? value : null;
+  };
+  const fingerState = (position) => {
+    const value = fingerValue(position);
+    const average = Number(avg);
+    if (!Number.isFinite(value) || !Number.isFinite(average)) return '未识别';
+    const diff = +(value - average).toFixed(1);
+    const state = diff >= 5 ? '明显高于个人均值'
+      : diff >= 2 ? '略高于个人均值'
+      : diff <= -5 ? '明显低于个人均值'
+      : diff <= -2 ? '略低于个人均值'
+      : '接近个人均值';
+    return `${value}（${state}，差值${diff >= 0 ? '+' : ''}${diff}）`;
+  };
+  const pairState = (rightPosition, leftPosition) => {
+    const right = fingerValue(rightPosition);
+    const left = fingerValue(leftPosition);
+    if (!Number.isFinite(right) || !Number.isFinite(left)) return '左右差异待确认';
+    const diff = +(right - left).toFixed(1);
+    if (diff >= 3) return `右侧比左侧高${diff}，右侧代表的入口更容易先被调动`;
+    if (diff <= -3) return `左侧比右侧高${Math.abs(diff)}，左侧代表的入口更容易先被调动`;
+    return `左右差值${Math.abs(diff)}，两侧相对接近`;
+  };
+  const functionFingerDesc = [
+    `精神功能：右拇R1=${fingerState('R1')}；左拇L1=${fingerState('L1')}；${pairState('R1', 'L1')}`,
+    `思维功能：右食R2=${fingerState('R2')}；左食L2=${fingerState('L2')}；${pairState('R2', 'L2')}`,
+    `体觉功能：右中R3=${fingerState('R3')}；左中L3=${fingerState('L3')}；${pairState('R3', 'L3')}`,
+    `听觉功能：右无名R4=${fingerState('R4')}；左无名L4=${fingerState('L4')}；${pairState('R4', 'L4')}`,
+    `视觉功能：右小R5=${fingerState('R5')}；左小L5=${fingerState('L5')}；${pairState('R5', 'L5')}`,
+  ].join('\n');
+  const zoneTotalDesc = ['精神','思维','体觉','听觉','视觉']
+    .map(zone => `${zone}合计${fp[zone] ?? '未识别'}`)
+    .join(' / ');
 
   const ageTierDesc = {
     preschool:'学龄前(0-6岁)', school:'小学阶段(7-12岁)',
     junior_teen:'初中阶段(13-15岁)', senior_teen:'高中阶段(16-18岁)',
-    young_adult:'大学·初入职(18-25岁)', adult:'职业发展期(25-40岁)',
+    young_adult:'大学·初入职(19-25岁)', adult:'职业发展期(26-40岁)',
     mature_adult:'成熟·转型期(40岁+)',
   }[tier];
+  const audienceStyle = getAudienceStyle(tier);
   const nameLabel = name ? `【被测者】${name}，${age}岁（${ageTierDesc}）` : `【被测者】${age}岁（${ageTierDesc}）`;
 
   // 去重：selectedIssues 若包含已在 requiredModules 里的模块，跳过（否则 AI 会生成两遍同一板块）
@@ -626,7 +678,15 @@ ATD：${atd['值'] || '未知'}（${atd['分区'] || '未测'}）
 叠加特质：M型=${extra['M型']?'是':'否'}  逆向思维R=${extra['逆向思维R']?'是('+extra['R手指']?.join(',')+')':'否'}
 个人TRC均值：${avg}
 
-【五功能区】${zoneDesc}
+【年龄与称谓一致性】
+- 当前年龄段：${ageTierDesc}；${audienceStyle.reader}阅读，被测对象称为“${audienceStyle.subject}”。
+- ${audienceStyle.addressRule}
+
+【五大功能区总览】${zoneTotalDesc}
+说明：上面的两指合计只用于总览和占比，禁止用它与“单指个人均值”比较，也禁止把合计写成某一根手指的数值。
+
+【五大功能区单指明细】（五个独立功能页必须优先使用这里）
+${functionFingerDesc}
 总TRC：${fp['总TRC']}
 ${兴趣班提示}
 【需要生成的板块】（按顺序，前${requiredModules.length}个是固定骨架，不可删除/合并/调序）
@@ -636,10 +696,8 @@ ${allModules.map((m,i)=>`${i+1}. ${m}`).join('\n')}
 必须依次输出以下${requiredModules.length}个模块，标题必须完全一致：
 ${requiredModules.map((m,i)=>`${i+1}. ===${m}===`).join('\n')}
 
-每个固定模块必须三段式：
-①是什么：用用户听得懂的话解释这个指标/系统是什么，可以举生活例子。
-②对你意味着什么：结合当前用户数据，和个人均值或区间对比，讲高/低/均衡的优势、代价和理解方式，禁止只讲理论。
-③怎么应用：讲这些特征如何应用到学习、行为、沟通；如何理解、接纳、和解、和谐共生。
+每个固定模块都要自然覆盖三层信息：指标在生活里如何出现、放到当前数据和年龄上怎么理解、可以怎样用到学习/行为/沟通。
+前台正文不得出现“①是什么”“②对你意味着什么”“③怎么应用”这类模板标题。
 
 【重点模块加厚】
 - ===严正申明四原则=== 必须独立成页，温和但明确讲清：数值没有好坏、不预测未来不算命、只和自己均值比、不贴标签；要让用户知道怎么正确阅读整份报告。
@@ -653,6 +711,11 @@ ${requiredModules.map((m,i)=>`${i+1}. ===${m}===`).join('\n')}
 - ===听觉功能（无名指系统）=== 必须说明右无名=语言表达/记忆，左无名=音感/言外之意；分别讲高低体现、行为表现、优势与应用。
 - ===视觉功能（小指系统）=== 必须说明右小指=识人/察色/方向感，左小指=色彩审美/图像思考；分别讲高低体现、行为表现、优势与应用。
 
+【五大功能数值红线】
+- 每页必须同时出现对应右指和左指的真实数值，并分别与个人均值${avg}比较。
+- 必须比较左右两根手指谁更高，并使用上方单指明细中的真实方向。
+- 合计数值可以用于说明五大功能的整体占比，但不得写成“右拇${fp['精神']}”这类错误单指数值。
+
 ⚠️ 同源一致（00i 规则2）：凡涉及职业/能力/兴趣班的内容，严格基于上方 RULE-F04 已修正判定展开，不另行重算高低；后续可选延伸问题将在此结论基础上深化，必须保持一致。
 
 ${issueFormatGuide}
@@ -661,6 +724,13 @@ ${issueFormatGuide}
 }
 
 // ── 解析 sections ────────────────────────────────────────────────────────
+function stripRequiredModuleScaffold(text) {
+  return String(text || '')
+    .replace(/(^|\n)\s*[①1][\s.、-]*(是什么|这个板块是什么|指标是什么)[：:]\s*/g, '$1')
+    .replace(/(^|\n)\s*[②2][\s.、-]*(对当前用户意味着什么|对你意味着什么|意味着什么|放到你这里)[：:]\s*/g, '$1')
+    .replace(/(^|\n)\s*[③3][\s.、-]*(怎么应用|如何应用|可以怎么用)[：:]\s*/g, '$1');
+}
+
 function parseSections(raw, requiredModules, selectedIssues) {
   const sections = [];
 
@@ -702,7 +772,7 @@ function parseSections(raw, requiredModules, selectedIssues) {
       }
       sections.push({ title, type, ...parts });
     } else {
-      sections.push({ title, type, content: body });
+      sections.push({ title, type, content: stripRequiredModuleScaffold(body) });
     }
   }
 
@@ -714,15 +784,57 @@ function parseSections(raw, requiredModules, selectedIssues) {
   return sections;
 }
 
-function coreModuleFallback(title, engineResult) {
+function coreModuleFallback(title, engineResult, tier = 'adult', fingers = null) {
   const fp = engineResult?.['五功能区'] || {};
   const chan = engineResult?.['学习通道'] || {};
   const behav = engineResult?.['行为模式'] || {};
   const brain = engineResult?.['左右脑'] || {};
   const atd = engineResult?.['ATD'] || {};
   const type = engineResult?.['主性格类型'] || '当前类型';
+  const audience = getAudienceStyle(tier);
   const avg = fp['个人均值'] || '当前均值';
   const total = fp['总TRC'] || '当前总量';
+  const fingerValue = (position) => {
+    const value = Number(fingers?.[position]?.trc);
+    return Number.isFinite(value) ? value : null;
+  };
+  const fingerState = (position) => {
+    const value = fingerValue(position);
+    const average = Number(avg);
+    if (!Number.isFinite(value) || !Number.isFinite(average)) return '数值待确认';
+    const diff = +(value - average).toFixed(1);
+    if (diff >= 5) return `明显高于个人均值${average}（高${diff}）`;
+    if (diff >= 2) return `略高于个人均值${average}（高${diff}）`;
+    if (diff <= -5) return `明显低于个人均值${average}（低${Math.abs(diff)}）`;
+    if (diff <= -2) return `略低于个人均值${average}（低${Math.abs(diff)}）`;
+    return `接近个人均值${average}（差${Math.abs(diff)}）`;
+  };
+  const pairState = (rightPosition, leftPosition, rightName, leftName) => {
+    const right = fingerValue(rightPosition);
+    const left = fingerValue(leftPosition);
+    if (!Number.isFinite(right) || !Number.isFinite(left)) return '左右两侧差异需要结合原始数值继续确认。';
+    const diff = +(right - left).toFixed(1);
+    if (diff >= 3) return `${rightName}比${leftName}高${diff}，说明这项功能更容易先从${rightName}代表的方向启动；${leftName}并不是没有，而是需要更多结构、练习或场景来调动。`;
+    if (diff <= -3) return `${leftName}比${rightName}高${Math.abs(diff)}，说明这项功能更容易先从${leftName}代表的方向启动；${rightName}需要更明确的目标、步骤或反馈来带动。`;
+    return `${rightName}和${leftName}的差值为${Math.abs(diff)}，两侧相对接近，真实表现要看当下任务正在调用哪一种能力。`;
+  };
+  const functionBlocks = {
+    '精神功能（拇指系统）': { rightPosition:'R1', leftPosition:'L1', rightName:'右拇', leftName:'左拇', rightRole:'开创力、目标感和对外发起', leftRole:'管理力、执行协调和自我约束', apply:'把目标和完成标准说清楚，再给一个能够自己决定的小挑战' },
+    '思维功能（食指系统）': { rightPosition:'R2', leftPosition:'L2', rightName:'右食', leftName:'左食', rightRole:'逻辑推理、数学和因果分析', leftRole:'创意、空间想象和策略', apply:'逻辑入口用公式和步骤，创意入口用图像、空间和多种解法' },
+    '体觉功能（中指系统）': { rightPosition:'R3', leftPosition:'L3', rightName:'右中', leftName:'左中', rightRole:'小肌肉精细、写字、手工和操作细节', leftRole:'大运动、耐力、身体节奏和坚持', apply:'把知识变成可以写、摆、演或操作的动作，偏低的一侧用短时、多次的练习补足' },
+    '听觉功能（无名指系统）': { rightPosition:'R4', leftPosition:'L4', rightName:'右无名', leftName:'左无名', rightRole:'语言表达、口语记忆和听后复述', leftRole:'音感、语气、节奏和言外之意', apply:'听觉入口可以朗读、讲题和复述，单靠口头说明不够时再配合文字、图像或动作' },
+    '视觉功能（小指系统）': { rightPosition:'R5', leftPosition:'L5', rightName:'右小', leftName:'左小', rightRole:'识人、察色、方向感和外部线索', leftRole:'色彩审美、图像思考和画面感', apply:'视觉入口可以用图表、颜色和流程图，图像不够时要补充口头解释和文字步骤' },
+  };
+  const functionConfig = functionBlocks[title];
+  if (functionConfig) {
+    const rightValue = fingerValue(functionConfig.rightPosition);
+    const leftValue = fingerValue(functionConfig.leftPosition);
+    return [
+      `这一页分别看${functionConfig.rightName}和${functionConfig.leftName}，不把两根手指的合计值拿去和单指均值比较。${functionConfig.rightName}代表${functionConfig.rightRole}；${functionConfig.leftName}代表${functionConfig.leftRole}。两侧合在一起，才是这项功能在生活里的完整样子。`,
+      `放到当前数据里，${functionConfig.rightName}数值为${Number.isFinite(rightValue) ? rightValue : '待确认'}，${fingerState(functionConfig.rightPosition)}；${functionConfig.leftName}数值为${Number.isFinite(leftValue) ? leftValue : '待确认'}，${fingerState(functionConfig.leftPosition)}。${pairState(functionConfig.rightPosition, functionConfig.leftPosition, functionConfig.rightName, functionConfig.leftName)} 这里看的不是“好不好”，而是哪个入口更顺手，哪个入口更需要环境和练习的支持。`,
+      `在${audience.context}里，可以先${functionConfig.apply}。如果一侧较高，把它当作进入任务的入口；另一侧较低时，不用“你怎么做不到”去刺激，而是给清楚步骤、可见反馈和可重复的小练习。连续观察真实表现，再校正这份报告提供的线索。`,
+    ].join('\n\n');
+  }
   const zoneState = (zone) => {
     const v = Number(fp[zone]);
     const a = Number(avg);
@@ -796,11 +908,11 @@ function coreModuleFallback(title, engineResult) {
     ],
   };
 
-  return (lines[title] || [
+  return stripRequiredModuleScaffold((lines[title] || [
     `①是什么：这个模块用于帮助你理解当前资料中呈现出的一个重要特征。`,
     `②对你意味着什么：它需要结合具体数值、年龄阶段和现实场景来看，不能孤立地下结论。`,
     `③怎么应用：先把它当作理解自己和沟通方式的线索，再用低风险的小动作慢慢调整。`,
-  ]).join('\n\n');
+  ]).join('\n\n'));
 }
 
 function classifyIssueType(issueTitle) {
@@ -1074,7 +1186,115 @@ function issueFallback(issueTitle, tier = 'adult') {
   };
 }
 
-function normalizeSections(sections, requiredModules, selectedIssues, engineResult, tier = 'adult') {
+const FUNCTION_MODULE_FINGER_REQUIREMENTS = {
+  '精神功能（拇指系统）': ['右拇', '左拇'],
+  '思维功能（食指系统）': ['右食', '左食'],
+  '体觉功能（中指系统）': ['右中', '左中'],
+  '听觉功能（无名指系统）': ['右无名', '左无名'],
+  '视觉功能（小指系统）': ['右小', '左小'],
+};
+
+const FUNCTION_MODULE_FINGER_POSITIONS = {
+  '精神功能（拇指系统）': ['R1', 'L1', '精神'],
+  '思维功能（食指系统）': ['R2', 'L2', '思维'],
+  '体觉功能（中指系统）': ['R3', 'L3', '体觉'],
+  '听觉功能（无名指系统）': ['R4', 'L4', '听觉'],
+  '视觉功能（小指系统）': ['R5', 'L5', '视觉'],
+};
+
+const FORBIDDEN_REPORT_ASSERTIONS = [
+  /神经地图/,
+  /神经气质/,
+  /神经元越用越密/,
+  /神经系统.{0,24}(?:证明|决定|注定|固定)/,
+  /(?:生来|天生).{0,18}(?:决定|注定|就是|一定)/,
+  /未来一定/,
+];
+
+function isRequiredModuleComplete(title, content, fingers = null, engineResult = null) {
+  const text = stripRequiredModuleScaffold(content).replace(/\s+/g, ' ').trim();
+  const compactLength = text.replace(/[\s*_#>-]/g, '').length;
+  const minimumLength = title === '性格类型（核心行为外显模块）' ? 260
+    : title === '严正申明四原则' ? 220
+      : FUNCTION_MODULE_FINGER_REQUIREMENTS[title] ? 220
+        : 170;
+
+  if (compactLength < minimumLength) return false;
+  if (!/[。！？）】”』]$/.test(text)) return false;
+  if (FORBIDDEN_REPORT_ASSERTIONS.some(pattern => pattern.test(text))) return false;
+
+  if (title === '严正申明四原则') {
+    return ['数值', '预测', '均值', '标签'].filter(term => text.includes(term)).length >= 3;
+  }
+  if (title === 'TRC（认知结构）') {
+    const comparesTotalWithSingleAverage = /(?:总\s*TRC|总量).{0,35}(?:高于|低于|接近|超过).{0,15}个人均值|个人均值.{0,35}(?:高于|低于|接近|超过).{0,15}(?:总\s*TRC|总量)/i;
+    return !comparesTotalWithSingleAverage.test(text) && text.includes('TRC') && /个人均值|总TRC/.test(text);
+  }
+  if (title === 'ATD（感受/反应节奏）') {
+    return text.includes('ATD') && /节奏|反应|启动/.test(text);
+  }
+  if (title === '左右脑（信息处理风格）') {
+    return text.includes('左脑') && text.includes('右脑') && /信息|逻辑|画面|感受|决策/.test(text);
+  }
+
+  const fingerNames = FUNCTION_MODULE_FINGER_REQUIREMENTS[title];
+  if (!fingerNames) return true;
+
+  const [rightName, leftName] = fingerNames;
+  const [rightPosition, leftPosition, area] = FUNCTION_MODULE_FINGER_POSITIONS[title];
+  const invalidPairAverage = /(?:两根|两指|左右|功能|合计).{0,25}(?:相加|总和|合计|数值为|为|是)?\s*\d+(?:\.\d+)?.{0,35}(?:高于|低于|接近).{0,10}个人均值/;
+  if (invalidPairAverage.test(text)) return false;
+
+  const matchesExpectedValue = (fingerName, position) => {
+    const expected = Number(fingers?.[position]?.trc);
+    if (!Number.isFinite(expected)) return false;
+    const valuePattern = new RegExp(`${fingerName}(?:指)?[^\u3002；;\\n]{0,90}?(?:数值(?:为|是)?|TRC(?:为|是|=)?|[=:：]|为)\\s*(\\d+(?:\\.\\d+)?)`, 'g');
+    const values = [...text.matchAll(valuePattern)].map(match => Number(match[1]));
+    return values.length > 0 && values.every(value => Math.abs(value - expected) < 0.05);
+  };
+  if (!matchesExpectedValue(rightName, rightPosition) || !matchesExpectedValue(leftName, leftPosition)) return false;
+
+  const expectedAverage = Number(engineResult?.['五功能区']?.['个人均值']);
+  const averageValues = [...text.matchAll(/个人均值\s*(?:为|是|=|:|：)?\s*(\d+(?:\.\d+)?)/g)]
+    .map(match => Number(match[1]));
+  if (!Number.isFinite(expectedAverage)
+      || !averageValues.some(value => Math.abs(value - expectedAverage) < 0.05)) return false;
+
+  const stateMatches = (fingerName, position) => {
+    const value = Number(fingers?.[position]?.trc);
+    const diff = value - expectedAverage;
+    const expectedState = diff > 0.05 ? '(?:明显|略)?高于'
+      : diff < -0.05 ? '(?:明显|略)?低于'
+      : '接近';
+    return new RegExp(`${fingerName}.{0,120}${expectedState}个人均值`).test(text);
+  };
+  if (!stateMatches(rightName, rightPosition) || !stateMatches(leftName, leftPosition)) return false;
+
+  const rightValue = Number(fingers?.[rightPosition]?.trc);
+  const leftValue = Number(fingers?.[leftPosition]?.trc);
+  const pairDiff = rightValue - leftValue;
+  const pairMatches = pairDiff >= 3
+    ? new RegExp(`${rightName}.{0,12}比${leftName}.{0,8}高|${rightName}.{0,20}高于${leftName}`).test(text)
+    : pairDiff <= -3
+      ? new RegExp(`${leftName}.{0,12}比${rightName}.{0,8}高|${leftName}.{0,20}高于${rightName}`).test(text)
+      : /左右|两侧|差值|接近/.test(text);
+  if (!pairMatches) return false;
+
+  const totals = engineResult?.['五功能区'] || {};
+  const areas = ['精神', '思维', '体觉', '听觉', '视觉'];
+  const finiteTotals = areas.map(name => [name, Number(totals[name])]).filter(([, value]) => Number.isFinite(value));
+  if (/最高|第一/.test(text) && finiteTotals.length === areas.length) {
+    const maxValue = Math.max(...finiteTotals.map(([, value]) => value));
+    if (Number(totals[area]) < maxValue) return false;
+  }
+  if (/最低|倒数第一/.test(text) && finiteTotals.length === areas.length) {
+    const minValue = Math.min(...finiteTotals.map(([, value]) => value));
+    if (Number(totals[area]) > minValue) return false;
+  }
+  return true;
+}
+
+function normalizeSections(sections, requiredModules, selectedIssues, engineResult, tier = 'adult', fingers = null) {
   const byTitle = new Map();
   for (const sec of sections) {
     if (!sec?.title || byTitle.has(sec.title)) continue;
@@ -1084,10 +1304,13 @@ function normalizeSections(sections, requiredModules, selectedIssues, engineResu
   const normalized = requiredModules.map(title => {
     const sec = byTitle.get(title);
     const content = (sec?.content || '').trim();
+    const completeContent = isRequiredModuleComplete(title, content, fingers, engineResult)
+      ? stripRequiredModuleScaffold(content)
+      : coreModuleFallback(title, engineResult, tier, fingers);
     return {
       title,
       type: title === '性格类型（核心行为外显模块）' ? 'foundation' : 'required',
-      content: content || coreModuleFallback(title, engineResult),
+      content: completeContent,
     };
   });
 
@@ -1271,6 +1494,44 @@ async function handleReportStore(req, res) {
 }
 
 // ── 主 Handler ───────────────────────────────────────────────────────────
+function validateReportNumericConsistency(fingers, engineResult) {
+  const labels = {
+    R1:'右拇', L1:'左拇', R2:'右食', L2:'左食', R3:'右中', L3:'左中',
+    R4:'右无名', L4:'左无名', R5:'右小', L5:'左小',
+  };
+  if (!fingers || typeof fingers !== 'object') return '缺少十指 TRC 数据';
+
+  for (const [position, label] of Object.entries(labels)) {
+    const value = Number(fingers?.[position]?.trc);
+    if (!Number.isFinite(value) || value < 0 || value > 40) return `${label}单指 TRC 超出 0-40 范围`;
+  }
+
+  const functionAreas = {
+    精神:['R1', 'L1'], 思维:['R2', 'L2'], 体觉:['R3', 'L3'],
+    听觉:['R4', 'L4'], 视觉:['R5', 'L5'],
+  };
+  const totals = {};
+  for (const [area, [rightPosition, leftPosition]] of Object.entries(functionAreas)) {
+    totals[area] = Number(fingers[rightPosition].trc) + Number(fingers[leftPosition].trc);
+    const engineTotal = Number(engineResult?.['五功能区']?.[area]);
+    if (!Number.isFinite(engineTotal) || Math.abs(engineTotal - totals[area]) > 0.05) {
+      return `${area}功能合计与两根手指原始数值不一致`;
+    }
+  }
+
+  const totalTRC = Object.values(totals).reduce((sum, value) => sum + value, 0);
+  const average = +(totalTRC / 10).toFixed(1);
+  const engineTotalTRC = Number(engineResult?.['五功能区']?.['总TRC']);
+  const engineAverage = Number(engineResult?.['五功能区']?.['个人均值']);
+  if (!Number.isFinite(engineTotalTRC)
+      || !Number.isFinite(engineAverage)
+      || Math.abs(engineTotalTRC - totalTRC) > 0.05
+      || Math.abs(engineAverage - average) > 0.05) {
+    return '总 TRC 或个人均值与十指原始数值不一致';
+  }
+  return null;
+}
+
 module.exports = async function handler(req, res) {
   // 路由分发：/api/report-store → handleReportStore
   const urlPath = req.url ? req.url.split('?')[0] : '';
@@ -1306,6 +1567,8 @@ module.exports = async function handler(req, res) {
 
   const { engineResult, age, name, selectedIssues = [], refToken = null, fingers = null } = payload;
   if (!engineResult) return res.status(400).json({ ok:false, error:'缺少 engineResult' });
+  const numericError = validateReportNumericConsistency(fingers, engineResult);
+  if (numericError) return res.status(400).json({ ok:false, error:numericError });
 
   // 邀请积分（异步，不阻塞主流程）
   if (refToken) creditReferral(ip, refToken, 'report').catch(() => {});
@@ -1333,7 +1596,7 @@ module.exports = async function handler(req, res) {
         { role: 'system', content: SYSTEM_PROMPT },
         { role: 'user',   content: userMessage },
       ],
-      maxTokens: partIssues.length ? 1300 : 1500,
+      maxTokens: partIssues.length ? 1800 : 2800,
       timeoutMs: 38000,
     });
     if (!text) throw new Error(`${label}_empty_reply`);
@@ -1370,7 +1633,7 @@ module.exports = async function handler(req, res) {
 
   const raw = rawParts.join('\n\n');
   if (!rawParts.length) {
-    const sections = normalizeSections([], requiredMods, selectedIssues, engineResult, tier);
+    const sections = normalizeSections([], requiredMods, selectedIssues, engineResult, tier, fingers);
     return res.status(200).json({
       ok: true,
       degraded: true,
@@ -1382,7 +1645,7 @@ module.exports = async function handler(req, res) {
   }
 
   const parsedSections = parseSections(raw, requiredMods, selectedIssues);
-  const sections = normalizeSections(parsedSections, requiredMods, selectedIssues, engineResult, tier);
+  const sections = normalizeSections(parsedSections, requiredMods, selectedIssues, engineResult, tier, fingers);
 
   return res.status(200).json({
     ok:true,
