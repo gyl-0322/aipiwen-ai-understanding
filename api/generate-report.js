@@ -1208,6 +1208,8 @@ const FORBIDDEN_REPORT_ASSERTIONS = [
   /神经元越用越密/,
   /神经系统.{0,24}(?:证明|决定|注定|固定)/,
   /(?:生来|天生).{0,18}(?:决定|注定|就是|一定)/,
+  /(?:生来|天生).{0,18}(?:懂|擅长|拥有|具备)/,
+  /(?:左脑|右脑).{0,12}(?:共情力|情商|人格|性格|命运)/,
   /未来一定/,
 ];
 
@@ -1220,7 +1222,7 @@ function isRequiredModuleComplete(title, content, fingers = null, engineResult =
         : 170;
 
   if (compactLength < minimumLength) return false;
-  if (!/[。！？）】”』]$/.test(text)) return false;
+  if (!/[。！？…）】”』]$/.test(text)) return false;
   if (FORBIDDEN_REPORT_ASSERTIONS.some(pattern => pattern.test(text))) return false;
 
   if (title === '严正申明四原则') {

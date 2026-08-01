@@ -64,7 +64,30 @@ const engineResult = {
   ATD:{ 值:39, 分区:'敏感灵活型' },
 };
 
+function uniformSample(value) {
+  const uniformFingers = Object.fromEntries(
+    ['R1','L1','R2','L2','R3','L3','R4','L4','R5','L5'].map(position => [position, { trc:value }])
+  );
+  const areaTotal = value * 2;
+  return {
+    fingers: uniformFingers,
+    engineResult: {
+      五功能区: {
+        精神:areaTotal, 思维:areaTotal, 体觉:areaTotal, 听觉:areaTotal, 视觉:areaTotal,
+        总TRC:value * 10, 个人均值:value,
+      },
+    },
+  };
+}
+
 assert(sandbox.validateReportNumericConsistency(fingers, engineResult) === null, '正确的真实样本未通过数值一致性校验');
+for (const boundary of [0, 40]) {
+  const sample = uniformSample(boundary);
+  assert(
+    sandbox.validateReportNumericConsistency(sample.fingers, sample.engineResult) === null,
+    `单指边界值 ${boundary} 未通过数值一致性校验`
+  );
+}
 assert(
   sandbox.validateReportNumericConsistency(fingers, { ...engineResult, 五功能区:{ ...engineResult.五功能区, 精神:62 } })
     ?.includes('精神功能合计'),
@@ -78,6 +101,7 @@ const correctMental = [
 ].join('\n\n');
 
 assert(sandbox.isRequiredModuleComplete('精神功能（拇指系统）', correctMental, fingers, engineResult), '正确精神功能页被误判为不完整');
+assert(sandbox.isRequiredModuleComplete('精神功能（拇指系统）', correctMental.replace(/。$/, '……'), fingers, engineResult), '中文省略号结尾被误判为截断');
 assert(!sandbox.isRequiredModuleComplete('精神功能（拇指系统）', correctMental.replace('右拇数值为14', '右拇数值为31').replace('左拇数值为17', '左拇数值为31'), fingers, engineResult), '合计31被复制成两根拇指数值时没有被拦截');
 
 const reversedBody = correctMental
@@ -104,6 +128,7 @@ assert(!sandbox.isRequiredModuleComplete('性格类型（核心行为外显模�
 assert(!sandbox.isRequiredModuleComplete('视觉功能（小指系统）', '你看黑板时会先扫过整体，再落定在某一行字上——', fingers, engineResult), '半截视觉功能正文没有被拦截');
 assert(!sandbox.isRequiredModuleComplete('TRC（认知结构）', '当前总TRC为131，远高于个人均值13.1。这里还有足够长的解释和建议。'.repeat(8), fingers, engineResult), '总TRC与单指均值直接比较没有被拦截');
 assert(!sandbox.isRequiredModuleComplete('ATD（感受/反应节奏）', '你生来带着一套特别的神经地图。ATD39说明神经系统已经证明了你的固定反应。'.repeat(8), fingers, engineResult), '脑科学或命定化强断言没有被拦截');
+assert(!sandbox.isRequiredModuleComplete('左右脑（信息处理风格）', '你天生懂语言韵律，右脑的共情力决定了你在人际中的固定表现。'.repeat(12), fingers, engineResult), '隐性脑科学或天生能力强断言没有被拦截');
 
 const normalized = sandbox.normalizeSections([
   { title:'精神功能（拇指系统）', type:'required', content:'右拇31，左拇31。' },
