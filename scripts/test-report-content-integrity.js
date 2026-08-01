@@ -27,7 +27,10 @@ assert(apiSource.includes('normalizeSections(parsedSections, requiredMods, selec
 assert(apiSource.includes('【五大功能区单指明细】'), 'Prompt 没有向模型提供五大功能单指明细');
 
 const coreTokenMatch = apiSource.match(/maxTokens:\s*partIssues\.length\s*\?\s*(\d+)\s*:\s*(\d+)/);
-assert(coreTokenMatch && Number(coreTokenMatch[2]) >= 2600, '固定模块输出 token 上限仍不足，容易截断最后一页');
+assert(coreTokenMatch && Number(coreTokenMatch[1]) >= 1200, '两题一批的问题输出 token 上限不足');
+assert(coreTokenMatch && Number(coreTokenMatch[2]) >= 1700, '两个固定模块一批的输出 token 上限不足');
+assert(apiSource.includes('chunkModules(requiredMods, 2)'), '固定模块没有按两个一批拆分，仍有截断风险');
+assert(apiSource.includes('chunkModules(selectedIssues, 2)'), '用户问题没有按两个一批拆分，仍有截断风险');
 
 const helperSource = [
   sourceBetween('function getAudienceStyle', '// ── 必给模块'),

@@ -1598,7 +1598,7 @@ module.exports = async function handler(req, res) {
         { role: 'system', content: SYSTEM_PROMPT },
         { role: 'user',   content: userMessage },
       ],
-      maxTokens: partIssues.length ? 1800 : 2800,
+      maxTokens: partIssues.length ? 1300 : 1800,
       timeoutMs: 38000,
     });
     if (!text) throw new Error(`${label}_empty_reply`);
@@ -1608,15 +1608,17 @@ module.exports = async function handler(req, res) {
   // 单次完整报告已经超过 Vercel 60s 的稳定承载范围；拆成小块并行生成，
   // 单块失败只局部兜底，避免整份报告常态进入基础兜底。
   const jobs = [
-    ...chunkModules(requiredMods, 4).map((mods, idx) => ({
+    ...chunkModules(requiredMods, 2).map((mods, idx) => ({
       label: `core_${idx + 1}`,
       modules: mods,
       issues: [],
     })),
   ];
-  if (selectedIssues.length) {
-    jobs.push({ label: 'issues', modules: [], issues: selectedIssues });
-  }
+  jobs.push(...chunkModules(selectedIssues, 2).map((issues, idx) => ({
+    label: `issues_${idx + 1}`,
+    modules: [],
+    issues,
+  })));
 
   const results = await Promise.allSettled(
     jobs.map(job => generatePart(job.modules, job.issues, job.label))
