@@ -10,6 +10,7 @@
 
 const crypto = require('crypto');
 const { redisGet, redisSet, creditReferral, callClaude, MODEL_DEEP, MODEL_FREE, getOpenid } = require('./_lib');
+const { buildReportKnowledgePromptContext } = require('../lib/report-knowledge-index');
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const ATTRIBUTION_TOKEN_PATTERN = /^[0-9a-f]{32}$/;
@@ -591,7 +592,7 @@ const SYSTEM_PROMPT = `你是 AIPIWEN 报告解读助手，负责把结构化报
 - 直接开始正文，禁止任何开场白（"收到""好的""当然"等）`;
 
 // ── 构建用户消息（引擎数据 + 格式规范） ────────────────────────────────
-function buildUserMessage(engineResult, age, name, requiredModules, selectedIssues, fingers, tier) {
+function buildUserMessage(engineResult, age, name, requiredModules, selectedIssues, fingers, tier, knowledgeContext = {}) {
   const fp      = engineResult['五功能区'] || {};
   const chan     = engineResult['学习通道'] || {};
   const behav    = engineResult['行为模式'] || {};
@@ -670,6 +671,10 @@ function buildUserMessage(engineResult, age, name, requiredModules, selectedIssu
         return `===issue:${issue}===\n${issuePromptGuide(issue)}`;
       }).join('\n\n')
     : '';
+  const knowledgeBlocks = [
+    knowledgeContext.reportKnowledgeBlock,
+    knowledgeContext.riskKnowledgeBlock,
+  ].filter(Boolean).join('\n\n');
 
   return `${nameLabel}
 主性格类型：${engineResult['主性格类型']}
@@ -722,7 +727,81 @@ ${requiredModules.map((m,i)=>`${i+1}. ===${m}===`).join('\n')}
 
 ${issueFormatGuide}
 
+${knowledgeBlocks}
+
 ===END=== 结尾。现在开始生成：`;
+}
+
+function ageBandLabelFromTier(tier, age) {
+  const labels = {
+    preschool: '幼儿3-6岁',
+    school: '小学7-12岁',
+    junior_teen: '初中13-15岁',
+    senior_teen: '高中16-18岁',
+    young_adult: '19-25岁',
+    adult: '26-40岁',
+    mature_adult: '40+',
+  };
+  return labels[tier] || `年龄${age ?? ''}`;
+}
+
+function describeFingerForRetrieval(fingers, position, average) {
+  const value = Number(fingers?.[position]?.trc);
+  const avg = Number(average);
+  if (!Number.isFinite(value) || !Number.isFinite(avg)) return '未识别';
+  const diff = +(value - avg).toFixed(1);
+  const level = diff >= 3 ? '高于个人均值'
+    : diff <= -3 ? '低于个人均值'
+      : '接近个人均值';
+  return `${value} ${level} 差值${diff >= 0 ? '+' : ''}${diff}`;
+}
+
+function buildFiveFunctionRetrievalMetrics(engineResult, fingers, reportModules) {
+  const average = engineResult?.['五功能区']?.['个人均值'];
+  const definitions = {
+    精神功能: [['右拇', 'R1'], ['左拇', 'L1']],
+    思维功能: [['右食', 'R2'], ['左食', 'L2']],
+    体觉功能: [['右中', 'R3'], ['左中', 'L3']],
+    听觉功能: [['右无名', 'R4'], ['左无名', 'L4']],
+    视觉功能: [['右小', 'R5'], ['左小', 'L5']],
+  };
+  const metrics = {};
+  for (const [area, positions] of Object.entries(definitions)) {
+    if (!(reportModules || []).some(moduleName => String(moduleName).startsWith(area))) continue;
+    metrics[area] = Object.fromEntries(
+      positions.map(([label, position]) => [label, describeFingerForRetrieval(fingers, position, average)])
+    );
+  }
+  return metrics;
+}
+
+function buildReportKnowledgeContextInput(payload, reportModules, tier) {
+  const { engineResult, age, selectedIssues = [], fingers = null } = payload;
+  const functionMetrics = buildFiveFunctionRetrievalMetrics(engineResult, fingers, reportModules);
+  const customUserQuestion = payload.customUserQuestion || payload.extraQuestion || '';
+  return {
+    ageBand: ageBandLabelFromTier(tier, age),
+    subjectAge: age,
+    userIdentity: Number(age) <= 18 ? 'parent' : 'self',
+    reportSubject: Number(age) <= 18 ? 'child' : 'self',
+    selectedIssues,
+    customUserQuestion,
+    reportModules,
+    functionAreas: Object.keys(functionMetrics),
+    metrics: functionMetrics,
+    personalityType: engineResult?.['主性格类型'] || '',
+    learningChannel: engineResult?.['学习通道']?.['主通道'] || '',
+    behaviorPattern: engineResult?.['行为模式']?.['结论'] || '',
+    trc: `个人均值 ${engineResult?.['五功能区']?.['个人均值'] ?? ''} 总TRC ${engineResult?.['五功能区']?.['总TRC'] ?? ''}`,
+    atd: `${engineResult?.['ATD']?.['值'] ?? ''} ${engineResult?.['ATD']?.['分区'] || ''}`.trim(),
+    reportTextSummary: [
+      engineResult?.['左右脑']?.['结论'],
+      engineResult?.['学习通道']?.['主通道'],
+      engineResult?.['行为模式']?.['结论'],
+      engineResult?.['ATD']?.['分区'],
+    ].filter(Boolean).join(' '),
+    riskSignals: [...selectedIssues, customUserQuestion].filter(Boolean).join(' '),
+  };
 }
 
 // ── 解析 sections ────────────────────────────────────────────────────────
@@ -1628,7 +1707,34 @@ module.exports = async function handler(req, res) {
   }
 
   async function generatePart(partModules, partIssues, label) {
-    const userMessage = buildUserMessage(engineResult, age, name, partModules, partIssues, fingers, tier);
+    let knowledgeContext = {};
+    try {
+      knowledgeContext = buildReportKnowledgePromptContext(
+        buildReportKnowledgeContextInput(
+          { ...payload, selectedIssues: partIssues },
+          partModules,
+          tier
+        ),
+        { topK: 3, maxReportItems: 3, maxRiskItems: 2 }
+      );
+      console.info('[gen-report] knowledge_context', label, JSON.stringify({
+        mode: knowledgeContext.mode,
+        autoHits: knowledgeContext.retrievalSummary?.autoUsableHitCount || 0,
+        guardrailHits: knowledgeContext.retrievalSummary?.guardrailHitCount || 0,
+      }));
+    } catch (error) {
+      console.warn('[gen-report] knowledge_context_skipped', label, error.message);
+    }
+    const userMessage = buildUserMessage(
+      engineResult,
+      age,
+      name,
+      partModules,
+      partIssues,
+      fingers,
+      tier,
+      knowledgeContext
+    );
     const { text } = await callClaude({
       model:     MODEL_FREE,       // qwen-plus
       messages: [
