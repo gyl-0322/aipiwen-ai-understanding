@@ -236,12 +236,12 @@ const promptContext = buildReportKnowledgePromptContext({
   functionAreas: ['精神功能', '听觉功能'],
   metrics: {
     精神功能: {
-      右拇: '26 高于个人均值 差值+5.9',
-      左拇: '14 低于个人均值 差值-6.1',
+      右拇: '右拇高 R1高 右拇 26 高于个人均值 差值+5.9',
+      左拇: '左拇低 L1低 左拇 14 低于个人均值 差值-6.1',
     },
     听觉功能: {
-      右无名: '15 低于个人均值 差值-5.1',
-      左无名: '24 高于个人均值 差值+3.9',
+      右无名: '右无名低 R4低 右无名 15 低于个人均值 差值-5.1',
+      左无名: '左无名高 L4高 左无名 24 高于个人均值 差值+3.9',
     },
   },
 });
@@ -251,6 +251,15 @@ assert.strictEqual(promptContext.mode, 'v1.5_prompt_context');
 assert(promptContext.reportKnowledgeBlock.includes('Report Knowledge Index 命中内容'), 'V1.5 prompt context should include report grounding block');
 assert(promptContext.retrievalSummary.uniqueHitIds.includes('RKI-V1.3-JUNIOR-BOUNDARY'), 'V1.5 context should include age-stage hit id');
 assert(promptContext.retrievalSummary.uniqueHitIds.includes('RKI-V1.2-SPIRIT-R_HIGH'), 'V1.5 context should include five-function hit id');
+assert(promptContext.reportKnowledgeBlock.includes('精神功能深度解释：右侧单指高'), 'five-function hit must be injected, not only counted in retrieval summary');
+assert(promptContext.reportKnowledgeBlock.includes('精神功能深度解释：左侧单指低'), 'both single-finger directions must be represented in five-function grounding');
+assert(promptContext.reportKnowledgeBlock.includes('初中 13-15：顶嘴和叛逆'), 'age-stage hit must be represented in the prompt context');
+const promptQuestionStage = buildReportKnowledgeRetrievalDryRun({
+  ageBand: '小学7-12岁',
+  selectedIssues: ['作业拖拉/磨蹭怎么破', '考试焦虑/输不起怎么疏导'],
+}).stageResults.find(stage => stage.stage === 'user_questions');
+assert.strictEqual(promptQuestionStage.queryResults.length, 2, 'each selected issue must retain an independent retrieval result');
+assert(promptQuestionStage.queryResults.every(result => result.hitCount > 0), 'each selected issue should have its own knowledge hit candidates');
 assert(!promptContext.reportKnowledgeBlock.includes('/Users/'), 'V1.5 report grounding must not expose local paths');
 assert(!promptContext.reportKnowledgeBlock.includes('teacher_report_reading_001'), 'V1.5 report grounding must not expose raw source filenames');
 assert(!promptContext.reportKnowledgeBlock.includes('正式报告语言底座'), 'rewrite-required cards must not enter automatic report grounding');

@@ -745,7 +745,7 @@ function ageBandLabelFromTier(tier, age) {
   return labels[tier] || `年龄${age ?? ''}`;
 }
 
-function describeFingerForRetrieval(fingers, position, average) {
+function describeFingerForRetrieval(fingers, position, average, label) {
   const value = Number(fingers?.[position]?.trc);
   const avg = Number(average);
   if (!Number.isFinite(value) || !Number.isFinite(avg)) return '未识别';
@@ -753,7 +753,8 @@ function describeFingerForRetrieval(fingers, position, average) {
   const level = diff >= 3 ? '高于个人均值'
     : diff <= -3 ? '低于个人均值'
       : '接近个人均值';
-  return `${value} ${level} 差值${diff >= 0 ? '+' : ''}${diff}`;
+  const direction = diff >= 3 ? '高' : diff <= -3 ? '低' : '接近';
+  return `${label}${direction} ${position}${direction} ${label} ${value} ${level} 差值${diff >= 0 ? '+' : ''}${diff}`;
 }
 
 function buildFiveFunctionRetrievalMetrics(engineResult, fingers, reportModules) {
@@ -769,7 +770,7 @@ function buildFiveFunctionRetrievalMetrics(engineResult, fingers, reportModules)
   for (const [area, positions] of Object.entries(definitions)) {
     if (!(reportModules || []).some(moduleName => String(moduleName).startsWith(area))) continue;
     metrics[area] = Object.fromEntries(
-      positions.map(([label, position]) => [label, describeFingerForRetrieval(fingers, position, average)])
+      positions.map(([label, position]) => [label, describeFingerForRetrieval(fingers, position, average, label)])
     );
   }
   return metrics;
@@ -1709,13 +1710,15 @@ module.exports = async function handler(req, res) {
   async function generatePart(partModules, partIssues, label) {
     let knowledgeContext = {};
     try {
+      const functionModuleCount = partModules.filter(moduleName => FUNCTION_MODULE_FINGER_REQUIREMENTS[moduleName]).length;
+      const maxReportItems = functionModuleCount ? Math.min(1 + functionModuleCount * 2, 5) : 3;
       knowledgeContext = buildReportKnowledgePromptContext(
         buildReportKnowledgeContextInput(
           { ...payload, selectedIssues: partIssues },
           partModules,
           tier
         ),
-        { topK: 3, maxReportItems: 3, maxRiskItems: 2 }
+        { topK: 4, maxReportItems, maxRiskItems: 2 }
       );
       console.info('[gen-report] knowledge_context', label, JSON.stringify({
         mode: knowledgeContext.mode,
