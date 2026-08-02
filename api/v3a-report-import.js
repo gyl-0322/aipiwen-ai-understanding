@@ -620,7 +620,6 @@ async function handleInterpretationGenerate(config, session, res, body, advisorU
   }
   const limit = dependencies.consumeRateLimit || consumeRateLimit;
   const generate = dependencies.callClaude || callClaude;
-  await limit(config, 'interpretation-generate-advisor', advisorUserId, 10, 3600);
   const context = await loadInterpretationContext(config, session, input.clientId, input.reportId);
   const existing = context.report.interpretation_data;
   if (existing?.id && Array.isArray(existing.steps)) {
@@ -629,6 +628,7 @@ async function handleInterpretationGenerate(config, session, res, body, advisorU
       reused: true
     });
   }
+  await limit(config, 'interpretation-generate-advisor', advisorUserId, 10, 3600);
 
   const prompt = interpretation.buildPrompt(context.report, context.client, input);
   let steps;

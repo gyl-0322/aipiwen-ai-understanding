@@ -119,6 +119,10 @@ function response(status, payload) {
   };
 }
 
+function normalizeEq(value) {
+  return String(value || '').replace(/^eq\./, '');
+}
+
 function responseHarness() {
   return {
     statusCode: null,
@@ -133,9 +137,12 @@ async function testBffFlows() {
   const reportId = '11111111-1111-4111-8111-111111111111';
   const clientId = '22222222-2222-4222-8222-222222222222';
   const advisorId = '33333333-3333-4333-8333-333333333333';
+  const secondReportId = '44444444-4444-4444-8444-444444444444';
+  const secondClientId = '55555555-5555-4555-8555-555555555555';
   const session = { csrfToken: 'TEST_CSRF_NOT_REAL', record: { accessToken: 'TEST_ACCESS_TOKEN_NOT_REAL' } };
   const config = { supabaseUrl: 'https://project.supabase.co', anonKey: 'TEST_ANON_KEY_NOT_REAL' };
   let stored = null;
+  let secondStored = null;
   let hideReport = false;
   const calls = [];
   try {
@@ -144,9 +151,14 @@ async function testBffFlows() {
       const body = init.body ? JSON.parse(init.body) : null;
       calls.push({ url, init, body });
       if (url.pathname === '/rest/v1/advisor_reports') {
+        const requestedReportId = normalizeEq(url.searchParams.get('id'));
+        const requestedClientId = normalizeEq(url.searchParams.get('advisor_client_id'));
+        const isSecond = requestedReportId === secondReportId && requestedClientId === secondClientId;
+        const isFirst = requestedReportId === reportId && requestedClientId === clientId;
+        if (!isFirst && !isSecond) return response(200, []);
         return response(200, hideReport ? [] : [{
-          id: reportId,
-          advisor_client_id: clientId,
+          id: isSecond ? secondReportId : reportId,
+          advisor_client_id: isSecond ? secondClientId : clientId,
           status: 'ready',
           structured_input: {
             reportType: '儿童天赋报告',
@@ -157,26 +169,31 @@ async function testBffFlows() {
           },
           generated_report: { sections: [{ title: '摘要', content: '报告内容' }] },
           age_at_report: 8,
-          interpretation_data: stored,
+          interpretation_data: isSecond ? secondStored : stored,
           created_at: '2026-07-30T00:00:00Z',
           updated_at: '2026-07-30T00:00:00Z'
         }]);
       }
       if (url.pathname === '/rest/v1/advisor_clients') {
+        const requestedClientId = normalizeEq(url.searchParams.get('id'));
+        const isSecond = requestedClientId === secondClientId;
+        if (requestedClientId !== clientId && !isSecond) return response(200, []);
         return response(200, [{
-          id: clientId,
-          display_name: '隔离测试客户',
+          id: isSecond ? secondClientId : clientId,
+          display_name: isSecond ? '第二位隔离测试客户' : '隔离测试客户',
           birth_date: '2018-01-01',
           created_at: '2026-07-30T00:00:00Z'
         }]);
       }
       if (url.pathname.endsWith('/rpc/v3a_save_advisor_interpretation')) {
-        stored = body.p_interpretation_data;
+        if (body.p_report_id === secondReportId) secondStored = body.p_interpretation_data;
+        else stored = body.p_interpretation_data;
+        const saved = body.p_report_id === secondReportId ? secondStored : stored;
         return response(200, {
-          reportId,
-          interpretationId: stored.id,
-          status: stored.status,
-          updatedAt: stored.updatedAt
+          reportId: body.p_report_id,
+          interpretationId: saved.id,
+          status: saved.status,
+          updatedAt: saved.updatedAt
         });
       }
       throw new Error(`unexpected fetch ${url.pathname}`);
@@ -209,6 +226,7 @@ async function testBffFlows() {
     assert(stored && stored.status === 'generated', '生成结果必须经 RPC 保存');
 
     let reusedCalledModel = false;
+    let reusedConsumedQuota = false;
     const reusedRes = responseHarness();
     await reportTest.handleInterpretationGenerate(config, session, reusedRes, {
       clientId,
@@ -216,7 +234,9 @@ async function testBffFlows() {
       clientConcerns: [],
       customNotes: ''
     }, advisorId, {
-      consumeRateLimit: async () => {},
+      consumeRateLimit: async () => {
+        reusedConsumedQuota = true;
+      },
       callClaude: async () => {
         reusedCalledModel = true;
         throw new Error('已有方案不得再次调用模型');
@@ -225,6 +245,21 @@ async function testBffFlows() {
     assert.equal(reusedRes.statusCode, 200, '已有方案必须直接返回');
     assert.equal(reusedRes.body.reused, true, '已有方案必须标记 reused');
     assert.equal(reusedCalledModel, false, '已有方案不得重复生成');
+    assert.equal(reusedConsumedQuota, false, '读取已有方案不得消耗新方案生成额度');
+
+    const secondGenerateRes = responseHarness();
+    await reportTest.handleInterpretationGenerate(config, session, secondGenerateRes, {
+      clientId: secondClientId,
+      reportId: secondReportId,
+      clientConcerns: [],
+      customNotes: ''
+    }, advisorId, {
+      consumeRateLimit: async () => {},
+      callClaude: async () => ({ text: JSON.stringify({ steps: validSteps }), finishReason: 'stop' })
+    });
+    assert.equal(secondGenerateRes.statusCode, 200, '同一指导师的第二位客户也必须生成成功');
+    assert(secondStored && secondStored.status === 'generated', '第二位客户方案必须独立保存');
+    assert.notEqual(secondStored.id, stored.id, '不同客户不得复用同一个解读方案标识');
 
     const saveRes = responseHarness();
     await reportTest.handleInterpretationSave(config, session, saveRes, {
