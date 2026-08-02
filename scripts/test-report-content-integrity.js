@@ -152,6 +152,9 @@ assert(!sandbox.isRequiredModuleComplete('TRC（认知结构）', wrongTrcRange,
 const wrongAtdRange = `当前ATD为39，处于敏感灵活型，也落在小学阶段常见的中高频区间。这个节奏说明启动和反应都很灵活，神经系统自带一枚微调旋钮。学习和沟通时可以先给清楚边界，再观察真实反应。`.repeat(4);
 assert(!sandbox.isRequiredModuleComplete('ATD（感受/反应节奏）', wrongAtdRange, fingers, engineResult), 'ATD 无来源区间或神经系统强表达没有被拦截');
 
+const observedAtdBiology = `当前ATD为39，处于敏感灵活型。这个数值意味着他的神经系统对信息的初筛非常细腻，像一台调得很准的收音机。学习时可以把任务拆小，沟通时留出一点反应时间，再结合真实行为持续观察。`.repeat(4);
+assert(!sandbox.isRequiredModuleComplete('ATD（感受/反应节奏）', observedAtdBiology, fingers, engineResult), '把 ATD 直接解释成神经系统特征时没有被拦截');
+
 const wrongBrainNumbers = correctBrain
   .replace('左脑数值为59', '左脑数值为72')
   .replace('右脑数值为72', '右脑数值为59');
@@ -159,6 +162,9 @@ assert(!sandbox.isRequiredModuleComplete('左右脑（信息处理风格）', wr
 
 const innateBrainMetaphor = `你在任务里会反复核对细节，大脑里天生装着一台反向校验仪。遇到不确定的信息时，你会先停下来观察，再寻找更清楚的证据。学习上可以把标准说清楚，沟通时给一点整理时间，让这种谨慎成为可用的力量。`.repeat(5);
 assert(!sandbox.isRequiredModuleComplete('性格类型（核心行为外显模块）', innateBrainMetaphor, fingers, engineResult), '脑内天生装着能力的强结论没有被拦截');
+
+const observedDevelopmentClaim = `当前行为模式为动机型。小学阶段的孩子本就处在规则意识快速扎根的年纪，而这种天然倾向会让他更在意任务有没有意义。家长可以把要求换成一个具体场景，让孩子先说出自己想完成的第一步，再观察真实变化。`.repeat(5);
+assert(!sandbox.isRequiredModuleComplete('行为模式（行为解释系统）', observedDevelopmentClaim, fingers, engineResult), '没有来源的年龄发展规律或天然倾向没有被拦截');
 
 const normalized = sandbox.normalizeSections([
   { title:'精神功能（拇指系统）', type:'required', content:'右拇31，左拇31。' },
