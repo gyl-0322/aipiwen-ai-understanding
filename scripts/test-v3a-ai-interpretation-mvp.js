@@ -17,6 +17,7 @@ assert(exists(helperPath), '缺少 AI 解读输出校验模块');
 
 const migration = read(migrationPath);
 const reportBff = read('api/v3a-report-import.js');
+const aiLib = read('api/_lib.js');
 const helperSource = read(helperPath);
 const sessionHtml = read('ai-interpreter-session.html');
 const sessionJs = read('static/ai-interpreter.js');
@@ -49,6 +50,8 @@ assert(!exists('api/v3a-generate-interpretation.js'), '不得新增第 13 个 Se
 
 assert(/require\('\.\.\/server\/v3a-interpretation'\)/.test(reportBff), '报告 BFF 必须复用解读安全模块');
 assert(/callClaude/.test(reportBff) && /MODEL_FREE/.test(reportBff), '必须复用现有 AI 调用封装');
+assert(/responseFormat/.test(aiLib) && /body\.response_format = responseFormat/.test(aiLib),
+  'AI 调用封装必须支持可选 JSON 输出模式');
 assert(/action === 'interpretation'/.test(reportBff), '报告 BFF 必须登记 interpretation action');
 assert(/v3a_save_advisor_interpretation/.test(reportBff), '保存必须调用受控 RPC');
 assert(/consumeRateLimit/.test(reportBff) && /interpretation-generate-advisor/.test(reportBff),
@@ -267,6 +270,7 @@ async function testBffFlows() {
         truncatedAttempts += 1;
         assert.equal(options.timeoutMs, 45000, '首次 AI 请求必须保留完整生成时间');
         assert.equal(options.maxTokens, 3500, 'AI 输出上限必须受控，避免生成时间失控');
+        assert.deepEqual(options.responseFormat, { type: 'json_object' }, 'AI 解读必须启用模型 JSON 输出模式');
         return truncatedAttempts === 1
           ? { text: JSON.stringify({ steps: validSteps }), finishReason: 'length' }
           : { text: JSON.stringify({ steps: validSteps }), finishReason: 'stop' };

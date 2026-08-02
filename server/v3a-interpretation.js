@@ -150,7 +150,8 @@ function buildPrompt(report, client, input) {
     '四条规则：1.数值没有好坏；2.不做未来预测；3.不贴标签；4.不与他人比较。',
     `报告资料：${compactReportData(report, client, input)}`,
     `固定步骤：${STEP_TITLES.map((title, index) => `${index}.${title}`).join('；')}`,
-    '每步必须包含stepIndex、title、why、say、ask、no、action、risk；六个内容字段均为1-6条字符串数组。',
+    '每步必须包含stepIndex、title、why、say、ask、no、action、risk；stepIndex按0至7排列，title使用对应固定步骤标题。',
+    '每个步骤必须严格使用数组字段，例如：{"stepIndex":0,"title":"建立安全感","why":["说明"],"say":["话术"],"ask":["问题"],"no":["禁语"],"action":["行动"],"risk":["提醒"]}。',
     '为保证生成稳定，每个内容字段只写1条，单条不超过60个汉字。',
     '输出格式：{"steps":[...]}'
   ].join('\n');

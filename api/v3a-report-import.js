@@ -642,7 +642,8 @@ async function handleInterpretationGenerate(config, session, res, body, advisorU
           messages: [{ role: 'user', content: prompt.user }],
           maxTokens: 3500,
           timeoutMs: Math.min(45000, generationDeadline - Date.now()),
-          retries: 0
+          retries: 0,
+          responseFormat: { type: 'json_object' }
         });
         if (['length', 'max_tokens'].includes(normalize(result?.finishReason).toLowerCase())) {
           const error = new Error('AI_OUTPUT_INVALID');
