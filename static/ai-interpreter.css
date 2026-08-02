@@ -917,7 +917,38 @@ button.table-row {
 
 .customer-table .table-head,
 .customer-table .table-row {
-  grid-template-columns: 1fr 1.35fr .95fr .85fr .78fr .72fr .85fr 52px;
+  grid-template-columns: 1fr 1.35fr .95fr .85fr .78fr .72fr .85fr 92px;
+}
+
+.customer-start-button {
+  min-height: 32px;
+  padding: 6px 9px;
+  white-space: nowrap;
+}
+
+.import-file-actions .field {
+  max-width: 520px;
+}
+
+.finger-confirm-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.finger-confirm-row {
+  display: grid;
+  grid-template-columns: 42px minmax(86px, 1fr) minmax(86px, 1fr);
+  align-items: center;
+  gap: 8px;
+}
+
+.import-confirm-check {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  color: var(--muted);
+  line-height: 1.6;
 }
 
 .review-table .table-head,
@@ -2319,6 +2350,10 @@ body[data-page="advisor"] .value-card {
   }
 
   .searchbar {
+    grid-template-columns: 1fr;
+  }
+
+  .finger-confirm-grid {
     grid-template-columns: 1fr;
   }
 

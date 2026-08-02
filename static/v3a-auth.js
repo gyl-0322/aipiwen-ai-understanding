@@ -203,7 +203,6 @@
     const messageSelector = '#v3a-login-message';
     const passwordMessageSelector = '#v3a-password-login-message';
     if (!form || !sendButton) return;
-    const stayOnLoginHome = new URLSearchParams(window.location.search).has('home');
 
     function showPhoneLoginStatus(enabled, unavailable = false) {
       const status = $('#v3a-phone-login-status');
@@ -325,16 +324,6 @@
     } catch (error) {
       showPhoneLoginStatus(false, true);
       showMessage(messageSelector, error.message);
-    }
-
-    if (!stayOnLoginHome) {
-      try {
-        const current = await requestSession('me');
-        routeByStatus(current.me, messageSelector);
-        return;
-      } catch (error) {
-        if (error.status !== 401) showMessage(messageSelector, error.message);
-      }
     }
 
     sendButton.addEventListener('click', async () => {

@@ -35,14 +35,15 @@ for (const [page, title] of pages) {
   assert(source.includes('data-v3a-auth-page="workbench" hidden'), `页面必须先通过真实登录校验：${page}`);
   assert(source.includes('static/v3a-auth.js'), `页面必须加载 V3a 认证脚本：${page}`);
   assert(source.includes('static/ai-interpreter.js'), `页面必须加载旧工作台交互脚本：${page}`);
-  assert(source.includes('<strong>学习示例</strong>') || source.includes('功能预览') || source.includes(experienceNotice),
+  assert(page === 'ai-interpreter-session.html' || source.includes('<strong>学习示例</strong>') || source.includes('功能预览') || source.includes(experienceNotice),
     `页面必须明确标注学习示例或功能预览：${page}`);
   assert(source.includes('id="v3a-workbench-error" hidden') &&
     source.includes('id="v3a-workbench-error-message"'),
     `受保护页面必须包含非白屏错误边界：${page}`);
   assert(!/V1\.1|V2 Dry-run|Static Demo|Prototype|Emma|解读师/.test(source),
     `用户可见页面仍包含研发历史或旧角色文案：${page}`);
-  assert(source.includes(`<h1>${title}</h1>`) || source.includes(`<h1>${title} · 王小明的妈妈</h1>`),
+  assert(source.includes(`<h1>${title}</h1>`) ||
+    (page === 'ai-interpreter-session.html' && source.includes('id="session-client-title">AI解读助手</h1>')),
     `页面标题不符合旧工作台栏目：${page}`);
 
   const hrefs = Array.from(source.matchAll(/href="([^"#][^"]*\.html)"/g)).map((match) => match[1]);
@@ -63,7 +64,7 @@ for (const [page, title] of pages) {
 const navLinks = [
   'ai-interpreter-workbench.html',
   'ai-interpreter-customers.html',
-  'ai-interpreter-session.html',
+  'ai-interpreter-customers.html?intent=interpret',
   'ai-interpreter-training.html',
   'ai-interpreter-review.html',
   'ai-interpreter-cases.html'
@@ -99,17 +100,17 @@ assert(session.includes('id="next-step"') && session.includes('id="prev-step"') 
   'AI 解读助手页必须保留步骤切换按钮');
 assert(session.includes('id="ai-why"') && session.includes('id="ai-say"') && session.includes('id="ai-risk"'),
   'AI 解读助手页必须保留右栏话术渲染容器');
-assert(session.includes('id="generate-plan"') && session.includes('id="credit-modal"'),
-  'AI 解读助手页必须保留生成方案开放提示');
-assert((session.includes('AI 方案生成功能即将开放') || session.includes('当前不会扣减积分')) &&
+assert(!session.includes('id="generate-plan"') && /await generateInterpretation\(\)/.test(read('static/ai-interpreter.js')),
+  'AI 解读助手必须在首次进入时自动生成方案，不保留重复生成按钮');
+assert(session.includes('id="save-interpretation"') && !session.includes('id="credit-modal"') &&
   !/ZHANGWEI01|确认消耗积分|确认消耗|data-modal-current/.test(session),
-  '未接真实扣费前不得展示假扣积分或硬编码邀请码');
+  '真实 AI MVP 必须提供保存且不得展示假扣积分');
 assert(!session.includes('id="v3a-workbench-invite-code"') && !session.includes('邀请码：'),
   'AI 解读助手页顶部不得重复展示邀请码');
 
 const customers = read('ai-interpreter-customers.html');
-assert((customers.match(/class="table-row js-open-session"/g) || []).length >= 2,
-  '我的客户页必须保留两个学习示例客户行的点击交互');
+assert((customers.match(/class="table-row js-open-session"/g) || []).length === 0,
+  '学习示例客户行不得冒充真实解读入口');
 assert(!/data-dryrun-customers|V2 Dry-run/.test(customers),
   '我的客户页不得保留隐藏的旧模拟客户面板');
 assert(!/class="btn[^"]*"[^>]*>进入(?: AI)?解读助手</.test(customers),

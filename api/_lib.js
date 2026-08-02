@@ -282,9 +282,11 @@ async function callClaude({ model, system, messages, maxTokens = 600, cache = fa
       }
       const data = JSON.parse(rawText);
       // OpenAI-compatible 响应格式
-      const text = data.choices?.[0]?.message?.content?.trim() || null;
+      const choice = data.choices?.[0] || null;
+      const text = choice?.message?.content?.trim() || null;
+      const finishReason = choice?.finish_reason || null;
       trackApiSpend(model, data.usage?.prompt_tokens || 0, data.usage?.completion_tokens || 0).catch(() => {});
-      return { text, usage: data.usage || {} };
+      return { text, usage: data.usage || {}, finishReason };
     } catch (e) {
       clearTimeout(timer);
       lastError = e;

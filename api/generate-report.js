@@ -861,6 +861,17 @@ function chunkModules(modules, size) {
   return chunks;
 }
 
+function isCompleteGeneratedPart(text, partModules = [], partIssues = [], finishReason = '') {
+  const value = String(text || '').trim();
+  const reason = String(finishReason || '').toLowerCase();
+  if (!value || reason === 'length' || reason === 'max_tokens') return false;
+  if (!/===END===\s*$/.test(value)) return false;
+  if (!partModules.every(title => value.includes(`===${title}===`))) return false;
+  return partIssues.every(title => (
+    value.includes(`===issue:${title}===`) || value.includes(`===${title}===`)
+  ));
+}
+
 // ── 报告存储处理器（merged from report-store.js）─────────────────────────────
 async function checkStoreRate(ip) {
   const minute = Math.floor(Date.now() / 60000);
@@ -1054,23 +1065,29 @@ module.exports = async function handler(req, res) {
 
   async function generatePart(partModules, partIssues, label) {
     const userMessage = buildUserMessage(engineResult, age, name, partModules, partIssues, fingers, tier);
-    const { text } = await callClaude({
+    const { text, finishReason } = await callClaude({
       model:     MODEL_FREE,       // qwen-plus
       messages: [
         { role: 'system', content: SYSTEM_PROMPT },
         { role: 'user',   content: userMessage },
       ],
-      maxTokens: partIssues.length ? 1300 : 1500,
+      maxTokens: partIssues.length ? 1800 : 2200,
       timeoutMs: 38000,
     });
     if (!text) throw new Error(`${label}_empty_reply`);
+    if (!isCompleteGeneratedPart(text, partModules, partIssues, finishReason)) {
+      const error = new Error(`${label}_incomplete_reply`);
+      error.code = 'AI_REPLY_INCOMPLETE';
+      throw error;
+    }
     return text;
   }
 
   // 单次完整报告已经超过 Vercel 60s 的稳定承载范围；拆成小块并行生成，
-  // 单块失败只局部兜底，避免整份报告常态进入基础兜底。
+  // 每块最多 3 个模块，避免模型在第 4 个模块中途耗尽输出额度。
+  // 单块不完整或失败时整块使用完整兜底，禁止保存半句话。
   const jobs = [
-    ...chunkModules(requiredMods, 4).map((mods, idx) => ({
+    ...chunkModules(requiredMods, 3).map((mods, idx) => ({
       label: `core_${idx + 1}`,
       modules: mods,
       issues: [],
@@ -1125,5 +1142,7 @@ module.exports._test = {
   normalizeAttributionInput,
   getAttributionConfig,
   storeAttribution,
-  handleReportStore
+  handleReportStore,
+  chunkModules,
+  isCompleteGeneratedPart,
 };

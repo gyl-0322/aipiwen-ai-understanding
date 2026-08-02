@@ -47,6 +47,10 @@
       "dest": "/api/v3a-attribution?action=customers"
     },
     {
+      "src": "/api/v3a-generate-interpretation",
+      "dest": "/api/v3a-report-import?action=interpretation"
+    },
+    {
       "src": "/api/v3a-admin/unassigned",
       "dest": "/api/v3a-admin?action=unassigned"
     },

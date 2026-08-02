@@ -12,6 +12,8 @@
 
 const crypto = require('crypto');
 const TRCEngine = require('../lib/trc-engine');
+const { callClaude, MODEL_FREE } = require('./_lib');
+const interpretation = require('../server/v3a-interpretation');
 const {
   HttpError,
   getConfig,
@@ -20,6 +22,7 @@ const {
   loadSession,
   resolveSession,
   requireCsrf,
+  consumeRateLimit,
   readJson
 } = require('../server/v3a-session-store');
 
@@ -34,6 +37,7 @@ const REPORT_TYPES = new Set(['儿童天赋报告', '成人发展报告', '学�
 const MAX_FILE_BYTES = Math.floor(2.5 * 1024 * 1024);
 const MAX_MULTIPART_BYTES = MAX_FILE_BYTES + 64 * 1024;
 const MAX_JSON_BYTES = 20 * 1024;
+const MAX_INTERPRETATION_JSON_BYTES = 72 * 1024;
 const MAX_GENERATED_REPORT_BYTES = 1500 * 1024;
 
 const RPC_ERROR_STATUS = new Map([
@@ -51,7 +55,10 @@ const RPC_ERROR_STATUS = new Map([
   ['REPORT_NOT_FOUND', 404],
   ['INVALID_REPORT_TRANSITION', 409],
   ['INVALID_GENERATED_REPORT', 502],
-  ['INVALID_ERROR_CODE', 500]
+  ['INVALID_ERROR_CODE', 500],
+  ['INTERPRETATION_FORBIDDEN', 403],
+  ['INTERPRETATION_REPORT_NOT_READY', 409],
+  ['INVALID_INTERPRETATION_DATA', 400]
 ]);
 
 function normalize(value) {
@@ -144,12 +151,12 @@ async function readRawBody(req, limit) {
   });
 }
 
-async function readJsonBody(req) {
+async function readJsonBody(req, limit = MAX_JSON_BYTES) {
   const contentType = normalize(req.headers?.['content-type']).toLowerCase();
   if (!contentType.startsWith('application/json')) {
     throw new HttpError(415, '请求格式无效。', 'JSON_REQUIRED');
   }
-  const raw = await readRawBody(req, MAX_JSON_BYTES);
+  const raw = await readRawBody(req, limit);
   try {
     const body = JSON.parse(raw.toString('utf8'));
     if (!body || typeof body !== 'object' || Array.isArray(body)) throw new Error('invalid');
@@ -511,6 +518,204 @@ async function handleConfirm(config, session, res, body, advisorUserId) {
   }
 }
 
+function interpretationHttpError(error) {
+  const code = normalize(error?.code || error?.message);
+  const mapping = {
+    ADVISOR_ID_NOT_ALLOWED: [400, '请求中不得指定指导师。'],
+    INVALID_REPORT_ID: [400, '报告标识无效。'],
+    INVALID_CLIENT_ID: [400, '客户标识无效。'],
+    INVALID_CLIENT_CONCERNS: [400, '客户关注问题格式无效。'],
+    INVALID_CUSTOM_NOTES: [400, '补充说明不能超过 500 字。'],
+    INVALID_INTERPRETATION_ID: [400, '解读方案标识无效。'],
+    AI_OUTPUT_INVALID: [502, 'AI 解读方案格式异常，请稍后重试。'],
+    UNSAFE_AI_OUTPUT: [502, 'AI 解读方案未通过安全检查，请稍后重试。']
+  };
+  const mapped = mapping[code];
+  return mapped ? new HttpError(mapped[0], mapped[1], code) : error;
+}
+
+function publicReportData(report) {
+  const structured = report?.structured_input && typeof report.structured_input === 'object'
+    ? report.structured_input
+    : {};
+  return {
+    reportType: normalize(structured.reportType).slice(0, 60) || '报告',
+    ageAtReport: Number.isInteger(report?.age_at_report) ? report.age_at_report : null,
+    fingers: structured.fingers && typeof structured.fingers === 'object' ? structured.fingers : null,
+    atd: Number.isFinite(Number(structured.atd)) ? Number(structured.atd) : null,
+    engineResult: structured.engineResult && typeof structured.engineResult === 'object'
+      ? structured.engineResult
+      : {},
+    selectedIssues: Array.isArray(structured.selectedIssues)
+      ? structured.selectedIssues.map(normalize).filter(Boolean).slice(0, 6)
+      : [],
+    customIssue: normalize(structured.customIssue).slice(0, 200) || null
+  };
+}
+
+async function loadInterpretationContext(config, session, clientId, reportId) {
+  if (!interpretation.isUuid(reportId)) throw new HttpError(400, '报告标识无效。', 'INVALID_REPORT_ID');
+  if (!interpretation.isUuid(clientId)) throw new HttpError(400, '客户标识无效。', 'INVALID_CLIENT_ID');
+  const reports = await selectRows(config, session, 'advisor_reports', {
+    select: 'id,advisor_client_id,status,structured_input,generated_report,age_at_report,interpretation_data,created_at,updated_at',
+    id: `eq.${reportId}`,
+    advisor_client_id: `eq.${clientId}`,
+    limit: 1
+  }, '解读报告暂时无法读取。');
+  const report = reports[0];
+  if (!report) throw new HttpError(404, '未找到该客户报告。', 'REPORT_NOT_FOUND');
+  if (report.status !== 'ready') {
+    throw new HttpError(409, '报告尚未生成完成，暂时不能创建解读方案。', 'INTERPRETATION_REPORT_NOT_READY');
+  }
+  const clients = await selectRows(config, session, 'advisor_clients', {
+    select: 'id,display_name,birth_date,created_at',
+    id: `eq.${clientId}`,
+    archived_at: 'is.null',
+    limit: 1
+  }, '客户信息暂时无法读取。');
+  const client = clients[0];
+  if (!client) throw new HttpError(404, '未找到该客户。', 'CLIENT_NOT_FOUND');
+  return { report, client };
+}
+
+function interpretationResponse(context, session) {
+  const stored = context.report.interpretation_data;
+  return {
+    ok: true,
+    csrfToken: session.csrfToken,
+    client: {
+      id: context.client.id,
+      displayName: context.client.display_name,
+      birthDate: context.client.birth_date
+    },
+    report: {
+      id: context.report.id,
+      ...publicReportData(context.report),
+      createdAt: context.report.created_at,
+      updatedAt: context.report.updated_at
+    },
+    interpretation: stored && typeof stored === 'object' ? {
+      id: stored.id,
+      status: stored.status,
+      steps: stored.steps,
+      createdAt: stored.createdAt || null,
+      updatedAt: stored.updatedAt || null
+    } : null
+  };
+}
+
+async function handleInterpretationGet(config, session, res, req) {
+  const clientId = normalize(req.query?.clientId);
+  const reportId = normalize(req.query?.reportId);
+  const context = await loadInterpretationContext(config, session, clientId, reportId);
+  return res.status(200).json(interpretationResponse(context, session));
+}
+
+async function handleInterpretationGenerate(config, session, res, body, advisorUserId, dependencies = {}) {
+  let input;
+  try {
+    input = interpretation.validateGenerateBody(body);
+  } catch (error) {
+    throw interpretationHttpError(error);
+  }
+  const limit = dependencies.consumeRateLimit || consumeRateLimit;
+  const generate = dependencies.callClaude || callClaude;
+  await limit(config, 'interpretation-generate-advisor', advisorUserId, 10, 3600);
+  const context = await loadInterpretationContext(config, session, input.clientId, input.reportId);
+  const existing = context.report.interpretation_data;
+  if (existing?.id && Array.isArray(existing.steps)) {
+    return res.status(200).json({
+      ...interpretationResponse(context, session),
+      reused: true
+    });
+  }
+
+  const prompt = interpretation.buildPrompt(context.report, context.client, input);
+  let steps;
+  try {
+    const result = await generate({
+      model: MODEL_FREE,
+      system: prompt.system,
+      messages: [{ role: 'user', content: prompt.user }],
+      maxTokens: 6000,
+      timeoutMs: 50000,
+      retries: 0
+    });
+    steps = interpretation.parseModelText(result?.text);
+  } catch (error) {
+    const safe = interpretationHttpError(error);
+    if (safe instanceof HttpError) throw safe;
+    throw new HttpError(502, 'AI 解读方案暂时无法生成，请稍后重试。', 'INTERPRETATION_GENERATION_FAILED');
+  }
+
+  const now = new Date().toISOString();
+  const data = {
+    version: 1,
+    id: crypto.randomUUID(),
+    status: 'generated',
+    steps,
+    clientConcerns: input.clientConcerns,
+    customNotes: input.customNotes,
+    createdAt: now,
+    updatedAt: now
+  };
+  const saved = await callRpc(config, session, 'v3a_save_advisor_interpretation', {
+    p_report_id: input.reportId,
+    p_interpretation_data: data
+  });
+  return res.status(200).json({
+    ok: true,
+    csrfToken: session.csrfToken,
+    interpretationId: saved?.interpretationId || data.id,
+    status: 'generated',
+    steps
+  });
+}
+
+async function handleInterpretationSave(config, session, res, body) {
+  let input;
+  try {
+    input = interpretation.validateSaveBody(body);
+  } catch (error) {
+    throw interpretationHttpError(error);
+  }
+  const context = await loadInterpretationContext(config, session, input.clientId, input.reportId);
+  const existing = context.report.interpretation_data;
+  if (!existing || existing.id !== input.interpretationId) {
+    throw new HttpError(409, '解读方案状态已变化，请刷新后重试。', 'INTERPRETATION_CONFLICT');
+  }
+  const data = {
+    ...existing,
+    version: 1,
+    id: input.interpretationId,
+    status: 'edited',
+    steps: input.editedSteps,
+    updatedAt: new Date().toISOString()
+  };
+  await callRpc(config, session, 'v3a_save_advisor_interpretation', {
+    p_report_id: input.reportId,
+    p_interpretation_data: data
+  });
+  return res.status(200).json({
+    ok: true,
+    csrfToken: session.csrfToken,
+    interpretationId: input.interpretationId,
+    status: 'edited',
+    steps: input.editedSteps
+  });
+}
+
+async function handleInterpretation(config, session, res, req, advisorUserId) {
+  if (req.method === 'GET') return await handleInterpretationGet(config, session, res, req);
+  const body = await readJsonBody(req, MAX_INTERPRETATION_JSON_BYTES);
+  const operation = normalize(req.query?.operation);
+  if (operation === 'generate') {
+    return await handleInterpretationGenerate(config, session, res, body, advisorUserId);
+  }
+  if (operation === 'save') return await handleInterpretationSave(config, session, res, body);
+  throw new HttpError(400, '不支持的 AI 解读操作。', 'INVALID_ACTION');
+}
+
 async function handleStatus(config, session, res, reportId) {
   if (!isUuid(reportId)) throw new HttpError(400, '报告标识无效。', 'INVALID_REPORT_ID');
   const reports = await selectRows(config, session, 'advisor_reports', {
@@ -552,9 +757,12 @@ async function handler(req, res) {
     const config = getConfig();
     if (req.method === 'POST') requireSameOrigin(req, config);
     const { session, advisorUserId } = await requireActiveAdvisor(config, req, req.method === 'POST');
+    const action = normalize(req.query?.action);
+    if (action === 'interpretation') {
+      return await handleInterpretation(config, session, res, req, advisorUserId);
+    }
     if (req.method === 'GET') return await handleStatus(config, session, res, normalize(req.query?.id));
 
-    const action = normalize(req.query?.action);
     if (action === 'extract') return await handleExtract(config, req, res, advisorUserId);
     if (action === 'confirm') return await handleConfirm(config, session, res, await readJsonBody(req), advisorUserId);
     throw new HttpError(400, '不支持的操作。', 'INVALID_ACTION');
@@ -572,6 +780,10 @@ module.exports._test = {
   ageFromBirthDate,
   callExtract,
   handleConfirm,
+  handleInterpretation,
+  handleInterpretationGenerate,
+  handleInterpretationGet,
+  handleInterpretationSave,
   handleStatus,
   internalOrigin,
   isUuid,
