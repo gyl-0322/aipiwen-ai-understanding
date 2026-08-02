@@ -633,14 +633,15 @@ async function handleInterpretationGenerate(config, session, res, body, advisorU
   const prompt = interpretation.buildPrompt(context.report, context.client, input);
   let steps;
   try {
+    const generationDeadline = Date.now() + 52000;
     for (let attempt = 0; attempt < 2; attempt += 1) {
       try {
         const result = await generate({
           model: MODEL_FREE,
           system: prompt.system,
           messages: [{ role: 'user', content: prompt.user }],
-          maxTokens: 6000,
-          timeoutMs: 24000,
+          maxTokens: 3500,
+          timeoutMs: Math.min(45000, generationDeadline - Date.now()),
           retries: 0
         });
         if (['length', 'max_tokens'].includes(normalize(result?.finishReason).toLowerCase())) {
@@ -658,7 +659,7 @@ async function handleInterpretationGenerate(config, session, res, body, advisorU
           || status === 429
           || status >= 500
           || (!status && code !== 'UNSAFE_AI_OUTPUT');
-        if (!retriable || attempt === 1) throw error;
+        if (!retriable || attempt === 1 || generationDeadline - Date.now() < 8000) throw error;
       }
     }
   } catch (error) {

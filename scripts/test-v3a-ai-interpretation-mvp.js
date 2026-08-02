@@ -60,6 +60,7 @@ assert(!/console\.(?:log|error)\([^\n]*(?:prompt|structured_input|generated_repo
 assert(/const STEP_TITLES/.test(helperSource), '必须冻结 8 步标题');
 assert(/UNSAFE_AI_OUTPUT/.test(helperSource), '必须拒绝不安全 AI 输出');
 assert(/AI_OUTPUT_INVALID/.test(helperSource), '必须拒绝非结构化 AI 输出');
+assert(/每个内容字段只写1条/.test(helperSource), '必须限制模型输出长度，避免 8 步方案生成超时');
 
 assert(!/id="generate-plan"/.test(sessionHtml) && /await generateInterpretation\(\)/.test(sessionJs),
   '首次进入真实报告必须自动生成方案，不保留重复生成按钮');
@@ -264,7 +265,8 @@ async function testBffFlows() {
       consumeRateLimit: async () => {},
       callClaude: async (options) => {
         truncatedAttempts += 1;
-        assert.equal(options.timeoutMs, 24000, '单次 AI 请求必须为第二次尝试保留执行时间');
+        assert.equal(options.timeoutMs, 45000, '首次 AI 请求必须保留完整生成时间');
+        assert.equal(options.maxTokens, 3500, 'AI 输出上限必须受控，避免生成时间失控');
         return truncatedAttempts === 1
           ? { text: JSON.stringify({ steps: validSteps }), finishReason: 'length' }
           : { text: JSON.stringify({ steps: validSteps }), finishReason: 'stop' };

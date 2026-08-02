@@ -151,6 +151,7 @@ function buildPrompt(report, client, input) {
     `报告资料：${compactReportData(report, client, input)}`,
     `固定步骤：${STEP_TITLES.map((title, index) => `${index}.${title}`).join('；')}`,
     '每步必须包含stepIndex、title、why、say、ask、no、action、risk；六个内容字段均为1-6条字符串数组。',
+    '为保证生成稳定，每个内容字段只写1条，单条不超过60个汉字。',
     '输出格式：{"steps":[...]}'
   ].join('\n');
   return { system, user };
