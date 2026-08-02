@@ -31,6 +31,7 @@ assert(coreTokenMatch && Number(coreTokenMatch[1]) >= 1200, '两题一批的问�
 assert(coreTokenMatch && Number(coreTokenMatch[2]) >= 1700, '两个固定模块一批的输出 token 上限不足');
 assert(apiSource.includes('chunkModules(requiredMods, 2)'), '固定模块没有按两个一批拆分，仍有截断风险');
 assert(apiSource.includes('chunkModules(selectedIssues, 2)'), '用户问题没有按两个一批拆分，仍有截断风险');
+assert(apiSource.includes('timeoutMs: 50000'), '模型单批等待时间没有为 Vercel 60 秒上限保留合理收尾空间');
 
 const helperSource = [
   sourceBetween('function getAudienceStyle', '// ── 必给模块'),

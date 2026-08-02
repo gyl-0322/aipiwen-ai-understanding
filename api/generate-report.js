@@ -1599,7 +1599,7 @@ module.exports = async function handler(req, res) {
         { role: 'user',   content: userMessage },
       ],
       maxTokens: partIssues.length ? 1300 : 1800,
-      timeoutMs: 38000,
+      timeoutMs: 50000,
     });
     if (!text) throw new Error(`${label}_empty_reply`);
     return text;
