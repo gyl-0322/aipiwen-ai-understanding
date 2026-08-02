@@ -251,6 +251,52 @@ async function testBffFlows() {
     assert(!JSON.stringify(rpcCall.body).includes(advisorId), '保存 payload 不得携带 advisor id');
 
     stored = null;
+    let truncatedAttempts = 0;
+    const saveCallsBeforeRetry = calls.filter((call) =>
+      call.url.pathname.endsWith('/rpc/v3a_save_advisor_interpretation')).length;
+    const retryRes = responseHarness();
+    await reportTest.handleInterpretationGenerate(config, session, retryRes, {
+      clientId,
+      reportId,
+      clientConcerns: [],
+      customNotes: ''
+    }, advisorId, {
+      consumeRateLimit: async () => {},
+      callClaude: async (options) => {
+        truncatedAttempts += 1;
+        assert.equal(options.timeoutMs, 24000, '单次 AI 请求必须为第二次尝试保留执行时间');
+        return truncatedAttempts === 1
+          ? { text: JSON.stringify({ steps: validSteps }), finishReason: 'length' }
+          : { text: JSON.stringify({ steps: validSteps }), finishReason: 'stop' };
+      }
+    });
+    assert.equal(retryRes.statusCode, 200, '首次输出截断后必须重试并成功');
+    assert.equal(truncatedAttempts, 2, '截断输出只允许额外重试一次');
+    assert.equal(calls.filter((call) =>
+      call.url.pathname.endsWith('/rpc/v3a_save_advisor_interpretation')).length - saveCallsBeforeRetry, 1,
+    '重试成功后只能保存一次解读方案');
+
+    stored = null;
+    let transientAttempts = 0;
+    const transientRes = responseHarness();
+    await reportTest.handleInterpretationGenerate(config, session, transientRes, {
+      clientId,
+      reportId,
+      clientConcerns: [],
+      customNotes: ''
+    }, advisorId, {
+      consumeRateLimit: async () => {},
+      callClaude: async () => {
+        transientAttempts += 1;
+        if (transientAttempts === 1) throw new Error('temporary upstream failure');
+        return { text: JSON.stringify({ steps: validSteps }), finishReason: 'stop' };
+      }
+    });
+    assert.equal(transientRes.statusCode, 200, '瞬时上游失败后必须重试并成功');
+    assert.equal(transientAttempts, 2, '瞬时失败只允许额外重试一次');
+
+    stored = null;
+    let invalidAttempts = 0;
     await assert.rejects(
       () => reportTest.handleInterpretationGenerate(config, session, responseHarness(), {
         clientId,
@@ -259,11 +305,15 @@ async function testBffFlows() {
         customNotes: ''
       }, advisorId, {
         consumeRateLimit: async () => {},
-        callClaude: async () => ({ text: JSON.stringify({ steps: validSteps.slice(0, 7) }) })
+        callClaude: async () => {
+          invalidAttempts += 1;
+          return { text: JSON.stringify({ steps: validSteps.slice(0, 7) }), finishReason: 'stop' };
+        }
       }),
       (error) => error?.code === 'AI_OUTPUT_INVALID',
       '不足 8 步的模型输出必须拒绝且不得保存'
     );
+    assert.equal(invalidAttempts, 2, '格式异常输出只允许额外重试一次');
 
     hideReport = true;
     await assert.rejects(

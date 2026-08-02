@@ -633,15 +633,34 @@ async function handleInterpretationGenerate(config, session, res, body, advisorU
   const prompt = interpretation.buildPrompt(context.report, context.client, input);
   let steps;
   try {
-    const result = await generate({
-      model: MODEL_FREE,
-      system: prompt.system,
-      messages: [{ role: 'user', content: prompt.user }],
-      maxTokens: 6000,
-      timeoutMs: 50000,
-      retries: 0
-    });
-    steps = interpretation.parseModelText(result?.text);
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      try {
+        const result = await generate({
+          model: MODEL_FREE,
+          system: prompt.system,
+          messages: [{ role: 'user', content: prompt.user }],
+          maxTokens: 6000,
+          timeoutMs: 24000,
+          retries: 0
+        });
+        if (['length', 'max_tokens'].includes(normalize(result?.finishReason).toLowerCase())) {
+          const error = new Error('AI_OUTPUT_INVALID');
+          error.code = 'AI_OUTPUT_INVALID';
+          throw error;
+        }
+        steps = interpretation.parseModelText(result?.text);
+        break;
+      } catch (error) {
+        const code = normalize(error?.code || error?.message);
+        const status = Number(error?.status || 0);
+        const retriable = code === 'AI_OUTPUT_INVALID'
+          || error?.name === 'AbortError'
+          || status === 429
+          || status >= 500
+          || (!status && code !== 'UNSAFE_AI_OUTPUT');
+        if (!retriable || attempt === 1) throw error;
+      }
+    }
   } catch (error) {
     const safe = interpretationHttpError(error);
     if (safe instanceof HttpError) throw safe;
