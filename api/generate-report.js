@@ -792,8 +792,8 @@ function coreModuleFallback(title, engineResult, tier = 'adult', fingers = null)
   const atd = engineResult?.['ATD'] || {};
   const type = engineResult?.['主性格类型'] || '当前类型';
   const audience = getAudienceStyle(tier);
-  const avg = fp['个人均值'] || '当前均值';
-  const total = fp['总TRC'] || '当前总量';
+  const avg = fp['个人均值'] ?? '当前均值';
+  const total = fp['总TRC'] ?? '当前总量';
   const fingerValue = (position) => {
     const value = Number(fingers?.[position]?.trc);
     return Number.isFinite(value) ? value : null;
@@ -843,7 +843,7 @@ function coreModuleFallback(title, engineResult, tier = 'adult', fingers = null)
     if (v <= a - 5) return '低于个人均值，属于更需要节奏、方法和环境支持的入口';
     return '接近个人均值，属于相对均衡、需要看具体场景调动的入口';
   };
-  const valueOf = (zone) => fp[zone] || '—';
+  const valueOf = (zone) => fp[zone] ?? '—';
 
   const lines = {
     '严正申明四原则': [
@@ -858,12 +858,12 @@ function coreModuleFallback(title, engineResult, tier = 'adult', fingers = null)
     ],
     'ATD（感受/反应节奏）': [
       `①是什么：ATD可以理解为一个人接收刺激、产生反应和进入状态的节奏。它更接近“速度感”和“敏感度”，不是好坏分数。`,
-      `②对你意味着什么：当前ATD为${atd['值'] || '未识别'}，处于${atd['分区'] || '待确认'}。节奏偏快时容易反应灵敏、先感觉到变化，也可能急；节奏偏慢时更稳、更能沉住气，也可能需要更多启动时间。`,
+      `②对你意味着什么：当前ATD为${atd['值'] ?? '未识别'}，处于${atd['分区'] || '待确认'}。节奏偏快时容易反应灵敏、先感觉到变化，也可能急；节奏偏慢时更稳、更能沉住气，也可能需要更多启动时间。`,
       `③怎么应用：学习和沟通时，不要只催结果，要给出清楚边界、启动信号和缓冲时间；当节奏被看懂，反应就更容易变成配合，而不是对抗。`
     ],
     '左右脑（信息处理风格）': [
       `①是什么：左右脑代表信息处理风格的偏向。左脑更偏语言、逻辑、目标和规则，右脑更偏画面、感受、关系和整体直觉。`,
-      `②对你意味着什么：当前左右脑表现为${brain['结论'] || '相对均衡'}，左脑占比${brain['左脑占比'] || '未识别'}%。偏左时更需要逻辑和步骤，偏右时更需要画面、情境和感受连接；均衡时则要看具体任务调动哪一边。`,
+      `②对你意味着什么：当前左脑数值为${brain['左脑'] ?? '未识别'}，右脑数值为${brain['右脑'] ?? '未识别'}，左脑占比${brain['左脑占比'] ?? '未识别'}%，整体表现为${brain['结论'] || '相对均衡'}。偏左时更需要逻辑和步骤，偏右时更需要画面、情境和感受连接；均衡时则要看具体任务调动哪一边。`,
       `③怎么应用：学习上可以把抽象内容转成步骤或图像；沟通上先用对方听得懂的方式进入，再谈要求，决策时也允许自己既看事实，也看身体和情绪给出的提醒。`
     ],
     '性格类型（核心行为外显模块）': [
@@ -1206,12 +1206,29 @@ const FORBIDDEN_REPORT_ASSERTIONS = [
   /神经地图/,
   /神经气质/,
   /神经元越用越密/,
-  /神经系统.{0,24}(?:证明|决定|注定|固定)/,
+  /神经系统.{0,24}(?:自带|天生|天然|装着|证明|决定|注定|固定)/,
+  /(?:大脑|脑内).{0,24}(?:自带|天生|天然|装着|证明|决定|注定|固定)/,
   /(?:生来|天生).{0,18}(?:决定|注定|就是|一定)/,
   /(?:生来|天生).{0,18}(?:懂|擅长|拥有|具备)/,
   /(?:左脑|右脑).{0,12}(?:共情力|情商|人格|性格|命运)/,
   /未来一定/,
 ];
+
+const UNSUPPORTED_NORMATIVE_ASSERTIONS = [
+  /(?:常见|正常|平均).{0,12}(?:区间|范围|水平|位置)/,
+  /(?:同龄|年龄阶段|幼儿阶段|小学阶段|中学阶段|成年阶段).{0,20}(?:区间|范围|水平|中段|偏高|偏低)/,
+];
+
+function explicitMetricValues(text, labelPattern) {
+  const pattern = new RegExp(`${labelPattern}(?:活跃度|数值|总量|值|占比)?(?:为|是|=|:|：)?\\s*(\\d+(?:\\.\\d+)?)\\s*%?`, 'g');
+  return [...text.matchAll(pattern)].map(match => Number(match[1]));
+}
+
+function hasOnlyExpectedMetric(text, labelPattern, expected) {
+  if (!Number.isFinite(expected)) return false;
+  const values = explicitMetricValues(text, labelPattern);
+  return values.length > 0 && values.every(value => Math.abs(value - expected) < 0.05);
+}
 
 function isRequiredModuleComplete(title, content, fingers = null, engineResult = null) {
   const text = stripRequiredModuleScaffold(content).replace(/\s+/g, ' ').trim();
@@ -1229,14 +1246,30 @@ function isRequiredModuleComplete(title, content, fingers = null, engineResult =
     return ['数值', '预测', '均值', '标签'].filter(term => text.includes(term)).length >= 3;
   }
   if (title === 'TRC（认知结构）') {
-    const comparesTotalWithSingleAverage = /(?:总\s*TRC|总量).{0,35}(?:高于|低于|接近|超过).{0,15}个人均值|个人均值.{0,35}(?:高于|低于|接近|超过).{0,15}(?:总\s*TRC|总量)/i;
-    return !comparesTotalWithSingleAverage.test(text) && text.includes('TRC') && /个人均值|总TRC/.test(text);
+    const comparesTotalWithSingleAverage = /(?:总\s*TRC|总量)[^。！？；;\n]{0,35}(?:高于|低于|接近|超过)[^。！？；;\n]{0,15}个人均值|个人均值[^。！？；;\n]{0,35}(?:高于|低于|接近|超过)[^。！？；;\n]{0,15}(?:总\s*TRC|总量)/i;
+    const expectedTotal = Number(engineResult?.['五功能区']?.['总TRC']);
+    const expectedAverage = Number(engineResult?.['五功能区']?.['个人均值']);
+    return !comparesTotalWithSingleAverage.test(text)
+      && !UNSUPPORTED_NORMATIVE_ASSERTIONS.some(pattern => pattern.test(text))
+      && hasOnlyExpectedMetric(text, '(?:总\\s*TRC|TRC\\s*总量)', expectedTotal)
+      && hasOnlyExpectedMetric(text, '个人均值', expectedAverage);
   }
   if (title === 'ATD（感受/反应节奏）') {
-    return text.includes('ATD') && /节奏|反应|启动/.test(text);
+    const expectedAtd = Number(engineResult?.['ATD']?.['值']);
+    const expectedZone = String(engineResult?.['ATD']?.['分区'] || '').trim();
+    return hasOnlyExpectedMetric(text, 'ATD', expectedAtd)
+      && (!expectedZone || text.includes(expectedZone))
+      && !UNSUPPORTED_NORMATIVE_ASSERTIONS.some(pattern => pattern.test(text))
+      && /节奏|反应|启动/.test(text);
   }
   if (title === '左右脑（信息处理风格）') {
-    return text.includes('左脑') && text.includes('右脑') && /信息|逻辑|画面|感受|决策/.test(text);
+    const expectedLeft = Number(engineResult?.['左右脑']?.['左脑']);
+    const expectedRight = Number(engineResult?.['左右脑']?.['右脑']);
+    const expectedLeftPercent = Number(engineResult?.['左右脑']?.['左脑占比']);
+    return hasOnlyExpectedMetric(text, '左脑(?!占比)', expectedLeft)
+      && hasOnlyExpectedMetric(text, '右脑(?!占比)', expectedRight)
+      && hasOnlyExpectedMetric(text, '左脑占比', expectedLeftPercent)
+      && /信息|逻辑|画面|感受|决策/.test(text);
   }
 
   const fingerNames = FUNCTION_MODULE_FINGER_REQUIREMENTS[title];

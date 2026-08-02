@@ -64,7 +64,7 @@ const engineResult = {
   },
   学习通道:{ 主通道:'听觉型' },
   行为模式:{ 结论:'动机型' },
-  左右脑:{ 结论:'右脑型', 左脑占比:45 },
+  左右脑:{ 结论:'右脑型', 左脑:59, 右脑:72, 左脑占比:45 },
   ATD:{ 值:39, 分区:'敏感灵活型' },
 };
 
@@ -90,6 +90,11 @@ for (const boundary of [0, 40]) {
   assert(
     sandbox.validateReportNumericConsistency(sample.fingers, sample.engineResult) === null,
     `单指边界值 ${boundary} 未通过数值一致性校验`
+  );
+  const trcFallback = sandbox.coreModuleFallback('TRC（认知结构）', sample.engineResult, 'adult', sample.fingers);
+  assert(
+    sandbox.isRequiredModuleComplete('TRC（认知结构）', trcFallback, sample.fingers, sample.engineResult),
+    `单指边界值 ${boundary} 的 TRC 兜底未保留真实数值`
   );
 }
 assert(
@@ -134,6 +139,27 @@ assert(!sandbox.isRequiredModuleComplete('TRC（认知结构）', '当前总TRC�
 assert(!sandbox.isRequiredModuleComplete('ATD（感受/反应节奏）', '你生来带着一套特别的神经地图。ATD39说明神经系统已经证明了你的固定反应。'.repeat(8), fingers, engineResult), '脑科学或命定化强断言没有被拦截');
 assert(!sandbox.isRequiredModuleComplete('左右脑（信息处理风格）', '你天生懂语言韵律，右脑的共情力决定了你在人际中的固定表现。'.repeat(12), fingers, engineResult), '隐性脑科学或天生能力强断言没有被拦截');
 
+const correctTrc = sandbox.coreModuleFallback('TRC（认知结构）', engineResult, 'school', fingers);
+const correctAtd = sandbox.coreModuleFallback('ATD（感受/反应节奏）', engineResult, 'school', fingers);
+const correctBrain = sandbox.coreModuleFallback('左右脑（信息处理风格）', engineResult, 'school', fingers);
+assert(sandbox.isRequiredModuleComplete('TRC（认知结构）', correctTrc, fingers, engineResult), '正确 TRC 页被误判为不完整');
+assert(sandbox.isRequiredModuleComplete('ATD（感受/反应节奏）', correctAtd, fingers, engineResult), '正确 ATD 页被误判为不完整');
+assert(sandbox.isRequiredModuleComplete('左右脑（信息处理风格）', correctBrain, fingers, engineResult), '正确左右脑页被误判为不完整');
+
+const wrongTrcRange = `当前总TRC为131，个人均值为13.1，落在儿童常见区间中段偏上。这个判断说明当前吸收容量处于同龄人的常见水平。学习时可以分块输入，沟通时减少连续指令，再结合真实表现观察和校正。`.repeat(4);
+assert(!sandbox.isRequiredModuleComplete('TRC（认知结构）', wrongTrcRange, fingers, engineResult), '没有来源的 TRC 同龄区间判断没有被拦截');
+
+const wrongAtdRange = `当前ATD为39，处于敏感灵活型，也落在小学阶段常见的中高频区间。这个节奏说明启动和反应都很灵活，神经系统自带一枚微调旋钮。学习和沟通时可以先给清楚边界，再观察真实反应。`.repeat(4);
+assert(!sandbox.isRequiredModuleComplete('ATD（感受/反应节奏）', wrongAtdRange, fingers, engineResult), 'ATD 无来源区间或神经系统强表达没有被拦截');
+
+const wrongBrainNumbers = correctBrain
+  .replace('左脑数值为59', '左脑数值为72')
+  .replace('右脑数值为72', '右脑数值为59');
+assert(!sandbox.isRequiredModuleComplete('左右脑（信息处理风格）', wrongBrainNumbers, fingers, engineResult), '左右脑真实数值被调换时没有被拦截');
+
+const innateBrainMetaphor = `你在任务里会反复核对细节，大脑里天生装着一台反向校验仪。遇到不确定的信息时，你会先停下来观察，再寻找更清楚的证据。学习上可以把标准说清楚，沟通时给一点整理时间，让这种谨慎成为可用的力量。`.repeat(5);
+assert(!sandbox.isRequiredModuleComplete('性格类型（核心行为外显模块）', innateBrainMetaphor, fingers, engineResult), '脑内天生装着能力的强结论没有被拦截');
+
 const normalized = sandbox.normalizeSections([
   { title:'精神功能（拇指系统）', type:'required', content:'右拇31，左拇31。' },
   { title:'视觉功能（小指系统）', type:'required', content:'你看黑板时会先扫过整体——' },
@@ -155,6 +181,8 @@ console.log(JSON.stringify({
     'function_ranking',
     'truncated_modules',
     'unsafe_assertions',
+    'core_metric_values',
+    'unsupported_normative_ranges',
     'natural_safe_fallback',
   ],
 }, null, 2));
