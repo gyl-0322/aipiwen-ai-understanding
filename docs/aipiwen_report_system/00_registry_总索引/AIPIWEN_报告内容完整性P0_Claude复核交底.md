@@ -77,21 +77,24 @@
 - `node scripts/test-report-content-integrity.js`
 - `node scripts/test-report-issue-answer-modes.js`：12 类回答模式通过，4 个代表问题标题和正文差异保留。
 - `node scripts/test-report-upload-p0.js`：12/12 通过。
+- `node scripts/test-v3a-advisor-report-import.js`：93 项指导师报告导入检查通过；上传页和 V3 导入 API 均传入完整 `fingers`。
 - `git diff --check`
+- GitHub `report-issue-contract`：通过。
+- Vercel Preview 真实模型调用：45 秒返回，`degraded:false`，12 个固定模块和 4 个问题全部返回。
+- Preview 数值检查：右拇 14、左拇 17，未复制精神合计 31；左中 16 高于右中 7；听觉 29 未误写为最高。
+- Preview 内容检查：无固定模块截断、无禁用强断言、4 个问题正文相互独立。
 
-## 6. 请 Claude 重点复核
+## 6. Claude 独立复核结论
 
-1. `isRequiredModuleComplete()` 的正则是否会把合法中文表达误判为不完整。
-2. “单指与均值比较”和“左右差异比较”是否存在漏网的错误数值表达。
-3. 2800 tokens + 38 秒的单批策略在当前 Vercel/Qwen 环境下是否可能增加超时率。
-4. 输入端要求 `fingers` 完整是否会影响任何历史调用者；当前 `report-upload.html` 的正式调用已传入 `ST.fingers`。
-5. 安全补齐内容是否足够自然，是否需要在不改页面结构的前提下再增加年龄场景。
+- 代码层面通过，未发现新的 P0 阻塞问题。
+- Claude 提出的中文省略号结尾缺口、0/40 边界测试和隐性脑科学断言缺口已补充并通过回归。
+- 仓库调用方已核验：`report-upload.html` 与 `api/v3a-report-import.js` 均传入完整十指对象。
+- Claude 对 2800 tokens 的速度估算与 Preview 实测不符；已依据三轮 Preview 收敛为“固定模块 2 页一批、问题 2 题一批、50 秒单批等待”。
 
 ## 7. 尚未证明的事项
 
-- 尚未在 Vercel Preview 中调用真实模型重新生成完整报告。
 - 尚未使用真实上传图片走完从识别到报告的全链路。
 - 尚未部署生产环境。
 - 尚未声称“线上已修好”。
 
-下一道门应是：代码复核通过后推送隔离分支，仅做 Preview，用同一份真实数据重新生成报告，再核对 12 个固定模块、五大功能单指数值、左右方向、四问差异和正文完整性。
+下一道门应是：在当前 Preview 中由人工上传一份测试报告图片，走完识别、问题选择、生成和报告查看链路；确认页面内容与 API 结构化检查一致后，再决定是否进入生产发布审批。
