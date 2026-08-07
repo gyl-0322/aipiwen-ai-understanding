@@ -172,7 +172,13 @@ function parseModelText(value, expectedIndexes = null) {
   } catch {
     fail('AI_OUTPUT_INVALID');
   }
-  return expectedIndexes ? validateStepChunk(payload?.steps, expectedIndexes) : validateSteps(payload?.steps);
+  if (!expectedIndexes) return validateSteps(payload?.steps);
+  const modelSteps = payload?.steps;
+  if (expectedIndexes.length === 1 && Array.isArray(modelSteps) && modelSteps.length === 1
+      && modelSteps[0] && typeof modelSteps[0] === 'object' && !Array.isArray(modelSteps[0])) {
+    return validateStepChunk([{ ...modelSteps[0], stepIndex: expectedIndexes[0] }], expectedIndexes);
+  }
+  return validateStepChunk(modelSteps, expectedIndexes);
 }
 
 function compactReportData(report, client, input, stepIndexes) {

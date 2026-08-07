@@ -167,6 +167,11 @@ assert.throws(() => interpretation.validateSteps(validSteps.map((step, index) =>
 
 const parsed = interpretation.parseModelText(`\`\`\`json\n${JSON.stringify({ steps: validSteps })}\n\`\`\``);
 assert.equal(parsed.length, 16, '必须解析 fenced JSON');
+const canonicalSingleStep = interpretation.parseModelText(JSON.stringify({
+  steps: [{ ...detailedSteps[3], stepIndex: 1 }]
+}), [3]);
+assert.equal(canonicalSingleStep[0].stepIndex, 3,
+  '单板块模型响应必须按服务端指定序号归位，不能因模型从1重新编号而失败');
 assert.throws(() => interpretation.validateGenerateBody({ reportId: 'bad', clientId: 'bad' }), /INVALID_REPORT_ID/,
   '必须拒绝非法报告 ID');
 assert.throws(() => interpretation.validateGenerateBody({
