@@ -639,52 +639,63 @@ async function handleInterpretationGenerate(config, session, res, body, advisorU
   if (existing) {
     return res.status(200).json({
       ...interpretationResponse(context, session),
+      complete: true,
       reused: true
     });
   }
-  await limit(config, 'interpretation-generate-advisor', advisorUserId, 10, 3600);
 
-  let steps;
+  const raw = context.report.interpretation_data;
+  let completedSteps = [];
+  let interpretationId = crypto.randomUUID();
+  let createdAt = new Date().toISOString();
+  let resumed = false;
+  if (Number(raw?.version) === DETAILED_INTERPRETATION_VERSION
+      && normalize(raw?.status) === 'generating'
+      && interpretation.isUuid(raw?.id)) {
+    try {
+      completedSteps = interpretation.validateDetailedPrefix(raw.steps);
+      interpretationId = raw.id;
+      createdAt = normalize(raw.createdAt) || createdAt;
+      resumed = true;
+    } catch {}
+  }
+  if (!resumed) await limit(config, 'interpretation-generate-advisor', advisorUserId, 10, 3600);
+
+  const stepIndexes = [completedSteps.length, completedSteps.length + 1];
+
+  let generatedSteps;
   try {
     const generationDeadline = Date.now() + 56500;
-    const stepGroups = [
-      [0, 1], [2, 3], [4, 5], [6, 7],
-      [8, 9], [10, 11], [12, 13], [14, 15]
-    ];
-    const generateGroup = async (stepIndexes) => {
-      const prompt = interpretation.buildPrompt(context.report, context.client, input, stepIndexes);
-      for (let attempt = 0; attempt < 2; attempt += 1) {
-        try {
-          const result = await generate({
-            model: MODEL_FREE,
-            system: prompt.system,
-            messages: [{ role: 'user', content: prompt.user }],
-            maxTokens: 3200,
-            timeoutMs: Math.min(52000, generationDeadline - Date.now()),
-            retries: 0,
-            responseFormat: { type: 'json_object' }
-          });
-          if (['length', 'max_tokens'].includes(normalize(result?.finishReason).toLowerCase())) {
-            const error = new Error('AI_OUTPUT_INVALID');
-            error.code = 'AI_OUTPUT_INVALID';
-            throw error;
-          }
-          return interpretation.parseModelText(result?.text, stepIndexes);
-        } catch (error) {
-          const code = normalize(error?.code || error?.message);
-          const status = Number(error?.status || 0);
-          const retriable = code === 'AI_OUTPUT_INVALID'
-            || error?.name === 'AbortError'
-            || status === 429
-            || status >= 500
-            || (!status && code !== 'UNSAFE_AI_OUTPUT');
-          if (!retriable || attempt === 1 || generationDeadline - Date.now() < 8000) throw error;
+    const prompt = interpretation.buildPrompt(context.report, context.client, input, stepIndexes);
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      try {
+        const result = await generate({
+          model: MODEL_FREE,
+          system: prompt.system,
+          messages: [{ role: 'user', content: prompt.user }],
+          maxTokens: 3200,
+          timeoutMs: Math.min(52000, generationDeadline - Date.now()),
+          retries: 0,
+          responseFormat: { type: 'json_object' }
+        });
+        if (['length', 'max_tokens'].includes(normalize(result?.finishReason).toLowerCase())) {
+          const error = new Error('AI_OUTPUT_INVALID');
+          error.code = 'AI_OUTPUT_INVALID';
+          throw error;
         }
+        generatedSteps = interpretation.parseModelText(result?.text, stepIndexes);
+        break;
+      } catch (error) {
+        const code = normalize(error?.code || error?.message);
+        const status = Number(error?.status || 0);
+        const retriable = code === 'AI_OUTPUT_INVALID'
+          || error?.name === 'AbortError'
+          || status === 429
+          || status >= 500
+          || (!status && code !== 'UNSAFE_AI_OUTPUT');
+        if (!retriable || attempt === 1 || generationDeadline - Date.now() < 8000) throw error;
       }
-      throw new Error('AI_OUTPUT_INVALID');
-    };
-    const chunks = await Promise.all(stepGroups.map(generateGroup));
-    steps = interpretation.validateDetailedSteps(chunks.flat());
+    }
   } catch (error) {
     const safe = interpretationHttpError(error);
     if (safe instanceof HttpError) throw safe;
@@ -692,14 +703,18 @@ async function handleInterpretationGenerate(config, session, res, body, advisorU
   }
 
   const now = new Date().toISOString();
+  const steps = [...completedSteps, ...generatedSteps];
+  const complete = steps.length === interpretation.STEP_TITLES.length;
+  if (complete) interpretation.validateDetailedSteps(steps);
+  else interpretation.validateDetailedPrefix(steps);
   const data = {
     version: DETAILED_INTERPRETATION_VERSION,
-    id: crypto.randomUUID(),
-    status: 'generated',
+    id: interpretationId,
+    status: complete ? 'generated' : 'generating',
     steps,
-    clientConcerns: input.clientConcerns,
-    customNotes: input.customNotes,
-    createdAt: now,
+    clientConcerns: resumed && Array.isArray(raw.clientConcerns) ? raw.clientConcerns : input.clientConcerns,
+    customNotes: resumed ? raw.customNotes || null : input.customNotes,
+    createdAt,
     updatedAt: now
   };
   const saved = await callRpc(config, session, 'v3a_save_advisor_interpretation', {
@@ -710,8 +725,10 @@ async function handleInterpretationGenerate(config, session, res, body, advisorU
     ok: true,
     csrfToken: session.csrfToken,
     interpretationId: saved?.interpretationId || data.id,
-    status: 'generated',
-    steps
+    status: data.status,
+    complete,
+    progress: { completed: steps.length, total: interpretation.STEP_TITLES.length },
+    ...(complete ? { steps } : {})
   });
 }
 

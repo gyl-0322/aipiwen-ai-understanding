@@ -11,11 +11,14 @@ const exists = (relativePath) => fs.existsSync(path.join(root, relativePath));
 process.env.SESSION_SECRET ||= 'TEST_SESSION_SECRET_NOT_REAL';
 
 const migrationPath = 'supabase/migrations/029_v3a_advisor_interpretation_data.sql';
+const migrationV3Path = 'supabase/migrations/030_v3a_advisor_interpretation_v3.sql';
 const helperPath = 'server/v3a-interpretation.js';
 assert(exists(migrationPath), '缺少 Migration 029');
+assert(exists(migrationV3Path), '缺少 Migration 030');
 assert(exists(helperPath), '缺少 AI 解读输出校验模块');
 
 const migration = read(migrationPath);
+const migrationV3 = read(migrationV3Path);
 const reportBff = read('api/v3a-report-import.js');
 const aiLib = read('api/_lib.js');
 const helperSource = read(helperPath);
@@ -39,6 +42,21 @@ assert(/grant execute on function public\.v3a_save_advisor_interpretation[\s\S]*
 assert(!/grant (?:insert|update|delete) on table public\.advisor_reports/i.test(migration),
   '不得扩大 advisor_reports 浏览器写权限');
 assert(!/delete from public\.(?:users|advisor_clients|advisor_reports)/i.test(migration), '迁移不得删除用户、客户或报告');
+
+assert(/^begin;[\s\S]*commit;\s*$/m.test(migrationV3), 'Migration 030 必须为单事务');
+assert(/MIGRATION_030_REQUIRES_MIGRATION_029/.test(migrationV3), 'Migration 030 必须验证 029 基线');
+assert(/version' = '1'[\s\S]*jsonb_array_length\(interpretation_data -> 'steps'\) = 8/.test(migrationV3),
+  'Migration 030 必须兼容旧版 8 步数据');
+assert(/version' = '3'[\s\S]*status' = 'generating'[\s\S]*in \(2, 4, 6, 8, 10, 12, 14\)/.test(migrationV3),
+  'Migration 030 必须只允许偶数板块的 V3 分段状态');
+assert(/status' in \('generated', 'edited'\)[\s\S]*jsonb_array_length\(interpretation_data -> 'steps'\) = 16/.test(migrationV3),
+  'Migration 030 必须要求完成态正好 16 个板块');
+assert(/create or replace function public\.v3a_save_advisor_interpretation\(/.test(migrationV3),
+  'Migration 030 必须同步升级受控保存 RPC');
+assert(/revoke all on function public\.v3a_save_advisor_interpretation[\s\S]*grant execute[\s\S]*to authenticated;/.test(migrationV3),
+  'Migration 030 不得扩大 RPC 权限');
+assert(!/delete from public\.(?:users|advisor_clients|advisor_reports)/i.test(migrationV3),
+  'Migration 030 不得删除用户、客户或报告');
 
 const aliases = new Map(vercel.routes.map((route) => [route.src, route.dest]));
 assert.equal(aliases.get('/api/v3a-generate-interpretation'), '/api/v3a-report-import?action=interpretation',
@@ -70,9 +88,10 @@ for (const moduleName of ['TRC', 'ATD', '左右脑', '性格类型', '学习通�
   assert(helperSource.includes(moduleName), `详细版提示词必须覆盖完整版报告模块：${moduleName}`);
 }
 assert(/DETAILED_INTERPRETATION_VERSION\s*=\s*3/.test(reportBff), '16 板块详细版必须使用独立版本号');
-for (const group of ['[0, 1]', '[2, 3]', '[4, 5]', '[6, 7]', '[8, 9]', '[10, 11]', '[12, 13]', '[14, 15]']) {
-  assert(reportBff.includes(group), `必须包含并行生成分组 ${group}`);
-}
+assert(/validateDetailedPrefix/.test(reportBff) && /progress:\s*\{ completed: steps\.length/.test(reportBff),
+  'BFF 必须校验并返回可恢复的分段进度');
+assert(/requestIndex\s*=\s*0; requestIndex\s*<\s*8/.test(sessionJs),
+  '前端必须按顺序请求 8 组板块，避免单个 Serverless 请求超时');
 
 assert(!/id="generate-plan"/.test(sessionHtml) && /await generateInterpretation\(\)/.test(sessionJs),
   '首次进入真实报告必须自动生成方案，不保留重复生成按钮');
@@ -258,6 +277,22 @@ async function testBffFlows() {
       throw new Error(`unexpected fetch ${url.pathname}`);
     };
 
+    async function generateComplete(targetClientId, targetReportId, dependencies) {
+      const partialProgress = [];
+      for (let requestIndex = 0; requestIndex < 8; requestIndex += 1) {
+        const result = responseHarness();
+        await reportTest.handleInterpretationGenerate(config, session, result, {
+          clientId: targetClientId,
+          reportId: targetReportId,
+          clientConcerns: ['注意力'],
+          customNotes: '先确认家长当前观察'
+        }, advisorId, dependencies);
+        if (result.body.complete === true) return { result, partialProgress };
+        partialProgress.push(result.body.progress?.completed);
+      }
+      throw new Error('测试中的分段方案未在 8 次请求内完成');
+    }
+
     const getRes = responseHarness();
     await reportTest.handleInterpretationGet(config, session, getRes, {
       query: { clientId, reportId }
@@ -266,25 +301,22 @@ async function testBffFlows() {
     assert.equal(getRes.body.client.displayName, '隔离测试客户', 'GET 必须返回客户展示名');
     assert.equal(getRes.body.csrfToken, session.csrfToken, 'GET 必须返回当前 Session CSRF');
 
-    let limited = false;
-    const generateRes = responseHarness();
-    await reportTest.handleInterpretationGenerate(config, session, generateRes, {
-      clientId,
-      reportId,
-      clientConcerns: ['注意力'],
-      customNotes: '先确认家长当前观察'
-    }, advisorId, {
+    let limitedCount = 0;
+    const generated = await generateComplete(clientId, reportId, {
       consumeRateLimit: async (_config, scope, key) => {
-        limited = scope === 'interpretation-generate-advisor' && key === advisorId;
+        if (scope === 'interpretation-generate-advisor' && key === advisorId) limitedCount += 1;
       },
       callClaude: async (options) => ({
         text: JSON.stringify({ steps: detailedChunkForOptions(options) }),
         finishReason: 'stop'
       })
     });
+    const generateRes = generated.result;
     assert.equal(generateRes.statusCode, 200, '生成必须成功返回');
     assert.equal(generateRes.body.steps.length, 16, '生成必须返回 16 个结构化板块');
-    assert(limited, '生成必须执行指导师级限流');
+    assert.deepEqual(generated.partialProgress, [2, 4, 6, 8, 10, 12, 14],
+      '每次请求必须只保存两个板块并准确返回进度');
+    assert.equal(limitedCount, 1, '同一份分段方案只能在首次请求执行一次指导师级限流');
     assert(stored && stored.status === 'generated', '生成结果必须经 RPC 保存');
 
     let reusedCalledModel = false;
@@ -340,19 +372,14 @@ async function testBffFlows() {
       '第二位客户未经人工编辑的旧简版必须自动升级为详细版');
 
     let secondCalledModel = false;
-    const secondGenerateRes = responseHarness();
-    await reportTest.handleInterpretationGenerate(config, session, secondGenerateRes, {
-      clientId: secondClientId,
-      reportId: secondReportId,
-      clientConcerns: [],
-      customNotes: ''
-    }, advisorId, {
+    const secondGenerated = await generateComplete(secondClientId, secondReportId, {
       consumeRateLimit: async () => {},
       callClaude: async (options) => {
         secondCalledModel = true;
         return { text: JSON.stringify({ steps: detailedChunkForOptions(options) }), finishReason: 'stop' };
       }
     });
+    const secondGenerateRes = secondGenerated.result;
     assert.equal(secondGenerateRes.statusCode, 200, '同一指导师的第二位客户也必须生成成功');
     assert.equal(secondCalledModel, true, '第二位客户的旧简版不得阻止详细版重新生成');
     assert(secondStored && secondStored.status === 'generated', '第二位客户方案必须独立保存');
@@ -390,13 +417,7 @@ async function testBffFlows() {
     const truncatedAttempts = new Map();
     const saveCallsBeforeRetry = calls.filter((call) =>
       call.url.pathname.endsWith('/rpc/v3a_save_advisor_interpretation')).length;
-    const retryRes = responseHarness();
-    await reportTest.handleInterpretationGenerate(config, session, retryRes, {
-      clientId,
-      reportId,
-      clientConcerns: [],
-      customNotes: ''
-    }, advisorId, {
+    const retryGenerated = await generateComplete(clientId, reportId, {
       consumeRateLimit: async () => {},
       callClaude: async (options) => {
         const chunk = detailedChunkForOptions(options);
@@ -411,24 +432,19 @@ async function testBffFlows() {
           : { text: JSON.stringify({ steps: chunk }), finishReason: 'stop' };
       }
     });
+    const retryRes = retryGenerated.result;
     assert.equal(retryRes.statusCode, 200, '首次输出截断后必须重试并成功');
     assert.equal(truncatedAttempts.get(0), 2, '截断的步骤组只允许额外重试一次');
     for (const key of [2, 4, 6, 8, 10, 12, 14]) {
       assert.equal(truncatedAttempts.get(key), 1, '未截断的步骤组不得重复生成');
     }
     assert.equal(calls.filter((call) =>
-      call.url.pathname.endsWith('/rpc/v3a_save_advisor_interpretation')).length - saveCallsBeforeRetry, 1,
-    '重试成功后只能保存一次解读方案');
+      call.url.pathname.endsWith('/rpc/v3a_save_advisor_interpretation')).length - saveCallsBeforeRetry, 8,
+    '每个成功板块组必须只保存一次，失败重试不得额外写入');
 
     stored = null;
     const transientAttempts = new Map();
-    const transientRes = responseHarness();
-    await reportTest.handleInterpretationGenerate(config, session, transientRes, {
-      clientId,
-      reportId,
-      clientConcerns: [],
-      customNotes: ''
-    }, advisorId, {
+    const transientGenerated = await generateComplete(clientId, reportId, {
       consumeRateLimit: async () => {},
       callClaude: async (options) => {
         const chunk = detailedChunkForOptions(options);
@@ -439,6 +455,7 @@ async function testBffFlows() {
         return { text: JSON.stringify({ steps: chunk }), finishReason: 'stop' };
       }
     });
+    const transientRes = transientGenerated.result;
     assert.equal(transientRes.statusCode, 200, '瞬时上游失败后必须重试并成功');
     assert.equal(transientAttempts.get(0), 2, '瞬时失败的步骤组只允许额外重试一次');
     for (const key of [2, 4, 6, 8, 10, 12, 14]) {
@@ -466,7 +483,7 @@ async function testBffFlows() {
       (error) => error?.code === 'AI_OUTPUT_INVALID',
       '步骤组不完整的模型输出必须拒绝且不得保存'
     );
-    assert.equal(invalidAttempts, 16, '八个格式异常步骤组各只允许额外重试一次');
+    assert.equal(invalidAttempts, 2, '当前格式异常步骤组只允许额外重试一次，且不得进入下一组');
 
     hideReport = true;
     await assert.rejects(

@@ -268,21 +268,30 @@
         ? [...reportContext.report.selectedIssues]
         : [];
       if (reportContext.report?.customIssue) concerns.push(reportContext.report.customIssue);
-      const response = await fetch(`${API}?operation=generate`, {
-        method: 'POST',
-        credentials: 'same-origin',
-        headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
-        body: JSON.stringify({
-          clientId,
-          reportId,
-          clientConcerns: concerns,
-          customNotes: $('#interpretation-custom-notes')?.value || ''
-        })
-      });
-      const payload = await readPayload(response, 'AI 解读方案暂时无法生成。');
-      const generated = payload.interpretation || payload;
-      loadSteps(generated.steps, generated.id || payload.interpretationId, generated.status || payload.status);
-      showStatus(payload.reused ? '已加载已有方案' : 'AI 解读方案已生成', '请逐步审核和修改，完成后点击保存。');
+      for (let requestIndex = 0; requestIndex < 8; requestIndex += 1) {
+        const response = await fetch(`${API}?operation=generate`, {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
+          body: JSON.stringify({
+            clientId,
+            reportId,
+            clientConcerns: concerns,
+            customNotes: $('#interpretation-custom-notes')?.value || ''
+          })
+        });
+        const payload = await readPayload(response, 'AI 解读方案暂时无法生成。');
+        if (payload.complete === true) {
+          const generated = payload.interpretation || payload;
+          loadSteps(generated.steps, generated.id || payload.interpretationId, generated.status || payload.status);
+          showStatus(payload.reused ? '已加载已有方案' : 'AI 解读方案已生成', '请逐个板块审核和修改，完成后点击保存。');
+          return;
+        }
+        const completed = Number(payload.progress?.completed) || 0;
+        const total = Number(payload.progress?.total) || STEP_META.length;
+        showStatus('正在分段生成', `已完成 ${completed}/${total} 个板块，正在继续生成，请保持页面打开。`);
+      }
+      throw new Error('结构化解读方案尚未完成，请重新进入后继续生成。');
     } catch (error) {
       showStatus('生成失败', error.message, true);
     } finally {

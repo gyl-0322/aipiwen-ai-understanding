@@ -146,6 +146,13 @@ function validateDetailedSteps(value) {
   return validateStepChunk(value, STEP_TITLES.map((_, index) => index));
 }
 
+function validateDetailedPrefix(value) {
+  if (!Array.isArray(value) || value.length < 2 || value.length >= STEP_TITLES.length || value.length % 2 !== 0) {
+    fail('AI_OUTPUT_INVALID');
+  }
+  return validateStepChunk(value, value.map((_, index) => index));
+}
+
 function validateSaveBody(value) {
   const body = value && typeof value === 'object' && !Array.isArray(value) ? value : {};
   rejectAdvisorId(body);
@@ -240,6 +247,7 @@ module.exports = {
   buildPrompt,
   isUuid,
   parseModelText,
+  validateDetailedPrefix,
   validateDetailedSteps,
   validateGenerateBody,
   validateSaveBody,
