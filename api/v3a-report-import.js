@@ -689,10 +689,11 @@ async function handleInterpretationGenerate(config, session, res, body, advisorU
         const code = normalize(error?.code || error?.message);
         const status = Number(error?.status || 0);
         const retriable = code === 'AI_OUTPUT_INVALID'
+          || code === 'UNSAFE_AI_OUTPUT'
           || error?.name === 'AbortError'
           || status === 429
           || status >= 500
-          || (!status && code !== 'UNSAFE_AI_OUTPUT');
+          || !status;
         if (!retriable || attempt === 1 || generationDeadline - Date.now() < 8000) throw error;
       }
     }

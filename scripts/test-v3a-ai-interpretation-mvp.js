@@ -463,6 +463,28 @@ async function testBffFlows() {
     }
 
     stored = null;
+    const unsafeAttempts = new Map();
+    const safetyRetryGenerated = await generateComplete(clientId, reportId, {
+      consumeRateLimit: async () => {},
+      callClaude: async (options) => {
+        const chunk = structuredClone(detailedChunkForOptions(options));
+        const key = chunk[0].stepIndex;
+        const attempt = (unsafeAttempts.get(key) || 0) + 1;
+        unsafeAttempts.set(key, attempt);
+        if (key === 0 && attempt === 1) {
+          chunk[0].say[0] = '孩子以后一定会成功';
+        }
+        return { text: JSON.stringify({ steps: chunk }), finishReason: 'stop' };
+      }
+    });
+    assert.equal(safetyRetryGenerated.result.statusCode, 200,
+      '首次输出未通过安全检查时必须丢弃该输出并自动重试一次');
+    assert.equal(unsafeAttempts.get(0), 2, '不安全步骤组只允许额外重试一次');
+    for (const key of [2, 4, 6, 8, 10, 12, 14]) {
+      assert.equal(unsafeAttempts.get(key), 1, '安全步骤组不得重复生成');
+    }
+
+    stored = null;
     let invalidAttempts = 0;
     await assert.rejects(
       () => reportTest.handleInterpretationGenerate(config, session, responseHarness(), {

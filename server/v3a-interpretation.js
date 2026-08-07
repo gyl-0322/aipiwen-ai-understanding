@@ -233,6 +233,7 @@ function buildPrompt(report, client, input, stepIndexes = STEP_TITLES.map((_, in
     `本次必须且只能生成以下板块：\n${requestedSteps.join('\n')}`,
     '每个板块必须包含stepIndex、title、why、say、ask、no、action、risk；stepIndex与title必须和本次指定板块一致。',
     '每个板块都使用同一详细标准：why至少2条，讲清依据和解读价值；say至少3条，给可以直接照着讲的完整话术；ask至少2条，用于核对生活场景和客户感受；no至少2条，提示禁语和错误解释；action至少3条，写清动作、观察点和复盘；risk至少2条，说明资料边界、复核或转介条件。',
+    'no和risk字段只说明需要避免的表达类别，不要逐字复述诊断、预测、保证或决定论句子，避免禁语被误当作可复制话术。',
     '不再把内容压缩成一句概括，也不设置60字限制；每条按需要完整表达，但不得重复、注水或脱离报告数据。',
     '先讲用户听得懂的话，再连接具体报告字段；资料没有提供的结论必须明确标为待确认，不能编造。',
     '输出格式：{"steps":[...]}'
