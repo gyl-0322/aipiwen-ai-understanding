@@ -578,8 +578,17 @@ async function loadInterpretationContext(config, session, clientId, reportId) {
   return { report, client };
 }
 
+function reusableInterpretation(value) {
+  if (!value || typeof value !== 'object' || !interpretation.isUuid(value.id)) return null;
+  try {
+    return { ...value, steps: interpretation.validateSteps(value.steps) };
+  } catch {
+    return null;
+  }
+}
+
 function interpretationResponse(context, session) {
-  const stored = context.report.interpretation_data;
+  const stored = reusableInterpretation(context.report.interpretation_data);
   return {
     ok: true,
     csrfToken: session.csrfToken,
@@ -594,7 +603,7 @@ function interpretationResponse(context, session) {
       createdAt: context.report.created_at,
       updatedAt: context.report.updated_at
     },
-    interpretation: stored && typeof stored === 'object' ? {
+    interpretation: stored ? {
       id: stored.id,
       status: stored.status,
       steps: stored.steps,
@@ -621,8 +630,8 @@ async function handleInterpretationGenerate(config, session, res, body, advisorU
   const limit = dependencies.consumeRateLimit || consumeRateLimit;
   const generate = dependencies.callClaude || callClaude;
   const context = await loadInterpretationContext(config, session, input.clientId, input.reportId);
-  const existing = context.report.interpretation_data;
-  if (existing?.id && Array.isArray(existing.steps)) {
+  const existing = reusableInterpretation(context.report.interpretation_data);
+  if (existing) {
     return res.status(200).json({
       ...interpretationResponse(context, session),
       reused: true

@@ -247,6 +247,22 @@ async function testBffFlows() {
     assert.equal(reusedCalledModel, false, '已有方案不得重复生成');
     assert.equal(reusedConsumedQuota, false, '读取已有方案不得消耗新方案生成额度');
 
+    secondStored = {
+      version: 1,
+      id: '66666666-6666-4666-8666-666666666666',
+      status: 'generated',
+      steps: validSteps.slice(0, 1),
+      createdAt: '2026-07-30T00:00:00Z',
+      updatedAt: '2026-07-30T00:00:00Z'
+    };
+    const secondGetRes = responseHarness();
+    await reportTest.handleInterpretationGet(config, session, secondGetRes, {
+      query: { clientId: secondClientId, reportId: secondReportId }
+    });
+    assert.equal(secondGetRes.body.interpretation, null,
+      '第二位客户的残缺旧方案必须视为无效，以便前端自动重新生成');
+
+    let secondCalledModel = false;
     const secondGenerateRes = responseHarness();
     await reportTest.handleInterpretationGenerate(config, session, secondGenerateRes, {
       clientId: secondClientId,
@@ -255,9 +271,13 @@ async function testBffFlows() {
       customNotes: ''
     }, advisorId, {
       consumeRateLimit: async () => {},
-      callClaude: async () => ({ text: JSON.stringify({ steps: validSteps }), finishReason: 'stop' })
+      callClaude: async () => {
+        secondCalledModel = true;
+        return { text: JSON.stringify({ steps: validSteps }), finishReason: 'stop' };
+      }
     });
     assert.equal(secondGenerateRes.statusCode, 200, '同一指导师的第二位客户也必须生成成功');
+    assert.equal(secondCalledModel, true, '第二位客户的残缺旧方案不得阻止重新生成');
     assert(secondStored && secondStored.status === 'generated', '第二位客户方案必须独立保存');
     assert.notEqual(secondStored.id, stored.id, '不同客户不得复用同一个解读方案标识');
 
