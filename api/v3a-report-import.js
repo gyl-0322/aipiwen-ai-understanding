@@ -666,37 +666,39 @@ async function handleInterpretationGenerate(config, session, res, body, advisorU
   let generatedSteps;
   try {
     const generationDeadline = Date.now() + 56500;
-    const prompt = interpretation.buildPrompt(context.report, context.client, input, stepIndexes);
-    for (let attempt = 0; attempt < 2; attempt += 1) {
-      try {
-        const result = await generate({
-          model: MODEL_FREE,
-          system: prompt.system,
-          messages: [{ role: 'user', content: prompt.user }],
-          maxTokens: 3200,
-          timeoutMs: Math.min(52000, generationDeadline - Date.now()),
-          retries: 0,
-          responseFormat: { type: 'json_object' }
-        });
-        if (['length', 'max_tokens'].includes(normalize(result?.finishReason).toLowerCase())) {
-          const error = new Error('AI_OUTPUT_INVALID');
-          error.code = 'AI_OUTPUT_INVALID';
-          throw error;
+    generatedSteps = (await Promise.all(stepIndexes.map(async (stepIndex) => {
+      const prompt = interpretation.buildPrompt(context.report, context.client, input, [stepIndex]);
+      for (let attempt = 0; attempt < 2; attempt += 1) {
+        try {
+          const result = await generate({
+            model: MODEL_FREE,
+            system: prompt.system,
+            messages: [{ role: 'user', content: prompt.user }],
+            maxTokens: 2400,
+            timeoutMs: Math.min(52000, generationDeadline - Date.now()),
+            retries: 0,
+            responseFormat: { type: 'json_object' }
+          });
+          if (['length', 'max_tokens'].includes(normalize(result?.finishReason).toLowerCase())) {
+            const error = new Error('AI_OUTPUT_INVALID');
+            error.code = 'AI_OUTPUT_INVALID';
+            throw error;
+          }
+          return interpretation.parseModelText(result?.text, [stepIndex]);
+        } catch (error) {
+          const code = normalize(error?.code || error?.message);
+          const status = Number(error?.status || 0);
+          const retriable = code === 'AI_OUTPUT_INVALID'
+            || code === 'UNSAFE_AI_OUTPUT'
+            || error?.name === 'AbortError'
+            || status === 429
+            || status >= 500
+            || !status;
+          if (!retriable || attempt === 1 || generationDeadline - Date.now() < 8000) throw error;
         }
-        generatedSteps = interpretation.parseModelText(result?.text, stepIndexes);
-        break;
-      } catch (error) {
-        const code = normalize(error?.code || error?.message);
-        const status = Number(error?.status || 0);
-        const retriable = code === 'AI_OUTPUT_INVALID'
-          || code === 'UNSAFE_AI_OUTPUT'
-          || error?.name === 'AbortError'
-          || status === 429
-          || status >= 500
-          || !status;
-        if (!retriable || attempt === 1 || generationDeadline - Date.now() < 8000) throw error;
       }
-    }
+      throw new Error('AI_OUTPUT_INVALID');
+    }))).flat();
   } catch (error) {
     const safe = interpretationHttpError(error);
     if (safe instanceof HttpError) throw safe;

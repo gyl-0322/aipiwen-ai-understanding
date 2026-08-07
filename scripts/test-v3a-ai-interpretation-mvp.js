@@ -189,7 +189,7 @@ function detailedChunkForOptions(options, source = detailedSteps) {
   const prompt = String(options?.messages?.[0]?.content || '');
   const block = prompt.match(/本次必须且只能生成以下板块：\n([\s\S]*?)\n每个板块必须包含/)?.[1] || '';
   const indexes = [...block.matchAll(/^(1[0-5]|[0-9])\./gm)].map((match) => Number(match[1]));
-  assert.deepEqual(indexes.length, 2, '每次模型调用必须只生成连续 2 个板块');
+  assert.equal(indexes.length, 1, '每次模型调用必须只生成 1 个详细板块');
   return source.filter((step) => indexes.includes(step.stepIndex));
 }
 
@@ -310,10 +310,11 @@ async function testBffFlows() {
       consumeRateLimit: async (_config, scope, key) => {
         if (scope === 'interpretation-generate-advisor' && key === advisorId) limitedCount += 1;
       },
-      callClaude: async (options) => ({
-        text: JSON.stringify({ steps: detailedChunkForOptions(options) }),
-        finishReason: 'stop'
-      })
+      callClaude: async (options) => {
+        const chunk = detailedChunkForOptions(options);
+        assert.equal(chunk.length, 1, '每次模型调用只允许生成一个详细板块');
+        return { text: JSON.stringify({ steps: chunk }), finishReason: 'stop' };
+      }
     });
     const generateRes = generated.result;
     assert.equal(generateRes.statusCode, 200, '生成必须成功返回');
@@ -429,7 +430,7 @@ async function testBffFlows() {
         const attempt = (truncatedAttempts.get(key) || 0) + 1;
         truncatedAttempts.set(key, attempt);
         assert(options.timeoutMs > 0 && options.timeoutMs <= 52000, 'AI 请求必须在函数时限内完成');
-        assert.equal(options.maxTokens, 3200, '每两个板块必须获得足够且受控的输出空间');
+        assert.equal(options.maxTokens, 2400, '每个详细板块必须获得足够且受控的输出空间');
         assert.deepEqual(options.responseFormat, { type: 'json_object' }, 'AI 解读必须启用模型 JSON 输出模式');
         return key === 0 && attempt === 1
           ? { text: JSON.stringify({ steps: chunk }), finishReason: 'length' }
@@ -439,8 +440,8 @@ async function testBffFlows() {
     const retryRes = retryGenerated.result;
     assert.equal(retryRes.statusCode, 200, '首次输出截断后必须重试并成功');
     assert.equal(truncatedAttempts.get(0), 2, '截断的步骤组只允许额外重试一次');
-    for (const key of [2, 4, 6, 8, 10, 12, 14]) {
-      assert.equal(truncatedAttempts.get(key), 1, '未截断的步骤组不得重复生成');
+    for (const key of Array.from({ length: 15 }, (_, index) => index + 1)) {
+      assert.equal(truncatedAttempts.get(key), 1, '未截断的板块不得重复生成');
     }
     assert.equal(calls.filter((call) =>
       call.url.pathname.endsWith('/rpc/v3a_save_advisor_interpretation')).length - saveCallsBeforeRetry, 8,
@@ -462,8 +463,8 @@ async function testBffFlows() {
     const transientRes = transientGenerated.result;
     assert.equal(transientRes.statusCode, 200, '瞬时上游失败后必须重试并成功');
     assert.equal(transientAttempts.get(0), 2, '瞬时失败的步骤组只允许额外重试一次');
-    for (const key of [2, 4, 6, 8, 10, 12, 14]) {
-      assert.equal(transientAttempts.get(key), 1, '未失败的步骤组不得重复生成');
+    for (const key of Array.from({ length: 15 }, (_, index) => index + 1)) {
+      assert.equal(transientAttempts.get(key), 1, '未失败的板块不得重复生成');
     }
 
     stored = null;
@@ -484,8 +485,8 @@ async function testBffFlows() {
     assert.equal(safetyRetryGenerated.result.statusCode, 200,
       '首次输出未通过安全检查时必须丢弃该输出并自动重试一次');
     assert.equal(unsafeAttempts.get(0), 2, '不安全步骤组只允许额外重试一次');
-    for (const key of [2, 4, 6, 8, 10, 12, 14]) {
-      assert.equal(unsafeAttempts.get(key), 1, '安全步骤组不得重复生成');
+    for (const key of Array.from({ length: 15 }, (_, index) => index + 1)) {
+      assert.equal(unsafeAttempts.get(key), 1, '安全板块不得重复生成');
     }
 
     stored = null;
@@ -501,7 +502,7 @@ async function testBffFlows() {
         callClaude: async (options) => {
           invalidAttempts += 1;
           return {
-            text: JSON.stringify({ steps: detailedChunkForOptions(options).slice(0, 1) }),
+            text: JSON.stringify({ steps: [] }),
             finishReason: 'stop'
           };
         }
@@ -509,7 +510,7 @@ async function testBffFlows() {
       (error) => error?.code === 'AI_OUTPUT_INVALID',
       '步骤组不完整的模型输出必须拒绝且不得保存'
     );
-    assert.equal(invalidAttempts, 2, '当前格式异常步骤组只允许额外重试一次，且不得进入下一组');
+    assert.equal(invalidAttempts, 4, '两个格式异常板块各只允许额外重试一次，且不得保存当前组');
 
     hideReport = true;
     await assert.rejects(
