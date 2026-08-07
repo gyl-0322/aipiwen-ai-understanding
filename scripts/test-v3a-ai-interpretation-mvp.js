@@ -70,7 +70,7 @@ for (const moduleName of ['TRC', 'ATD', '左右脑', '性格类型', '学习通�
   assert(helperSource.includes(moduleName), `详细版提示词必须覆盖完整版报告模块：${moduleName}`);
 }
 assert(/DETAILED_INTERPRETATION_VERSION\s*=\s*3/.test(reportBff), '16 板块详细版必须使用独立版本号');
-for (const group of ['[0, 1, 2, 3]', '[4, 5, 6, 7]', '[8, 9, 10, 11]', '[12, 13, 14, 15]']) {
+for (const group of ['[0, 1]', '[2, 3]', '[4, 5]', '[6, 7]', '[8, 9]', '[10, 11]', '[12, 13]', '[14, 15]']) {
   assert(reportBff.includes(group), `必须包含并行生成分组 ${group}`);
 }
 
@@ -152,11 +152,21 @@ assert.throws(() => interpretation.validateGenerateBody({
   advisorId: '33333333-3333-4333-8333-333333333333'
 }), /ADVISOR_ID_NOT_ALLOWED/, '不得接受浏览器 advisorId');
 
+const scopedPrompt = interpretation.buildPrompt({
+  structured_input: { reportType: '测试报告', engineResult: {} },
+  generated_report: { sections: [
+    { title: 'TRC（认知结构）', content: 'TRC_SCOPE_MARKER' },
+    { title: '视觉功能（小指系统）', content: 'VISUAL_SCOPE_MARKER' }
+  ] }
+}, { display_name: '隔离测试客户' }, { clientConcerns: [], customNotes: null }, [2, 3]);
+assert(scopedPrompt.user.includes('TRC_SCOPE_MARKER'), '每组提示词必须携带当前板块对应的报告片段');
+assert(!scopedPrompt.user.includes('VISUAL_SCOPE_MARKER'), '每组提示词不得重复携带无关报告片段');
+
 function detailedChunkForOptions(options, source = detailedSteps) {
   const prompt = String(options?.messages?.[0]?.content || '');
   const block = prompt.match(/本次必须且只能生成以下板块：\n([\s\S]*?)\n每个板块必须包含/)?.[1] || '';
   const indexes = [...block.matchAll(/^(1[0-5]|[0-9])\./gm)].map((match) => Number(match[1]));
-  assert.deepEqual(indexes.length, 4, '每次模型调用必须只生成连续 4 步');
+  assert.deepEqual(indexes.length, 2, '每次模型调用必须只生成连续 2 个板块');
   return source.filter((step) => indexes.includes(step.stepIndex));
 }
 
@@ -394,7 +404,7 @@ async function testBffFlows() {
         const attempt = (truncatedAttempts.get(key) || 0) + 1;
         truncatedAttempts.set(key, attempt);
         assert(options.timeoutMs > 0 && options.timeoutMs <= 52000, 'AI 请求必须在函数时限内完成');
-        assert.equal(options.maxTokens, 4200, '每组详细方案必须获得足够且受控的输出空间');
+        assert.equal(options.maxTokens, 3200, '每两个板块必须获得足够且受控的输出空间');
         assert.deepEqual(options.responseFormat, { type: 'json_object' }, 'AI 解读必须启用模型 JSON 输出模式');
         return key === 0 && attempt === 1
           ? { text: JSON.stringify({ steps: chunk }), finishReason: 'length' }
@@ -403,7 +413,9 @@ async function testBffFlows() {
     });
     assert.equal(retryRes.statusCode, 200, '首次输出截断后必须重试并成功');
     assert.equal(truncatedAttempts.get(0), 2, '截断的步骤组只允许额外重试一次');
-    for (const key of [4, 8, 12]) assert.equal(truncatedAttempts.get(key), 1, '未截断的步骤组不得重复生成');
+    for (const key of [2, 4, 6, 8, 10, 12, 14]) {
+      assert.equal(truncatedAttempts.get(key), 1, '未截断的步骤组不得重复生成');
+    }
     assert.equal(calls.filter((call) =>
       call.url.pathname.endsWith('/rpc/v3a_save_advisor_interpretation')).length - saveCallsBeforeRetry, 1,
     '重试成功后只能保存一次解读方案');
@@ -429,7 +441,9 @@ async function testBffFlows() {
     });
     assert.equal(transientRes.statusCode, 200, '瞬时上游失败后必须重试并成功');
     assert.equal(transientAttempts.get(0), 2, '瞬时失败的步骤组只允许额外重试一次');
-    for (const key of [4, 8, 12]) assert.equal(transientAttempts.get(key), 1, '未失败的步骤组不得重复生成');
+    for (const key of [2, 4, 6, 8, 10, 12, 14]) {
+      assert.equal(transientAttempts.get(key), 1, '未失败的步骤组不得重复生成');
+    }
 
     stored = null;
     let invalidAttempts = 0;
@@ -452,7 +466,7 @@ async function testBffFlows() {
       (error) => error?.code === 'AI_OUTPUT_INVALID',
       '步骤组不完整的模型输出必须拒绝且不得保存'
     );
-    assert.equal(invalidAttempts, 8, '四个格式异常步骤组各只允许额外重试一次');
+    assert.equal(invalidAttempts, 16, '八个格式异常步骤组各只允许额外重试一次');
 
     hideReport = true;
     await assert.rejects(

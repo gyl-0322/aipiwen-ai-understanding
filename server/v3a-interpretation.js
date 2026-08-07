@@ -44,6 +44,10 @@ const STEP_GUIDANCE = [
   '把报告理解转成家庭、学习或工作中的具体动作；给出执行步骤、观察指标、周期和复盘方式。',
   '复述客户共识、记录异议与待核实信息；明确后续跟进、总部复核和需要转介专业支持的边界。'
 ];
+const STEP_SECTION_KEYWORDS = [
+  [], ['严正'], ['性格类型'], ['TRC'], ['ATD'], ['学习通道'], ['行为模式'], ['左右脑'],
+  ['精神功能'], ['思维功能'], ['体觉功能'], ['听觉功能'], ['视觉功能'], [], [], []
+];
 const DETAILED_FIELD_MINIMUMS = { why: 2, say: 3, ask: 2, no: 2, action: 3, risk: 2 };
 const UNSAFE_OUTPUT = /(?:患有|确诊|必然|注定|保证|一定会|命中注定|未来(?:一定|必然|将会)|智商(?:很高|很低|高|低)|优于(?:别人|他人|同龄人)|劣于(?:别人|他人|同龄人)|天生就是)/i;
 
@@ -164,7 +168,7 @@ function parseModelText(value, expectedIndexes = null) {
   return expectedIndexes ? validateStepChunk(payload?.steps, expectedIndexes) : validateSteps(payload?.steps);
 }
 
-function compactReportData(report, client, input) {
+function compactReportData(report, client, input, stepIndexes) {
   const structured = report?.structured_input && typeof report.structured_input === 'object'
     ? report.structured_input
     : {};
@@ -174,8 +178,15 @@ function compactReportData(report, client, input) {
   const generated = report?.generated_report && typeof report.generated_report === 'object'
     ? report.generated_report
     : {};
+  const keywords = stepIndexes.flatMap((index) => STEP_SECTION_KEYWORDS[index] || []);
+  if (stepIndexes.includes(13)) {
+    keywords.push(...input.clientConcerns, input.customNotes || '');
+  }
   const sections = Array.isArray(generated.sections)
-    ? generated.sections.slice(0, 16).map((section) => ({
+    ? generated.sections.filter((section) => {
+      const title = normalize(section?.title);
+      return keywords.some((keyword) => keyword && title.includes(keyword));
+    }).slice(0, 4).map((section) => ({
       title: normalize(section?.title).slice(0, 80),
       content: normalize(section?.content).slice(0, 900)
     })).filter((section) => section.title || section.content)
@@ -210,7 +221,7 @@ function buildPrompt(report, client, input, stepIndexes = STEP_TITLES.map((_, in
   const user = [
     '请根据以下去标识化报告资料，生成本次指定步骤的详细解读脚本。',
     '四条规则：1.数值没有好坏；2.不做未来预测；3.不贴标签；4.不与他人比较。',
-    `报告资料：${compactReportData(report, client, input)}`,
+    `报告资料：${compactReportData(report, client, input, stepIndexes)}`,
     '完整版报告解读顺序固定为：性格类型、TRC、ATD、学习通道、行为模式、左右脑、精神功能、思维功能、体觉功能、听觉功能、视觉功能；涉及的数据必须与报告原文一致，不得合并、调序或遗漏。',
     `本次必须且只能生成以下板块：\n${requestedSteps.join('\n')}`,
     '每个板块必须包含stepIndex、title、why、say、ask、no、action、risk；stepIndex与title必须和本次指定板块一致。',
