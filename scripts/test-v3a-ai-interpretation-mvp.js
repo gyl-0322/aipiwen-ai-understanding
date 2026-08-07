@@ -13,15 +13,18 @@ process.env.SESSION_SECRET ||= 'TEST_SESSION_SECRET_NOT_REAL';
 const migrationPath = 'supabase/migrations/029_v3a_advisor_interpretation_data.sql';
 const migrationV3Path = 'supabase/migrations/030_v3a_advisor_interpretation_v3.sql';
 const migrationV3SingleModulePath = 'supabase/migrations/031_v3a_advisor_interpretation_single_module_progress.sql';
+const migrationV3SizePath = 'supabase/migrations/032_v3a_advisor_interpretation_size_limit.sql';
 const helperPath = 'server/v3a-interpretation.js';
 assert(exists(migrationPath), '缺少 Migration 029');
 assert(exists(migrationV3Path), '缺少 Migration 030');
 assert(exists(migrationV3SingleModulePath), '缺少 Migration 031');
+assert(exists(migrationV3SizePath), '缺少 Migration 032');
 assert(exists(helperPath), '缺少 AI 解读输出校验模块');
 
 const migration = read(migrationPath);
 const migrationV3 = read(migrationV3Path);
 const migrationV3SingleModule = read(migrationV3SingleModulePath);
+const migrationV3Size = read(migrationV3SizePath);
 const reportBff = read('api/v3a-report-import.js');
 const aiLib = read('api/_lib.js');
 const helperSource = read(helperPath);
@@ -68,6 +71,14 @@ assert(/v_status in \('generated', 'edited'\) and v_step_count = 16/.test(migrat
   'Migration 031 必须保持完成态正好 16 个板块');
 assert(!/delete from public\.(?:users|advisor_clients|advisor_reports)/i.test(migrationV3SingleModule),
   'Migration 031 不得删除用户、客户或报告');
+assert(/^begin;[\s\S]*commit;\s*$/m.test(migrationV3Size), 'Migration 032 必须为单事务');
+assert(/MIGRATION_032_REQUIRES_MIGRATION_031/.test(migrationV3Size), 'Migration 032 必须验证 031 基线');
+assert(/octet_length\(interpretation_data::text\) <= 131072/.test(migrationV3Size),
+  'Migration 032 必须把详细解读存储上限提升到受控的 128KB');
+assert(/octet_length\(p_interpretation_data::text\) > 131072/.test(migrationV3Size),
+  'Migration 032 RPC 必须同步执行 128KB 上限');
+assert(!/delete from public\.(?:users|advisor_clients|advisor_reports)/i.test(migrationV3Size),
+  'Migration 032 不得删除用户、客户或报告');
 
 const aliases = new Map(vercel.routes.map((route) => [route.src, route.dest]));
 assert.equal(aliases.get('/api/v3a-generate-interpretation'), '/api/v3a-report-import?action=interpretation',
@@ -170,6 +181,18 @@ assert.equal(interpretation.validateDetailedSteps(detailedSteps).length, 16,
   '必须接受内容完整的详细版 16 板块输出');
 assert.equal(interpretation.validateDetailedPrefix(detailedSteps.slice(0, 1)).length, 1,
   '必须允许单个详细板块作为可恢复生成前缀');
+const expandedDetailedSteps = detailedSteps.map((step) => Object.fromEntries(Object.entries(step).map(([key, value]) =>
+  [key, Array.isArray(value) ? value.map((item) => `${item}${'详细说明'.repeat(30)}`) : value]
+)));
+assert(Buffer.byteLength(JSON.stringify(expandedDetailedSteps)) > 64 * 1024,
+  '扩展测试样本必须真实超过旧 64KB 上限');
+assert.equal(interpretation.validateDetailedSteps(expandedDetailedSteps).length, 16,
+  '详细 16 板块在 128KB 安全上限内必须通过');
+const oversizedDetailedSteps = detailedSteps.map((step) => Object.fromEntries(Object.entries(step).map(([key, value]) =>
+  [key, Array.isArray(value) ? value.map((item) => `${item}${'超长内容'.repeat(100)}`) : value]
+)));
+assert.throws(() => interpretation.validateDetailedSteps(oversizedDetailedSteps), /AI_OUTPUT_INVALID/,
+  '超过 128KB 的异常大方案必须继续拒绝');
 assert.throws(() => interpretation.validateDetailedSteps(validSteps), /AI_OUTPUT_INVALID/,
   '每字段只有 1 条的旧简版不得伪装成详细版');
 assert.throws(() => interpretation.validateSteps(validSteps.slice(0, 15)), /AI_OUTPUT_INVALID/,

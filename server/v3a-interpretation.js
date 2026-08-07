@@ -49,6 +49,7 @@ const STEP_SECTION_KEYWORDS = [
   ['精神功能'], ['思维功能'], ['体觉功能'], ['听觉功能'], ['视觉功能'], [], [], []
 ];
 const DETAILED_FIELD_MINIMUMS = { why: 2, say: 3, ask: 2, no: 2, action: 3, risk: 2 };
+const MAX_INTERPRETATION_BYTES = 128 * 1024;
 const UNSAFE_OUTPUT = /(?:患有|确诊|必然|注定|保证|一定会|命中注定|未来(?:一定|必然|将会)|智商(?:很高|很低|高|低)|优于(?:别人|他人|同龄人)|劣于(?:别人|他人|同龄人)|天生就是)/i;
 
 function fail(code) {
@@ -126,7 +127,7 @@ function validateSteps(value) {
     : value.length === LEGACY_STEP_TITLES.length ? LEGACY_STEP_TITLES : null;
   if (!titles) fail('AI_OUTPUT_INVALID');
   const steps = value.map((step, index) => normalizeStep(step, index, false, titles));
-  if (Buffer.byteLength(JSON.stringify(steps)) > 64 * 1024) fail('AI_OUTPUT_INVALID');
+  if (Buffer.byteLength(JSON.stringify(steps)) > MAX_INTERPRETATION_BYTES) fail('AI_OUTPUT_INVALID');
   return steps;
 }
 
@@ -138,7 +139,7 @@ function validateStepChunk(value, expectedIndexes) {
     if (!Number.isInteger(index) || index < 0 || index >= STEP_TITLES.length) fail('AI_OUTPUT_INVALID');
     return normalizeStep(step, index, true);
   });
-  if (Buffer.byteLength(JSON.stringify(steps)) > 48 * 1024) fail('AI_OUTPUT_INVALID');
+  if (Buffer.byteLength(JSON.stringify(steps)) > MAX_INTERPRETATION_BYTES) fail('AI_OUTPUT_INVALID');
   return steps;
 }
 
