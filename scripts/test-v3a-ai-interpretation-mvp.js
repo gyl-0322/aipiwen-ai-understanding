@@ -184,6 +184,12 @@ const scopedPrompt = interpretation.buildPrompt({
 }, { display_name: '隔离测试客户' }, { clientConcerns: [], customNotes: null }, [2, 3]);
 assert(scopedPrompt.user.includes('TRC_SCOPE_MARKER'), '每组提示词必须携带当前板块对应的报告片段');
 assert(!scopedPrompt.user.includes('VISUAL_SCOPE_MARKER'), '每组提示词不得重复携带无关报告片段');
+assert(scopedPrompt.user.includes('steps数组必须恰好包含2个对象'),
+  '模型提示词必须锁定本次返回的板块对象数量');
+assert(scopedPrompt.user.includes('why恰好2条、say恰好3条、ask恰好2条、no恰好2条、action恰好3条、risk恰好2条'),
+  '模型提示词必须锁定每个字段的精确条数，避免至少条数导致结构漂移');
+assert(scopedPrompt.user.includes('stepIndex必须使用上方指定的0基序号'),
+  '模型提示词必须阻止单板块请求重新从1编号');
 
 function detailedChunkForOptions(options, source = detailedSteps) {
   const prompt = String(options?.messages?.[0]?.content || '');
