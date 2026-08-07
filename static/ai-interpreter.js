@@ -277,7 +277,7 @@
         ? [...reportContext.report.selectedIssues]
         : [];
       if (reportContext.report?.customIssue) concerns.push(reportContext.report.customIssue);
-      for (let requestIndex = 0; requestIndex < 8; requestIndex += 1) {
+      for (let requestIndex = 0; requestIndex < 16; requestIndex += 1) {
         let payload = null;
         let lastError = null;
         for (let requestAttempt = 0; requestAttempt < 2; requestAttempt += 1) {

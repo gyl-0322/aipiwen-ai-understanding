@@ -661,7 +661,7 @@ async function handleInterpretationGenerate(config, session, res, body, advisorU
   }
   if (!resumed) await limit(config, 'interpretation-generate-advisor', advisorUserId, 10, 3600);
 
-  const stepIndexes = [completedSteps.length, completedSteps.length + 1];
+  const stepIndexes = [completedSteps.length];
 
   let generatedSteps;
   try {

@@ -12,13 +12,16 @@ process.env.SESSION_SECRET ||= 'TEST_SESSION_SECRET_NOT_REAL';
 
 const migrationPath = 'supabase/migrations/029_v3a_advisor_interpretation_data.sql';
 const migrationV3Path = 'supabase/migrations/030_v3a_advisor_interpretation_v3.sql';
+const migrationV3SingleModulePath = 'supabase/migrations/031_v3a_advisor_interpretation_single_module_progress.sql';
 const helperPath = 'server/v3a-interpretation.js';
 assert(exists(migrationPath), '缺少 Migration 029');
 assert(exists(migrationV3Path), '缺少 Migration 030');
+assert(exists(migrationV3SingleModulePath), '缺少 Migration 031');
 assert(exists(helperPath), '缺少 AI 解读输出校验模块');
 
 const migration = read(migrationPath);
 const migrationV3 = read(migrationV3Path);
+const migrationV3SingleModule = read(migrationV3SingleModulePath);
 const reportBff = read('api/v3a-report-import.js');
 const aiLib = read('api/_lib.js');
 const helperSource = read(helperPath);
@@ -57,6 +60,14 @@ assert(/revoke all on function public\.v3a_save_advisor_interpretation[\s\S]*gra
   'Migration 030 不得扩大 RPC 权限');
 assert(!/delete from public\.(?:users|advisor_clients|advisor_reports)/i.test(migrationV3),
   'Migration 030 不得删除用户、客户或报告');
+assert(/^begin;[\s\S]*commit;\s*$/m.test(migrationV3SingleModule), 'Migration 031 必须为单事务');
+assert(/MIGRATION_031_REQUIRES_MIGRATION_030/.test(migrationV3SingleModule), 'Migration 031 必须验证 030 基线');
+assert(/v_status = 'generating' and v_step_count between 1 and 15/.test(migrationV3SingleModule),
+  'Migration 031 必须允许 1-15 个板块逐一断点保存');
+assert(/v_status in \('generated', 'edited'\) and v_step_count = 16/.test(migrationV3SingleModule),
+  'Migration 031 必须保持完成态正好 16 个板块');
+assert(!/delete from public\.(?:users|advisor_clients|advisor_reports)/i.test(migrationV3SingleModule),
+  'Migration 031 不得删除用户、客户或报告');
 
 const aliases = new Map(vercel.routes.map((route) => [route.src, route.dest]));
 assert.equal(aliases.get('/api/v3a-generate-interpretation'), '/api/v3a-report-import?action=interpretation',
@@ -90,8 +101,8 @@ for (const moduleName of ['TRC', 'ATD', '左右脑', '性格类型', '学习通�
 assert(/DETAILED_INTERPRETATION_VERSION\s*=\s*3/.test(reportBff), '16 板块详细版必须使用独立版本号');
 assert(/validateDetailedPrefix/.test(reportBff) && /progress:\s*\{ completed: steps\.length/.test(reportBff),
   'BFF 必须校验并返回可恢复的分段进度');
-assert(/requestIndex\s*=\s*0; requestIndex\s*<\s*8/.test(sessionJs),
-  '前端必须按顺序请求 8 组板块，避免单个 Serverless 请求超时');
+assert(/requestIndex\s*=\s*0; requestIndex\s*<\s*16/.test(sessionJs),
+  '前端必须按顺序请求 16 个板块，避免单个 Serverless 请求超时');
 assert(/requestAttempt\s*=\s*0; requestAttempt\s*<\s*2/.test(sessionJs)
   && /isRetryableGenerationError/.test(sessionJs)
   && /正在自动重试/.test(sessionJs),
@@ -157,6 +168,8 @@ assert.equal(interpretation.validateSteps(validSteps).length, 16, '必须接受�
 assert.equal(interpretation.validateSteps(legacySteps).length, 8, '必须继续接受人工编辑过的旧 8 步方案');
 assert.equal(interpretation.validateDetailedSteps(detailedSteps).length, 16,
   '必须接受内容完整的详细版 16 板块输出');
+assert.equal(interpretation.validateDetailedPrefix(detailedSteps.slice(0, 1)).length, 1,
+  '必须允许单个详细板块作为可恢复生成前缀');
 assert.throws(() => interpretation.validateDetailedSteps(validSteps), /AI_OUTPUT_INVALID/,
   '每字段只有 1 条的旧简版不得伪装成详细版');
 assert.throws(() => interpretation.validateSteps(validSteps.slice(0, 15)), /AI_OUTPUT_INVALID/,
@@ -294,7 +307,7 @@ async function testBffFlows() {
 
     async function generateComplete(targetClientId, targetReportId, dependencies) {
       const partialProgress = [];
-      for (let requestIndex = 0; requestIndex < 8; requestIndex += 1) {
+      for (let requestIndex = 0; requestIndex < 16; requestIndex += 1) {
         const result = responseHarness();
         await reportTest.handleInterpretationGenerate(config, session, result, {
           clientId: targetClientId,
@@ -305,7 +318,7 @@ async function testBffFlows() {
         if (result.body.complete === true) return { result, partialProgress };
         partialProgress.push(result.body.progress?.completed);
       }
-      throw new Error('测试中的分段方案未在 8 次请求内完成');
+      throw new Error('测试中的分段方案未在 16 次请求内完成');
     }
 
     const getRes = responseHarness();
@@ -330,8 +343,8 @@ async function testBffFlows() {
     const generateRes = generated.result;
     assert.equal(generateRes.statusCode, 200, '生成必须成功返回');
     assert.equal(generateRes.body.steps.length, 16, '生成必须返回 16 个结构化板块');
-    assert.deepEqual(generated.partialProgress, [2, 4, 6, 8, 10, 12, 14],
-      '每次请求必须只保存两个板块并准确返回进度');
+    assert.deepEqual(generated.partialProgress, Array.from({ length: 15 }, (_, index) => index + 1),
+      '每次请求必须只保存一个板块并准确返回进度');
     assert.equal(limitedCount, 1, '同一份分段方案只能在首次请求执行一次指导师级限流');
     assert(stored && stored.status === 'generated', '生成结果必须经 RPC 保存');
 
@@ -455,8 +468,8 @@ async function testBffFlows() {
       assert.equal(truncatedAttempts.get(key), 1, '未截断的板块不得重复生成');
     }
     assert.equal(calls.filter((call) =>
-      call.url.pathname.endsWith('/rpc/v3a_save_advisor_interpretation')).length - saveCallsBeforeRetry, 8,
-    '每个成功板块组必须只保存一次，失败重试不得额外写入');
+      call.url.pathname.endsWith('/rpc/v3a_save_advisor_interpretation')).length - saveCallsBeforeRetry, 16,
+    '每个成功板块必须只保存一次，失败重试不得额外写入');
 
     stored = null;
     const transientAttempts = new Map();
@@ -521,7 +534,7 @@ async function testBffFlows() {
       (error) => error?.code === 'AI_OUTPUT_INVALID',
       '步骤组不完整的模型输出必须拒绝且不得保存'
     );
-    assert.equal(invalidAttempts, 4, '两个格式异常板块各只允许额外重试一次，且不得保存当前组');
+    assert.equal(invalidAttempts, 2, '格式异常板块只允许额外重试一次，且不得保存当前板块');
 
     hideReport = true;
     await assert.rejects(

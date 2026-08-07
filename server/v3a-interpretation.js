@@ -147,7 +147,7 @@ function validateDetailedSteps(value) {
 }
 
 function validateDetailedPrefix(value) {
-  if (!Array.isArray(value) || value.length < 2 || value.length >= STEP_TITLES.length || value.length % 2 !== 0) {
+  if (!Array.isArray(value) || value.length < 1 || value.length >= STEP_TITLES.length) {
     fail('AI_OUTPUT_INVALID');
   }
   return validateStepChunk(value, value.map((_, index) => index));
