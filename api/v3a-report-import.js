@@ -39,6 +39,7 @@ const MAX_MULTIPART_BYTES = MAX_FILE_BYTES + 64 * 1024;
 const MAX_JSON_BYTES = 20 * 1024;
 const MAX_INTERPRETATION_JSON_BYTES = 72 * 1024;
 const MAX_GENERATED_REPORT_BYTES = 1500 * 1024;
+const DETAILED_INTERPRETATION_VERSION = 2;
 
 const RPC_ERROR_STATUS = new Map([
   ['REPORT_IMPORT_FORBIDDEN', 403],
@@ -581,7 +582,11 @@ async function loadInterpretationContext(config, session, clientId, reportId) {
 function reusableInterpretation(value) {
   if (!value || typeof value !== 'object' || !interpretation.isUuid(value.id)) return null;
   try {
-    return { ...value, steps: interpretation.validateSteps(value.steps) };
+    if (normalize(value.status) === 'edited') {
+      return { ...value, steps: interpretation.validateSteps(value.steps) };
+    }
+    if (Number(value.version) < DETAILED_INTERPRETATION_VERSION) return null;
+    return { ...value, steps: interpretation.validateDetailedSteps(value.steps) };
   } catch {
     return null;
   }
@@ -639,39 +644,44 @@ async function handleInterpretationGenerate(config, session, res, body, advisorU
   }
   await limit(config, 'interpretation-generate-advisor', advisorUserId, 10, 3600);
 
-  const prompt = interpretation.buildPrompt(context.report, context.client, input);
   let steps;
   try {
     const generationDeadline = Date.now() + 52000;
-    for (let attempt = 0; attempt < 2; attempt += 1) {
-      try {
-        const result = await generate({
-          model: MODEL_FREE,
-          system: prompt.system,
-          messages: [{ role: 'user', content: prompt.user }],
-          maxTokens: 3500,
-          timeoutMs: Math.min(45000, generationDeadline - Date.now()),
-          retries: 0,
-          responseFormat: { type: 'json_object' }
-        });
-        if (['length', 'max_tokens'].includes(normalize(result?.finishReason).toLowerCase())) {
-          const error = new Error('AI_OUTPUT_INVALID');
-          error.code = 'AI_OUTPUT_INVALID';
-          throw error;
+    const stepGroups = [[0, 1, 2, 3], [4, 5, 6, 7]];
+    const generateGroup = async (stepIndexes) => {
+      const prompt = interpretation.buildPrompt(context.report, context.client, input, stepIndexes);
+      for (let attempt = 0; attempt < 2; attempt += 1) {
+        try {
+          const result = await generate({
+            model: MODEL_FREE,
+            system: prompt.system,
+            messages: [{ role: 'user', content: prompt.user }],
+            maxTokens: 4200,
+            timeoutMs: Math.min(45000, generationDeadline - Date.now()),
+            retries: 0,
+            responseFormat: { type: 'json_object' }
+          });
+          if (['length', 'max_tokens'].includes(normalize(result?.finishReason).toLowerCase())) {
+            const error = new Error('AI_OUTPUT_INVALID');
+            error.code = 'AI_OUTPUT_INVALID';
+            throw error;
+          }
+          return interpretation.parseModelText(result?.text, stepIndexes);
+        } catch (error) {
+          const code = normalize(error?.code || error?.message);
+          const status = Number(error?.status || 0);
+          const retriable = code === 'AI_OUTPUT_INVALID'
+            || error?.name === 'AbortError'
+            || status === 429
+            || status >= 500
+            || (!status && code !== 'UNSAFE_AI_OUTPUT');
+          if (!retriable || attempt === 1 || generationDeadline - Date.now() < 8000) throw error;
         }
-        steps = interpretation.parseModelText(result?.text);
-        break;
-      } catch (error) {
-        const code = normalize(error?.code || error?.message);
-        const status = Number(error?.status || 0);
-        const retriable = code === 'AI_OUTPUT_INVALID'
-          || error?.name === 'AbortError'
-          || status === 429
-          || status >= 500
-          || (!status && code !== 'UNSAFE_AI_OUTPUT');
-        if (!retriable || attempt === 1 || generationDeadline - Date.now() < 8000) throw error;
       }
-    }
+      throw new Error('AI_OUTPUT_INVALID');
+    };
+    const chunks = await Promise.all(stepGroups.map(generateGroup));
+    steps = interpretation.validateDetailedSteps(chunks.flat());
   } catch (error) {
     const safe = interpretationHttpError(error);
     if (safe instanceof HttpError) throw safe;
@@ -680,7 +690,7 @@ async function handleInterpretationGenerate(config, session, res, body, advisorU
 
   const now = new Date().toISOString();
   const data = {
-    version: 1,
+    version: DETAILED_INTERPRETATION_VERSION,
     id: crypto.randomUUID(),
     status: 'generated',
     steps,
@@ -716,7 +726,7 @@ async function handleInterpretationSave(config, session, res, body) {
   }
   const data = {
     ...existing,
-    version: 1,
+    version: Math.max(1, Number(existing.version) || 1),
     id: input.interpretationId,
     status: 'edited',
     steps: input.editedSteps,

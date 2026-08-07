@@ -12,6 +12,17 @@ const STEP_TITLES = [
   '给行动建议',
   '记录客户反馈 / 必要时提交总部复核'
 ];
+const STEP_GUIDANCE = [
+  '说明本次解读流程、确认客户最想解决的问题；用轻松开场、自我介绍和保密说明建立安全感。',
+  '逐条讲清数值没有好坏、不预测未来、只和本人均值比较、不贴标签；确认客户理解并同意继续。',
+  '结合主性格类型、典型优势、压力下表现、生活与关系场景展开；先描述可观察行为，再邀请客户核对。',
+  '依次解释总TRC与个人均值、ATD节奏、左右脑处理风格；每个数据都讲是什么、意味着什么、如何应用。',
+  '解释主学习通道、行为模式，并把精神、思维、体觉、听觉、视觉五大功能区及对应十指分别单列；至少形成7条可直接讲述的内容，连接学习、沟通与日常行为。',
+  '围绕客户关注问题，结合报告数据解释可能机制；核对真实场景，区分资料事实、客户反馈与待确认假设。',
+  '把报告理解转成家庭、学习或工作中的具体动作；给出执行步骤、观察指标、周期和复盘方式。',
+  '复述客户共识、记录异议与待核实信息；明确后续跟进、总部复核和需要转介专业支持的边界。'
+];
+const DETAILED_FIELD_MINIMUMS = { why: 2, say: 3, ask: 2, no: 2, action: 3, risk: 2 };
 const UNSAFE_OUTPUT = /(?:患有|确诊|必然|注定|保证|一定会|命中注定|未来(?:一定|必然|将会)|智商(?:很高|很低|高|低)|优于(?:别人|他人|同龄人)|劣于(?:别人|他人|同龄人)|天生就是)/i;
 
 function fail(code) {
@@ -63,26 +74,47 @@ function validateGenerateBody(value) {
   };
 }
 
-function normalizeStepList(value) {
-  if (!Array.isArray(value) || value.length < 1 || value.length > 6) fail('AI_OUTPUT_INVALID');
+function normalizeStepList(value, minimum = 1) {
+  if (!Array.isArray(value) || value.length < minimum || value.length > 10) fail('AI_OUTPUT_INVALID');
   const result = value.map(normalize);
   if (result.some((item) => !item || item.length > 500)) fail('AI_OUTPUT_INVALID');
   if (result.some((item) => UNSAFE_OUTPUT.test(item))) fail('UNSAFE_AI_OUTPUT');
   return result;
 }
 
+function normalizeStep(step, index, detailed) {
+  if (!step || typeof step !== 'object' || Array.isArray(step) || Number(step.stepIndex) !== index) {
+    fail('AI_OUTPUT_INVALID');
+  }
+  const result = { stepIndex: index, title: STEP_TITLES[index] };
+  for (const field of STEP_FIELDS) {
+    const minimum = detailed && index === 4 && field === 'say' ? 7 : DETAILED_FIELD_MINIMUMS[field];
+    result[field] = normalizeStepList(step[field], detailed ? minimum : 1);
+  }
+  return result;
+}
+
 function validateSteps(value) {
   if (!Array.isArray(value) || value.length !== STEP_TITLES.length) fail('AI_OUTPUT_INVALID');
-  const steps = value.map((step, index) => {
-    if (!step || typeof step !== 'object' || Array.isArray(step) || Number(step.stepIndex) !== index) {
-      fail('AI_OUTPUT_INVALID');
-    }
-    const result = { stepIndex: index, title: STEP_TITLES[index] };
-    for (const field of STEP_FIELDS) result[field] = normalizeStepList(step[field]);
-    return result;
-  });
+  const steps = value.map((step, index) => normalizeStep(step, index, false));
   if (Buffer.byteLength(JSON.stringify(steps)) > 64 * 1024) fail('AI_OUTPUT_INVALID');
   return steps;
+}
+
+function validateStepChunk(value, expectedIndexes) {
+  if (!Array.isArray(expectedIndexes) || expectedIndexes.length < 1) fail('AI_OUTPUT_INVALID');
+  if (!Array.isArray(value) || value.length !== expectedIndexes.length) fail('AI_OUTPUT_INVALID');
+  const steps = value.map((step, position) => {
+    const index = Number(expectedIndexes[position]);
+    if (!Number.isInteger(index) || index < 0 || index >= STEP_TITLES.length) fail('AI_OUTPUT_INVALID');
+    return normalizeStep(step, index, true);
+  });
+  if (Buffer.byteLength(JSON.stringify(steps)) > 48 * 1024) fail('AI_OUTPUT_INVALID');
+  return steps;
+}
+
+function validateDetailedSteps(value) {
+  return validateStepChunk(value, STEP_TITLES.map((_, index) => index));
 }
 
 function validateSaveBody(value) {
@@ -94,7 +126,7 @@ function validateSaveBody(value) {
   return { ...ids, interpretationId, editedSteps: validateSteps(body.editedSteps) };
 }
 
-function parseModelText(value) {
+function parseModelText(value, expectedIndexes = null) {
   let text = normalize(value);
   const fenced = text.match(/^```(?:json)?\s*([\s\S]*?)\s*```$/i);
   if (fenced) text = fenced[1].trim();
@@ -104,7 +136,7 @@ function parseModelText(value) {
   } catch {
     fail('AI_OUTPUT_INVALID');
   }
-  return validateSteps(payload?.steps);
+  return expectedIndexes ? validateStepChunk(payload?.steps, expectedIndexes) : validateSteps(payload?.steps);
 }
 
 function compactReportData(report, client, input) {
@@ -139,20 +171,28 @@ function compactReportData(report, client, input) {
   return json.slice(0, 18000);
 }
 
-function buildPrompt(report, client, input) {
+function buildPrompt(report, client, input, stepIndexes = STEP_TITLES.map((_, index) => index)) {
+  const requestedSteps = stepIndexes.map((index) => {
+    if (!Number.isInteger(index) || index < 0 || index >= STEP_TITLES.length) fail('AI_OUTPUT_INVALID');
+    return `${index}.${STEP_TITLES[index]}：${STEP_GUIDANCE[index]}`;
+  });
   const system = [
     '你是AIPIWEN指导师的解读辅助工具。',
+    '目标是让刚入门的指导师也能按照页面提示，完整、安全地完成一次专业解读。',
     '只能解释报告数据和提供沟通建议，不得诊断、预测、贴标签或与他人比较。',
     '必须输出严格JSON，不得输出Markdown或额外说明。'
   ].join('');
   const user = [
-    '请根据以下去标识化报告资料生成8步标准解读方案。',
+    '请根据以下去标识化报告资料，生成本次指定步骤的详细解读脚本。',
     '四条规则：1.数值没有好坏；2.不做未来预测；3.不贴标签；4.不与他人比较。',
     `报告资料：${compactReportData(report, client, input)}`,
-    `固定步骤：${STEP_TITLES.map((title, index) => `${index}.${title}`).join('；')}`,
-    '每步必须包含stepIndex、title、why、say、ask、no、action、risk；stepIndex按0至7排列，title使用对应固定步骤标题。',
-    '每个步骤必须严格使用数组字段，例如：{"stepIndex":0,"title":"建立安全感","why":["说明"],"say":["话术"],"ask":["问题"],"no":["禁语"],"action":["行动"],"risk":["提醒"]}。',
-    '为保证生成稳定，每个内容字段只写1条，单条不超过60个汉字。',
+    '完整版报告模块包括：严正声明、TRC、ATD、左右脑、性格类型、学习通道、行为模式、精神功能、思维功能、体觉功能、听觉功能、视觉功能；涉及的数据必须与报告原文一致。',
+    `本次必须且只能生成以下步骤：\n${requestedSteps.join('\n')}`,
+    '每步必须包含stepIndex、title、why、say、ask、no、action、risk；stepIndex与title必须和本次指定步骤一致。',
+    'why至少2条，讲清依据和解读价值；say至少3条，给可以直接照着讲的完整话术；ask至少2条，用于核对生活场景和客户感受；no至少2条，提示禁语和错误解释；action至少3条，写清动作、观察点和复盘；risk至少2条，说明资料边界、复核或转介条件。',
+    '第5步的say必须至少7条：学习通道、行为模式、精神功能、思维功能、体觉功能、听觉功能、视觉功能分别单列，不得合并或遗漏。',
+    '不再把内容压缩成一句概括，也不设置60字限制；每条按需要完整表达，但不得重复、注水或脱离报告数据。',
+    '先讲用户听得懂的话，再连接具体报告字段；资料没有提供的结论必须明确标为待确认，不能编造。',
     '输出格式：{"steps":[...]}'
   ].join('\n');
   return { system, user };
@@ -164,6 +204,7 @@ module.exports = {
   buildPrompt,
   isUuid,
   parseModelText,
+  validateDetailedSteps,
   validateGenerateBody,
   validateSaveBody,
   validateSteps

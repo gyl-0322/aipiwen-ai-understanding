@@ -63,7 +63,15 @@ assert(!/console\.(?:log|error)\([^\n]*(?:prompt|structured_input|generated_repo
 assert(/const STEP_TITLES/.test(helperSource), '必须冻结 8 步标题');
 assert(/UNSAFE_AI_OUTPUT/.test(helperSource), '必须拒绝不安全 AI 输出');
 assert(/AI_OUTPUT_INVALID/.test(helperSource), '必须拒绝非结构化 AI 输出');
-assert(/每个内容字段只写1条/.test(helperSource), '必须限制模型输出长度，避免 8 步方案生成超时');
+assert(!/每个内容字段只写1条|单条不超过60个汉字/.test(helperSource),
+  '详细版不得继续把每个字段压缩成 1 条或 60 字');
+for (const moduleName of ['TRC', 'ATD', '左右脑', '性格类型', '学习通道', '行为模式',
+  '精神功能', '思维功能', '体觉功能', '听觉功能', '视觉功能']) {
+  assert(helperSource.includes(moduleName), `详细版提示词必须覆盖完整版报告模块：${moduleName}`);
+}
+assert(/DETAILED_INTERPRETATION_VERSION\s*=\s*2/.test(reportBff), '详细版解读必须使用独立版本号');
+assert(/Promise\.all/.test(reportBff) && /\[0, 1, 2, 3\]/.test(reportBff) && /\[4, 5, 6, 7\]/.test(reportBff),
+  '详细版必须拆成两组并行生成，避免单次输出截断');
 
 assert(!/id="generate-plan"/.test(sessionHtml) && /await generateInterpretation\(\)/.test(sessionJs),
   '首次进入真实报告必须自动生成方案，不保留重复生成按钮');
@@ -94,7 +102,27 @@ const validSteps = interpretation.STEP_TITLES.map((title, stepIndex) => ({
   action: ['记录反馈'],
   risk: ['注意边界']
 }));
+const detailedSteps = interpretation.STEP_TITLES.map((title, stepIndex) => ({
+  stepIndex,
+  title,
+  why: ['解释本步骤与报告数据的关系', '说明本步骤对本次沟通的价值'],
+  say: stepIndex === 4
+    ? ['讲学习通道', '讲行为模式', '讲精神功能', '讲思维功能', '讲体觉功能', '讲听觉功能', '讲视觉功能']
+    : ['先用生活场景建立理解', '再连接报告里的具体数据', '最后确认客户是否有共鸣'],
+  ask: ['您在日常生活中见过类似表现吗', '哪一个场景最希望先改善'],
+  no: ['不要把数值解释成能力高低', '不要把当前表现预测成未来结果'],
+  action: ['记录一个真实生活场景', '选择一个可以立即尝试的小动作', '约定一周后的观察指标'],
+  risk: ['资料不足时明确说明需要继续核对', '出现专业风险时建议寻求相应专业支持']
+}));
 assert.equal(interpretation.validateSteps(validSteps).length, 8, '必须接受合法 8 步输出');
+assert.equal(interpretation.validateDetailedSteps(detailedSteps).length, 8, '必须接受内容完整的详细版 8 步输出');
+assert.equal(interpretation.validateDetailedSteps(detailedSteps)[4].say.length, 7,
+  '第 5 步必须分别覆盖学习通道、行为模式与五大功能区');
+assert.throws(() => interpretation.validateDetailedSteps(detailedSteps.map((step, index) =>
+  index === 4 ? { ...step, say: step.say.slice(0, 6) } : step)), /AI_OUTPUT_INVALID/,
+  '第 5 步遗漏完整版报告模块时必须拒绝');
+assert.throws(() => interpretation.validateDetailedSteps(validSteps), /AI_OUTPUT_INVALID/,
+  '每字段只有 1 条的旧简版不得伪装成详细版');
 assert.throws(() => interpretation.validateSteps(validSteps.slice(0, 7)), /AI_OUTPUT_INVALID/,
   '必须拒绝不足 8 步');
 assert.throws(() => interpretation.validateSteps(validSteps.map((step, index) =>
@@ -110,6 +138,14 @@ assert.throws(() => interpretation.validateGenerateBody({
   clientId: '22222222-2222-4222-8222-222222222222',
   advisorId: '33333333-3333-4333-8333-333333333333'
 }), /ADVISOR_ID_NOT_ALLOWED/, '不得接受浏览器 advisorId');
+
+function detailedChunkForOptions(options, source = detailedSteps) {
+  const prompt = String(options?.messages?.[0]?.content || '');
+  const block = prompt.match(/本次必须且只能生成以下步骤：\n([\s\S]*?)\n每步必须包含/)?.[1] || '';
+  const indexes = [...block.matchAll(/^([0-7])\./gm)].map((match) => Number(match[1]));
+  assert.deepEqual(indexes.length, 4, '每次模型调用必须只生成连续 4 步');
+  return source.filter((step) => indexes.includes(step.stepIndex));
+}
 
 function response(status, payload) {
   return {
@@ -218,7 +254,10 @@ async function testBffFlows() {
       consumeRateLimit: async (_config, scope, key) => {
         limited = scope === 'interpretation-generate-advisor' && key === advisorId;
       },
-      callClaude: async () => ({ text: JSON.stringify({ steps: validSteps }) })
+      callClaude: async (options) => ({
+        text: JSON.stringify({ steps: detailedChunkForOptions(options) }),
+        finishReason: 'stop'
+      })
     });
     assert.equal(generateRes.statusCode, 200, '生成必须成功返回');
     assert.equal(generateRes.body.steps.length, 8, '生成必须返回 8 步');
@@ -250,8 +289,23 @@ async function testBffFlows() {
     secondStored = {
       version: 1,
       id: '66666666-6666-4666-8666-666666666666',
+      status: 'edited',
+      steps: validSteps,
+      createdAt: '2026-07-30T00:00:00Z',
+      updatedAt: '2026-07-30T00:00:00Z'
+    };
+    const legacyEditedGetRes = responseHarness();
+    await reportTest.handleInterpretationGet(config, session, legacyEditedGetRes, {
+      query: { clientId: secondClientId, reportId: secondReportId }
+    });
+    assert.equal(legacyEditedGetRes.body.interpretation.steps.length, 8,
+      '指导师人工编辑过的旧方案必须保留，不得被详细版升级覆盖');
+
+    secondStored = {
+      version: 1,
+      id: '66666666-6666-4666-8666-666666666666',
       status: 'generated',
-      steps: validSteps.slice(0, 1),
+      steps: validSteps,
       createdAt: '2026-07-30T00:00:00Z',
       updatedAt: '2026-07-30T00:00:00Z'
     };
@@ -260,7 +314,7 @@ async function testBffFlows() {
       query: { clientId: secondClientId, reportId: secondReportId }
     });
     assert.equal(secondGetRes.body.interpretation, null,
-      '第二位客户的残缺旧方案必须视为无效，以便前端自动重新生成');
+      '第二位客户未经人工编辑的旧简版必须自动升级为详细版');
 
     let secondCalledModel = false;
     const secondGenerateRes = responseHarness();
@@ -271,13 +325,13 @@ async function testBffFlows() {
       customNotes: ''
     }, advisorId, {
       consumeRateLimit: async () => {},
-      callClaude: async () => {
+      callClaude: async (options) => {
         secondCalledModel = true;
-        return { text: JSON.stringify({ steps: validSteps }), finishReason: 'stop' };
+        return { text: JSON.stringify({ steps: detailedChunkForOptions(options) }), finishReason: 'stop' };
       }
     });
     assert.equal(secondGenerateRes.statusCode, 200, '同一指导师的第二位客户也必须生成成功');
-    assert.equal(secondCalledModel, true, '第二位客户的残缺旧方案不得阻止重新生成');
+    assert.equal(secondCalledModel, true, '第二位客户的旧简版不得阻止详细版重新生成');
     assert(secondStored && secondStored.status === 'generated', '第二位客户方案必须独立保存');
     assert.notEqual(secondStored.id, stored.id, '不同客户不得复用同一个解读方案标识');
 
@@ -310,7 +364,7 @@ async function testBffFlows() {
     assert(!JSON.stringify(rpcCall.body).includes(advisorId), '保存 payload 不得携带 advisor id');
 
     stored = null;
-    let truncatedAttempts = 0;
+    const truncatedAttempts = new Map();
     const saveCallsBeforeRetry = calls.filter((call) =>
       call.url.pathname.endsWith('/rpc/v3a_save_advisor_interpretation')).length;
     const retryRes = responseHarness();
@@ -322,23 +376,27 @@ async function testBffFlows() {
     }, advisorId, {
       consumeRateLimit: async () => {},
       callClaude: async (options) => {
-        truncatedAttempts += 1;
-        assert.equal(options.timeoutMs, 45000, '首次 AI 请求必须保留完整生成时间');
-        assert.equal(options.maxTokens, 3500, 'AI 输出上限必须受控，避免生成时间失控');
+        const chunk = detailedChunkForOptions(options);
+        const key = chunk[0].stepIndex;
+        const attempt = (truncatedAttempts.get(key) || 0) + 1;
+        truncatedAttempts.set(key, attempt);
+        assert(options.timeoutMs > 0 && options.timeoutMs <= 45000, 'AI 请求必须在函数时限内完成');
+        assert.equal(options.maxTokens, 4200, '每组详细方案必须获得足够且受控的输出空间');
         assert.deepEqual(options.responseFormat, { type: 'json_object' }, 'AI 解读必须启用模型 JSON 输出模式');
-        return truncatedAttempts === 1
-          ? { text: JSON.stringify({ steps: validSteps }), finishReason: 'length' }
-          : { text: JSON.stringify({ steps: validSteps }), finishReason: 'stop' };
+        return key === 0 && attempt === 1
+          ? { text: JSON.stringify({ steps: chunk }), finishReason: 'length' }
+          : { text: JSON.stringify({ steps: chunk }), finishReason: 'stop' };
       }
     });
     assert.equal(retryRes.statusCode, 200, '首次输出截断后必须重试并成功');
-    assert.equal(truncatedAttempts, 2, '截断输出只允许额外重试一次');
+    assert.equal(truncatedAttempts.get(0), 2, '截断的步骤组只允许额外重试一次');
+    assert.equal(truncatedAttempts.get(4), 1, '未截断的步骤组不得重复生成');
     assert.equal(calls.filter((call) =>
       call.url.pathname.endsWith('/rpc/v3a_save_advisor_interpretation')).length - saveCallsBeforeRetry, 1,
     '重试成功后只能保存一次解读方案');
 
     stored = null;
-    let transientAttempts = 0;
+    const transientAttempts = new Map();
     const transientRes = responseHarness();
     await reportTest.handleInterpretationGenerate(config, session, transientRes, {
       clientId,
@@ -347,14 +405,18 @@ async function testBffFlows() {
       customNotes: ''
     }, advisorId, {
       consumeRateLimit: async () => {},
-      callClaude: async () => {
-        transientAttempts += 1;
-        if (transientAttempts === 1) throw new Error('temporary upstream failure');
-        return { text: JSON.stringify({ steps: validSteps }), finishReason: 'stop' };
+      callClaude: async (options) => {
+        const chunk = detailedChunkForOptions(options);
+        const key = chunk[0].stepIndex;
+        const attempt = (transientAttempts.get(key) || 0) + 1;
+        transientAttempts.set(key, attempt);
+        if (key === 0 && attempt === 1) throw new Error('temporary upstream failure');
+        return { text: JSON.stringify({ steps: chunk }), finishReason: 'stop' };
       }
     });
     assert.equal(transientRes.statusCode, 200, '瞬时上游失败后必须重试并成功');
-    assert.equal(transientAttempts, 2, '瞬时失败只允许额外重试一次');
+    assert.equal(transientAttempts.get(0), 2, '瞬时失败的步骤组只允许额外重试一次');
+    assert.equal(transientAttempts.get(4), 1, '未失败的步骤组不得重复生成');
 
     stored = null;
     let invalidAttempts = 0;
@@ -366,15 +428,18 @@ async function testBffFlows() {
         customNotes: ''
       }, advisorId, {
         consumeRateLimit: async () => {},
-        callClaude: async () => {
+        callClaude: async (options) => {
           invalidAttempts += 1;
-          return { text: JSON.stringify({ steps: validSteps.slice(0, 7) }), finishReason: 'stop' };
+          return {
+            text: JSON.stringify({ steps: detailedChunkForOptions(options).slice(0, 1) }),
+            finishReason: 'stop'
+          };
         }
       }),
       (error) => error?.code === 'AI_OUTPUT_INVALID',
-      '不足 8 步的模型输出必须拒绝且不得保存'
+      '步骤组不完整的模型输出必须拒绝且不得保存'
     );
-    assert.equal(invalidAttempts, 2, '格式异常输出只允许额外重试一次');
+    assert.equal(invalidAttempts, 4, '两个格式异常步骤组各只允许额外重试一次');
 
     hideReport = true;
     await assert.rejects(
