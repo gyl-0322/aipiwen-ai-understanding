@@ -646,7 +646,7 @@ async function handleInterpretationGenerate(config, session, res, body, advisorU
 
   let steps;
   try {
-    const generationDeadline = Date.now() + 52000;
+    const generationDeadline = Date.now() + 56500;
     const stepGroups = [[0, 1, 2, 3], [4, 5, 6, 7], [8, 9, 10, 11], [12, 13, 14, 15]];
     const generateGroup = async (stepIndexes) => {
       const prompt = interpretation.buildPrompt(context.report, context.client, input, stepIndexes);
@@ -657,7 +657,7 @@ async function handleInterpretationGenerate(config, session, res, body, advisorU
             system: prompt.system,
             messages: [{ role: 'user', content: prompt.user }],
             maxTokens: 4200,
-            timeoutMs: Math.min(45000, generationDeadline - Date.now()),
+            timeoutMs: Math.min(52000, generationDeadline - Date.now()),
             retries: 0,
             responseFormat: { type: 'json_object' }
           });

@@ -393,7 +393,7 @@ async function testBffFlows() {
         const key = chunk[0].stepIndex;
         const attempt = (truncatedAttempts.get(key) || 0) + 1;
         truncatedAttempts.set(key, attempt);
-        assert(options.timeoutMs > 0 && options.timeoutMs <= 45000, 'AI 请求必须在函数时限内完成');
+        assert(options.timeoutMs > 0 && options.timeoutMs <= 52000, 'AI 请求必须在函数时限内完成');
         assert.equal(options.maxTokens, 4200, '每组详细方案必须获得足够且受控的输出空间');
         assert.deepEqual(options.responseFormat, { type: 'json_object' }, 'AI 解读必须启用模型 JSON 输出模式');
         return key === 0 && attempt === 1
