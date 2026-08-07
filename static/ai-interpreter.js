@@ -12,7 +12,7 @@
     action: 'ai-action',
     risk: 'ai-risk'
   };
-  const STEP_META = [
+  const LEGACY_STEP_META = [
     ['建立安全感', '暖场、自我介绍、确认解读目标', '3-5 分钟'],
     ['严正声明和四条规则', '明确报告边界与客户权利', '2-3 分钟'],
     ['讲性格类型，让客户产生共鸣', '从生活观察进入报告', '5-8 分钟'],
@@ -21,6 +21,24 @@
     ['进入客户关注问题', '回应客户本次真实关切', '6-10 分钟'],
     ['给行动建议', '把理解转为可执行行动', '5-8 分钟'],
     ['记录客户反馈 / 必要时提交总部复核', '记录反馈并识别风险', '3-5 分钟']
+  ];
+  const STEP_META = [
+    ['建立安全感', '暖场、自我介绍、确认本次解读目标', '3-5 分钟'],
+    ['严正声明四原则', '明确报告边界与客户权利', '3-5 分钟'],
+    ['性格类型', '讲清核心底色、优势、代价与现实场景', '8-12 分钟'],
+    ['TRC', '解释认知容量、个人均值与学习承载方式', '6-10 分钟'],
+    ['ATD', '解释反应节奏、敏感度与启动缓冲方式', '5-8 分钟'],
+    ['学习通道', '解释信息输入、记忆复习与环境安排', '5-8 分钟'],
+    ['行为模式', '解释启动、目标、压力、执行与反馈方式', '5-8 分钟'],
+    ['左右脑', '解释信息处理、学习、决策与沟通偏向', '5-8 分钟'],
+    ['精神功能', '解读右拇开创力与左拇管理力', '4-6 分钟'],
+    ['思维功能', '解读右食逻辑与左食创意空间', '4-6 分钟'],
+    ['体觉功能', '解读右中精细动作与左中运动耐力', '4-6 分钟'],
+    ['听觉功能', '解读右无名语言记忆与左无名音感语气', '4-6 分钟'],
+    ['视觉功能', '解读右小指识人方向与左小指色彩图像', '4-6 分钟'],
+    ['客户关注问题', '结合报告资料与真实场景回应本次关切', '8-12 分钟'],
+    ['行动建议', '形成具体动作、观察指标和复盘周期', '6-10 分钟'],
+    ['记录客户反馈 / 必要时提交总部复核', '记录共识、异议、待核实项与后续安排', '4-6 分钟']
   ];
 
   let steps = STEP_META.map(([title, goal, time], stepIndex) => ({
@@ -189,7 +207,7 @@
   function updateStep(index) {
     currentStep = Math.max(0, Math.min(steps.length - 1, index));
     const step = steps[currentStep];
-    setText('#current-step-index', `第 ${currentStep + 1}/8 步`);
+    setText('#current-step-index', `第 ${currentStep + 1}/${steps.length} 个板块`);
     setText('#current-step-title', step.title);
     setText('#current-step-time', step.time);
     setText('#current-step-goal', step.goal);
@@ -205,12 +223,13 @@
   }
 
   function loadSteps(nextSteps, id, status) {
+    const metadata = nextSteps.length === LEGACY_STEP_META.length ? LEGACY_STEP_META : STEP_META;
     steps = nextSteps.map((step, index) => ({
       ...steps[index],
       ...step,
-      title: STEP_META[index][0],
-      goal: STEP_META[index][1],
-      time: STEP_META[index][2]
+      title: metadata[index][0],
+      goal: metadata[index][1],
+      time: metadata[index][2]
     }));
     interpretationId = id || '';
     currentStep = 0;
@@ -230,7 +249,7 @@
       loadSteps(payload.interpretation.steps, payload.interpretation.id, payload.interpretation.status);
       showStatus('已加载解读方案', '可继续逐步审核、修改并保存。');
     } else {
-      showStatus('正在生成', 'AI 正在根据本报告自动生成 8 步解读方案，请稍候。');
+      showStatus('正在生成', 'AI 正在根据本报告自动生成完整的结构化解读方案，请稍候。');
       await generateInterpretation();
     }
   }
@@ -243,7 +262,7 @@
   async function generateInterpretation() {
     if (busy || !reportContext || !csrfToken) return;
     setBusy(true);
-    showStatus('正在生成', 'AI 正在根据本报告生成 8 步解读方案，请稍候。');
+    showStatus('正在生成', 'AI 正在根据本报告生成完整的结构化解读方案，请稍候。');
     try {
       const concerns = Array.isArray(reportContext.report?.selectedIssues)
         ? [...reportContext.report.selectedIssues]

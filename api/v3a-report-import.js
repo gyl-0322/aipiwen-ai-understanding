@@ -39,7 +39,7 @@ const MAX_MULTIPART_BYTES = MAX_FILE_BYTES + 64 * 1024;
 const MAX_JSON_BYTES = 20 * 1024;
 const MAX_INTERPRETATION_JSON_BYTES = 72 * 1024;
 const MAX_GENERATED_REPORT_BYTES = 1500 * 1024;
-const DETAILED_INTERPRETATION_VERSION = 2;
+const DETAILED_INTERPRETATION_VERSION = 3;
 
 const RPC_ERROR_STATUS = new Map([
   ['REPORT_IMPORT_FORBIDDEN', 403],
@@ -647,7 +647,7 @@ async function handleInterpretationGenerate(config, session, res, body, advisorU
   let steps;
   try {
     const generationDeadline = Date.now() + 52000;
-    const stepGroups = [[0, 1, 2, 3], [4, 5, 6, 7]];
+    const stepGroups = [[0, 1, 2, 3], [4, 5, 6, 7], [8, 9, 10, 11], [12, 13, 14, 15]];
     const generateGroup = async (stepIndexes) => {
       const prompt = interpretation.buildPrompt(context.report, context.client, input, stepIndexes);
       for (let attempt = 0; attempt < 2; attempt += 1) {
