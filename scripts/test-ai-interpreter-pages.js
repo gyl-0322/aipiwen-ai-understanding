@@ -64,7 +64,7 @@ for (const [page, title] of pages) {
 const navLinks = [
   'ai-interpreter-workbench.html',
   'ai-interpreter-customers.html',
-  'ai-interpreter-customers.html?intent=interpret',
+  'ai-interpreter-customers.html?intent=interpret#v3a-real-customers',
   'ai-interpreter-training.html',
   'ai-interpreter-review.html',
   'ai-interpreter-cases.html'

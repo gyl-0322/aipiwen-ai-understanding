@@ -38,9 +38,15 @@ assert(!/generate-plan/.test(sessionJs),
 
 for (const page of workbenchPages) {
   const html = read(page);
-  assert(/data-page="session" href="ai-interpreter-customers\.html\?intent=interpret"/.test(html),
+  assert(/data-page="session" href="ai-interpreter-customers\.html\?intent=interpret#v3a-real-customers"/.test(html),
     `${page} 的 AI 解读助手入口必须先进入客户选择页`);
 }
+assert(/intent.*interpret[\s\S]*page = 'session'/.test(sessionJs),
+  '客户选择状态必须高亮 AI 解读助手，而不是继续高亮我的客户');
+assert(/v3a-real-customers-title[\s\S]*选择客户开始解读/.test(customersJs),
+  '客户选择状态必须有明显页面标题');
+assert(/v3a-real-customers[\s\S]*scrollIntoView/.test(customersJs),
+  '客户选择状态必须自动定位到真实客户列表');
 assert(!/<a class="table-row" href="ai-interpreter-session\.html">/.test(workbenchHtml),
   '工作台学习示例记录不得链接无上下文解读页');
 assert(!workbenchHtml.includes('<span>进入</span>'),

@@ -294,7 +294,9 @@
   }
 
   function initNavigation() {
-    const page = document.body.dataset.page;
+    let page = document.body.dataset.page;
+    const intent = new URLSearchParams(window.location.search).get('intent');
+    if (page === 'customers' && intent === 'interpret') page = 'session';
     $$('.nav-link').forEach((link) => link.classList.toggle('active', link.dataset.page === page));
   }
 

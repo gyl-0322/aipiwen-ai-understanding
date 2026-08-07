@@ -61,18 +61,20 @@ class FakeNode {
     this.files = [];
     this.textContent = '';
     this.innerHTML = '';
+    this.scrolled = false;
   }
   addEventListener(type, handler) { this.events[type] = handler; }
   append(...children) { this.children.push(...children); }
   replaceChildren(...children) { this.children = children; }
   setAttribute(name, value) { this[name] = String(value); }
-  scrollIntoView() {}
+  scrollIntoView() { this.scrolled = true; }
   reset() { this.checked = false; }
 }
 
 const ids = [
   'v3a-attribution-qr', 'v3a-customer-upload', 'v3a-real-customers-error',
-  'v3a-real-customers-count', 'v3a-real-customers-list', 'v3a-real-customers-table',
+  'v3a-real-customers', 'v3a-real-customers-title', 'v3a-real-customers-count',
+  'v3a-real-customers-list', 'v3a-real-customers-table',
   'v3a-real-customers-empty', 'v3a-customer-search', 'v3a-customer-status-filter',
   'v3a-customer-sort', 'v3a-attribution-panel', 'v3a-attribution-qr-image',
   'v3a-attribution-url', 'v3a-attribution-service-code', 'v3a-attribution-code-copy',
@@ -219,6 +221,12 @@ function makeFile(type = 'image/jpeg', bytes = 16) {
     .sort((left, right) => left.localeCompare(right, 'zh-CN'));
   assert.deepEqual(list.children.map((row) => row.children[0].textContent), expectedNameOrder,
     '客户姓名排序必须实际改变真实列表顺序');
+
+  const interpretationRuntime = await boot({ search: '?intent=interpret' });
+  assert.equal(interpretationRuntime.nodes.get('v3a-real-customers-title').textContent, '选择客户开始解读',
+    'AI 解读助手入口必须显示明确的客户选择标题');
+  assert.equal(interpretationRuntime.nodes.get('v3a-real-customers').scrolled, true,
+    'AI 解读助手入口必须自动定位到真实客户列表');
 
   const fetchCountBeforeOpen = runtime.calls.length;
   await runtime.trigger('v3a-customer-upload', 'click');

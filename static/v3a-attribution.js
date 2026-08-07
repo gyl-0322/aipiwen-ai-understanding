@@ -423,9 +423,13 @@
   $('#v3a-customer-search')?.addEventListener('input', applyCustomerView);
   $('#v3a-customer-status-filter')?.addEventListener('change', applyCustomerView);
   $('#v3a-customer-sort')?.addEventListener('change', applyCustomerView);
-  if (new URLSearchParams(window.location.search).get('intent') === 'interpret') {
+  const interpretationMode = new URLSearchParams(window.location.search).get('intent') === 'interpret';
+  if (interpretationMode) {
     $('#v3a-customer-guidance-title').textContent = '选择客户开始解读';
     $('#v3a-customer-guidance-text').textContent = '请在真实客户列表中点击“开始解读”。只有已生成报告的客户可以进入。';
+    $('#v3a-real-customers-title').textContent = '选择客户开始解读';
   }
-  loadCustomers();
+  loadCustomers().then(() => {
+    if (interpretationMode) $('#v3a-real-customers')?.scrollIntoView({ block: 'start' });
+  });
 })();
