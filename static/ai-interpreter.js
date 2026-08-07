@@ -90,9 +90,18 @@
   async function readPayload(response, fallback) {
     let payload = null;
     try { payload = await response.json(); } catch {}
-    if (!response.ok || payload?.ok !== true) throw new Error(payload?.error || fallback);
+    if (!response.ok || payload?.ok !== true) {
+      const error = new Error(payload?.error || fallback);
+      error.status = Number(response.status) || 0;
+      error.code = String(payload?.code || '');
+      throw error;
+    }
     if (typeof payload.csrfToken === 'string') csrfToken = payload.csrfToken;
     return payload;
+  }
+
+  function isRetryableGenerationError(error) {
+    return !Number(error?.status) || Number(error.status) === 429 || Number(error.status) >= 500;
   }
 
   function pickResult(result, keys) {
@@ -269,18 +278,33 @@
         : [];
       if (reportContext.report?.customIssue) concerns.push(reportContext.report.customIssue);
       for (let requestIndex = 0; requestIndex < 8; requestIndex += 1) {
-        const response = await fetch(`${API}?operation=generate`, {
-          method: 'POST',
-          credentials: 'same-origin',
-          headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
-          body: JSON.stringify({
-            clientId,
-            reportId,
-            clientConcerns: concerns,
-            customNotes: $('#interpretation-custom-notes')?.value || ''
-          })
-        });
-        const payload = await readPayload(response, 'AI 解读方案暂时无法生成。');
+        let payload = null;
+        let lastError = null;
+        for (let requestAttempt = 0; requestAttempt < 2; requestAttempt += 1) {
+          try {
+            const response = await fetch(`${API}?operation=generate`, {
+              method: 'POST',
+              credentials: 'same-origin',
+              headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
+              body: JSON.stringify({
+                clientId,
+                reportId,
+                clientConcerns: concerns,
+                customNotes: $('#interpretation-custom-notes')?.value || ''
+              })
+            });
+            payload = await readPayload(response, 'AI 解读方案暂时无法生成。');
+            break;
+          } catch (error) {
+            lastError = error;
+            if (requestAttempt === 0 && isRetryableGenerationError(error)) {
+              showStatus('正在自动重试', '当前板块生成暂时中断，正在从已保存进度继续。');
+              continue;
+            }
+            throw error;
+          }
+        }
+        if (!payload) throw lastError || new Error('AI 解读方案暂时无法生成。');
         if (payload.complete === true) {
           const generated = payload.interpretation || payload;
           loadSteps(generated.steps, generated.id || payload.interpretationId, generated.status || payload.status);

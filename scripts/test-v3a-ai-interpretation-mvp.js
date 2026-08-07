@@ -92,6 +92,10 @@ assert(/validateDetailedPrefix/.test(reportBff) && /progress:\s*\{ completed: st
   'BFF 必须校验并返回可恢复的分段进度');
 assert(/requestIndex\s*=\s*0; requestIndex\s*<\s*8/.test(sessionJs),
   '前端必须按顺序请求 8 组板块，避免单个 Serverless 请求超时');
+assert(/requestAttempt\s*=\s*0; requestAttempt\s*<\s*2/.test(sessionJs)
+  && /isRetryableGenerationError/.test(sessionJs)
+  && /正在自动重试/.test(sessionJs),
+  '前端必须对网络、429 或 5xx 自动重试当前板块一次');
 
 assert(!/id="generate-plan"/.test(sessionHtml) && /await generateInterpretation\(\)/.test(sessionJs),
   '首次进入真实报告必须自动生成方案，不保留重复生成按钮');
