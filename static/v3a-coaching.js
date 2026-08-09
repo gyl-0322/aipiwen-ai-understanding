@@ -113,12 +113,12 @@
         const target = document.querySelector('#pickerList');
         target.replaceChildren();
         (payload.people || []).forEach((person) => {
-          const button = node('button', 'clue-card');
+          const button = node('button', 'picker-card');
           button.type = 'button';
           const stage = node('span', `stage-tag ${person.stage || 'initial'}`, stageLabels[person.stage] || '初始解读期');
-          const labelWrap = node('div', 'clue-card-header');
+          const labelWrap = node('div', 'picker-card-name');
           labelWrap.append(node('strong', '', person.displayName || '客户'), stage);
-          button.append(labelWrap, node('p', '', `服务阶段：${stageLabels[person.stage] || '初始解读期'}`), node('div', 'clue-action', '开始辅导 →'));
+          button.append(labelWrap, node('div', 'picker-card-meta', `服务阶段：${stageLabels[person.stage] || '初始解读期'}`), node('div', 'picker-card-action', '开始辅导 →'));
           button.addEventListener('click', () => window.location.assign(`/ai-coaching-assistant.html?person_id=${encodeURIComponent(person.id)}`));
           target.append(button);
         });

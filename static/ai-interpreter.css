@@ -2573,7 +2573,13 @@ body[data-page="advisor"] .value-card {
 .case-modal textarea { min-height: 100px; }
 .case-modal .btn-row { display: flex; gap: 8px; justify-content: flex-end; }
 
-.picker-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+.picker-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px; }
+.picker-card { display: flex; flex-direction: column; justify-content: space-between; gap: 8px; padding: 16px 14px; border: 1px solid var(--line); border-radius: 8px; background: rgba(255,255,255,.028); cursor: pointer; min-height: 108px; }
+.picker-card:hover { border-color: var(--line-strong); background: rgba(82,213,232,.05); }
+.picker-card-name { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.picker-card-name strong { color: var(--text); font-size: 14px; }
+.picker-card-meta { color: var(--muted); font-size: 13px; line-height: 1.6; }
+.picker-card-action { color: var(--cyan); font-size: 12px; font-weight: 800; text-align: right; margin-top: 4px; }
 
 .case-list { display: grid; gap: 10px; }
 .case-card-item { padding: 14px; border: 1px solid var(--line); border-radius: 8px; background: rgba(255,255,255,.028); display: grid; gap: 8px; }
