@@ -51,6 +51,54 @@
       "dest": "/api/v3a-report-import?action=interpretation"
     },
     {
+      "src": "/api/v3a-client-data-center/clues",
+      "dest": "/api/v3a-attribution?action=client-data-center-clues"
+    },
+    {
+      "src": "/api/v3a-client-data-center/stage-summary",
+      "dest": "/api/v3a-attribution?action=client-data-center-stage-summary"
+    },
+    {
+      "src": "/api/v3a-client-data-center/person-list",
+      "dest": "/api/v3a-attribution?action=client-data-center-person-list"
+    },
+    {
+      "src": "/api/v3a-client-data-center",
+      "dest": "/api/v3a-attribution?action=client-data-center"
+    },
+    {
+      "src": "/api/v3a-coaching-suggestion",
+      "dest": "/api/v3a-report-import?action=coaching-suggestion"
+    },
+    {
+      "src": "/api/v3a-coaching-sessions",
+      "dest": "/api/v3a-attribution?action=coaching-sessions"
+    },
+    {
+      "src": "/api/v3a-growth-records",
+      "dest": "/api/v3a-attribution?action=growth-records"
+    },
+    {
+      "src": "/api/v3a-case-cards/([^/]+)/submit",
+      "dest": "/api/v3a-attribution?action=case-cards&caseAction=submit&caseId=$1"
+    },
+    {
+      "src": "/api/v3a-case-cards/([^/]+)/review",
+      "dest": "/api/v3a-attribution?action=case-cards&caseAction=review&caseId=$1"
+    },
+    {
+      "src": "/api/v3a-case-cards/([^/]+)",
+      "dest": "/api/v3a-attribution?action=case-cards&caseId=$1"
+    },
+    {
+      "src": "/api/v3a-case-cards",
+      "dest": "/api/v3a-attribution?action=case-cards"
+    },
+    {
+      "src": "/api/v3a-case-candidates",
+      "dest": "/api/v3a-attribution?action=case-candidates"
+    },
+    {
       "src": "/api/v3a-admin/unassigned",
       "dest": "/api/v3a-admin?action=unassigned"
     },
@@ -193,6 +241,30 @@
     {
       "src": "/ai-interpreter-cases",
       "dest": "/ai-interpreter-cases.html"
+    },
+    {
+      "src": "/client-360.html",
+      "dest": "/client-360.html"
+    },
+    {
+      "src": "/client-360",
+      "dest": "/client-360.html"
+    },
+    {
+      "src": "/ai-coaching-assistant.html",
+      "dest": "/ai-coaching-assistant.html"
+    },
+    {
+      "src": "/ai-coaching-assistant",
+      "dest": "/ai-coaching-assistant.html"
+    },
+    {
+      "src": "/growth-record.html",
+      "dest": "/growth-record.html"
+    },
+    {
+      "src": "/growth-record",
+      "dest": "/growth-record.html"
     },
     {
       "src": "/admin-applications.html",

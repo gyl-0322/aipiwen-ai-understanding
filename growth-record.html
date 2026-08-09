@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>成长记录 · AIPIWEN指导师工作台</title>
+  <meta name="description" content="AIPIWEN 客户成长记录">
+  <link rel="stylesheet" href="static/ai-interpreter.css">
+  <script src="/js/error-tracker.js" defer></script>
+  <script src="static/v3a-auth.js" defer></script>
+  <script src="static/ai-interpreter.js" defer></script>
+  <script src="static/v3a-growth-record.js" defer></script>
+</head>
+<body data-v3a-auth-page="workbench" hidden data-page="growth-record">
+  <div class="app-shell">
+    <aside class="sidebar">
+      <a class="brand" href="ai-interpreter-workbench.html"><svg class="brand-flower" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><circle class="brand-flower-ring" cx="18" cy="18" r="15.5" stroke-width=".9" stroke-dasharray="2.5 6"/><g class="brand-flower-petals"><ellipse cx="18" cy="12" rx="2.2" ry="6.5"/><ellipse cx="18" cy="12" rx="2.2" ry="6.5" transform="rotate(90 18 18)"/><ellipse cx="18" cy="12" rx="1.4" ry="5.5" transform="rotate(45 18 18)"/><ellipse cx="18" cy="12" rx="1.4" ry="5.5" transform="rotate(135 18 18)"/></g><circle class="brand-flower-center" cx="18" cy="18" r="3"/></svg><div><p class="brand-title">AIPIWEN指导师工作台</p><div class="brand-subtitle">AI成长理解工作台</div></div></a>
+      <nav class="nav" aria-label="主导航">
+        <a class="nav-link" data-page="workbench" href="ai-interpreter-workbench.html"><span>⌂</span><span>工作台首页</span></a>
+        <a class="nav-link" data-page="customers" href="ai-interpreter-customers.html"><span>◎</span><span>我的客户</span></a>
+        <a class="nav-link" data-page="client-360" href="client-360.html"><span>●</span><span>客户 360 档案</span></a>
+        <a class="nav-link" data-page="session" href="ai-interpreter-customers.html?intent=interpret#v3a-real-customers"><span>◈</span><span>AI解读助手</span></a>
+        <a class="nav-link" data-page="coaching" href="ai-coaching-assistant.html"><span>◉</span><span>AI辅导助手</span></a>
+        <a class="nav-link" data-page="growth-record" href="growth-record.html"><span>✎</span><span>成长记录</span></a>
+        <a class="nav-link" data-page="training" href="ai-interpreter-training.html"><span>▣</span><span>解读训练</span></a>
+        <a class="nav-link" data-page="review" href="ai-interpreter-review.html"><span>◇</span><span>总部复核 / 规范</span></a>
+        <a class="nav-link" data-page="cases" href="ai-interpreter-cases.html"><span>✦</span><span>特殊案例库</span></a>
+      </nav>
+      <div class="sidebar-note">记录可观察事实、家长反馈与后续计划。</div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar"><div><p class="eyebrow">成长记录</p><h1>成长记录</h1><p>用结构化记录沉淀持续服务过程。</p></div></header>
+      <p class="dryrun-error" id="growthError" role="status" aria-live="polite" hidden></p>
+      <div class="layout-grid cols-aside">
+        <section class="module" id="recordForm">
+          <div class="card-header"><div class="card-title"><h2>新增记录</h2><small>最多 2000 字</small></div></div>
+          <div class="growth-form-grid">
+            <label class="field"><span>关联客户</span><select class="select" id="selectPerson"><option value="">请选择客户</option></select></label>
+            <div class="field"><span>记录类型</span><div class="pill-row" id="recordTypePills"><button class="pill active" type="button" data-type="advisor_obs">指导师观察</button><button class="pill" type="button" data-type="parent_feedback">家长反馈</button><button class="pill" type="button" data-type="child_self_report">孩子自述</button><button class="pill" type="button" data-type="key_event">关键事件</button><button class="pill" type="button" data-type="service_decision">服务决策</button></div></div>
+            <div class="field full-width"><span>领域标签（可多选）</span><div class="pill-row" id="domainPills"><button class="pill" type="button" data-domain="learning">学习</button><button class="pill" type="button" data-domain="behavior">行为</button><button class="pill" type="button" data-domain="emotion">情绪</button><button class="pill" type="button" data-domain="social">社交</button><button class="pill" type="button" data-domain="parent_child">亲子关系</button><button class="pill" type="button" data-domain="family_system">家庭系统</button><button class="pill" type="button" data-domain="physical">身体</button></div></div>
+            <div class="field"><span>变化方向</span><div class="pill-row" id="directionPills"><button class="pill" type="button" data-direction="improving">进步</button><button class="pill active" type="button" data-direction="stable">持平</button><button class="pill" type="button" data-direction="declining">退步</button><button class="pill" type="button" data-direction="new_emergence">新出现</button><button class="pill" type="button" data-direction="resolved">已解决</button></div></div>
+            <div class="field"><span>关联皮纹指标（可选）</span><div class="pill-row" id="markerPills"><button class="pill" type="button" data-marker="TRC">TRC</button><button class="pill" type="button" data-marker="ATD">ATD</button><button class="pill" type="button" data-marker="pattern">纹型</button><button class="pill" type="button" data-marker="personality">性格类型</button><button class="pill" type="button" data-marker="channel">学习通道</button><button class="pill" type="button" data-marker="brain">左右脑</button></div></div>
+            <div class="field"><span>可见范围</span><div class="pill-row" id="visibilityPills"><button class="pill active" type="button" data-visibility="advisor_only">仅指导师可见</button><button class="pill" type="button" data-visibility="shared">指导师和家长都可见</button></div></div>
+            <label class="field full-width"><span>记录内容</span><textarea class="textarea" id="recordContent" rows="6" maxlength="2000" placeholder="描述观察到的具体事实和变化。"></textarea><small id="charCount">0/2000</small></label>
+          </div>
+          <button class="btn primary" id="btnSaveRecord" type="button" disabled style="margin-top:12px">保存记录</button>
+        </section>
+
+        <section class="module" id="timelinePanel">
+          <div class="card-header"><div class="card-title"><h2>时间线</h2><small>按时间倒序</small></div></div>
+          <div class="searchbar" style="margin-bottom:14px"><select class="select" id="filterPerson"><option value="">全部客户</option></select><select class="select" id="filterDomain"><option value="">全部领域</option><option value="learning">学习</option><option value="behavior">行为</option><option value="emotion">情绪</option><option value="social">社交</option><option value="parent_child">亲子关系</option><option value="family_system">家庭系统</option><option value="physical">身体</option></select><select class="select" id="filterDirection"><option value="">全部方向</option><option value="improving">进步</option><option value="stable">持平</option><option value="declining">退步</option><option value="new_emergence">新出现</option><option value="resolved">已解决</option></select><select class="select" id="filterRecorder"><option value="">全部记录者</option><option value="advisor">指导师</option></select></div>
+          <div class="timeline-list" id="timelineList"><div class="v4-empty-state">正在读取成长记录…</div></div>
+          <button class="btn ghost" id="btnLoadMore" type="button" style="width:100%;margin-top:10px">加载更多</button>
+        </section>
+      </div>
+    </main>
+  </div>
+  <main class="public-shell auth-shell" id="v3a-workbench-error" hidden><section class="module auth-card"><p class="eyebrow">AIPIWEN 指导师工作台</p><h1>工作台暂时无法打开</h1><p id="v3a-workbench-error-message" role="alert">账号信息暂时无法加载，请稍后重试。</p><div class="top-actions"><a class="btn primary" href="">重新加载</a><a class="btn ghost" href="/login.html">返回登录</a></div></section></main>
+</body>
+</html>

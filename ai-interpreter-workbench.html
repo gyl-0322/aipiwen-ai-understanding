@@ -9,6 +9,8 @@
   <script src="/js/error-tracker.js" defer></script>
   <script src="https://cdn.bootcdn.net/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" defer></script>
   <script src="static/v3a-auth.js" defer></script>
+  <script src="static/v3a-growth-snapshot.js" defer></script>
+  <script src="static/v3a-workbench-clues.js" defer></script>
   <script src="static/ai-interpreter.js" defer></script>
 </head>
 <body data-v3a-auth-page="workbench" hidden data-page="workbench">
@@ -33,10 +35,13 @@
       <nav class="nav" aria-label="主导航">
         <a class="nav-link" data-page="workbench" href="ai-interpreter-workbench.html"><span>⌂</span><span>工作台首页</span></a>
         <a class="nav-link" data-page="customers" href="ai-interpreter-customers.html"><span>◎</span><span>我的客户</span></a>
+        <a class="nav-link" data-page="client-360" href="client-360.html"><span>●</span><span>客户 360 档案</span></a>
         <a class="nav-link" data-page="session" href="ai-interpreter-customers.html?intent=interpret#v3a-real-customers"><span>◈</span><span>AI解读助手</span></a>
+        <a class="nav-link" data-page="coaching" href="ai-coaching-assistant.html"><span>◉</span><span>AI辅导助手</span></a>
+        <a class="nav-link" data-page="growth-record" href="growth-record.html"><span>✎</span><span>成长记录</span></a>
         <a class="nav-link" data-page="training" href="ai-interpreter-training.html"><span>▣</span><span>解读训练</span></a>
         <a class="nav-link" data-page="review" href="ai-interpreter-review.html"><span>◇</span><span>总部复核 / 规范</span></a>
-        <a class="nav-link" data-page="cases" href="ai-interpreter-cases.html"><span>✦</span><span>优秀案例沉淀</span></a>
+        <a class="nav-link" data-page="cases" href="ai-interpreter-cases.html"><span>✦</span><span>特殊案例库</span></a>
       </nav>
       <div class="sidebar-note">
         工作台持续更新中，部分功能展示为学习示例。
@@ -46,7 +51,7 @@
     <main class="main">
       <header class="topbar">
         <div>
-          <p class="eyebrow">Workbench Overview</p>
+          <p class="eyebrow">工作台首页</p>
           <h1>AIPIWEN指导师工作台</h1>
           <p>把一份报告转化为客户听得懂、用得上、风险可控的专业解读。</p>
         </div>
@@ -55,8 +60,8 @@
             <span>身份</span>
             <strong id="v3a-workbench-role">读取中</strong>
           </button>
-          <button class="workbench-chip" type="button" data-v3a-detail="credits" aria-label="查看积分明细">
-            <span>积分</span>
+          <button class="workbench-chip" type="button" data-v3a-detail="credits" aria-label="查看成长积分明细">
+            <span>成长积分</span>
             <strong id="v3a-workbench-balance">读取中</strong>
           </button>
           <button class="workbench-chip" type="button" data-v3a-detail="invite" aria-label="查看邀请码二维码">
@@ -67,6 +72,34 @@
         </div>
       </header>
       <p class="dryrun-error" id="v3a-workbench-message" role="status" aria-live="polite" hidden></p>
+
+      <section class="module growth-snapshot" id="v3a-growth-snapshot" aria-labelledby="v3a-growth-snapshot-title">
+        <div class="card-header">
+          <div class="card-title">
+            <h2 id="v3a-growth-snapshot-title">个人成长快照</h2>
+            <small>你的成长贡献记录，仅本人可见</small>
+          </div>
+          <span class="status info">V0.1</span>
+        </div>
+        <p class="dryrun-error" id="v3a-growth-snapshot-message" role="status" aria-live="polite" hidden></p>
+        <div class="growth-snapshot-grid">
+          <div class="growth-summary-panel" aria-labelledby="v3a-growth-summary-title">
+            <h3 id="v3a-growth-summary-title">成长摘要</h3>
+            <p class="growth-balance-copy">你已积累 <strong id="v3a-growth-balance">读取中</strong> 成长积分</p>
+            <p>这些成长积分记录了你从注册到现在的每一次成长贡献，不代表可消费金额。</p>
+            <ul class="growth-milestone-list" id="v3a-growth-milestones" aria-label="成长里程碑">
+              <li class="growth-log-empty">正在读取成长里程碑……</li>
+            </ul>
+          </div>
+          <div class="growth-recent-panel" aria-labelledby="v3a-growth-recent-title">
+            <h3 id="v3a-growth-recent-title">近期记录</h3>
+            <p>最近 10 条成长贡献记录。</p>
+            <ul class="growth-log-list" id="v3a-growth-recent-logs">
+              <li class="growth-log-empty">正在读取近期记录……</li>
+            </ul>
+          </div>
+        </div>
+      </section>
 
       <section class="notice" aria-label="学习示例说明" style="margin-bottom:16px">
         <strong>学习示例</strong>
@@ -88,6 +121,21 @@
           <div class="metric-value">2</div>
           <div class="metric-label">本周待完成训练</div>
           <p>含“数值解释安全度”评分项。</p>
+        </div>
+      </section>
+
+      <section class="module" style="margin-top:16px" aria-labelledby="v4-clue-title">
+        <div class="card-header">
+          <div class="card-title">
+            <h2 id="v4-clue-title">今日辅导线索</h2>
+            <small>以下客户可能需要你今天关注</small>
+          </div>
+        </div>
+        <p class="dryrun-error" id="clueError" role="status" aria-live="polite" hidden></p>
+        <div class="clue-list" id="clueList" style="display:grid;gap:10px">
+          <div class="clue-card" aria-busy="true">
+            <div class="clue-card-header"><strong>正在读取辅导线索…</strong></div>
+          </div>
         </div>
       </section>
 

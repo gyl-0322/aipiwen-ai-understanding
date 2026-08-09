@@ -321,18 +321,41 @@
       const readyReport = reports.find((report) => report.status === 'ready') || null;
       const row = document.createElement('div');
       row.className = 'table-row';
-      const action = document.createElement(readyReport ? 'button' : 'span');
+      row.dataset.clientId = client.id;
+      const stage = document.createElement('span');
+      stage.dataset.v4Stage = 'initial';
+      stage.className = 'stage-tag initial';
+      stage.textContent = '初始解读期';
+      const candidate = document.createElement('span');
+      candidate.dataset.v4Candidate = 'false';
+      candidate.textContent = '-';
+      const actions = document.createElement('span');
+      actions.className = 'v4-row-actions';
+      const archive = document.createElement('button');
+      archive.type = 'button';
+      archive.className = 'btn ghost';
+      archive.textContent = '客户360';
+      archive.addEventListener('click', () => {
+        window.location.assign(`client-360.html?person_id=${encodeURIComponent(client.id)}`);
+      });
+      actions.append(archive);
       if (readyReport) {
-        action.type = 'button';
-        action.className = 'btn ghost customer-start-button';
-        action.textContent = '开始解读';
-        action.addEventListener('click', () => {
+        const interpret = document.createElement('button');
+        interpret.type = 'button';
+        interpret.className = 'btn ghost customer-start-button';
+        interpret.textContent = '开始解读';
+        interpret.addEventListener('click', () => {
           const target = `ai-interpreter-session.html?clientId=${encodeURIComponent(client.id)}&reportId=${encodeURIComponent(readyReport.id)}`;
           window.location.assign(target);
         });
-      } else {
-        action.textContent = '报告未就绪';
+        actions.append(interpret);
       }
+      const caseButton = document.createElement('button');
+      caseButton.type = 'button';
+      caseButton.className = 'btn ghost';
+      caseButton.textContent = '存入案例库';
+      caseButton.addEventListener('click', () => window.openCaseModal?.(client.id, client.displayName));
+      actions.append(caseButton);
       row.append(
         cell(client.displayName, true),
         cell(sourceLabels[client.source] || client.source),
@@ -341,7 +364,9 @@
         cell(formatTime(latest?.createdAt)),
         cell(statusLabels[latest?.status] || (latest ? latest.status : '暂无报告')),
         cell(formatTime(client.createdAt)),
-        action
+        stage,
+        candidate,
+        actions
       );
       return row;
     });
@@ -349,6 +374,9 @@
     $('#v3a-real-customers-count').textContent = `${clients.length} 位`;
     $('#v3a-real-customers-table').hidden = clients.length === 0;
     $('#v3a-real-customers-empty').hidden = clients.length !== 0;
+    document.dispatchEvent(new CustomEvent('v3a:customers-rendered', {
+      detail: { clients: clients.map((client) => ({ id: client.id })) }
+    }));
   }
 
   async function createToken() {
@@ -423,13 +451,9 @@
   $('#v3a-customer-search')?.addEventListener('input', applyCustomerView);
   $('#v3a-customer-status-filter')?.addEventListener('change', applyCustomerView);
   $('#v3a-customer-sort')?.addEventListener('change', applyCustomerView);
-  const interpretationMode = new URLSearchParams(window.location.search).get('intent') === 'interpret';
-  if (interpretationMode) {
+  if (new URLSearchParams(window.location.search).get('intent') === 'interpret') {
     $('#v3a-customer-guidance-title').textContent = '选择客户开始解读';
     $('#v3a-customer-guidance-text').textContent = '请在真实客户列表中点击“开始解读”。只有已生成报告的客户可以进入。';
-    $('#v3a-real-customers-title').textContent = '选择客户开始解读';
   }
-  loadCustomers().then(() => {
-    if (interpretationMode) $('#v3a-real-customers')?.scrollIntoView({ block: 'start' });
-  });
+  loadCustomers();
 })();

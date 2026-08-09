@@ -8,7 +8,7 @@ const pages = [
   ['ai-interpreter-session.html', 'AI解读助手'],
   ['ai-interpreter-training.html', '解读训练'],
   ['ai-interpreter-review.html', '总部复核 / 使用规范'],
-  ['ai-interpreter-cases.html', '优秀案例沉淀']
+  ['ai-interpreter-cases.html', '特殊案例库']
 ];
 const allowedMissing = new Set(['advisor-dryrun-new-customer.html']);
 const allowedExternalScripts = new Set([
@@ -35,7 +35,7 @@ for (const [page, title] of pages) {
   assert(source.includes('data-v3a-auth-page="workbench" hidden'), `页面必须先通过真实登录校验：${page}`);
   assert(source.includes('static/v3a-auth.js'), `页面必须加载 V3a 认证脚本：${page}`);
   assert(source.includes('static/ai-interpreter.js'), `页面必须加载旧工作台交互脚本：${page}`);
-  assert(page === 'ai-interpreter-session.html' || source.includes('<strong>学习示例</strong>') || source.includes('功能预览') || source.includes(experienceNotice),
+  assert(['ai-interpreter-session.html', 'ai-interpreter-cases.html'].includes(page) || source.includes('<strong>学习示例</strong>') || source.includes('功能预览') || source.includes(experienceNotice),
     `页面必须明确标注学习示例或功能预览：${page}`);
   assert(source.includes('id="v3a-workbench-error" hidden') &&
     source.includes('id="v3a-workbench-error-message"'),
@@ -64,7 +64,10 @@ for (const [page, title] of pages) {
 const navLinks = [
   'ai-interpreter-workbench.html',
   'ai-interpreter-customers.html',
+  'client-360.html',
   'ai-interpreter-customers.html?intent=interpret#v3a-real-customers',
+  'ai-coaching-assistant.html',
+  'growth-record.html',
   'ai-interpreter-training.html',
   'ai-interpreter-review.html',
   'ai-interpreter-cases.html'

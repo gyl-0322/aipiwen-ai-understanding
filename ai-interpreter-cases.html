@@ -3,207 +3,70 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>优秀案例沉淀 · AIPIWEN指导师工作台</title>
-  <meta name="description" content="AIPIWEN 指导师工作台优秀案例沉淀体验页面">
+  <title>特殊案例库 · AIPIWEN指导师工作台</title>
+  <meta name="description" content="AIPIWEN 指导师特殊案例库">
   <link rel="stylesheet" href="static/ai-interpreter.css">
   <script src="/js/error-tracker.js" defer></script>
   <script src="static/v3a-auth.js" defer></script>
   <script src="static/ai-interpreter.js" defer></script>
+  <script src="static/v3a-case-cards.js" defer></script>
 </head>
 <body data-v3a-auth-page="workbench" hidden data-page="cases">
   <div class="app-shell">
     <aside class="sidebar">
       <a class="brand" href="ai-interpreter-workbench.html">
-        <svg class="brand-flower" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-          <circle class="brand-flower-ring" cx="18" cy="18" r="15.5" stroke-width=".9" stroke-dasharray="2.5 6"/>
-          <g class="brand-flower-petals">
-            <ellipse cx="18" cy="12" rx="2.2" ry="6.5" transform="rotate(0 18 18)"/>
-            <ellipse cx="18" cy="12" rx="2.2" ry="6.5" transform="rotate(90 18 18)"/>
-            <ellipse cx="18" cy="12" rx="1.4" ry="5.5" transform="rotate(45 18 18)"/>
-            <ellipse cx="18" cy="12" rx="1.4" ry="5.5" transform="rotate(135 18 18)"/>
-          </g>
-          <circle class="brand-flower-center" cx="18" cy="18" r="3"/>
-        </svg>
-        <div>
-          <p class="brand-title">AIPIWEN指导师工作台</p>
-          <div class="brand-subtitle">AI成长理解工作台</div>
-        </div>
+        <svg class="brand-flower" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><circle class="brand-flower-ring" cx="18" cy="18" r="15.5" stroke-width=".9" stroke-dasharray="2.5 6"/><g class="brand-flower-petals"><ellipse cx="18" cy="12" rx="2.2" ry="6.5"/><ellipse cx="18" cy="12" rx="2.2" ry="6.5" transform="rotate(90 18 18)"/><ellipse cx="18" cy="12" rx="1.4" ry="5.5" transform="rotate(45 18 18)"/><ellipse cx="18" cy="12" rx="1.4" ry="5.5" transform="rotate(135 18 18)"/></g><circle class="brand-flower-center" cx="18" cy="18" r="3"/></svg>
+        <div><p class="brand-title">AIPIWEN指导师工作台</p><div class="brand-subtitle">AI成长理解工作台</div></div>
       </a>
       <nav class="nav" aria-label="主导航">
         <a class="nav-link" data-page="workbench" href="ai-interpreter-workbench.html"><span>⌂</span><span>工作台首页</span></a>
         <a class="nav-link" data-page="customers" href="ai-interpreter-customers.html"><span>◎</span><span>我的客户</span></a>
+        <a class="nav-link" data-page="client-360" href="client-360.html"><span>●</span><span>客户 360 档案</span></a>
         <a class="nav-link" data-page="session" href="ai-interpreter-customers.html?intent=interpret#v3a-real-customers"><span>◈</span><span>AI解读助手</span></a>
+        <a class="nav-link" data-page="coaching" href="ai-coaching-assistant.html"><span>◉</span><span>AI辅导助手</span></a>
+        <a class="nav-link" data-page="growth-record" href="growth-record.html"><span>✎</span><span>成长记录</span></a>
         <a class="nav-link" data-page="training" href="ai-interpreter-training.html"><span>▣</span><span>解读训练</span></a>
         <a class="nav-link" data-page="review" href="ai-interpreter-review.html"><span>◇</span><span>总部复核 / 规范</span></a>
-        <a class="nav-link" data-page="cases" href="ai-interpreter-cases.html"><span>✦</span><span>优秀案例沉淀</span></a>
+        <a class="nav-link" data-page="cases" href="ai-interpreter-cases.html"><span>✦</span><span>特殊案例库</span></a>
       </nav>
-      <div class="sidebar-note">
-        本页为学习示例，帮助您了解优秀案例的展示方式。
-      </div>
+      <div class="sidebar-note">沉淀值得复盘的服务案例；共享前需提交总部审核。</div>
     </aside>
 
     <main class="main">
-      <header class="topbar">
-        <div>
-          <p class="eyebrow">Platform Review</p>
-          <h1>优秀案例沉淀</h1>
-          <p>从高质量服务案例中学习表达方法和解读经验。</p>
-        </div>
-      </header>
+      <header class="topbar"><div><p class="eyebrow">特殊案例库</p><h1>特殊案例库</h1><p>保存服务经验，复盘关键转折，并学习团队共享案例。</p></div><span class="status info" id="pendingBadge" hidden>待审核：<strong id="pendingCount">0</strong></span></header>
+      <p class="dryrun-error" id="caseError" role="status" aria-live="polite" hidden></p>
 
-      <section class="notice" aria-label="学习示例说明" style="margin-bottom:16px">
-        <strong>学习示例</strong>
-        <p>以下展示优秀案例的整理方式，案例数据为学习参考。</p>
+      <section class="module" id="pendingSection" hidden>
+        <div class="card-header"><div class="card-title"><h2>待审核</h2><small>仅总部管理员可见</small></div></div>
+        <div class="case-list" id="pendingCaseList"></div>
       </section>
 
-      <section class="module boundary">
-        <div class="card-header">
-          <div class="card-title">
-            <h2>优秀案例说明</h2>
-            <small>从服务记录到学习材料</small>
-          </div>
-          <span class="status info">学习示例</span>
-        </div>
-        <p>平台会从高质量服务记录中整理学习案例，并进行去标识化处理，帮助指导师学习表达与服务方法。</p>
+      <section class="module" id="myCasesSection" style="margin-top:16px">
+        <div class="card-header"><div class="card-title"><h2>我的案例</h2><small>草稿、已提交及已退回案例</small></div><button class="btn ghost" id="btnNewCase" type="button">+ 新建案例</button></div>
+        <div class="case-list" id="myCaseList"></div>
+        <div class="v4-empty-state" id="myCasesEmpty" hidden>你还没有存入案例。可在“我的客户”点击“存入案例库”。</div>
       </section>
 
-      <section class="module" style="margin-top:16px">
-        <div class="card-header">
-          <div class="card-title">
-            <h2>案例整理流程</h2>
-              <small>服务记录 → 筛选 → 去标识化 → 分类整理 → 解读训练 → 方法沉淀</small>
-          </div>
-        </div>
-        <div class="timeline">
-          <div class="pipeline-step">
-            <b>① 解读记录</b>
-            <p>来源于指导师在 AI解读助手完成的服务记录。以下为学习示例数据。</p>
-          </div>
-          <div class="pipeline-step">
-            <b>② 总部精选</b>
-            <p>平台按流程完整度、话术准确性、客户反馈和教学价值筛选优秀案例。</p>
-          </div>
-          <div class="pipeline-step">
-            <b>③ 脱敏</b>
-            <p>客户姓名、学校、报告编号等去标识化处理示例。</p>
-          </div>
-          <div class="pipeline-step">
-            <b>④ 分类整理</b>
-            <p>按报告类型、客户特征、教学重点和风险场景进行分类。</p>
-          </div>
-          <div class="pipeline-step">
-            <b>⑤ 解读训练</b>
-            <p>脱敏案例进入训练模块，供新人练习并查看参考话术和客户反馈。</p>
-          </div>
-          <div class="pipeline-step">
-            <b>⑥ 反哺AI话术库</b>
-            <p>提炼高频话术、客户反馈关联和“为什么这样讲”策略素材。</p>
-          </div>
-        </div>
-      </section>
-
-      <section class="layout-grid cols-3" style="margin-top:16px">
-        <div class="card metric cyan">
-          <div class="metric-value">—</div>
-          <div class="metric-label">解读记录输入</div>
-          <p>来自一线指导师完成的服务记录。</p>
-        </div>
-        <div class="card metric amber">
-          <div class="metric-value">20-30</div>
-          <div class="metric-label">总部精选候选案例</div>
-          <p>筛选标准：无风险词、反馈正面、有教学价值。</p>
-        </div>
-        <div class="card metric green">
-          <div class="metric-value">15</div>
-          <div class="metric-label">训练案例沉淀目标</div>
-          <p>已精选案例进入训练模块，供新人练习参考。</p>
-        </div>
-      </section>
-
-      <section class="layout-grid cols-aside" style="margin-top:16px">
-        <div class="table-card recent-table">
-          <div class="card-header" style="padding:16px 16px 0">
-            <div class="card-title">
-              <h2>总部精选候选</h2>
-              <small>用于展示筛选标准与评注意图</small>
-            </div>
-          </div>
-          <div class="table-head">
-            <span>案例</span><span>报告类型</span><span>教学重点</span><span>状态</span><span>操作</span>
-          </div>
-          <div class="table-row">
-            <strong>王小明 · 8 岁</strong><span>儿童天赋报告</span><span>TRC/ATD 安全解释</span><span class="status pending">待精选</span><span>评注</span>
-          </div>
-          <div class="table-row">
-            <strong>客户 A · 成人</strong><span>成人发展规划</span><span>职业边界回应</span><span class="status done">已精选</span><span>查看</span>
-          </div>
-          <div class="table-row">
-            <strong>客户 B · 亲子</strong><span>学习通道评估</span><span>高焦虑家长安抚</span><span class="status info">待脱敏</span><span>规则</span>
-          </div>
-        </div>
-
-        <aside class="module">
-          <div class="card-header">
-            <div class="card-title">
-              <h2>平台评注样例</h2>
-              <small>帮助新人理解优秀案例为什么优秀</small>
-            </div>
-          </div>
-          <div class="notice">
-            <strong>第④步处理亮点</strong>
-            <p>指导师先强调“数值没有好坏”，再分别解释 TRC、ATD、左右脑，避免客户把数值理解为分数。</p>
-          </div>
-          <div class="notice">
-            <strong>客户反馈价值</strong>
-            <p>客户在“原来他不是不专心，而是会同时留意很多信息”处产生共鸣，可作为训练中的反馈片段。</p>
-          </div>
-        </aside>
-      </section>
-
-      <section class="layout-grid cols-2" style="margin-top:16px">
-        <div class="module">
-          <div class="card-header">
-            <div class="card-title">
-              <h2>脱敏规则清单</h2>
-              <small>这里只展示规则，不执行处理</small>
-            </div>
-          </div>
-          <ul class="guide-list">
-            <li>客户姓名替换为“客户 A / 客户 B”或虚拟姓名。</li>
-            <li>客户年龄保留范围，删除具体学校、单位、报告编号和精确日期。</li>
-            <li>指导师姓名可选署名，默认替换为“资深指导师 A”。</li>
-            <li>报告核心数据保留，因为训练案例需要 TRC、ATD、五大功能区与十指特征摘要、学习通道等解读素材。</li>
-          </ul>
-        </div>
-
-        <div class="module">
-          <div class="card-header">
-            <div class="card-title">
-              <h2>反哺 AI 话术库的方向</h2>
-              <small>当前只展示闭环，不更新真实模型或话术库</small>
-            </div>
-          </div>
-          <ul class="guide-list">
-            <li>提取优秀指导案例在 TRC / ATD 讲解中的高频比喻和类比。</li>
-            <li>关联客户“对对对”“原来是这样”的反馈，提高安全话术推荐权重。</li>
-            <li>标记容易引发风险追问的话术为慎用。</li>
-            <li>扩充右栏“为什么这样讲”的策略库素材。</li>
-          </ul>
-        </div>
+      <section class="module" id="sharedSection" style="margin-top:16px">
+        <div class="card-header"><div class="card-title"><h2>总部精选 · 团队共享案例</h2><small>共享案例不显示客户身份信息</small></div></div>
+        <div class="case-list" id="sharedCaseList"></div>
+        <div class="v4-empty-state" id="sharedEmpty" hidden>暂无共享案例。</div>
       </section>
     </main>
   </div>
 
-  <main class="public-shell auth-shell" id="v3a-workbench-error" hidden>
-    <section class="module auth-card">
-      <p class="eyebrow">AIPIWEN 指导师工作台</p>
-      <h1>工作台暂时无法打开</h1>
-      <p id="v3a-workbench-error-message" role="alert">账号信息暂时无法加载，请稍后重试。</p>
-      <div class="top-actions">
-        <a class="btn primary" href="">重新加载</a>
-        <a class="btn ghost" href="/login.html">返回登录</a>
-      </div>
+  <div class="case-modal-overlay" id="caseModal" hidden>
+    <section class="case-modal" role="dialog" aria-modal="true" aria-labelledby="caseModalTitle">
+      <h2 id="caseModalTitle">存入特殊案例库</h2>
+      <div class="form-row"><label>客户</label><strong id="caseModalPerson">请选择客户</strong></div>
+      <div class="form-row"><label>案例类型（可多选）</label><div class="pill-row" id="caseTypePills"><button class="pill" type="button" data-type="fingerprint_rare">皮纹特征少见</button><button class="pill" type="button" data-type="coaching_effective">辅导方法有效</button><button class="pill" type="button" data-type="turning_point">服务转折明显</button><button class="pill" type="button" data-type="stubborn_problem">持续问题</button><button class="pill" type="button" data-type="parent_child_improvement">亲子关系改善</button><button class="pill" type="button" data-type="long_term_tracking">长期跟踪</button><button class="pill" type="button" data-type="other">其他</button></div></div>
+      <div class="form-row"><label for="caseTitle">案例标题</label><input class="input" id="caseTitle" maxlength="120" placeholder="给这个案例起个名字"></div>
+      <div class="form-row"><label for="caseContent">为什么值得留存</label><textarea class="textarea" id="caseContent" maxlength="5000" rows="5" placeholder="描述特殊之处、关键转折和可复用经验。"></textarea></div>
+      <div class="form-row"><label>关联知识点（可选）</label><div class="pill-row" id="knowledgePills"><button class="pill" type="button" data-kc="A1">ATD</button><button class="pill" type="button" data-kc="A3">性格类型</button><button class="pill" type="button" data-kc="A5">TRC</button><button class="pill" type="button" data-kc="B1">认知发展</button><button class="pill" type="button" data-kc="B2">情绪发展</button><button class="pill" type="button" data-kc="B3">家庭系统</button><button class="pill" type="button" data-kc="B4">亲子沟通</button><button class="pill" type="button" data-kc="B5">学习动力</button></div></div>
+      <div class="btn-row"><button class="btn ghost" id="btnCloseCase" type="button">取消</button><button class="btn ghost" id="btnSaveDraft" type="button">保存为草稿</button><button class="btn primary" id="btnSubmitCase" type="button">提交总部审核</button></div>
     </section>
-  </main>
+  </div>
+
+  <main class="public-shell auth-shell" id="v3a-workbench-error" hidden><section class="module auth-card"><p class="eyebrow">AIPIWEN 指导师工作台</p><h1>工作台暂时无法打开</h1><p id="v3a-workbench-error-message" role="alert">账号信息暂时无法加载，请稍后重试。</p><div class="top-actions"><a class="btn primary" href="">重新加载</a><a class="btn ghost" href="/login.html">返回登录</a></div></section></main>
 </body>
 </html>

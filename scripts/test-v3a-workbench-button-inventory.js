@@ -10,7 +10,10 @@ const read = (relativePath) => fs.readFileSync(path.join(root, relativePath), 'u
 const pages = [
   'ai-interpreter-workbench.html',
   'ai-interpreter-customers.html',
+  'client-360.html',
   'ai-interpreter-session.html',
+  'ai-coaching-assistant.html',
+  'growth-record.html',
   'ai-interpreter-training.html',
   'ai-interpreter-review.html',
   'ai-interpreter-cases.html'
@@ -18,6 +21,10 @@ const pages = [
 const auth = read('static/v3a-auth.js');
 const customers = read('static/v3a-attribution.js');
 const interpreter = read('static/ai-interpreter.js');
+const client360 = read('static/v3a-client-360.js');
+const coaching = read('static/v3a-coaching.js');
+const growth = read('static/v3a-growth-record.js');
+const cases = read('static/v3a-case-cards.js');
 const handlers = new Map([
   ['v3a-workbench-logout', auth],
   ['v3a-attribution-qr', customers],
@@ -31,6 +38,19 @@ const handlers = new Map([
   ['prev-step', interpreter],
   ['next-step', interpreter],
   ['skip-step', interpreter]
+  ,['btnStartCoaching', client360]
+  ,['btnAddRecord', client360]
+  ,['btnHistory', coaching]
+  ,['btnGenerate', coaching]
+  ,['btnSaveRecord', coaching]
+  ,['selectPerson', growth]
+  ,['recordContent', growth]
+  ,['btnLoadMore', growth]
+  ,['btnSaveRecord@growth-record.html', growth]
+  ,['btnNewCase', cases]
+  ,['btnCloseCase', cases]
+  ,['btnSaveDraft', cases]
+  ,['btnSubmitCase', cases]
 ]);
 
 let count = 0;
@@ -55,8 +75,13 @@ for (const page of pages) {
         `${page} 复核标签缺少处理器`);
       continue;
     }
+    if (/\bdata-(?:tab|type|domain|direction|marker|visibility|kc)=/.test(attributes)) {
+      const source = page === 'client-360.html' ? client360 : page === 'growth-record.html' ? growth : cases;
+      assert(/addEventListener\('click'/.test(source), `${page} 选项按钮缺少处理器`);
+      continue;
+    }
     assert(id, `${page} 存在无法识别的无 ID 按钮`);
-    const source = handlers.get(id);
+    const source = handlers.get(`${id}@${page}`) || handlers.get(id);
     assert(source, `${page} 按钮 ${id} 未登记处理器`);
     if (id === 'v3a-report-import-submit') {
       assert(/v3a-report-import-confirm[\s\S]*addEventListener\('submit'/.test(source),
@@ -74,7 +99,7 @@ for (const page of pages) {
   }
 }
 
-assert.equal(count, 19, '工作台静态按钮数量发生变化，必须更新清单并核对处理器');
+assert.equal(count, 74, '工作台静态按钮数量发生变化，必须更新清单并核对处理器');
 assert(!/<a class="table-row" href="ai-interpreter-session\.html">/.test(read('ai-interpreter-workbench.html')),
   '学习示例记录不得指向无上下文解读页');
 assert(!/data-page="session" href="ai-interpreter-session\.html"/.test(pages.map(read).join('\n')),
