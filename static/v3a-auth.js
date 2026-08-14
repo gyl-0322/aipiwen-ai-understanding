@@ -24,6 +24,12 @@
     center: '服务中心/采集中心',
     pending: '待审核身份'
   };
+  const statusLabels = {
+    pending: '审核中',
+    active: '已激活',
+    rejected: '未通过',
+    disabled: '已停用'
+  };
   const channelRoleMap = {
     branch_company: 'agent',
     service_center: 'center',
@@ -652,14 +658,14 @@
     }
 
     function renderCredits() {
-      title.textContent = '积分明细';
-      subtitle.textContent = '当前余额与入账记录';
+      title.textContent = '成长积分明细';
+      subtitle.textContent = '个人成长贡献与入账记录';
       const rows = creditLogs;
       const ledger = rows.length ? rows.map((row) => {
         const amount = Number(row.amount) || 0;
         const direction = amount >= 0 ? '收入' : '支出';
         const signedAmount = `${amount > 0 ? '+' : ''}${amount}`;
-        const label = creditTypeLabels[row.type] || row.type || '积分变动';
+        const label = creditTypeLabels[row.type] || '成长积分记录';
         const note = normalize(row.note) || direction;
         const balanceBefore = Number.isFinite(Number(row.balanceBefore)) ? row.balanceBefore : '-';
         const balanceAfter = Number.isFinite(Number(row.balanceAfter)) ? row.balanceAfter : '-';
@@ -676,8 +682,8 @@
       }).join('') : `
         <div class="credit-detail-item">
           <div>
-            <strong>暂无积分流水</strong>
-            <small>积分收入或支出产生后会在这里显示。</small>
+            <strong>暂无成长积分记录</strong>
+            <small>成长贡献产生后会在这里显示。</small>
           </div>
           <span>--</span>
         </div>
@@ -685,7 +691,7 @@
       body.innerHTML = `
         <div class="workbench-detail-section">
           <div class="data-list">
-            <div class="data-item"><span>当前积分</span><strong>${escapeHtml(balance)}</strong></div>
+            <div class="data-item"><span>当前成长积分</span><strong>${escapeHtml(balance)}</strong></div>
             <div class="data-item"><span>流水范围</span><strong>最近 ${escapeHtml(String(rows.length))} 条</strong></div>
           </div>
           <div class="credit-detail-list">
@@ -825,6 +831,7 @@
       initWorkbenchDetails(me);
       initMobileNavigation();
       document.body.hidden = false;
+      document.dispatchEvent(new Event('v3a:workbench-ready'));
     } catch (error) {
       const shell = $('.app-shell');
       const errorShell = $('#v3a-workbench-error');
@@ -852,7 +859,7 @@
       }
       const role = me.profile?.role || me.applicationReview?.role || me.user.role;
       setText('#v3a-current-role', roleLabels[role] || role);
-      setText('#v3a-current-status', me.user.status);
+      setText('#v3a-current-status', statusLabels[me.user.status] || me.user.status);
       setText('#v3a-submitted-at', formatTime(me.applicationReview?.createdAt || me.user.createdAt));
       setText('#v3a-review-note', me.applicationReview?.reviewNote || '平台准入审核后更新');
       if (me.user.status !== 'pending') routeByStatus(me, messageSelector);

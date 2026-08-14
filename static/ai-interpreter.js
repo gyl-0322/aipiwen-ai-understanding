@@ -1,392 +1,393 @@
 (function () {
-  const steps = [
-    {
-      title: "建立安全感",
-      short: "暖场、自我介绍、确认解读环境舒适",
-      time: "3-5 分钟",
-      goal: "让客户放松，确认今天的解读目标和节奏，在进入数据前先建立信任。",
-      why: [
-        "客户第一次进入报告解读时，最需要先确认自己不是被评价、被判断，而是在被理解。",
-        "本次解读对象是妈妈，AI 建议先回应她对孩子学习状态的担心，再说明今天会一步步把报告翻译成可操作建议。"
-      ],
-      say: [
-        "王妈妈，今天我们会按照一个标准流程来讲，先让您听懂报告在说什么，再一起看哪些地方能落到家庭教育里。",
-        "如果中间有任何地方听起来像是在给孩子下结论，您可以随时打断我，我们会回到规则本身重新解释。"
-      ],
-      ask: [
-        "您今天最希望从这份报告里解决哪一个具体困惑？",
-        "小明最近让您最想理解的一个行为是什么？"
-      ],
-      no: [
-        "不要一上来直接讲 TRC、ATD 或能力分布。",
-        "不要说“这个报告很准，我直接告诉您孩子是什么类型”。"
-      ],
-      action: [
-        "记录客户最关心的 1-2 个问题，后面第⑥步再集中回应。",
-        "确认客户知道本次解读是辅助理解，不是诊断或预测。"
-      ],
-      risk: [
-        "如果客户一开始就问医学、升学、职业结论，先说明边界，再把问题记录到关注问题里。"
-      ]
-    },
-    {
-      title: "严正声明和四条规则",
-      short: "明确解读边界与客户权利",
-      time: "2-3 分钟",
-      goal: "在任何数据解读之前，先把报告性质、专业边界和四条规则讲清楚。",
-      why: [
-        "这是风险控制的前置动作。客户如果没有先听到边界，后续很容易把数值理解为好坏、预测或标签。",
-        "四条规则要用新版完整表述，不能用旧版含糊替代。"
-      ],
-      say: [
-        "本解读基于皮纹学及相关理论研究，报告数据反映先天特质倾向，不是诊断，不是预测。",
-        "1. 数值没有好坏，高有高的特长，低有低的特长",
-        "2. 不做未来预测，只解释天赋底色 + 后天环境 + 教育培养共同作用",
-        "3. 不贴标签，不定义“孩子就是一个什么样的人”",
-        "4. 不与他人比较，只与自己的平均值比较"
-      ],
-      ask: [
-        "这四条规则您能接受吗？后面如果我们讲到数值，我会一直用这四条规则来解释。",
-        "您更希望我讲得简洁一点，还是每个指标都多举生活例子？"
-      ],
-      no: [
-        "不要说“这个结论只是参考一下”就跳过边界说明。",
-        "不要把规则改成“报告很准但也要看后天”这类模糊表达。"
-      ],
-      action: [
-        "让客户明确表示理解后再进入第③步。",
-        "将客户特别敏感的问题标记为后续风险观察点。"
-      ],
-      risk: [
-        "如果客户要求比较同龄人、预测未来成绩或诊断注意力问题，立即回到四条规则。"
-      ]
-    },
-    {
-      title: "讲性格类型，让客户产生共鸣",
-      short: "用生活化语言介绍性格类型特征",
-      time: "5-8 分钟",
-      goal: "先讲客户能听懂、能验证的性格特征，让报告从抽象数据变成真实生活中的观察。",
-      why: [
-        "在进入底层数据前先建立共鸣，客户会更容易理解后面的 TRC、ATD 和左右脑并不是空泛指标。",
-        "本客户关注数学成绩和注意力，先用性格类型讲“信息接收方式”，能降低防御感。"
-      ],
-      say: [
-        "小明不是简单的安静或活泼，他更像是先观察、再判断、然后再行动的孩子。",
-        "我们先不急着说好坏，先看这个类型在生活里通常会怎么接收信息、怎么做决定。"
-      ],
-      ask: [
-        "您有没有观察到，小明遇到新任务时会先在旁边看一会儿？",
-        "当您催他快一点时，他是更快进入状态，还是反而更卡住？"
-      ],
-      no: [
-        "不要说“孩子就是这种性格，以后很难变”。",
-        "不要把性格类型讲成固定标签。"
-      ],
-      action: [
-        "每讲一个特征，都接一个生活场景和一个确认问题。",
-        "把客户说“对对对”的反馈记录下来，后续作为行动建议依据。"
-      ],
-      risk: [
-        "避免把性格类型与学业能力、职业方向直接绑定。"
-      ]
-    },
-    {
-      title: "TRC / ATD / 左右脑，解释底层数据",
-      short: "解释数值含义，强调高低各有所长",
-      time: "5-8 分钟",
-      goal: "帮助客户理解底层数据是特质参数，不是分数，也不是能力评判。",
-      why: [
-        "客户已在性格类型步骤中产生共鸣，此时引入底层数据能增强信任感。",
-        "TRC 185、ATD 42°、左脑主导都不属于极端值，适合正常解释；但客户关注数学和注意力，必须反复强调数值没有好坏。",
-        "从五大功能区和十指特征看，本次可以优先结合学习通道、行为模式和客户关注问题展开。"
-      ],
-      say: [
-        "王妈妈，接下来这些数值不是分数，也不是排名。数值没有好坏，高有高的特长，低有低的特长。",
-        "TRC 可以理解为信息处理容量。较高时可能更擅长同时留意多件事，较低时也可能更擅长单点深度专注。",
-        "ATD 42° 反映的是接收新信息时的本能节奏，我们不用快慢好坏来判断，而是看孩子适合怎样进入状态。",
-        "左脑主导说明小明更习惯用逻辑和结构来理解信息，但这不等于聪明或不聪明，也不决定文理方向。"
-      ],
-      ask: [
-        "您有没有发现，小明做作业时旁边有人说话，他好像也会留意到？",
-        "第一次接触新任务时，他通常是先观察，还是马上尝试？",
-        "他做选择时会不会比较喜欢问清楚原因和差别？"
-      ],
-      no: [
-        "不要说“TRC 偏低说明能力不足”。",
-        "不要说“ATD 角度大就是反应慢”。",
-        "不要说“左脑发达，以后肯定是理工科人才”。",
-        "不要拿孩子和别人家的孩子比较数值。"
-      ],
-      action: [
-        "解释每个数值后，都给一个家庭里可观察的现象。",
-        "如果客户问“是不是不行”，立即回到四条规则第一条。"
-      ],
-      risk: [
-        "客户关注“注意力不集中”可能引出医学诊断期待，不能使用诊断词。",
-        "客户关注“数学成绩偏弱”可能引出学业预测，不能做升学或成绩保证。"
-      ]
-    },
-    {
-      title: "讲学习通道 / 行为模式",
-      short: "解释信息处理和行动方式",
-      time: "5-8 分钟",
-      goal: "把听觉、视觉、体觉通道和日常学习行为连接起来，让客户知道怎么观察、怎么调整。",
-      why: [
-        "第④步已经说明数值不是好坏判断，现在可以进入更具体的学习方式。",
-        "小明听觉通道 82、体觉通道 70，适合用听讲复述和动手体验结合的方式。"
-      ],
-      say: [
-        "小明的听觉通道比较突出，所以很多时候他说“我听到了”，并不只是客气，而是真的通过声音在接收信息。",
-        "体觉通道也有支撑，所以只让他坐着听可能不够，配合写、画、摆、演示，理解会更稳定。"
-      ],
-      ask: [
-        "您讲题时，他是听您讲更容易懂，还是看图更容易懂？",
-        "他背课文或记知识点时，朗读出来会不会比默看更有效？"
-      ],
-      no: [
-        "不要说“听觉型就不适合看书”。",
-        "不要把学习通道当成唯一学习方式。"
-      ],
-      action: [
-        "建议家长用“先听一遍、再说一遍、最后写下来”的三步法。",
-        "把学习策略和客户关注问题建立连接，为第⑥步铺垫。"
-      ],
-      risk: [
-        "不要把学习通道与考试结果直接挂钩。"
-      ]
-    },
-    {
-      title: "进入客户关注问题",
-      short: "回应家长或客户的核心关切",
-      time: "10-15 分钟",
-      goal: "逐一回应客户标记的问题，把报告数据翻译成现实里的理解和支持方式。",
-      why: [
-        "客户真正付费购买的是“我该怎么办”的答案。前五步已经建立框架，现在可以回应具体问题。",
-        "“注意力不集中”和“数学成绩偏弱”都属于高敏问题，需要用边界清晰、可观察、可行动的方式回答。"
-      ],
-      say: [
-        "关于注意力，我们不做诊断，也不说孩子有没有某种问题。我们只看他在什么信息环境下更容易进入状态。",
-        "关于数学，我们不预测未来成绩，也不把某个分数和学科能力绑定。我们可以从学习通道和行为模式里找更适合他的练习方式。"
-      ],
-      ask: [
-        "他说注意力不集中通常发生在什么场景：听课、写作业，还是做不熟悉的题？",
-        "数学让他卡住的地方更多是听不懂题意、计算出错，还是一看到题就抗拒？"
-      ],
-      no: [
-        "不要说“这说明他以后数学会吃力”。",
-        "不要说“这是不是注意力缺陷”，也不要顺着客户的诊断问题下结论。"
-      ],
-      action: [
-        "把每个关注问题拆成场景、观察、可尝试方法三部分。",
-        "对超出报告范围的问题，记录并建议客户寻求相应专业支持。"
-      ],
-      risk: [
-        "医学、心理、重大教育决策类问题需要提示总部复核。"
-      ]
-    },
-    {
-      title: "给行动建议",
-      short: "具体、可操作的家庭教育方案",
-      time: "5-8 分钟",
-      goal: "给出 3-5 条能立刻尝试的行动，区分近期可做和长期坚持。",
-      why: [
-        "解读不能停留在“孩子是什么样”，必须转化为家长能执行的支持方式。",
-        "本客户适合低门槛开始，先给一周内可试的方法，再给长期观察指标。"
-      ],
-      say: [
-        "我们先从一周内能做的小调整开始，不追求一下子改变孩子，而是观察哪一种方法更适合他。",
-        "建议不是为了证明报告对，而是为了让您在家里更容易支持小明。"
-      ],
-      ask: [
-        "这三条建议里，哪一条您觉得今晚就能试一下？",
-        "如果只改一个家庭沟通方式，您最想先改哪一个？"
-      ],
-      no: [
-        "不要给过多、过满、不可执行的建议。",
-        "不要承诺“照做就一定提高成绩”。"
-      ],
-      action: [
-        "每天 10 分钟听觉复述：让孩子用自己的话讲一遍当天一个知识点。",
-        "复杂任务先给结构：先分三步，再开始做。",
-        "观察一周：记录孩子在哪种环境下更容易进入状态。"
-      ],
-      risk: [
-        "行动建议必须是支持性策略，不是治疗方案或升学方案。"
-      ]
-    },
-    {
-      title: "记录客户反馈 / 必要时提交总部复核",
-      short: "生成记录摘要，风险内容提交总部",
-      time: "3-5 分钟",
-      goal: "记录客户收获、疑问和行动意向；涉及高风险内容时，提交总部复核。",
-      why: [
-        "记录不是行政动作，而是品牌质量控制和案例沉淀的入口。",
-        "本次包含注意力和数学成绩两个敏感关注点，建议提交复核确认话术边界。"
-      ],
-      say: [
-        "今天我们先把可操作的部分整理给您。涉及注意力和成绩判断的部分，我会按规范再做一次总部复核，确认表达安全后再回复您。",
-        "您可以先记录这一周尝试后的观察，我们下次再看哪些方法更适合小明。"
-      ],
-      ask: [
-        "今天哪一部分最让您觉得“原来是这样”？",
-        "还有哪一部分您觉得需要我后续再解释？"
-      ],
-      no: [
-        "不要把内部风险标签展示给客户。",
-        "不要在未复核前交付高风险结论。"
-      ],
-      action: [
-        "生成解读记录卡片：已讲步骤、客户反馈、行动建议、风险点。",
-        "勾选“提交总部复核”，状态标记为等待中。"
-      ],
-      risk: [
-        "任何诊断、预测、关系去留、升学职业保证相关内容都必须拦截或复核。"
-      ]
-    }
+  'use strict';
+
+  const API = '/api/v3a-generate-interpretation';
+  const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  const STEP_FIELDS = ['why', 'say', 'ask', 'no', 'action', 'risk'];
+  const STEP_TARGETS = {
+    why: 'ai-why',
+    say: 'ai-say',
+    ask: 'ai-ask',
+    no: 'ai-no',
+    action: 'ai-action',
+    risk: 'ai-risk'
+  };
+  const LEGACY_STEP_META = [
+    ['建立安全感', '暖场、自我介绍、确认解读目标', '3-5 分钟'],
+    ['严正声明和四条规则', '明确报告边界与客户权利', '2-3 分钟'],
+    ['讲性格类型，让客户产生共鸣', '从生活观察进入报告', '5-8 分钟'],
+    ['TRC / ATD / 左右脑，解释底层数据', '解释数据而不评价高低', '5-8 分钟'],
+    ['讲学习通道 / 行为模式', '连接信息输入与行动方式', '5-8 分钟'],
+    ['进入客户关注问题', '回应客户本次真实关切', '6-10 分钟'],
+    ['给行动建议', '把理解转为可执行行动', '5-8 分钟'],
+    ['记录客户反馈 / 必要时提交总部复核', '记录反馈并识别风险', '3-5 分钟']
+  ];
+  const STEP_META = [
+    ['建立安全感', '暖场、自我介绍、确认本次解读目标', '3-5 分钟'],
+    ['严正声明四原则', '明确报告边界与客户权利', '3-5 分钟'],
+    ['性格类型', '讲清核心底色、优势、代价与现实场景', '8-12 分钟'],
+    ['TRC', '解释认知容量、个人均值与学习承载方式', '6-10 分钟'],
+    ['ATD', '解释反应节奏、敏感度与启动缓冲方式', '5-8 分钟'],
+    ['学习通道', '解释信息输入、记忆复习与环境安排', '5-8 分钟'],
+    ['行为模式', '解释启动、目标、压力、执行与反馈方式', '5-8 分钟'],
+    ['左右脑', '解释信息处理、学习、决策与沟通偏向', '5-8 分钟'],
+    ['精神功能', '解读右拇开创力与左拇管理力', '4-6 分钟'],
+    ['思维功能', '解读右食逻辑与左食创意空间', '4-6 分钟'],
+    ['体觉功能', '解读右中精细动作与左中运动耐力', '4-6 分钟'],
+    ['听觉功能', '解读右无名语言记忆与左无名音感语气', '4-6 分钟'],
+    ['视觉功能', '解读右小指识人方向与左小指色彩图像', '4-6 分钟'],
+    ['客户关注问题', '结合报告资料与真实场景回应本次关切', '8-12 分钟'],
+    ['行动建议', '形成具体动作、观察指标和复盘周期', '6-10 分钟'],
+    ['记录客户反馈 / 必要时提交总部复核', '记录共识、异议、待核实项与后续安排', '4-6 分钟']
   ];
 
-  const $ = (selector, root) => (root || document).querySelector(selector);
-  const $$ = (selector, root) => Array.from((root || document).querySelectorAll(selector));
+  let steps = STEP_META.map(([title, goal, time], stepIndex) => ({
+    stepIndex,
+    title,
+    goal,
+    time,
+    why: [], say: [], ask: [], no: [], action: [], risk: []
+  }));
+  let currentStep = 0;
+  let clientId = '';
+  let reportId = '';
+  let csrfToken = '';
+  let interpretationId = '';
+  let reportContext = null;
+  let busy = false;
 
-  function list(items) {
-    return items.map((item) => `<li>${item}</li>`).join("");
+  const $ = (selector, root = document) => root.querySelector(selector);
+  const $$ = (selector, root = document) => Array.from(root.querySelectorAll(selector));
+
+  function setText(selector, value) {
+    const node = $(selector);
+    if (node) node.textContent = String(value ?? '-');
   }
 
-  function setList(id, items) {
-    const node = document.getElementById(id);
-    if (node) node.innerHTML = list(items);
+  function formatDate(value) {
+    const date = new Date(value || '');
+    return Number.isNaN(date.getTime()) ? '-' : date.toLocaleString('zh-CN', { hour12: false });
   }
 
-  function setText(id, text) {
-    const node = document.getElementById(id);
-    if (node) node.textContent = text;
+  function showStatus(title, message, isError = false) {
+    const box = $('#session-status');
+    if (!box) return;
+    box.classList.toggle('dryrun-error', isError);
+    let strong = $('strong', box);
+    let paragraph = $('p', box);
+    if (!strong) {
+      strong = document.createElement('strong');
+      box.append(strong);
+    }
+    if (!paragraph) {
+      paragraph = document.createElement('p');
+      box.append(paragraph);
+    }
+    strong.textContent = title;
+    paragraph.textContent = message;
+  }
+
+  async function readPayload(response, fallback) {
+    let payload = null;
+    try { payload = await response.json(); } catch {}
+    if (!response.ok || payload?.ok !== true) {
+      const error = new Error(payload?.error || fallback);
+      error.status = Number(response.status) || 0;
+      error.code = String(payload?.code || '');
+      throw error;
+    }
+    if (typeof payload.csrfToken === 'string') csrfToken = payload.csrfToken;
+    return payload;
+  }
+
+  function isRetryableGenerationError(error) {
+    return !Number(error?.status) || Number(error.status) === 429 || Number(error.status) >= 500;
+  }
+
+  function pickResult(result, keys) {
+    for (const key of keys) {
+      const value = result?.[key];
+      if (typeof value === 'string' || typeof value === 'number') return String(value);
+    }
+    return '-';
+  }
+
+  function renderFeatures(result) {
+    const target = $('#report-feature-summary');
+    if (!target) return;
+    const entries = Object.entries(result || {})
+      .filter(([, value]) => ['string', 'number'].includes(typeof value))
+      .slice(0, 8);
+    if (entries.length === 0) {
+      target.replaceChildren();
+      const row = document.createElement('div');
+      row.className = 'data-item';
+      row.append(Object.assign(document.createElement('span'), { textContent: '报告摘要' }),
+        Object.assign(document.createElement('strong'), { textContent: '以生成报告内容为准' }));
+      target.append(row);
+      return;
+    }
+    target.replaceChildren(...entries.map(([key, value]) => {
+      const row = document.createElement('div');
+      row.className = 'data-item';
+      row.append(Object.assign(document.createElement('span'), { textContent: key }),
+        Object.assign(document.createElement('strong'), { textContent: String(value) }));
+      return row;
+    }));
+  }
+
+  function renderConcerns(report) {
+    const target = $('#client-concerns');
+    if (!target) return;
+    const concerns = Array.isArray(report.selectedIssues) ? [...report.selectedIssues] : [];
+    if (report.customIssue) concerns.push(report.customIssue);
+    target.replaceChildren(...(concerns.length ? concerns : ['暂无补充']).map((item) => {
+      const tag = document.createElement('span');
+      tag.className = 'pill';
+      tag.textContent = item;
+      return tag;
+    }));
+  }
+
+  function renderReportContext(payload) {
+    const client = payload.client || {};
+    const report = payload.report || {};
+    const result = report.engineResult || {};
+    const fingers = report.fingers && typeof report.fingers === 'object' ? report.fingers : {};
+    const trc = Object.values(fingers).reduce((sum, item) => sum + (Number(item?.trc) || 0), 0);
+    setText('#session-client-title', `${client.displayName || '客户'} · AI解读助手`);
+    setText('#session-report-meta', `${report.reportType || '报告'} · 真实客户报告`);
+    setText('#session-client-name', client.displayName || '-');
+    setText('#session-client-age', Number.isInteger(report.ageAtReport) ? `${report.ageAtReport} 岁` : '-');
+    setText('#session-report-type', report.reportType || '-');
+    setText('#session-report-time', formatDate(report.createdAt));
+    setText('#session-report-trc', trc > 0 ? trc : '-');
+    setText('#session-report-atd', report.atd == null ? '-' : report.atd);
+    setText('#session-report-personality', pickResult(result, ['主性格类型', '性格类型']));
+    setText('#session-report-channel', pickResult(result, ['学习通道', '先天学习风格', '主学习通道']));
+    setText('#session-report-brain', pickResult(result, ['左右脑', '左右脑倾向', '脑功能优势']));
+    renderFeatures(result);
+    renderConcerns(report);
+  }
+
+  function renderStepList() {
+    const target = $('#interpretation-step-list');
+    if (!target) return;
+    target.replaceChildren(...steps.map((step, index) => {
+      const button = document.createElement('button');
+      button.className = `step-card${index === currentStep ? ' active' : ''}`;
+      button.type = 'button';
+      button.dataset.step = String(index);
+      const status = interpretationId ? (index < currentStep ? '已查看' : index === currentStep ? '当前' : '待查看') : '等待生成';
+      button.innerHTML = `<span class="step-index">${index + 1}</span><span><strong></strong><small></small></span><span class="status"></span>`;
+      $('strong', button).textContent = step.title;
+      $('small', button).textContent = step.goal;
+      $('.status', button).textContent = status;
+      button.addEventListener('click', () => go(index));
+      return button;
+    }));
+  }
+
+  function collectCurrentEdits() {
+    if (!interpretationId || !steps[currentStep]) return;
+    for (const field of STEP_FIELDS) {
+      const target = document.getElementById(STEP_TARGETS[field]);
+      if (!target) continue;
+      const values = $$('li', target).map((item) => item.textContent.trim()).filter(Boolean);
+      if (values.length) steps[currentStep][field] = values;
+    }
+  }
+
+  function renderSpeechList(field, values) {
+    const target = document.getElementById(STEP_TARGETS[field]);
+    if (!target) return;
+    const items = values.length ? values : ['生成方案后显示'];
+    target.replaceChildren(...items.map((text) => {
+      const item = document.createElement('li');
+      item.textContent = text;
+      if (interpretationId) {
+        item.contentEditable = 'true';
+        item.spellcheck = false;
+      }
+      return item;
+    }));
   }
 
   function updateStep(index) {
-    const step = steps[index];
-    if (!step) return;
+    currentStep = Math.max(0, Math.min(steps.length - 1, index));
+    const step = steps[currentStep];
+    setText('#current-step-index', `第 ${currentStep + 1}/${steps.length} 个板块`);
+    setText('#current-step-title', step.title);
+    setText('#current-step-time', step.time);
+    setText('#current-step-goal', step.goal);
+    const progress = $('#session-progress');
+    if (progress) progress.style.width = `${((currentStep + 1) / steps.length) * 100}%`;
+    for (const field of STEP_FIELDS) renderSpeechList(field, step[field]);
+    renderStepList();
+  }
 
-    setText("current-step-index", `第 ${index + 1}/8 步`);
-    setText("current-step-title", step.title);
-    setText("current-step-goal", step.goal);
-    setText("current-step-time", step.time);
-    setList("current-step-points", [
-      step.short,
-      "每一步都先守住边界，再进入具体解释",
-      index === 1 ? "此步骤必须完整宣读新版四条规则" : "遇到客户担忧时，回到四条规则做安抚"
-    ]);
+  function go(index) {
+    collectCurrentEdits();
+    updateStep(index);
+  }
 
-    setList("ai-why", step.why);
-    setList("ai-say", step.say);
-    setList("ai-ask", step.ask);
-    setList("ai-no", step.no);
-    setList("ai-action", step.action);
-    setList("ai-risk", step.risk);
+  function loadSteps(nextSteps, id, status) {
+    const metadata = nextSteps.length === LEGACY_STEP_META.length ? LEGACY_STEP_META : STEP_META;
+    steps = nextSteps.map((step, index) => ({
+      ...steps[index],
+      ...step,
+      title: metadata[index][0],
+      goal: metadata[index][1],
+      time: metadata[index][2]
+    }));
+    interpretationId = id || '';
+    currentStep = 0;
+    setText('#interpretation-status', status === 'edited' ? '已编辑' : '已生成');
+    setText('#interpretation-edit-state', '可编辑');
+    $('#save-interpretation').disabled = !interpretationId;
+    updateStep(0);
+  }
 
-    const progress = document.getElementById("session-progress");
-    if (progress) progress.style.width = `${((index + 1) / steps.length) * 100}%`;
+  async function loadClientReport(nextClientId, nextReportId) {
+    const query = new URLSearchParams({ clientId: nextClientId, reportId: nextReportId });
+    const response = await fetch(`${API}?${query}`, { credentials: 'same-origin' });
+    const payload = await readPayload(response, '客户报告暂时无法读取。');
+    reportContext = payload;
+    renderReportContext(payload);
+    if (payload.interpretation?.id && Array.isArray(payload.interpretation.steps)) {
+      loadSteps(payload.interpretation.steps, payload.interpretation.id, payload.interpretation.status);
+      showStatus('已加载解读方案', '可继续逐步审核、修改并保存。');
+    } else {
+      showStatus('正在生成', 'AI 正在根据本报告自动生成完整的结构化解读方案，请稍候。');
+      await generateInterpretation();
+    }
+  }
 
-    $$(".step-card").forEach((button, buttonIndex) => {
-      button.classList.toggle("active", buttonIndex === index);
-      const status = button.querySelector(".status");
-      if (!status) return;
-      status.className = "status";
-      if (buttonIndex < index) {
-        status.classList.add("done");
-        status.textContent = "已完成";
-      } else if (buttonIndex === index) {
-        status.classList.add("info");
-        status.textContent = "进行中";
-      } else {
-        status.textContent = "待开始";
+  function setBusy(next) {
+    busy = next;
+    $('#save-interpretation').disabled = next || !interpretationId;
+  }
+
+  async function generateInterpretation() {
+    if (busy || !reportContext || !csrfToken) return;
+    setBusy(true);
+    showStatus('正在生成', 'AI 正在根据本报告生成完整的结构化解读方案，请稍候。');
+    try {
+      const concerns = Array.isArray(reportContext.report?.selectedIssues)
+        ? [...reportContext.report.selectedIssues]
+        : [];
+      if (reportContext.report?.customIssue) concerns.push(reportContext.report.customIssue);
+      for (let requestIndex = 0; requestIndex < 16; requestIndex += 1) {
+        let payload = null;
+        let lastError = null;
+        for (let requestAttempt = 0; requestAttempt < 2; requestAttempt += 1) {
+          try {
+            const response = await fetch(`${API}?operation=generate`, {
+              method: 'POST',
+              credentials: 'same-origin',
+              headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
+              body: JSON.stringify({
+                clientId,
+                reportId,
+                clientConcerns: concerns,
+                customNotes: $('#interpretation-custom-notes')?.value || ''
+              })
+            });
+            payload = await readPayload(response, 'AI 解读方案暂时无法生成。');
+            break;
+          } catch (error) {
+            lastError = error;
+            if (requestAttempt === 0 && isRetryableGenerationError(error)) {
+              showStatus('正在自动重试', '当前板块生成暂时中断，正在从已保存进度继续。');
+              continue;
+            }
+            throw error;
+          }
+        }
+        if (!payload) throw lastError || new Error('AI 解读方案暂时无法生成。');
+        if (payload.complete === true) {
+          const generated = payload.interpretation || payload;
+          loadSteps(generated.steps, generated.id || payload.interpretationId, generated.status || payload.status);
+          showStatus(payload.reused ? '已加载已有方案' : 'AI 解读方案已生成', '请逐个板块审核和修改，完成后点击保存。');
+          return;
+        }
+        const completed = Number(payload.progress?.completed) || 0;
+        const total = Number(payload.progress?.total) || STEP_META.length;
+        showStatus('正在分段生成', `已完成 ${completed}/${total} 个板块，正在继续生成，请保持页面打开。`);
       }
-    });
+      throw new Error('结构化解读方案尚未完成，请重新进入后继续生成。');
+    } catch (error) {
+      showStatus('生成失败', error.message, true);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function saveInterpretation() {
+    if (busy || !interpretationId || !csrfToken) return;
+    collectCurrentEdits();
+    setBusy(true);
+    showStatus('正在保存', '正在保存本次指导师编辑结果。');
+    try {
+      const response = await fetch(`${API}?operation=save`, {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
+        body: JSON.stringify({ clientId, reportId, interpretationId, editedSteps: steps })
+      });
+      const payload = await readPayload(response, '解读方案暂时无法保存。');
+      loadSteps(payload.steps, payload.interpretationId, payload.status);
+      showStatus('保存成功', '本次修改已保存到客户报告。');
+    } catch (error) {
+      showStatus('保存失败', error.message, true);
+    } finally {
+      setBusy(false);
+    }
   }
 
   function initNavigation() {
-    const page = document.body.dataset.page;
-    $$(".nav-link").forEach((link) => {
-      link.classList.toggle("active", link.dataset.page === page);
+    let page = document.body.dataset.page;
+    const intent = new URLSearchParams(window.location.search).get('intent');
+    if (page === 'customers' && intent === 'interpret') page = 'session';
+    $$('.nav-link').forEach((link) => link.classList.toggle('active', link.dataset.page === page));
+  }
+
+  function initReviewDemo() {
+    if (!document.body.matches('[data-page="review"]')) return;
+    $$('.tab-btn').forEach((button) => {
+      button.addEventListener('click', () => {
+        const target = button.dataset.reviewTarget;
+        $$('.tab-btn').forEach((item) => item.classList.toggle('active', item === button));
+        $$('.review-demo-card').forEach((card) => card.classList.toggle('active', card.dataset.reviewCard === target));
+      });
     });
   }
 
   function initSession() {
     if (!document.body.matches('[data-page="session"]')) return;
+    $('#save-interpretation').disabled = true;
+    renderStepList();
+    updateStep(0);
+    $('#prev-step')?.addEventListener('click', () => go(currentStep - 1));
+    $('#next-step')?.addEventListener('click', () => go(currentStep + 1));
+    $('#skip-step')?.addEventListener('click', () => go(currentStep + 1));
+    $('#save-interpretation')?.addEventListener('click', saveInterpretation);
 
-    $$(".step-card").forEach((button, index) => {
-      button.addEventListener("click", () => updateStep(index));
-    });
-
-    const prev = document.getElementById("prev-step");
-    const next = document.getElementById("next-step");
-    const skip = document.getElementById("skip-step");
-    let current = 3;
-
-    function go(index) {
-      current = Math.max(0, Math.min(steps.length - 1, index));
-      updateStep(current);
+    const params = new URLSearchParams(window.location.search);
+    clientId = params.get('clientId') || '';
+    reportId = params.get('reportId') || '';
+    if (!UUID_PATTERN.test(clientId) || !UUID_PATTERN.test(reportId)) {
+      showStatus('尚未选择真实客户报告', '请返回“我的客户”，点击一份已生成的报告进入。');
+      return;
     }
-
-    if (prev) prev.addEventListener("click", () => go(current - 1));
-    if (next) next.addEventListener("click", () => go(current + 1));
-    if (skip) skip.addEventListener("click", () => go(current + 1));
-
-    go(current);
-  }
-
-  function initCustomerRows() {
-    $$(".js-open-session").forEach((row) => {
-      row.addEventListener("click", () => {
-        window.location.href = "ai-interpreter-session.html";
-      });
+    loadClientReport(clientId, reportId).catch((error) => {
+      showStatus('报告加载失败', error.message, true);
     });
   }
 
-  function initReviewDemo() {
-    if (!document.body.matches('[data-page="review"]')) return;
-
-    $$(".tab-btn").forEach((button) => {
-      button.addEventListener("click", () => {
-        const target = button.dataset.reviewTarget;
-        $$(".tab-btn").forEach((item) => item.classList.toggle("active", item === button));
-        $$(".review-demo-card").forEach((card) => {
-          card.classList.toggle("active", card.dataset.reviewCard === target);
-        });
-      });
-    });
-  }
-
-  function initCreditModal() {
-    if (!document.body.matches('[data-page="session"]')) return;
-
-    const openButton = document.getElementById("generate-plan");
-    const modal = document.getElementById("credit-modal");
-    if (!openButton || !modal) return;
-
-    function closeModal() {
-      modal.classList.remove("open");
-      modal.setAttribute("aria-hidden", "true");
-    }
-
-    openButton.addEventListener("click", () => {
-      modal.classList.add("open");
-      modal.setAttribute("aria-hidden", "false");
-    });
-
-    $$("[data-close-credit-modal]", modal).forEach((button) => {
-      button.addEventListener("click", closeModal);
-    });
-
-    modal.addEventListener("click", (event) => {
-      if (event.target === modal) closeModal();
-    });
-  }
-
-  document.addEventListener("DOMContentLoaded", () => {
+  document.addEventListener('DOMContentLoaded', () => {
     initNavigation();
     initSession();
-    initCustomerRows();
     initReviewDemo();
-    initCreditModal();
   });
 })();
