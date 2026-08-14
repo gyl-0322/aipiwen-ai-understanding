@@ -6,6 +6,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const root = path.join(__dirname, '..');
+process.env.SESSION_SECRET ||= 'TEST_SESSION_SECRET_NOT_REAL';
 const migration = fs.readFileSync(path.join(root, 'supabase/migrations/020_v3a_advisor_client_tables.sql'), 'utf8');
 const permissionFixMigration = fs.readFileSync(
   path.join(root, 'supabase/migrations/021_v3a_advisor_report_rls_helper_permissions.sql'),
@@ -101,7 +102,8 @@ mustNotMatch(importSource, /SERVICE_ROLE|serviceRole|service_role/, '报告 BFF 
 mustNotMatch(customersSource, /SERVICE_ROLE|serviceRole|service_role/, '客户 BFF 不得读取或使用 service-role key');
 mustMatch(importSource, /v3a_create_advisor_report_import/, 'confirm 必须调用原子创建 RPC');
 mustMatch(importSource, /v3a_complete_advisor_report_import/, '生成结束必须调用受控完成 RPC');
-mustNotMatch(importSource, /crypto\.randomUUID\(/, 'BFF 不得替浏览器重新生成幂等键');
+mustNotMatch(importSource, /idempotencyKey\s*[:=]\s*crypto\.randomUUID\(/,
+  'BFF 不得替浏览器重新生成报告导入幂等键');
 mustMatch(importSource, /body\.idempotencyKey/, 'BFF 必须读取客户端幂等键');
 mustMatch(importSource, /ADVISOR_ID_NOT_ALLOWED/, 'BFF 必须显式拒绝 advisor id');
 mustMatch(importSource, /\/api\/extract-fp/, 'OCR 必须复用现有 Vercel extract API');

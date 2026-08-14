@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>AI解读助手详情页 · AIPIWEN指导师工作台</title>
-  <meta name="description" content="AIPIWEN 指导师工作台 AI 解读助手体验页面">
+  <meta name="description" content="AIPIWEN 指导师工作台 AI 解读助手">
   <link rel="stylesheet" href="static/ai-interpreter.css">
   <script src="/js/error-tracker.js" defer></script>
   <script src="static/v3a-auth.js" defer></script>
@@ -32,237 +32,82 @@
       <nav class="nav" aria-label="主导航">
         <a class="nav-link" data-page="workbench" href="ai-interpreter-workbench.html"><span>⌂</span><span>工作台首页</span></a>
         <a class="nav-link" data-page="customers" href="ai-interpreter-customers.html"><span>◎</span><span>我的客户</span></a>
-        <a class="nav-link" data-page="session" href="ai-interpreter-session.html"><span>◈</span><span>AI解读助手</span></a>
+        <a class="nav-link" data-page="client-360" href="client-360.html"><span>●</span><span>客户 360 档案</span></a>
+        <a class="nav-link" data-page="session" href="ai-interpreter-customers.html?intent=interpret#v3a-real-customers"><span>◈</span><span>AI解读助手</span></a>
+        <a class="nav-link" data-page="coaching" href="ai-coaching-assistant.html"><span>◉</span><span>AI辅导助手</span></a>
+        <a class="nav-link" data-page="growth-record" href="growth-record.html"><span>✎</span><span>成长记录</span></a>
         <a class="nav-link" data-page="training" href="ai-interpreter-training.html"><span>▣</span><span>解读训练</span></a>
         <a class="nav-link" data-page="review" href="ai-interpreter-review.html"><span>◇</span><span>总部复核 / 规范</span></a>
-        <a class="nav-link" data-page="cases" href="ai-interpreter-cases.html"><span>✦</span><span>优秀案例沉淀</span></a>
+        <a class="nav-link" data-page="cases" href="ai-interpreter-cases.html"><span>✦</span><span>特殊案例库</span></a>
       </nav>
-      <div class="sidebar-note">
-        本页为学习示例，帮助您熟悉解读步骤和表达方式。
-      </div>
+      <div class="sidebar-note">从客户报告出发，生成并完善本次解读方案。</div>
     </aside>
 
     <main class="main">
       <header class="topbar">
         <div>
-          <p class="eyebrow">AI Interpreter Session</p>
-          <h1>AI解读助手 · 王小明的妈妈</h1>
-          <p>儿童天赋报告 · 学习示例 · 当前展示第 ④ 步。</p>
+          <p class="eyebrow">AI解读助手</p>
+          <h1 id="session-client-title">AI解读助手</h1>
+          <p id="session-report-meta">请从“我的客户”选择一份已生成的报告。</p>
         </div>
         <div class="top-actions">
-          <button class="btn primary" id="generate-plan" type="button" disabled title="AI 方案生成功能即将开放">生成 AI 解读方案（即将开放）</button>
+          <button class="btn ghost" id="save-interpretation" type="button" disabled>保存解读方案</button>
         </div>
       </header>
 
-      <section class="notice" aria-label="学习示例说明" style="margin-bottom:16px">
-        <strong>学习示例</strong>
-        <p>以下为 8 步标准解读流程的学习演示。话术内容为参考示例，帮助您掌握规范解读方法。</p>
+      <section class="notice" id="session-status" role="status" aria-live="polite" style="margin-bottom:16px">
+        <strong>等待选择客户报告</strong>
+        <p>返回“我的客户”，点击已生成报告右侧的“开始解读”。</p>
       </section>
 
       <section class="session-grid" aria-label="AI解读助手三栏结构">
         <aside class="session-column">
           <div class="module">
-            <div class="card-header">
-              <div class="card-title">
-                <h2>左栏 · 客户信息</h2>
-                <small>客户基本资料与解读上下文</small>
-              </div>
-              <span class="status info">学习示例</span>
-            </div>
+            <div class="card-header"><div class="card-title"><h2>客户信息</h2><small>本次解读上下文</small></div></div>
             <div class="data-list">
-              <div class="data-item"><span>客户</span><strong>王小明（男）</strong></div>
-              <div class="data-item"><span>年龄 / 年级</span><strong>8 岁 / 二年级</strong></div>
-              <div class="data-item"><span>解读对象</span><strong>妈妈</strong></div>
-              <div class="data-item"><span>关系</span><strong>母子</strong></div>
-              <div class="data-item"><span>采集日期</span><strong>2026-06-20</strong></div>
-              <div class="data-item"><span>报告生成</span><strong>2026-07-01</strong></div>
+              <div class="data-item"><span>客户</span><strong id="session-client-name">-</strong></div>
+              <div class="data-item"><span>年龄</span><strong id="session-client-age">-</strong></div>
+              <div class="data-item"><span>报告类型</span><strong id="session-report-type">-</strong></div>
+              <div class="data-item"><span>报告时间</span><strong id="session-report-time">-</strong></div>
             </div>
           </div>
 
           <div class="module">
-            <div class="card-header">
-              <div class="card-title">
-                <h2>报告摘要</h2>
-                <small>报告数据（示例）</small>
-              </div>
-            </div>
+            <div class="card-header"><div class="card-title"><h2>报告摘要</h2><small>从客户真实报告读取</small></div></div>
             <div class="data-list">
-              <div class="data-item"><span>报告类型</span><strong>儿童天赋报告</strong></div>
-              <div class="data-item"><span>TRC</span><strong>185</strong></div>
-              <div class="data-item"><span>ATD</span><strong>42°</strong></div>
-              <div class="data-item"><span>左右脑</span><strong>左脑主导</strong></div>
-              <div class="data-item"><span>先天学习风格</span><strong>听觉型（主） / 体觉型（辅）</strong></div>
+              <div class="data-item"><span>TRC</span><strong id="session-report-trc">-</strong></div>
+              <div class="data-item"><span>ATD</span><strong id="session-report-atd">-</strong></div>
+              <div class="data-item"><span>性格类型</span><strong id="session-report-personality">-</strong></div>
+              <div class="data-item"><span>学习通道</span><strong id="session-report-channel">-</strong></div>
+              <div class="data-item"><span>左右脑</span><strong id="session-report-brain">-</strong></div>
             </div>
           </div>
 
           <div class="module">
-            <div class="card-header">
-              <div class="card-title">
-                <h2>五大功能区摘要</h2>
-                <small>数值仅用于展示个体内部特征组合，不做横向比较。</small>
-              </div>
-            </div>
-            <div class="finger-summary" aria-label="五大功能区紧凑摘要">
-              <div class="finger-row">
-                <h3><span>精神</span><span>功能</span></h3>
-                <div class="finger-pair">
-                  <div class="finger-hand" style="--value:86%">
-                    <span>右手</span>
-                    <strong><i>沟通管理</i><i>计划判断</i></strong>
-                    <em>30 Wt</em>
-                  </div>
-                  <div class="finger-hand" style="--value:74%">
-                    <span>左手</span>
-                    <strong><i>创造领导</i><i>目标憧憬</i></strong>
-                    <em>26 Wc</em>
-                  </div>
-                </div>
-              </div>
-              <div class="finger-row">
-                <h3><span>思维</span><span>功能</span></h3>
-                <div class="finger-pair">
-                  <div class="finger-hand" style="--value:57%">
-                    <span>右手</span>
-                    <strong><i>逻辑推理</i><i>语言功能</i></strong>
-                    <em>20 Ws</em>
-                  </div>
-                  <div class="finger-hand" style="--value:71%">
-                    <span>左手</span>
-                    <strong><i>空间心像</i><i>构思拟想</i></strong>
-                    <em>25 Wsc</em>
-                  </div>
-                </div>
-              </div>
-              <div class="finger-row">
-                <h3><span>听觉</span><span>功能</span></h3>
-                <div class="finger-pair">
-                  <div class="finger-hand" style="--value:51%">
-                    <span>右手</span>
-                    <strong><i>听觉辨识</i><i>语言理解</i></strong>
-                    <em>18 Lu</em>
-                  </div>
-                  <div class="finger-hand" style="--value:57%">
-                    <span>左手</span>
-                    <strong><i>听觉感受</i><i>音乐欣赏</i></strong>
-                    <em>20 Lu</em>
-                  </div>
-                </div>
-              </div>
-              <div class="finger-row">
-                <h3><span>视觉</span><span>功能</span></h3>
-                <div class="finger-pair">
-                  <div class="finger-hand" style="--value:40%">
-                    <span>右手</span>
-                    <strong><i>视觉辨识</i><i>观察理解</i></strong>
-                    <em>14 Lu</em>
-                  </div>
-                  <div class="finger-hand" style="--value:37%">
-                    <span>左手</span>
-                    <strong><i>视觉感受</i><i>图像欣赏</i></strong>
-                    <em>13 Lu</em>
-                  </div>
-                </div>
-              </div>
-              <div class="finger-row">
-                <h3><span>体觉</span><span>功能</span></h3>
-                <div class="finger-pair">
-                  <div class="finger-hand" style="--value:54%">
-                    <span>右手</span>
-                    <strong><i>体觉辨识</i><i>操作理解</i></strong>
-                    <em>19 Lu</em>
-                  </div>
-                  <div class="finger-hand" style="--value:46%">
-                    <span>左手</span>
-                    <strong><i>体觉感受</i><i>艺术欣赏</i></strong>
-                    <em>16 Wl</em>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <div class="card-header"><div class="card-title"><h2>报告特征摘要</h2><small>仅展示本报告已有结构化字段</small></div></div>
+            <div class="data-list" id="report-feature-summary"><div class="data-item"><span>状态</span><strong>等待加载</strong></div></div>
           </div>
 
           <div class="module">
-            <div class="card-header">
-              <div class="card-title">
-                <h2>客户关注问题</h2>
-                <small>围绕客户关注点集中回应，并给出后续建议</small>
-              </div>
-            </div>
-            <div class="pill-row">
-              <span class="pill">上课注意力不集中</span>
-              <span class="pill">数学成绩偏弱</span>
-              <span class="pill">写作业进入状态慢</span>
-            </div>
-            <p class="footer-note">解读时可结合五大功能区、学习通道和行为模式观察。</p>
-            <textarea class="textarea" style="margin-top:12px" placeholder="解读中客户补充的问题"></textarea>
+            <div class="card-header"><div class="card-title"><h2>客户关注问题</h2><small>生成时作为辅助上下文</small></div></div>
+            <div class="pill-row" id="client-concerns"><span class="pill">等待加载</span></div>
+            <textarea class="textarea" id="interpretation-custom-notes" maxlength="500" style="margin-top:12px" placeholder="指导师可补充本次解读需要注意的情况"></textarea>
           </div>
         </aside>
 
         <section class="session-column">
           <div class="module">
             <div class="card-header">
-              <div class="card-title">
-                <h2>中栏 · 8步标准解读路线</h2>
-                <small id="current-step-index">第 4/8 步</small>
-              </div>
-              <span class="status info">进行中</span>
+              <div class="card-title"><h2>结构化解读路径</h2><small id="current-step-index">第 1/16 个板块</small></div>
+              <span class="status" id="interpretation-status">尚未生成</span>
             </div>
-            <div class="progress-line" aria-label="解读进度">
-              <span id="session-progress" style="width:50%"></span>
-            </div>
-            <div class="step-list" style="margin-top:14px">
-              <button class="step-card" type="button" data-step="0">
-                <span class="step-index">①</span>
-                <span><strong>建立安全感</strong><small>暖场、自我介绍、确认解读环境舒适</small></span>
-                <span class="status done">已完成</span>
-              </button>
-              <button class="step-card" type="button" data-step="1">
-                <span class="step-index">②</span>
-                <span><strong>严正声明和四条规则</strong><small>告知客户解读性质、边界和权利</small></span>
-                <span class="status done">已完成</span>
-              </button>
-              <button class="step-card" type="button" data-step="2">
-                <span class="step-index">③</span>
-                <span><strong>讲性格类型，让客户产生共鸣</strong><small>用生活化语言介绍性格类型特征</small></span>
-                <span class="status done">已完成</span>
-              </button>
-              <button class="step-card active" type="button" data-step="3">
-                <span class="step-index">④</span>
-                <span><strong>TRC / ATD / 左右脑，解释底层数据</strong><small>解释数值含义，强调高低各有所长</small></span>
-                <span class="status info">进行中</span>
-              </button>
-              <button class="step-card" type="button" data-step="4">
-                <span class="step-index">⑤</span>
-                <span><strong>讲学习通道 / 行为模式</strong><small>解释信息处理和行动方式</small></span>
-                <span class="status">待开始</span>
-              </button>
-              <button class="step-card" type="button" data-step="5">
-                <span class="step-index">⑥</span>
-                <span><strong>进入客户关注问题</strong><small>回应家长或客户的核心关切</small></span>
-                <span class="status">待开始</span>
-              </button>
-              <button class="step-card" type="button" data-step="6">
-                <span class="step-index">⑦</span>
-                <span><strong>给行动建议</strong><small>给出具体、可操作的方案</small></span>
-                <span class="status">待开始</span>
-              </button>
-              <button class="step-card" type="button" data-step="7">
-                <span class="step-index">⑧</span>
-                <span><strong>记录客户反馈 / 必要时提交总部复核</strong><small>记录反馈，风险内容提交复核</small></span>
-                <span class="status">待开始</span>
-              </button>
-            </div>
+            <div class="progress-line" aria-label="解读进度"><span id="session-progress" style="width:12.5%"></span></div>
+            <div class="step-list" id="interpretation-step-list" style="margin-top:14px"></div>
           </div>
 
           <div class="module">
-            <div class="card-header">
-              <div class="card-title">
-                <h2 id="current-step-title">TRC / ATD / 左右脑，解释底层数据</h2>
-                <small>当前步骤指引 · 预计 <span id="current-step-time">5-8 分钟</span></small>
-              </div>
-            </div>
-            <p id="current-step-goal">帮助客户理解报告中的核心数值不是分数，而是反映先天特质的参数。</p>
-            <ul class="guide-list" id="current-step-points" style="margin-top:12px"></ul>
+            <div class="card-header"><div class="card-title"><h2 id="current-step-title">建立安全感</h2><small>当前步骤 · <span id="current-step-time">准备中</span></small></div></div>
+            <p id="current-step-goal">生成方案后可逐步审核和编辑右栏内容。</p>
             <div class="session-actions" style="margin-top:14px">
               <button class="btn" id="prev-step" type="button">上一步</button>
               <button class="btn primary" id="next-step" type="button">下一步</button>
@@ -274,42 +119,15 @@
         <aside class="session-column sticky-column">
           <div class="module">
             <div class="card-header">
-              <div class="card-title">
-                <h2>右栏 · AI辅助话术</h2>
-                <small>随当前步骤切换的体验话术</small>
-              </div>
-              <span class="status info">学习示例</span>
+              <div class="card-title"><h2>AI辅助话术</h2><small>生成后可由指导师逐条修改</small></div>
+              <span class="status" id="interpretation-edit-state">等待生成</span>
             </div>
-
-            <section class="ai-section why">
-              <h3>为什么这样讲</h3>
-              <ul class="speech-list" id="ai-why"></ul>
-            </section>
-
-            <section class="ai-section say" style="margin-top:12px">
-              <h3>可以这样说</h3>
-              <ul class="speech-list" id="ai-say"></ul>
-            </section>
-
-            <section class="ai-section" style="margin-top:12px">
-              <h3>可以这样问</h3>
-              <ul class="speech-list" id="ai-ask"></ul>
-            </section>
-
-            <section class="ai-section no" style="margin-top:12px">
-              <h3>不要这样说</h3>
-              <ul class="speech-list" id="ai-no"></ul>
-            </section>
-
-            <section class="ai-section" style="margin-top:12px">
-              <h3>行动建议</h3>
-              <ul class="speech-list" id="ai-action"></ul>
-            </section>
-
-            <section class="ai-section" style="margin-top:12px">
-              <h3>风险提醒</h3>
-              <ul class="speech-list" id="ai-risk"></ul>
-            </section>
+            <section class="ai-section why"><h3>为什么这样讲</h3><ul class="speech-list" id="ai-why"></ul></section>
+            <section class="ai-section say" style="margin-top:12px"><h3>可以这样说</h3><ul class="speech-list" id="ai-say"></ul></section>
+            <section class="ai-section" style="margin-top:12px"><h3>可以这样问</h3><ul class="speech-list" id="ai-ask"></ul></section>
+            <section class="ai-section no" style="margin-top:12px"><h3>不要这样说</h3><ul class="speech-list" id="ai-no"></ul></section>
+            <section class="ai-section" style="margin-top:12px"><h3>行动建议</h3><ul class="speech-list" id="ai-action"></ul></section>
+            <section class="ai-section" style="margin-top:12px"><h3>风险提醒</h3><ul class="speech-list" id="ai-risk"></ul></section>
           </div>
         </aside>
       </section>
@@ -327,24 +145,5 @@
       </div>
     </section>
   </main>
-
-  <div class="modal-layer" id="credit-modal" aria-hidden="true">
-    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="credit-modal-title">
-      <div class="card-header">
-        <div class="card-title">
-          <h2 id="credit-modal-title">功能开放提示</h2>
-          <small id="credit-modal-subtitle">当前不会扣减积分</small>
-        </div>
-        <button class="icon-btn" type="button" data-close-credit-modal aria-label="关闭">×</button>
-      </div>
-      <div class="notice">
-        <strong>AI 方案生成功能即将开放。</strong>
-        <p>功能开放后，生成方案将消耗相应积分。您当前的积分余额可在工作台首页查看。</p>
-      </div>
-      <div class="top-actions" style="margin-top:16px">
-        <button class="btn primary" type="button" data-close-credit-modal>我知道了</button>
-      </div>
-    </div>
-  </div>
 </body>
 </html>

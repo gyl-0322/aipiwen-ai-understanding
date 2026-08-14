@@ -12,6 +12,8 @@
 
 const crypto = require('crypto');
 const TRCEngine = require('../lib/trc-engine');
+const { callClaude, MODEL_FREE } = require('./_lib');
+const interpretation = require('../server/v3a-interpretation');
 const {
   HttpError,
   getConfig,
@@ -20,6 +22,7 @@ const {
   loadSession,
   resolveSession,
   requireCsrf,
+  consumeRateLimit,
   readJson
 } = require('../server/v3a-session-store');
 
@@ -34,7 +37,12 @@ const REPORT_TYPES = new Set(['儿童天赋报告', '成人发展报告', '学�
 const MAX_FILE_BYTES = Math.floor(2.5 * 1024 * 1024);
 const MAX_MULTIPART_BYTES = MAX_FILE_BYTES + 64 * 1024;
 const MAX_JSON_BYTES = 20 * 1024;
+const MAX_INTERPRETATION_JSON_BYTES = 72 * 1024;
 const MAX_GENERATED_REPORT_BYTES = 1500 * 1024;
+const DETAILED_INTERPRETATION_VERSION = 3;
+const COACHING_TYPES = new Set(['phone_follow_up', 'deep_coaching', 'initial_interpretation', 'emergency', 'daily_follow_up']);
+const COACHING_SESSION_TYPES = new Set(['pre_call', 'post_call', 'free']);
+const UNSAFE_COACHING_OUTPUT = /(?:患有|确诊|必然|注定|保证|一定会|命中注定|未来(?:一定|必然|将会)|智商(?:很高|很低|高|低)|优于(?:别人|他人|同龄人)|劣于(?:别人|他人|同龄人)|天生就是)/i;
 
 const RPC_ERROR_STATUS = new Map([
   ['REPORT_IMPORT_FORBIDDEN', 403],
@@ -51,7 +59,10 @@ const RPC_ERROR_STATUS = new Map([
   ['REPORT_NOT_FOUND', 404],
   ['INVALID_REPORT_TRANSITION', 409],
   ['INVALID_GENERATED_REPORT', 502],
-  ['INVALID_ERROR_CODE', 500]
+  ['INVALID_ERROR_CODE', 500],
+  ['INTERPRETATION_FORBIDDEN', 403],
+  ['INTERPRETATION_REPORT_NOT_READY', 409],
+  ['INVALID_INTERPRETATION_DATA', 400]
 ]);
 
 function normalize(value) {
@@ -144,12 +155,12 @@ async function readRawBody(req, limit) {
   });
 }
 
-async function readJsonBody(req) {
+async function readJsonBody(req, limit = MAX_JSON_BYTES) {
   const contentType = normalize(req.headers?.['content-type']).toLowerCase();
   if (!contentType.startsWith('application/json')) {
     throw new HttpError(415, '请求格式无效。', 'JSON_REQUIRED');
   }
-  const raw = await readRawBody(req, MAX_JSON_BYTES);
+  const raw = await readRawBody(req, limit);
   try {
     const body = JSON.parse(raw.toString('utf8'));
     if (!body || typeof body !== 'object' || Array.isArray(body)) throw new Error('invalid');
@@ -511,6 +522,414 @@ async function handleConfirm(config, session, res, body, advisorUserId) {
   }
 }
 
+function interpretationHttpError(error) {
+  const code = normalize(error?.code || error?.message);
+  const mapping = {
+    ADVISOR_ID_NOT_ALLOWED: [400, '请求中不得指定指导师。'],
+    INVALID_REPORT_ID: [400, '报告标识无效。'],
+    INVALID_CLIENT_ID: [400, '客户标识无效。'],
+    INVALID_CLIENT_CONCERNS: [400, '客户关注问题格式无效。'],
+    INVALID_CUSTOM_NOTES: [400, '补充说明不能超过 500 字。'],
+    INVALID_INTERPRETATION_ID: [400, '解读方案标识无效。'],
+    AI_OUTPUT_INVALID: [502, 'AI 解读方案格式异常，请稍后重试。'],
+    UNSAFE_AI_OUTPUT: [502, 'AI 解读方案未通过安全检查，请稍后重试。']
+  };
+  const mapped = mapping[code];
+  return mapped ? new HttpError(mapped[0], mapped[1], code) : error;
+}
+
+function publicReportData(report) {
+  const structured = report?.structured_input && typeof report.structured_input === 'object'
+    ? report.structured_input
+    : {};
+  return {
+    reportType: normalize(structured.reportType).slice(0, 60) || '报告',
+    ageAtReport: Number.isInteger(report?.age_at_report) ? report.age_at_report : null,
+    fingers: structured.fingers && typeof structured.fingers === 'object' ? structured.fingers : null,
+    atd: Number.isFinite(Number(structured.atd)) ? Number(structured.atd) : null,
+    engineResult: structured.engineResult && typeof structured.engineResult === 'object'
+      ? structured.engineResult
+      : {},
+    selectedIssues: Array.isArray(structured.selectedIssues)
+      ? structured.selectedIssues.map(normalize).filter(Boolean).slice(0, 6)
+      : [],
+    customIssue: normalize(structured.customIssue).slice(0, 200) || null
+  };
+}
+
+function validateCoachingSuggestionBody(value) {
+  const body = value && typeof value === 'object' && !Array.isArray(value) ? value : {};
+  if (body.advisor_id || body.advisorId || body.advisor_user_id) {
+    throw new HttpError(400, '请求中不得指定指导师。', 'ADVISOR_ID_NOT_ALLOWED');
+  }
+  const personId = normalize(body.person_id || body.personId);
+  const topic = normalize(body.topic);
+  const coachingType = normalize(body.coaching_type || body.coachingType);
+  const sessionType = normalize(body.session_type || body.sessionType);
+  if (!isUuid(personId) || topic.length < 2 || topic.length > 1000 || !COACHING_TYPES.has(coachingType) || !COACHING_SESSION_TYPES.has(sessionType)) {
+    throw new HttpError(400, '辅导话题或类型无效。', 'INVALID_COACHING_REQUEST');
+  }
+  return { personId, topic, coachingType, sessionType };
+}
+
+function parseCoachingSuggestion(value) {
+  let payload;
+  try {
+    payload = JSON.parse(normalize(value));
+  } catch {
+    throw new HttpError(502, 'AI 辅导建议格式异常，请稍后重试。', 'AI_COACHING_OUTPUT_INVALID');
+  }
+  const understanding = normalize(payload?.understanding);
+  const direction = normalize(payload?.direction);
+  const script = normalize(payload?.script);
+  const risks = Array.isArray(payload?.risks) ? payload.risks.map((risk) => ({
+    level: ['warning', 'tip'].includes(normalize(risk?.level)) ? normalize(risk.level) : 'warning',
+    text: normalize(risk?.text)
+  })).filter((risk) => risk.text).slice(0, 8) : [];
+  const knowledgeRefs = Array.isArray(payload?.knowledge_refs)
+    ? payload.knowledge_refs.map(normalize).filter((item) => /^[A-Z][A-Z0-9_-]{0,31}(?::v[0-9.]+)?$/.test(item)).slice(0, 12)
+    : [];
+  const allText = [understanding, direction, script, ...risks.map((risk) => risk.text)].join('\n');
+  if (
+    understanding.length < 20 || understanding.length > 2400 ||
+    direction.length < 20 || direction.length > 2400 ||
+    script.length < 20 || script.length > 4000 ||
+    risks.length < 1 || risks.some((risk) => risk.text.length > 400) ||
+    UNSAFE_COACHING_OUTPUT.test(allText)
+  ) {
+    throw new HttpError(502, 'AI 辅导建议未通过完整性与安全校验，请稍后重试。', 'AI_COACHING_OUTPUT_INVALID');
+  }
+  return { understanding, direction, script, risks, knowledgeRefs };
+}
+
+function compactCoachingContext(client, report, growthRecords) {
+  const structured = report?.structured_input && typeof report.structured_input === 'object' ? report.structured_input : {};
+  const generated = report?.generated_report && typeof report.generated_report === 'object' ? report.generated_report : {};
+  const sections = Array.isArray(generated.sections)
+    ? generated.sections.slice(0, 12).map((section) => ({
+      title: normalize(section?.title).slice(0, 80),
+      content: normalize(section?.content).slice(0, 700)
+    }))
+    : [];
+  const context = {
+    age: Number.isInteger(report?.age_at_report) ? report.age_at_report : null,
+    reportType: normalize(structured.reportType).slice(0, 60),
+    fingers: structured.fingers || null,
+    atd: structured.atd ?? null,
+    engineResult: structured.engineResult || {},
+    selectedIssues: Array.isArray(structured.selectedIssues) ? structured.selectedIssues.slice(0, 8) : [],
+    reportSections: sections,
+    recentGrowth: growthRecords.slice(0, 8).map((record) => ({
+      recordType: record.record_type,
+      domainTags: record.domain_tags,
+      changeDirection: record.change_direction,
+      content: normalize(record.content).slice(0, 500),
+      createdAt: record.created_at
+    }))
+  };
+  const fullName = normalize(client?.display_name);
+  let json = JSON.stringify(context);
+  if (fullName) json = json.split(fullName).join('客户');
+  return json.slice(0, 18000);
+}
+
+async function handleCoachingSuggestion(config, session, res, body, advisorUserId, dependencies = {}) {
+  const input = validateCoachingSuggestionBody(body);
+  const clients = await selectRows(config, session, 'advisor_clients', {
+    select: 'id,display_name,birth_date',
+    id: `eq.${input.personId}`,
+    advisor_user_id: `eq.${advisorUserId}`,
+    archived_at: 'is.null',
+    limit: 1
+  }, '客户信息暂时无法读取。');
+  const client = clients[0];
+  if (!client) throw new HttpError(404, '未找到该客户。', 'CLIENT_NOT_FOUND');
+  const [reports, growthRecords] = await Promise.all([
+    selectRows(config, session, 'advisor_reports', {
+      select: 'id,status,structured_input,generated_report,age_at_report,created_at',
+      advisor_client_id: `eq.${input.personId}`,
+      status: 'eq.ready',
+      order: 'created_at.desc',
+      limit: 1
+    }, '客户报告暂时无法读取。'),
+    selectRows(config, session, 'growth_records', {
+      select: 'record_type,domain_tags,change_direction,content,created_at',
+      advisor_client_id: `eq.${input.personId}`,
+      order: 'created_at.desc',
+      limit: 8
+    }, '成长记录暂时无法读取。')
+  ]);
+  if (!reports[0]) throw new HttpError(409, '客户暂无已生成报告，暂时不能生成辅导建议。', 'COACHING_REPORT_NOT_READY');
+
+  const limit = dependencies.consumeRateLimit || consumeRateLimit;
+  const generate = dependencies.callClaude || callClaude;
+  await limit(config, 'v4-coaching-suggestion-advisor', advisorUserId, 20, 3600);
+  const topic = input.topic.split(normalize(client.display_name)).join('客户');
+  const system = [
+    '你是AIPIWEN指导师的辅导准备助手。只提供沟通准备建议，不做诊断、治疗、未来预测或结果保证。',
+    '所有判断必须以给定报告和成长记录为依据；资料不足时明确写“需要向家长确认”。',
+    '输出严格 JSON 对象，字段为 understanding、direction、script、risks、knowledge_refs。',
+    'understanding 说明当前状态与资料依据；direction 说明本次沟通目标与顺序；script 给可直接参考但需指导师确认的完整话术；risks 为至少2条 {level:"warning"|"tip",text}。',
+    '不得输出客户姓名、手机号、验证码、Token、Cookie、Session 或任何内部ID。'
+  ].join('\n');
+  const user = [
+    `辅导类型：${input.coachingType}`,
+    `会话类型：${input.sessionType}`,
+    `本次话题：${topic}`,
+    `客户资料：${compactCoachingContext(client, reports[0], growthRecords)}`
+  ].join('\n');
+  let generated;
+  try {
+    generated = await generate({
+      model: MODEL_FREE,
+      system,
+      messages: [{ role: 'user', content: user }],
+      maxTokens: 1800,
+      timeoutMs: 50000,
+      retries: 1,
+      responseFormat: { type: 'json_object' }
+    });
+  } catch {
+    throw new HttpError(502, 'AI 辅导建议暂时无法生成，请稍后重试。', 'AI_COACHING_UNAVAILABLE');
+  }
+  const suggestion = parseCoachingSuggestion(generated?.text);
+  return res.status(200).json({
+    ok: true,
+    csrfToken: session.csrfToken,
+    understanding: suggestion.understanding,
+    direction: suggestion.direction,
+    script: suggestion.script,
+    risks: suggestion.risks,
+    knowledge_refs: suggestion.knowledgeRefs,
+    generated_at: new Date().toISOString()
+  });
+}
+
+async function loadInterpretationContext(config, session, clientId, reportId) {
+  if (!interpretation.isUuid(reportId)) throw new HttpError(400, '报告标识无效。', 'INVALID_REPORT_ID');
+  if (!interpretation.isUuid(clientId)) throw new HttpError(400, '客户标识无效。', 'INVALID_CLIENT_ID');
+  const reports = await selectRows(config, session, 'advisor_reports', {
+    select: 'id,advisor_client_id,status,structured_input,generated_report,age_at_report,interpretation_data,created_at,updated_at',
+    id: `eq.${reportId}`,
+    advisor_client_id: `eq.${clientId}`,
+    limit: 1
+  }, '解读报告暂时无法读取。');
+  const report = reports[0];
+  if (!report) throw new HttpError(404, '未找到该客户报告。', 'REPORT_NOT_FOUND');
+  if (report.status !== 'ready') {
+    throw new HttpError(409, '报告尚未生成完成，暂时不能创建解读方案。', 'INTERPRETATION_REPORT_NOT_READY');
+  }
+  const clients = await selectRows(config, session, 'advisor_clients', {
+    select: 'id,display_name,birth_date,created_at',
+    id: `eq.${clientId}`,
+    archived_at: 'is.null',
+    limit: 1
+  }, '客户信息暂时无法读取。');
+  const client = clients[0];
+  if (!client) throw new HttpError(404, '未找到该客户。', 'CLIENT_NOT_FOUND');
+  return { report, client };
+}
+
+function reusableInterpretation(value) {
+  if (!value || typeof value !== 'object' || !interpretation.isUuid(value.id)) return null;
+  try {
+    if (normalize(value.status) === 'edited') {
+      return { ...value, steps: interpretation.validateSteps(value.steps) };
+    }
+    if (Number(value.version) < DETAILED_INTERPRETATION_VERSION) return null;
+    return { ...value, steps: interpretation.validateDetailedSteps(value.steps) };
+  } catch {
+    return null;
+  }
+}
+
+function interpretationResponse(context, session) {
+  const stored = reusableInterpretation(context.report.interpretation_data);
+  return {
+    ok: true,
+    csrfToken: session.csrfToken,
+    client: {
+      id: context.client.id,
+      displayName: context.client.display_name,
+      birthDate: context.client.birth_date
+    },
+    report: {
+      id: context.report.id,
+      ...publicReportData(context.report),
+      createdAt: context.report.created_at,
+      updatedAt: context.report.updated_at
+    },
+    interpretation: stored ? {
+      id: stored.id,
+      status: stored.status,
+      steps: stored.steps,
+      createdAt: stored.createdAt || null,
+      updatedAt: stored.updatedAt || null
+    } : null
+  };
+}
+
+async function handleInterpretationGet(config, session, res, req) {
+  const clientId = normalize(req.query?.clientId);
+  const reportId = normalize(req.query?.reportId);
+  const context = await loadInterpretationContext(config, session, clientId, reportId);
+  return res.status(200).json(interpretationResponse(context, session));
+}
+
+async function handleInterpretationGenerate(config, session, res, body, advisorUserId, dependencies = {}) {
+  let input;
+  try {
+    input = interpretation.validateGenerateBody(body);
+  } catch (error) {
+    throw interpretationHttpError(error);
+  }
+  const limit = dependencies.consumeRateLimit || consumeRateLimit;
+  const generate = dependencies.callClaude || callClaude;
+  const context = await loadInterpretationContext(config, session, input.clientId, input.reportId);
+  const existing = reusableInterpretation(context.report.interpretation_data);
+  if (existing) {
+    return res.status(200).json({
+      ...interpretationResponse(context, session),
+      complete: true,
+      reused: true
+    });
+  }
+
+  const raw = context.report.interpretation_data;
+  let completedSteps = [];
+  let interpretationId = crypto.randomUUID();
+  let createdAt = new Date().toISOString();
+  let resumed = false;
+  if (Number(raw?.version) === DETAILED_INTERPRETATION_VERSION
+      && normalize(raw?.status) === 'generating'
+      && interpretation.isUuid(raw?.id)) {
+    try {
+      completedSteps = interpretation.validateDetailedPrefix(raw.steps);
+      interpretationId = raw.id;
+      createdAt = normalize(raw.createdAt) || createdAt;
+      resumed = true;
+    } catch {}
+  }
+  if (!resumed) await limit(config, 'interpretation-generate-advisor', advisorUserId, 10, 3600);
+
+  const stepIndexes = [completedSteps.length];
+
+  let generatedSteps;
+  try {
+    const generationDeadline = Date.now() + 56500;
+    generatedSteps = (await Promise.all(stepIndexes.map(async (stepIndex) => {
+      const prompt = interpretation.buildPrompt(context.report, context.client, input, [stepIndex]);
+      for (let attempt = 0; attempt < 2; attempt += 1) {
+        try {
+          const result = await generate({
+            model: MODEL_FREE,
+            system: prompt.system,
+            messages: [{ role: 'user', content: prompt.user }],
+            maxTokens: 2400,
+            timeoutMs: Math.min(52000, generationDeadline - Date.now()),
+            retries: 0,
+            responseFormat: { type: 'json_object' }
+          });
+          if (['length', 'max_tokens'].includes(normalize(result?.finishReason).toLowerCase())) {
+            const error = new Error('AI_OUTPUT_INVALID');
+            error.code = 'AI_OUTPUT_INVALID';
+            throw error;
+          }
+          return interpretation.parseModelText(result?.text, [stepIndex]);
+        } catch (error) {
+          const code = normalize(error?.code || error?.message);
+          const status = Number(error?.status || 0);
+          const retriable = code === 'AI_OUTPUT_INVALID'
+            || code === 'UNSAFE_AI_OUTPUT'
+            || error?.name === 'AbortError'
+            || status === 429
+            || status >= 500
+            || !status;
+          if (!retriable || attempt === 1 || generationDeadline - Date.now() < 8000) throw error;
+        }
+      }
+      throw new Error('AI_OUTPUT_INVALID');
+    }))).flat();
+  } catch (error) {
+    const safe = interpretationHttpError(error);
+    if (safe instanceof HttpError) throw safe;
+    throw new HttpError(502, 'AI 解读方案暂时无法生成，请稍后重试。', 'INTERPRETATION_GENERATION_FAILED');
+  }
+
+  const now = new Date().toISOString();
+  const steps = [...completedSteps, ...generatedSteps];
+  const complete = steps.length === interpretation.STEP_TITLES.length;
+  if (complete) interpretation.validateDetailedSteps(steps);
+  else interpretation.validateDetailedPrefix(steps);
+  const data = {
+    version: DETAILED_INTERPRETATION_VERSION,
+    id: interpretationId,
+    status: complete ? 'generated' : 'generating',
+    steps,
+    clientConcerns: resumed && Array.isArray(raw.clientConcerns) ? raw.clientConcerns : input.clientConcerns,
+    customNotes: resumed ? raw.customNotes || null : input.customNotes,
+    createdAt,
+    updatedAt: now
+  };
+  const saved = await callRpc(config, session, 'v3a_save_advisor_interpretation', {
+    p_report_id: input.reportId,
+    p_interpretation_data: data
+  });
+  return res.status(200).json({
+    ok: true,
+    csrfToken: session.csrfToken,
+    interpretationId: saved?.interpretationId || data.id,
+    status: data.status,
+    complete,
+    progress: { completed: steps.length, total: interpretation.STEP_TITLES.length },
+    ...(complete ? { steps } : {})
+  });
+}
+
+async function handleInterpretationSave(config, session, res, body) {
+  let input;
+  try {
+    input = interpretation.validateSaveBody(body);
+  } catch (error) {
+    throw interpretationHttpError(error);
+  }
+  const context = await loadInterpretationContext(config, session, input.clientId, input.reportId);
+  const existing = context.report.interpretation_data;
+  if (!existing || existing.id !== input.interpretationId) {
+    throw new HttpError(409, '解读方案状态已变化，请刷新后重试。', 'INTERPRETATION_CONFLICT');
+  }
+  const data = {
+    ...existing,
+    version: Math.max(1, Number(existing.version) || 1),
+    id: input.interpretationId,
+    status: 'edited',
+    steps: input.editedSteps,
+    updatedAt: new Date().toISOString()
+  };
+  await callRpc(config, session, 'v3a_save_advisor_interpretation', {
+    p_report_id: input.reportId,
+    p_interpretation_data: data
+  });
+  return res.status(200).json({
+    ok: true,
+    csrfToken: session.csrfToken,
+    interpretationId: input.interpretationId,
+    status: 'edited',
+    steps: input.editedSteps
+  });
+}
+
+async function handleInterpretation(config, session, res, req, advisorUserId) {
+  if (req.method === 'GET') return await handleInterpretationGet(config, session, res, req);
+  const body = await readJsonBody(req, MAX_INTERPRETATION_JSON_BYTES);
+  const operation = normalize(req.query?.operation);
+  if (operation === 'generate') {
+    return await handleInterpretationGenerate(config, session, res, body, advisorUserId);
+  }
+  if (operation === 'save') return await handleInterpretationSave(config, session, res, body);
+  throw new HttpError(400, '不支持的 AI 解读操作。', 'INVALID_ACTION');
+}
+
 async function handleStatus(config, session, res, reportId) {
   if (!isUuid(reportId)) throw new HttpError(400, '报告标识无效。', 'INVALID_REPORT_ID');
   const reports = await selectRows(config, session, 'advisor_reports', {
@@ -552,9 +971,16 @@ async function handler(req, res) {
     const config = getConfig();
     if (req.method === 'POST') requireSameOrigin(req, config);
     const { session, advisorUserId } = await requireActiveAdvisor(config, req, req.method === 'POST');
+    const action = normalize(req.query?.action);
+    if (action === 'coaching-suggestion') {
+      if (req.method !== 'POST') throw new HttpError(405, 'Method not allowed', 'METHOD_NOT_ALLOWED');
+      return await handleCoachingSuggestion(config, session, res, await readJsonBody(req), advisorUserId);
+    }
+    if (action === 'interpretation') {
+      return await handleInterpretation(config, session, res, req, advisorUserId);
+    }
     if (req.method === 'GET') return await handleStatus(config, session, res, normalize(req.query?.id));
 
-    const action = normalize(req.query?.action);
     if (action === 'extract') return await handleExtract(config, req, res, advisorUserId);
     if (action === 'confirm') return await handleConfirm(config, session, res, await readJsonBody(req), advisorUserId);
     throw new HttpError(400, '不支持的操作。', 'INVALID_ACTION');
@@ -572,11 +998,18 @@ module.exports._test = {
   ageFromBirthDate,
   callExtract,
   handleConfirm,
+  handleCoachingSuggestion,
+  handleInterpretation,
+  handleInterpretationGenerate,
+  handleInterpretationGet,
+  handleInterpretationSave,
   handleStatus,
   internalOrigin,
   isUuid,
   parseMultipartFile,
   sanitizeGeneratedReport,
+  parseCoachingSuggestion,
+  validateCoachingSuggestionBody,
   validateConfirmBody,
   validateFingers
 };

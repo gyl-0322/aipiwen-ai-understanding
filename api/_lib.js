@@ -242,7 +242,7 @@ const DS_API = 'https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completio
  * 统一 AI 调用入口（DashScope OpenAI-compatible）
  * 调用签名与原 callClaude 完全一致，上层代码无需修改
  */
-async function callClaude({ model, system, messages, maxTokens = 600, cache = false, timeoutMs = 25000, retries = 0 }) {
+async function callClaude({ model, system, messages, maxTokens = 600, cache = false, timeoutMs = 25000, retries = 0, responseFormat = null }) {
   const apiKey = process.env.DASHSCOPE_API_KEY || '';
 
   // 合并 system 提示（DashScope 走 role:system message）
@@ -260,6 +260,7 @@ async function callClaude({ model, system, messages, maxTokens = 600, cache = fa
     max_tokens: maxTokens,
     messages:   allMessages,
   };
+  if (responseFormat?.type === 'json_object') body.response_format = responseFormat;
 
   const headers = {
     'Authorization': `Bearer ${apiKey}`,
@@ -282,9 +283,11 @@ async function callClaude({ model, system, messages, maxTokens = 600, cache = fa
       }
       const data = JSON.parse(rawText);
       // OpenAI-compatible 响应格式
-      const text = data.choices?.[0]?.message?.content?.trim() || null;
+      const choice = data.choices?.[0] || null;
+      const text = choice?.message?.content?.trim() || null;
+      const finishReason = choice?.finish_reason || null;
       trackApiSpend(model, data.usage?.prompt_tokens || 0, data.usage?.completion_tokens || 0).catch(() => {});
-      return { text, usage: data.usage || {} };
+      return { text, usage: data.usage || {}, finishReason };
     } catch (e) {
       clearTimeout(timer);
       lastError = e;

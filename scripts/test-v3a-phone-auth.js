@@ -642,15 +642,16 @@ async function run() {
 
   harness = createHarness({ me: completeMe('active', 'advisor') });
   await settle();
-  assert.equal(harness.location.href, '/ai-interpreter-workbench.html', '已有 Session 必须按状态恢复路由');
+  assert.equal(harness.location.href, '', '已有 Session 不得让登录页自动跳转');
+  assert.equal(actionCalls(harness, 'me').length, 0, '登录页加载时不得请求旧 Session');
   assertBrowserIsolation(harness);
 
   const activeAdvisorWithoutPasswordFlag = completeMe('active', 'advisor');
   activeAdvisorWithoutPasswordFlag.requiresPasswordSetup = true;
   harness = createHarness({ me: activeAdvisorWithoutPasswordFlag });
   await settle();
-  assert.equal(harness.location.href, '/ai-interpreter-workbench.html',
-    'active 指导师即使缺少旧密码标记，也必须直接进入工作台');
+  assert.equal(harness.location.href, '', '旧密码标记不得导致登录页自动跳转');
+  assert.equal(actionCalls(harness, 'me').length, 0, '旧密码标记也不得触发 Session 探测');
   assertBrowserIsolation(harness);
 
   harness = createHarness({
