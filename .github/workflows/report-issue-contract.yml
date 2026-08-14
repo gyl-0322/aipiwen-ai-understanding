@@ -1,0 +1,41 @@
+name: Report issue answer contract
+
+on:
+  pull_request:
+    paths:
+      - 'api/generate-report.js'
+      - 'report-upload.html'
+      - 'scripts/test-report-issue-answer-modes.js'
+      - '.github/workflows/report-issue-contract.yml'
+  push:
+    branches:
+      - main
+      - 'hotfix/**'
+    paths:
+      - 'api/generate-report.js'
+      - 'report-upload.html'
+      - 'scripts/test-report-issue-answer-modes.js'
+      - '.github/workflows/report-issue-contract.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  report-issue-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Check report API syntax
+        run: node --check api/generate-report.js
+
+      - name: Verify differentiated issue answers
+        run: node scripts/test-report-issue-answer-modes.js
