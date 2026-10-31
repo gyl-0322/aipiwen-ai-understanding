@@ -2240,9 +2240,28 @@ body[data-page="advisor"] .value-card {
     display: none;
   }
 
+  .mobile-nav-backdrop:not([hidden]) {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 40;
+    border: 0;
+    padding: 0;
+    background: rgba(7, 10, 18, .78);
+    cursor: pointer;
+  }
+
+  .sidebar.mobile-nav-ready.is-open {
+    position: relative;
+    z-index: 50;
+    background: #0d1118;
+    box-shadow: 0 18px 48px rgba(0, 0, 0, .45);
+  }
+
   .sidebar.mobile-nav-ready.is-open .nav {
     display: grid;
     margin-top: 10px;
+    background: #0d1118;
   }
 
   .sidebar.mobile-nav-ready.is-open .sidebar-note {

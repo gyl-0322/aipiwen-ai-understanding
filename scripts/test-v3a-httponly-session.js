@@ -1117,6 +1117,36 @@ async function run() {
   assert.equal(supabaseCalls(lifecycleFetch.calls.slice(mark)).length, 0,
     '退出后的旧 SID 不得再次刷新 Supabase Session');
 
+  result = await invoke({
+    method: 'POST',
+    action: 'verify_otp',
+    body: { phone: PHONE, token: OTP },
+    headers: {
+      origin: ALLOWED_ORIGIN,
+      'sec-fetch-site': 'same-origin',
+      'content-type': 'application/json'
+    },
+    env: enabledEnv,
+    fetchStub: lifecycleFetch
+  });
+  const browserLogoutSid = assertSidCookie(result.res);
+  result = await invoke({
+    method: 'POST',
+    action: 'logout',
+    headers: {
+      origin: ALLOWED_ORIGIN,
+      'sec-fetch-site': 'same-origin',
+      'content-type': 'application/json',
+      cookie: `${COOKIE_NAME}=${encodeURIComponent(browserLogoutSid)}`,
+      'x-csrf-token': 'WRONG_CSRF_TOKEN_NOT_REAL',
+      'x-aipiwen-logout': '1'
+    },
+    env: enabledEnv,
+    fetchStub: lifecycleFetch
+  });
+  assert.equal(result.res.statusCode, 200, '同源浏览器退出在 CSRF 丢失时仍须清会话');
+  assertClearedCookie(result.res);
+
   const expiryFetch = createFetch();
   result = await invoke({
     method: 'POST',

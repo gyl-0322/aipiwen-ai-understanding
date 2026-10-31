@@ -169,7 +169,10 @@ function setSessionCookie(res, sid, maxAge = SESSION_TTL_SECONDS) {
 }
 
 function clearSessionCookie(res) {
-  res.setHeader('Set-Cookie', clearCookieHeader());
+  res.setHeader('Set-Cookie', [
+    clearCookieHeader(),
+    'aipiwen_session=; Path=/; Max-Age=0; Expires=Thu, 01 Jan 1970 00:00:00 GMT; HttpOnly; Secure; SameSite=Lax'
+  ]);
 }
 
 function readSessionId(req) {

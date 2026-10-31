@@ -1,0 +1,51 @@
+/* Shared help controls inherit AIPIWEN's brand without restyling page content. */
+body.aipiwen-help-present { padding-bottom: 88px; }
+.aipiwen-help { --aw-ink:#1a1714; --aw-muted:#625950; --aw-accent:#a84f18; --aw-paper:#fffefa; --aw-line:#e7e0d7; position:relative; z-index:60; color:var(--aw-ink); font:16px/1.6 var(--font-sans,-apple-system,'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif); }
+.aipiwen-help * { box-sizing:border-box; }
+.aipiwen-help [hidden] { display:none !important; }
+.aipiwen-help button, .aipiwen-help input { font:inherit; letter-spacing:normal; }
+.aipiwen-help button { cursor:pointer; }
+.aipiwen-help :is(button,a,input,h2):focus-visible { outline:3px solid var(--aw-accent); outline-offset:3px; }
+.aipiwen-help ::selection { background:var(--aw-accent); color:var(--aw-paper); }
+.aipiwen-help a { color:var(--aw-accent); text-underline-offset:4px; }
+.aw-help-dock { position:fixed; right:24px; bottom:24px; display:flex; align-items:stretch; border:1px solid var(--aw-line); border-radius:12px; background:var(--aw-paper); box-shadow:0 4px 16px rgba(49,37,25,.07); }
+.aw-help-dock button { display:flex; align-items:center; justify-content:center; gap:7px; min-height:44px; padding:10px 12px; border:0; border-radius:11px 0 0 11px; background:transparent; color:var(--aw-ink); font-size:14px; line-height:20px; white-space:nowrap; }
+.aw-help-dock .aw-help-report-trigger { color:var(--aw-accent); }
+.aw-help-dock .aw-help-support-trigger { border-left:1px solid var(--aw-line); border-radius:0 11px 11px 0; }
+.aw-help-dock small { position:absolute; width:1px; height:1px; padding:0; overflow:hidden; clip-path:inset(50%); white-space:nowrap; }
+.aipiwen-help svg { width:22px; height:22px; fill:none; stroke:currentColor; stroke-width:1.6; stroke-linecap:round; stroke-linejoin:round; flex:none; }
+.aw-help-dock svg { width:18px; height:18px; }
+.aw-help-dock button:hover, .aw-help-dock button[aria-expanded="true"] { background:#f6e9dc; }
+.aw-help-panel { position:fixed; right:24px; bottom:84px; width:min(380px,calc(100vw - 32px)); max-height:calc(100dvh - 116px); overflow:auto; overscroll-behavior:contain; scrollbar-color:var(--aw-accent) var(--aw-paper); scrollbar-width:thin; padding:20px; border:1px solid var(--aw-line); border-radius:18px; background:var(--aw-paper); box-shadow:0 14px 45px rgba(49,37,25,.18); }
+.aw-help-panel header { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:14px; }
+.aw-help-panel h2 { margin:0; color:var(--aw-ink); font-family:inherit; font-size:20px; font-weight:600; line-height:1.4; letter-spacing:normal; }
+.aw-help-close { display:grid; place-items:center; flex:none; width:44px; height:44px; padding:0; background:transparent; color:var(--aw-muted); border:1px solid var(--aw-line); border-radius:10px; }
+.aw-help-panel p { margin:0 0 14px; color:var(--aw-muted); font-size:16px; line-height:1.75; }
+.aw-help-panel .aw-help-note { font-size:14px; margin:12px 0 0; }
+.aw-help-note a { display:inline-flex; align-items:center; min-height:44px; }
+.aw-help-panel .aw-help-link, .aw-help-answer a { display:flex; align-items:center; gap:8px; width:fit-content; min-height:44px; font-weight:600; }
+.aw-help-panel .aw-help-contact { justify-content:center; width:100%; padding:10px 12px; margin:0 0 16px; border-radius:10px; background:var(--aw-accent); color:var(--aw-paper); text-decoration:none; }
+.aw-help-topics { display:flex; flex-wrap:wrap; gap:8px; }
+.aw-help-topics button { min-height:44px; padding:8px 10px; border:1px solid var(--aw-line); border-radius:8px; background:#f6e9dc; color:var(--aw-ink); font-size:14px; }
+.aw-help-topics button:hover { border-color:var(--aw-accent); }
+.aw-help-answer:empty { display:none; }
+.aw-help-answer { border-top:1px solid var(--aw-line); margin-top:20px; padding-top:16px; overflow-wrap:anywhere; }
+.aw-help-panel form { margin:20px 0 0; }
+.aw-help-panel label { display:block; margin-bottom:8px; font-size:14px; font-weight:600; }
+.aw-help-compose { display:flex; align-items:stretch; gap:8px; }
+.aw-help-compose input { min-width:0; width:100%; min-height:44px; border:1px solid #b6a99a; border-radius:8px; background:#fffefa; padding:10px; font-size:16px; color:var(--aw-ink); caret-color:var(--aw-accent); }
+.aw-help-compose input::placeholder { color:var(--aw-muted); opacity:1; }
+.aw-help-compose button { flex:none; min-width:56px; min-height:44px; border:0; border-radius:8px; background:var(--aw-accent); color:#fffefa; }
+@media(max-width:720px) {
+  body.aipiwen-help-present { padding-bottom:calc(132px + env(safe-area-inset-bottom)); }
+  .aw-help-dock { right:12px; bottom:max(12px,env(safe-area-inset-bottom)); flex-direction:column; max-width:46vw; }
+  .aw-help-dock button { border-radius:12px; font-size:13px; padding:8px 10px; }
+  .aw-help-dock .aw-help-support-trigger { border-left:0; border-top:1px solid var(--aw-line); }
+  .aw-help-panel { right:12px; bottom:calc(108px + env(safe-area-inset-bottom)); max-height:calc(100dvh - 140px - env(safe-area-inset-bottom)); padding:16px; }
+  .aipiwen-help.is-open::before { content:""; position:fixed; inset:0; background:rgba(16,12,8,.72); z-index:55; }
+  .aw-help-panel, .aw-help-dock { z-index:61; }
+}
+@media print {
+  body.aipiwen-help-present { padding-bottom:0; }
+  .aipiwen-help { display:none !important; }
+}

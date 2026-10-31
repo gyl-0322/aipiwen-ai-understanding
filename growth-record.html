@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>成长记录 · AIPIWEN指导师工作台</title>
+  <meta name="description" content="AIPIWEN 客户成长记录">
+  <link rel="stylesheet" href="static/ai-interpreter.css">
+  <link rel="stylesheet" href="static/v3a-growth-record.css">
+  <link rel="stylesheet" href="static/v3a-readability.css">
+  <script src="/js/error-tracker.js" defer></script>
+  <script src="static/v3a-ui.js" defer></script>
+  <script src="static/v3a-auth.js" defer></script>
+  <script src="static/ai-interpreter.js" defer></script>
+  <script src="static/v3a-growth-record.js" defer></script>
+</head>
+<body data-v3a-auth-page="workbench" hidden data-page="growth-record">
+  <div class="app-shell">
+    <aside class="sidebar">
+      <a class="brand" href="ai-interpreter-workbench.html"><svg class="brand-flower" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><circle class="brand-flower-ring" cx="18" cy="18" r="15.5" stroke-width=".9" stroke-dasharray="2.5 6"/><g class="brand-flower-petals"><ellipse cx="18" cy="12" rx="2.2" ry="6.5"/><ellipse cx="18" cy="12" rx="2.2" ry="6.5" transform="rotate(90 18 18)"/><ellipse cx="18" cy="12" rx="1.4" ry="5.5" transform="rotate(45 18 18)"/><ellipse cx="18" cy="12" rx="1.4" ry="5.5" transform="rotate(135 18 18)"/></g><circle class="brand-flower-center" cx="18" cy="18" r="3"/></svg><div><p class="brand-title">AIPIWEN指导师工作台</p><div class="brand-subtitle">AI成长理解工作台</div></div></a>
+      <nav class="nav" aria-label="主导航">
+        <a class="nav-link" data-page="workbench" href="ai-interpreter-workbench.html"><span>⌂</span><span>工作台首页</span></a>
+        <a class="nav-link" data-page="customers" href="ai-interpreter-customers.html"><span>◎</span><span>我的客户</span></a>
+        <a class="nav-link" data-page="coaching" href="ai-coaching-assistant.html"><span>◉</span><span>AI 辅导助手</span></a>
+        <a class="nav-link" data-page="growth-record" href="growth-record.html"><span>✎</span><span>成长记录</span></a>
+        <a class="nav-link" data-page="training" href="ai-interpreter-training.html"><span>▣</span><span>解读训练</span></a>
+        <a class="nav-link" data-page="review" href="ai-interpreter-review.html"><span>◇</span><span>总部复核 / 规范</span></a>
+        <a class="nav-link" data-page="fingerprint" href="fiac-review.html"><span>✋</span><span>指纹智能识别</span></a>
+        <a class="nav-link" data-page="cases" href="ai-interpreter-cases.html"><span>✦</span><span>特殊案例库</span></a>
+      </nav>
+      <div class="sidebar-note">记录可观察事实、家长反馈与后续计划。</div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar growth-topbar">
+        <div><p class="eyebrow">成长记录</p><h1>成长记录</h1><p>沉淀已经人工确认的事实、反馈与后续观察。</p></div>
+        <div class="top-actions growth-return-actions">
+          <a class="btn growth-return-client" id="growthReturnClient" href="/ai-interpreter-customers.html" hidden>返回客户全景</a>
+          <a class="btn ghost growth-return-workbench" id="growthReturnWorkbench" href="/ai-interpreter-workbench.html">返回工作台</a>
+        </div>
+      </header>
+
+      <section class="growth-context-strip" aria-labelledby="growthContextLabel">
+        <div><span id="growthContextLabel">当前客户</span><strong id="growthContextName">尚未选择</strong></div>
+        <p id="growthContextHint">新记录只保存给当前客户；下方可单独筛选历史记录。</p>
+        <a class="btn primary" id="growthChooseClient" href="/ai-interpreter-customers.html" hidden>前往我的客户选择</a>
+      </section>
+
+      <aside class="growth-pending-other" id="growthPendingOther" role="status" aria-live="polite" hidden>
+        <div><strong id="growthPendingCustomerName">另一位客户有一条保存结果待核对</strong><span id="growthPendingCustomerDetail">请先返回原客户完成核对，当前客户暂不能保存新记录。</span></div>
+        <a class="btn ghost" id="growthReturnPendingCustomer" href="/growth-record.html">返回原客户核对</a>
+      </aside>
+
+      <div class="growth-alert" id="growthReadError" role="alert" hidden><span id="growthReadErrorMessage"></span><button class="btn ghost" id="growthRetryRead" type="button" hidden>重新读取</button></div>
+      <div class="layout-grid cols-aside growth-page-layout">
+        <section class="module growth-create-panel" id="recordForm">
+          <div class="card-header"><div class="card-title"><h2>新增成长记录</h2><small>只记录已确认的信息，最多 2000 字</small></div></div>
+          <div class="growth-mobile-save-dock" id="growthMobileSaveDock">
+            <span id="growthMobileSaveLabel">请先填写记录内容</span>
+            <button class="btn primary" id="btnSaveRecordMobile" type="button" disabled aria-describedby="growthSaveStatus">保存记录</button>
+          </div>
+          <div class="growth-form-grid">
+            <div class="field growth-write-target" role="group" aria-labelledby="growthWriteTargetLabel"><span id="growthWriteTargetLabel">本记录将保存到</span><strong id="growthWriteTargetName">尚未选择</strong><input type="hidden" id="selectPerson" value=""></div>
+            <div class="field"><span>这是什么记录</span><div class="pill-row" id="recordTypePills" role="group" aria-label="记录类型"><button class="pill active" type="button" data-type="advisor_obs" aria-pressed="true">指导师观察</button><button class="pill" type="button" data-type="parent_feedback" aria-pressed="false">家长反馈</button><button class="pill" type="button" data-type="child_self_report" aria-pressed="false">孩子自述</button><button class="pill" type="button" data-type="key_event" aria-pressed="false">关键事件</button><button class="pill" type="button" data-type="service_decision" aria-pressed="false">服务决策</button></div></div>
+            <div class="field full-width"><span>本次关注哪些方面（可多选）</span><div class="pill-row" id="domainPills" role="group" aria-label="关注方面"><button class="pill" type="button" data-domain="learning" aria-pressed="false">学习</button><button class="pill" type="button" data-domain="behavior" aria-pressed="false">行为</button><button class="pill" type="button" data-domain="emotion" aria-pressed="false">情绪</button><button class="pill" type="button" data-domain="social" aria-pressed="false">社交</button><button class="pill" type="button" data-domain="parent_child" aria-pressed="false">亲子关系</button><button class="pill" type="button" data-domain="family_system" aria-pressed="false">家庭系统</button><button class="pill" type="button" data-domain="physical" aria-pressed="false">身体</button></div></div>
+            <div class="field"><span>观察到的变化</span><div class="pill-row" id="directionPills" role="group" aria-label="变化方向"><button class="pill" type="button" data-direction="improving" aria-pressed="false">进步</button><button class="pill active" type="button" data-direction="stable" aria-pressed="true">持平</button><button class="pill" type="button" data-direction="declining" aria-pressed="false">退步</button><button class="pill" type="button" data-direction="new_emergence" aria-pressed="false">新出现</button><button class="pill" type="button" data-direction="resolved" aria-pressed="false">已解决</button></div></div>
+            <div class="field"><span>与哪些报告信息有关（可选）</span><div class="pill-row" id="markerPills" role="group" aria-label="报告信息"><button class="pill" type="button" data-marker="TRC" aria-pressed="false">总纹嵴数（TRC）</button><button class="pill" type="button" data-marker="ATD" aria-pressed="false">ATD角度</button><button class="pill" type="button" data-marker="pattern" aria-pressed="false">纹型</button><button class="pill" type="button" data-marker="personality" aria-pressed="false">性格类型</button><button class="pill" type="button" data-marker="channel" aria-pressed="false">学习通道</button><button class="pill" type="button" data-marker="brain" aria-pressed="false">思维倾向</button></div></div>
+            <div class="field full-width"><span>谁可以看到</span><div class="pill-row" id="visibilityPills" role="group" aria-label="可见范围"><button class="pill active" type="button" data-visibility="advisor_only" aria-pressed="true">仅指导师可见</button><button class="pill" type="button" data-visibility="shared" aria-pressed="false">指导师和家长都可见</button></div></div>
+            <label class="field full-width record-content"><span>记录内容</span><textarea class="textarea" id="recordContent" rows="7" maxlength="2000" aria-describedby="recordContentHint charCount growthSaveStatus" placeholder="请记录具体事实、客户反馈和下一步观察。"></textarea><small id="recordContentHint">建议写清发生了什么、客户怎么说、接下来观察什么。</small><small id="charCount">0/2000</small></label>
+          </div>
+          <div class="growth-save-area">
+            <div class="growth-save-status is-neutral" id="growthSaveStatus" role="status" aria-live="polite" data-state="empty">
+              <strong id="growthSaveStatusTitle">请先填写本次成长记录</strong>
+              <span id="growthSaveStatusDetail">选择客户并填写记录内容后即可保存。</span>
+            </div>
+            <button class="btn primary growth-save-button" id="btnSaveRecord" type="button" disabled aria-describedby="growthSaveStatus">保存记录</button>
+          </div>
+        </section>
+
+        <section class="module growth-history-panel" id="timelinePanel">
+          <div class="card-header"><div class="card-title"><h2>历史记录</h2><small id="timelineSummary">按时间倒序</small></div></div>
+          <div class="growth-history-filters" aria-label="历史记录筛选">
+            <label><span>查看历史客户</span><select class="select" id="filterPerson"><option value="">请选择客户</option></select></label>
+            <label><span>关注方面</span><select class="select" id="filterDomain"><option value="">全部方面</option><option value="learning">学习</option><option value="behavior">行为</option><option value="emotion">情绪</option><option value="social">社交</option><option value="parent_child">亲子关系</option><option value="family_system">家庭系统</option><option value="physical">身体</option></select></label>
+            <label><span>变化</span><select class="select" id="filterDirection"><option value="">全部变化</option><option value="improving">进步</option><option value="stable">持平</option><option value="declining">退步</option><option value="new_emergence">新出现</option><option value="resolved">已解决</option></select></label>
+            <label><span>记录者</span><select class="select" id="filterRecorder"><option value="">全部记录者</option><option value="advisor">指导师</option></select></label>
+          </div>
+          <div class="timeline-list" id="timelineList"><div class="v4-empty-state" aria-busy="true">正在读取成长记录…</div></div>
+          <button class="btn ghost growth-load-more" id="btnLoadMore" type="button">加载更多</button>
+        </section>
+      </div>
+    </main>
+  </div>
+  <main class="public-shell auth-shell" id="v3a-workbench-error" hidden><section class="module auth-card"><p class="eyebrow">AIPIWEN 指导师工作台</p><h1>工作台暂时无法打开</h1><p id="v3a-workbench-error-message" role="alert">账号信息暂时无法加载，请稍后重试。</p><div class="top-actions"><a class="btn primary" href="">重新加载</a><a class="btn ghost" href="/login.html">返回登录</a></div></section></main>
+</body>
+</html>

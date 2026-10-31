@@ -593,8 +593,20 @@ async function handler(req, res) {
         clearSessionCookie(res);
         return res.status(200).json({ ok: true });
       }
-      const loaded = await loadSession(req, config);
-      requireCsrf(req, loaded);
+      let loaded;
+      try {
+        loaded = await loadSession(req, config);
+      } catch (error) {
+        clearSessionCookie(res);
+        if (error instanceof HttpError && (error.code === 'UNAUTHENTICATED' || error.statusCode === 401)) {
+          return res.status(200).json({ ok: true });
+        }
+        throw error;
+      }
+      const fetchSite = String(req.headers?.['sec-fetch-site'] || '').trim().toLowerCase();
+      const browserLogout = String(req.headers?.['x-aipiwen-logout'] || '').trim() === '1'
+        && fetchSite === 'same-origin';
+      if (!browserLogout) requireCsrf(req, loaded);
       await destroySession(config, sid);
       clearSessionCookie(res);
       await authRequest(config, '/logout?scope=local', undefined, loaded.record.accessToken).catch(() => null);

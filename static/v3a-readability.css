@@ -1,0 +1,158 @@
+/* Local readability refinement; only the eight reviewed workbench pages load this file. */
+body[data-page="customers"] .customer-learning-examples {
+  margin-top: 24px;
+  border-top: 1px solid var(--border, #273443);
+}
+
+body[data-page="customers"] :is(.customer-name-action, select, .customer-enter-action),
+body[data-page="coaching"] :is(#coachingType, #sessionType),
+body[data-page="session"] .mode-button {
+  min-height: 44px;
+}
+
+body[data-page] {
+  font-size: 16px;
+}
+
+body[data-page] :is(.nav-link, .nav-link > span:last-child, .btn, .archive-tab,
+  .case-view-tabs button, .case-status-filters button) {
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+body[data-page] :is(input.field, input.input, select, textarea, .professional-field-grid textarea) {
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.65;
+}
+
+body[data-page] :is(.card-title small, .sidebar-note, .pill, .badge, .tag, .status,
+  .eyebrow, .table-head, .footer-note, .growth-milestone small, .growth-log small,
+  .growth-log-empty, .growth-milestone-reward, .growth-log em,
+  .workbench-account-strip span, .workbench-user-card span, .workbench-user-card small,
+  .invite-code-display span, .invite-url-field span, .credit-overview span,
+  .invite-link-box span, .reward-steps em, .info-line,
+  .stage-tag, .direction-tag, .case-candidate-tag, .timeline-meta time, .timeline-meta .source,
+  .current-customer-bar span, .training-option-meta, .training-summary span,
+  .training-group-heading span, .training-case-progress, .training-detail-meta,
+  .training-local-marker, .training-stage-label, .training-answer-meta,
+  .training-service-note, .training-feedback-disclaimer, .training-history-record time,
+  .training-history-record small, .training-form-message, .training-catalog-secondary,
+  .training-catalog-secondary > span, .training-catalog-secondary a,
+  .training-workflow-progress li, .training-quote span, .training-source > span,
+  .case-detail-meta, .case-status-badge, .case-synthetic-marker, .case-form-message,
+  .case-write-boundary, .case-detail-field dt, .case-search > span, .case-field > span,
+  .case-context-field span, .case-preview-block strong, .coaching-field > span,
+  .coaching-context-strip span, .coaching-state-kicker, .coaching-plan-label,
+  .coaching-goal-actions > span, .coaching-confirmed-heading span,
+  .coaching-history-card .timeline-meta, .growth-context-strip span, .growth-context-strip p,
+  .growth-pending-other span, .growth-save-status span, .growth-history-filters label > span,
+  .growth-mobile-save-dock > span) {
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+body[data-page="growth-record"] #recordForm .growth-form-grid > .field > span {
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+body[data-page] :is(.main small, #summary-view small, .section-label,
+  #service-status, #service-status strong, #mode-description, #recording-detail,
+  .coaching-field, #recordContentHint, #charCount, .confirm-strip span,
+  .professional-ai-form label, .professional-field-grid label) {
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+body[data-page="cases"] .case-list {
+  grid-auto-rows: max-content;
+  align-content: start;
+}
+
+body[data-page] :is(.workbench-entry p, .card-subtitle, .empty-state p,
+  .data-item, .data-item strong, .professional-response-question,
+  .metric-label, .source-item span, .reward-steps strong, .clue-name-action,
+  .clue-card p, .case-card-item .case-summary, .workbench-priority-action span,
+  .training-intro p, .training-intro strong, .training-case-option small,
+  .training-detail-heading > p, .training-practice-heading p, .training-no-case p,
+  .training-history-empty p, .training-reference-heading p, .training-source p,
+  .case-list-option p, .case-privacy-banner p, .case-role-scope p, .case-notice,
+  .case-rail-heading p, .case-editor-header p, .case-detail-header p,
+  .case-submit-preview header p, .case-review-panel header p,
+  .case-empty p, .case-detail-empty p, .case-scan-panel p, .case-scan-panel li,
+  .coaching-insight, .coaching-safety-list, .coaching-unsafe p, .coaching-context-strip strong,
+  .growth-pending-other strong, .growth-save-status strong,
+  .training-answer-field > span, .training-reflection-grid > label) {
+  font-size: 16px;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+
+body[data-page] :is(.professional-response-answer, .editable-list li,
+  .previous-service p, .legacy-field p, .training-detail-section p,
+  .training-detail-section .guide-list, .training-history-content details p,
+  .training-case-context p, .training-safety-first p, .training-answer-start p,
+  .training-feedback-grid p, .training-method-list p, .training-quote p,
+  .training-correction-reason p, .training-switch-dialog p, .case-detail-field dd,
+  .case-preview-block p, .coaching-plan-section p, .coaching-step-list,
+  .growth-history-panel .timeline-body p, .coaching-history-card .timeline-body) {
+  font-size: 17px;
+  line-height: 1.8;
+  overflow-wrap: anywhere;
+}
+
+body[data-page] :is(.training-detail-section h3, .case-list-option h3,
+  .coaching-plan-section h3, .training-history-record h3) {
+  font-size: 18px;
+  line-height: 1.45;
+}
+
+body[data-page] :is(.training-case-option strong, .training-group-heading h3,
+  .training-feedback-grid h4, .training-method-list span,
+  .training-case-context h3, .training-case-context .training-goal > span,
+  .training-safety-first strong, .training-history-content summary,
+  .professional-module-button strong) {
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+body[data-page] .professional-module-button span {
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+body[data-page] .customer-table.v4-table .v4-row-actions .btn,
+body[data-page] .professional-response-actions .btn,
+body[data-page] .drawer-actions .btn,
+body[data-page] .coaching-exits .btn {
+  font-size: 16px;
+  line-height: 1.5;
+  white-space: normal;
+}
+
+body[data-page="session"] .finger-hand strong {
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+@media (max-width: 600px) {
+  body[data-page] :is(.btn, .archive-tab, .case-view-tabs button, .case-status-filters button) {
+    min-height: 44px;
+    white-space: normal;
+  }
+
+  body[data-page="coaching"] .coaching-exits {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  body[data-page="coaching"] .coaching-exits .btn:first-child {
+    grid-column: 1 / -1;
+  }
+
+  body[data-page="training"] .training-workflow-progress li {
+    min-height: 44px;
+    padding-inline: 4px;
+    overflow-wrap: anywhere;
+  }
+}

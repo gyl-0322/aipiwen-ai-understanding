@@ -17,6 +17,7 @@
 <script src="https://cdn.bootcdn.net/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdn.bootcdn.net/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="/js/share-utils.js"></script>
+<script src="/js/wecom-fallback.js"></script>
 <style>
 /* ─── DESIGN TOKENS ─── */
 :root {
@@ -126,6 +127,15 @@ body {
 .tool-done-check.show{display:block;}
 .tool-panel{display:none;background:#fff;border-top:1px solid var(--ink-10);padding:20px;}
 .tool-panel.active{display:block;}
+#panel-fingerprint.tool-panel.active{
+  position:fixed;inset:0;z-index:1200;overflow:auto;
+  background:rgba(26,23,20,.62);border-top:0;padding:24px 16px 48px;
+}
+#panel-fingerprint .fp-wizard-sheet{
+  width:min(720px,100%);margin:0 auto;background:var(--cream,#FDFCF8);
+  border-radius:20px;padding:8px 0 12px;box-shadow:0 24px 64px rgba(0,0,0,.28);
+}
+body.fp-wizard-open{overflow:hidden;}
 .tool-panel-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
 .tool-panel-title{font-size:16px;font-weight:700;color:var(--ink);}
 .tool-panel-close{width:30px;height:30px;border-radius:50%;border:1px solid var(--ink-10);background:#fff;font-size:15px;color:var(--ink-40);cursor:pointer;display:flex;align-items:center;justify-content:center;}
@@ -1141,12 +1151,11 @@ body {
         </div>
       </div>
       <div class="tool-panel" id="panel-fingerprint">
+        <div class="fp-wizard-sheet" role="dialog" aria-modal="true" aria-labelledby="fp-wizard-title">
         <div class="tool-panel-header">
-          <div class="tool-panel-title">🌀 孩子行为观察体验</div>
+          <div class="tool-panel-title" id="fp-wizard-title">🌀 孩子行为观察体验</div>
           <button class="tool-panel-close" onclick="closeTool('fingerprint')">✕</button>
         </div>
-
-  </div>
 
   <!-- PROGRESS — 7 dots -->
   <div class="progress-wrap">
@@ -1674,6 +1683,7 @@ body {
       <button class="btn-retry" onclick="resetWizard()">重新观察</button>
     </div>
   </div>
+        </div>
 
 
       </div>
@@ -2704,21 +2714,17 @@ function wecomeClick(e, href) {
   if (e) e.preventDefault();
   const r = window._currentResult || {};
   if (window.GT) window.GT.track('wecom_click', { type: r.key || '' });
-  const msg = `您好！我刚完成AIPIWEN行为观察体验，我的行为特点类型是【${r.mainType || ''}】（${r.tagline || ''}），想了解孩子的成长方案。`;
-  try {
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(msg).then(() => {
-        showToast('✓ 已复制观察结果，可直接粘贴给成长沟通顾问');
-      }).catch(() => {});
-    }
-  } catch (e) {}
   const url = href || ('https://work.weixin.qq.com/kfid/' + WECOM_KFID);
-  try {
-    const opened = window.open(url, '_blank', 'noopener');
-    if (!opened) window.location.href = url;
-  } catch (err) {
-    window.location.href = url;
+  if (window.AIPIWEN_WECOM) {
+    window.AIPIWEN_WECOM.open(null, url);
+    return;
   }
+  const desktop = !/MicroMessenger|Android|iPhone|iPod/i.test(navigator.userAgent || '');
+  if (desktop) {
+    showToast('请用手机微信打开客服链接。桌面浏览器直接打开容易停在空白页。');
+    return;
+  }
+  window.location.href = url;
 }
 </script>
 <script src="js/growth-tracker.js"></script>
@@ -2769,9 +2775,11 @@ if (window.GT) GT.track('page_open');
 function openTool(id){
   if(id==='fingerprint'){
     var p=document.getElementById('panel-fingerprint');if(!p)return;
-    if(p.classList.contains('active')){p.classList.remove('active');return}
+    if(p.classList.contains('active')){closeTool('fingerprint');return}
     document.querySelectorAll('.tool-panel').forEach(function(x){x.classList.remove('active')});
-    p.classList.add('active');p.scrollIntoView({behavior:'smooth',block:'start'});return
+    p.classList.add('active');
+    document.body.classList.add('fp-wizard-open');
+    return
   }
   var p=document.getElementById('panel-'+id);if(!p)return;
   if(p.classList.contains('active')){p.classList.remove('active');return}
@@ -2781,7 +2789,14 @@ function openTool(id){
   if(id==='style'&&!(document.getElementById('styleQText').dataset.loaded))initStyleQuiz();
   if(id==='vark'&&!(document.getElementById('varkQText').dataset.loaded))initVarkQuiz()
 }
-function closeTool(id){document.getElementById('panel-'+id).classList.remove('active')}
+function closeTool(id){
+  var panel=document.getElementById('panel-'+id);
+  if(panel) panel.classList.remove('active');
+  if(id==='fingerprint') document.body.classList.remove('fp-wizard-open');
+}
+document.getElementById('panel-fingerprint')?.addEventListener('click',function(event){
+  if(event.target===this) closeTool('fingerprint');
+});
 
 function pickMood(btn,label,emoji){
   document.querySelectorAll('#moodGrid .mood-btn').forEach(function(b){b.classList.remove('selected')});

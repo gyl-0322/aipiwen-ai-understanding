@@ -139,6 +139,13 @@ const AnalysisEngine = {
 
   // 12种行为模式识别规则
   PATTERNS: {
+    insufficient_signal: {
+      label: '信息不足',
+      category: 'context',
+      legacy: 'context',
+      keywords: [],
+      weight: 0
+    },
     emotional_explosion: {
       label: '情绪爆发',
       category: 'emotional',
@@ -311,7 +318,8 @@ const AnalysisEngine = {
       keyPhrase,
       tags,
       historyCtx,
-      raw_input: input
+      raw_input: input,
+      evidence: ranked.length > 0 ? 'behavior_keywords' : 'insufficient'
     };
   },
 
@@ -320,7 +328,7 @@ const AnalysisEngine = {
     if (/手机|游戏/.test(input)) return 'phone_addiction';
     if (/哭|难过|委屈/.test(input)) return 'emotional_sensitive';
     if (/打人|攻击/.test(input)) return 'aggression';
-    return 'emotional_explosion';
+    return 'insufficient_signal';
   },
 
   _extractKeyPhrase(input) {
@@ -359,6 +367,14 @@ const BehaviorReasoningEngine = {
 
   // 12类行为的深层原因数据库
   WHY_LAYER: {
+    insufficient_signal: {
+      reason_hypothesis: [
+        '这段描述还没有足够的行为事实，不能推断情绪强度或危机',
+        '先补上发生时间、对方原话和你看到的动作，再谈可能的原因'
+      ],
+      trigger_chain: ['信息不足', '不能建立触发链'],
+      family_factors: ['目前没有足够事实判断家庭互动']
+    },
     emotional_explosion: {
       reason_hypothesis: [
         '情绪调节能力的发育滞后于情绪感知能力——孩子感受到了，但还没有足够的工具来处理这种强度',
@@ -620,7 +636,8 @@ const ContentLibrary = {
       insight,
       historyNote,
       label: patternMeta ? patternMeta.label : '行为分析',
-      category: patternMeta ? patternMeta.category : 'emotional',
+      category: patternMeta ? patternMeta.category : 'context',
+      evidence: analysis.evidence || (primary === 'insufficient_signal' ? 'insufficient' : 'behavior_keywords'),
       whyParagraph  // V2 新增
     };
   },
@@ -661,6 +678,7 @@ const ContentLibrary = {
       })),
       historyIntro,
       label: patternMeta ? patternMeta.label : '行为分析',
+      evidence: analysis.evidence || (primary === 'insufficient_signal' ? 'insufficient' : 'behavior_keywords'),
       shareSummary: db.share_summary.replace(/\$\{keyPhrase\}/g, keyPhrase),
       whyData  // V2 新增
     };
@@ -668,12 +686,26 @@ const ContentLibrary = {
 
   DB: {
 
+    insufficient_signal: {
+      heading_tpl: '「${keyPhrase}」还不够形成行为判断',
+      body: '这段话里还没有足够的具体行为。先不要把它理解成情绪爆发、危机或性格结论。补上时间、原话和你看到的动作之后，才有资格做观察假设。',
+      insight_tpl: '你写下的是「${keyPhrase}」。证据等级：不足。这不是诊断。',
+      struct_heading: '证据不足，不能升级成情绪爆发',
+      struct_body: '「${keyPhrase}」没有对上已知的行为事实。这里不给危机标签，也不提供无出处的科学依据。',
+      misconceptions: [
+        { wrong: '随便写一句也能得到准确结论', right: '没有行为事实时，系统应该停在“信息不足”' }
+      ],
+      advice: [
+        { title: '补一个具体场景', text: '写下什么时候、对方原话、你看到的动作。' }
+      ],
+      share_summary: '这段描述证据不足，还不能判断行为模式。'
+    },
     emotional_explosion: {
       heading_tpl: '「${keyPhrase}」背后，是孩子的感受系统在超载',
       body: '孩子激烈的情绪反应，不是"无理取闹"，而是一个过载信号。情绪调节能力是大脑前额叶负责的——而前额叶在25岁才发育完全。孩子现在的爆发，是他用目前有限的神经资源在应对一个超过承载上限的时刻。记住一句话：情绪下不来，认知进不去。',
       insight_tpl: '你看到的是「${keyPhrase}」，但孩子在说：我现在的感受超过我能承受的了，我需要你帮我，而不是要求我立刻停下来。',
       struct_heading: '情绪爆发是一个"超载"现象，不是态度问题',
-      struct_body: '你描述的「${keyPhrase}」，呈现的是「情绪触发 → 感受积累 → 超过承载 → 外化表现」这个完整过程。某个具体的触发点（催促、比较、被否定）引发了强烈感受，而孩子还没有足够的工具来调节，所以"爆炸"了。这不是道德问题，是神经发育阶段的正常挑战。\n\n科学依据：人的情绪脑每秒处理1100万条信息，理性脑只有40条——当情绪激活，道理根本进不去。这是神经生理限制，不是孩子的态度问题。',
+      struct_body: '你描述的「${keyPhrase}」，看起来像「情绪触发 → 感受积累 → 超过承载 → 外化表现」。这是根据你写下的行为做的沟通假设，不是医学结论。\n\n证据等级：行为关键词匹配。没有可核对的文献出处，不能写成科学依据，也不能用「情绪脑每秒处理多少条信息」这类无来源数字解释这一次行为。',
       misconceptions: [
         { wrong: '他是故意激怒我的', right: '孩子情绪爆发时，前额叶几乎关闭——他没有能力"故意"，他只是被情绪淹没了' },
         { wrong: '太脆弱了，要锻炼抗压', right: '情绪敏感是特质不是弱点；强制压制不会让他更坚强，反而会让情绪调节更难' },
@@ -1398,7 +1430,7 @@ const ConsultingInsightEngine = {
 
   _getBehaviorHint(text) {
     const patterns = AnalysisEngine.PATTERNS;
-    let topPattern = 'emotional_explosion';
+    let topPattern = 'insufficient_signal';
     let topScore   = 0;
     Object.keys(patterns).forEach(function(key) {
       const p = patterns[key];
@@ -1408,6 +1440,14 @@ const ConsultingInsightEngine = {
       });
       if (score > topScore) { topScore = score; topPattern = key; }
     });
+    if (topScore === 0) {
+      return {
+        pattern: 'insufficient_signal',
+        label: '信息不足',
+        description: '描述里还没有足够的行为事实，不能标成情绪爆发或危机。',
+        confidence: 'none'
+      };
+    }
     const meta = patterns[topPattern];
     return {
       pattern: topPattern,
@@ -1632,6 +1672,15 @@ const BehaviorInterventionEngine = {
 
   // 12种行为模式 → 可执行干预路径
   INTERVENTION_BLUEPRINTS: {
+    insufficient_signal: {
+      goal: '先补齐可观察事实，不制定危机干预',
+      steps: [
+        '**今天：**只补一件具体的事：时间、原话、你看到的动作',
+        '**先不要做：**不要把这段话当成情绪爆发或危机来处理'
+      ],
+      expected_change: '补齐事实之后，才重新判断要不要进入某个行为主题',
+      risk_warning: '在事实不足时给强烈建议，比不给建议更容易误导'
+    },
     emotional_explosion: {
       goal: '降低情绪爆发的频率和强度，帮助孩子建立情绪调节能力',
       steps: [
@@ -2774,6 +2823,10 @@ const DailyInsightSystem = {
   KEY: 'aipiwen_daily_v1_',
 
   INSIGHTS_BY_PATTERN: {
+    insufficient_signal: [
+      '今天先记下一件具体的事，不急着下结论。',
+      '没有原话和动作时，任何“科学依据”都不成立。'
+    ],
     emotional_explosion: [
       '情绪爆发不是孩子的问题——是他在告诉你，他现在需要被看见，而不是被纠正。',
       '孩子爆发之前，通常有3-5个信号被忽视了。今天试着注意这些信号。',
