@@ -1,3 +1,5 @@
+# 这不是 www.aipiwen.cn 的发布流程。现网在阿里云 nginx。
+# 本工作流只在 main 上同步 index.html、admin.html、images/ 到旧 OSS bucket。
 name: Deploy to Aliyun OSS
 
 on:

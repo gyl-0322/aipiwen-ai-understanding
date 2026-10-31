@@ -1,24 +1,10 @@
 #!/bin/bash
-# AIPIWEN 一键部署脚本
-# 用法：bash deploy.sh
+# 线上 www.aipiwen.cn 已在阿里云（nginx），不是 Vercel。
+# 本脚本不再推 main，也不对生产执行上传。
 
-set -e
-cd "$(dirname "$0")"
-
-echo "🚀 开始部署 AIPIWEN..."
-
-if [[ -n $(git status --porcelain) ]]; then
-  echo "📝 发现未提交改动，正在提交..."
-  git add -A
-  git commit -m "deploy: $(date '+%Y-%m-%d %H:%M')"
-else
-  echo "✅ 没有新改动"
-fi
-
-echo "⬆️  推送到 GitHub..."
-git push origin main
-
-echo ""
-echo "✅ 推送完成！Vercel 1-2 分钟内自动部署。"
-echo "   部署状态：https://vercel.com/dashboard"
-echo "   线上网站：https://www.aipiwen.cn"
+echo "已停止。"
+echo "www.aipiwen.cn / aipiwen.cn 由阿里云发布，推 GitHub main 不会自动上线。"
+echo "仓库里的 .github/workflows/deploy.yml 只在 main 变更 index.html、admin.html、images/ 时，"
+echo "把这几个文件拷到 OSS bucket aipewen-ai-understanding，不是现网整站。"
+echo "现网响应头是 nginx/1.18.0 (Ubuntu)。发布前请在阿里云侧同步本 PR 列出的静态页和 API，不要用本脚本。"
+exit 1

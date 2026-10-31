@@ -298,6 +298,54 @@
       "dest": "/share/$1"
     },
     {
+      "src": "/favicon.ico",
+      "dest": "/favicon.ico"
+    },
+    {
+      "src": "/terms.html",
+      "dest": "/terms.html"
+    },
+    {
+      "src": "/terms",
+      "dest": "/terms.html"
+    },
+    {
+      "src": "/user-agreement.html",
+      "dest": "/user-agreement.html"
+    },
+    {
+      "src": "/user-agreement",
+      "dest": "/terms.html"
+    },
+    {
+      "src": "/consumer-auth.html",
+      "dest": "/consumer-auth.html"
+    },
+    {
+      "src": "/consumer-auth",
+      "dest": "/consumer-auth.html"
+    },
+    {
+      "src": "/fiac-review.html",
+      "dest": "/fiac-review.html"
+    },
+    {
+      "src": "/fiac-review",
+      "dest": "/fiac-review.html"
+    },
+    {
+      "src": "/growth-record.html",
+      "dest": "/growth-record.html"
+    },
+    {
+      "src": "/growth-record",
+      "dest": "/growth-record.html"
+    },
+    {
+      "src": "/css/(.*)",
+      "dest": "/css/$1"
+    },
+    {
       "src": "/",
       "dest": "/homepage.html"
     },

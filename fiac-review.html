@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>指纹智能分析中心 FIAC · AIPIWEN指导师工作台</title>
+  <meta name="description" content="AIPIWEN 已有报告指纹数据复核界面">
+  <link rel="stylesheet" href="static/ai-interpreter.css">
+  <script src="/js/error-tracker.js" defer></script>
+  <script src="static/v3a-ui.js" defer></script>
+  <script src="static/v3a-auth.js" defer></script>
+  <script src="static/v3a-fiac-review.js" defer></script>
+</head>
+<body data-v3a-auth-page="workbench" hidden data-page="fiac-review">
+  <div class="app-shell">
+    <aside class="sidebar">
+      <a class="brand" href="ai-interpreter-workbench.html">
+        <svg class="brand-flower" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <circle class="brand-flower-ring" cx="18" cy="18" r="15.5" stroke-width=".9" stroke-dasharray="2.5 6"/>
+          <g class="brand-flower-petals"><ellipse cx="18" cy="12" rx="2.2" ry="6.5"/><ellipse cx="18" cy="12" rx="2.2" ry="6.5" transform="rotate(90 18 18)"/><ellipse cx="18" cy="12" rx="1.4" ry="5.5" transform="rotate(45 18 18)"/><ellipse cx="18" cy="12" rx="1.4" ry="5.5" transform="rotate(135 18 18)"/></g>
+          <circle class="brand-flower-center" cx="18" cy="18" r="3"/>
+        </svg>
+        <div><p class="brand-title">AIPIWEN指导师工作台</p><div class="brand-subtitle">AI成长理解工作台</div></div>
+      </a>
+      <nav class="nav" aria-label="主导航">
+        <a class="nav-link" data-page="workbench" href="ai-interpreter-workbench.html"><span>⌂</span><span>工作台首页</span></a>
+        <a class="nav-link" data-page="customers" href="ai-interpreter-customers.html"><span>◎</span><span>我的客户</span></a>
+        <a class="nav-link" data-page="coaching" href="ai-coaching-assistant.html"><span>◉</span><span>AI 辅导助手</span></a>
+        <a class="nav-link" data-page="growth-record" href="growth-record.html"><span>✎</span><span>成长记录</span></a>
+        <a class="nav-link" data-page="training" href="ai-interpreter-training.html"><span>▣</span><span>解读训练</span></a>
+        <a class="nav-link" data-page="review" href="ai-interpreter-review.html"><span>◇</span><span>总部复核 / 规范</span></a>
+        <a class="nav-link" data-page="fingerprint" href="fiac-review.html"><span>✋</span><span>指纹智能识别</span></a>
+        <a class="nav-link" data-page="cases" href="ai-interpreter-cases.html"><span>✦</span><span>特殊案例库</span></a>
+      </nav>
+      <div class="sidebar-note">本页只用于指导师复核已有报告，不展示原始指纹图。</div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div><p class="eyebrow">专业测量复核</p><h1 id="fiacPageTitle">指纹智能分析中心 FIAC</h1><p>核对客户已有报告中的十指、总纹脊数 TRC 与 ATD 角。</p></div>
+        <div class="top-actions"><a class="btn primary" id="fiacRecognition" href="ai-interpreter-customers.html">前往我的客户选择</a><a class="btn ghost" id="fiacReturn" href="/ai-interpreter-customers.html">返回我的客户</a></div>
+      </header>
+
+      <section class="notice" style="margin-bottom:16px">
+        <strong>已有报告复核</strong>
+        <p>登录后只使用你账号名下的客户。指纹识别跟着这位客户的编号走，不会再单独建一份客户名单。</p>
+      </section>
+      <p class="dryrun-error" id="fiacError" role="status" aria-live="polite" hidden></p>
+
+      <section class="layout-grid cols-aside" id="fiacOverview">
+        <div class="module">
+          <div class="card-header"><div class="card-title"><h2 id="fiacClientName">正在读取客户</h2><small>当前客户报告</small></div><span class="status info" id="fiacMeasurementStatus">读取中</span></div>
+          <div class="data-list">
+            <div class="data-item"><span>数据来源</span><strong id="fiacSource">--</strong></div>
+            <div class="data-item"><span>关联报告</span><strong id="fiacReport">--</strong></div>
+            <div class="data-item"><span>十指数据</span><strong id="fiacFingerCount">--</strong></div>
+            <div class="data-item"><span>总纹脊数 TRC</span><strong id="fiacTrc">--</strong></div>
+            <div class="data-item"><span>ATD 角</span><strong id="fiacAtd">--</strong></div>
+            <div class="data-item"><span>AI 专业解读</span><strong id="fiacInterpretation">--</strong></div>
+            <div class="data-item"><span>指纹识别</span><strong id="fiacRecognitionStatus">正在按数据中心客户编号核对</strong></div>
+          </div>
+        </div>
+        <aside class="module">
+          <div class="card-title"><h2>复核流程</h2><small>人工确认步骤不可跳过</small></div>
+          <div class="fiac-review-flow" style="margin-top:14px">
+            <article class="fiac-review-step complete"><strong>1 · 读取已有数据</strong><p>使用已入库报告，不在现场重新识别。</p></article>
+            <article class="fiac-review-step current"><strong>2 · 指导师复核</strong><p>核对纹型、TRC 与 ATD，本页不执行确认写入。</p></article>
+            <article class="fiac-review-step complete"><strong>3 · 关联客户报告</strong><p id="fiacReviewState">正在等待已有报告。</p></article>
+          </div>
+        </aside>
+      </section>
+
+      <section class="module" style="margin-top:16px">
+        <div class="card-header"><div class="card-title"><h2>十指数据摘要</h2><small>纹型代码与 TRC · 不展示原始指纹图</small></div><span class="status pending">待人工复核</span></div>
+        <div class="fiac-finger-grid" id="fiacFingerGrid"><div class="v4-empty-state" aria-busy="true">正在读取十指数据。</div></div>
+      </section>
+    </main>
+  </div>
+
+  <main class="public-shell auth-shell" id="v3a-workbench-error" hidden>
+    <section class="module auth-card"><p class="eyebrow">AIPIWEN 指导师工作台</p><h1>工作台暂时无法打开</h1><p id="v3a-workbench-error-message" role="alert">账号信息暂时无法加载，请稍后重试。</p><div class="top-actions"><a class="btn primary" href="">重新加载</a><a class="btn ghost" href="/login.html">返回登录</a></div></section>
+  </main>
+</body>
+</html>

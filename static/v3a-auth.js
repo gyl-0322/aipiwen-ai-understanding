@@ -98,6 +98,7 @@
         credentials: 'same-origin',
         headers: isPost ? {
           'Content-Type': 'application/json',
+          ...(options.logout ? { 'X-AIPIWEN-Logout': '1' } : {}),
           ...(csrfToken ? { 'X-CSRF-Token': csrfToken } : {})
         } : undefined,
         body: isPost ? JSON.stringify(options.body || {}) : undefined
@@ -601,11 +602,19 @@
 
   async function logout(messageSelector) {
     try {
-      await requestSession('logout', { method: 'POST' });
+      if (!csrfToken) {
+        try {
+          await requestSession('me');
+        } catch (error) {
+          if (error.status !== 401) throw error;
+        }
+      }
+      await requestSession('logout', { method: 'POST', logout: true });
       csrfToken = '';
+      window.V3A_UI?.customerContext?.clear?.();
       window.location.href = '/login.html';
     } catch (error) {
-      showMessage(messageSelector, error.message);
+      showMessage(messageSelector, error.message || '退出登录没有完成，当前会话仍在。');
     }
   }
 
@@ -791,8 +800,19 @@
     toggle.setAttribute('aria-controls', nav.id);
     toggle.innerHTML = '<span class="mobile-nav-icon" aria-hidden="true"><span></span><span></span><span></span></span><span>菜单</span>';
 
+    let backdrop = document.querySelector('.mobile-nav-backdrop');
+    if (!backdrop) {
+      backdrop = document.createElement('button');
+      backdrop.type = 'button';
+      backdrop.className = 'mobile-nav-backdrop';
+      backdrop.setAttribute('aria-label', '关闭导航');
+      backdrop.hidden = true;
+      document.body.append(backdrop);
+    }
+
     function setOpen(open) {
       sidebar.classList.toggle('is-open', open);
+      backdrop.hidden = !open;
       toggle.setAttribute('aria-expanded', String(open));
       toggle.setAttribute('aria-label', open ? '关闭工作台导航' : '打开工作台导航');
     }
@@ -801,7 +821,10 @@
     sidebar.classList.add('mobile-nav-ready');
     sidebar.insertBefore(toggle, nav);
     toggle.addEventListener('click', () => setOpen(!sidebar.classList.contains('is-open')));
-    nav.addEventListener('click', () => setOpen(false));
+    backdrop.addEventListener('click', () => setOpen(false));
+    nav.addEventListener('click', (event) => {
+      if (event.target.closest('a')) setOpen(false);
+    });
     document.addEventListener('keydown', (event) => {
       if (event.key !== 'Escape' || !sidebar.classList.contains('is-open')) return;
       setOpen(false);
@@ -815,16 +838,32 @@
     try {
       const current = await requestSession('me');
       const me = current.me;
-      if (me?.user?.status !== 'active' || !validRoles.has(me.user.role)) {
+      const currentPage = document.body?.dataset?.page || '';
+      const isHeadquartersPage = currentPage === 'review';
+      const allowedRole = validRoles.has(me?.user?.role) || (isHeadquartersPage && me?.user?.role === 'super_admin');
+      if (me?.user?.status !== 'active' || !allowedRole) {
         routeByStatus(me, messageSelector);
+        return;
+      }
+      if (isHeadquartersPage && me.user.role !== 'super_admin') {
+        const shell = $('.app-shell');
+        const errorShell = $('#v3a-workbench-error');
+        if (shell) shell.hidden = true;
+        if (errorShell) errorShell.hidden = false;
+        const title = errorShell?.querySelector('h1');
+        if (title) title.textContent = '此页仅总部可见';
+        setText('#v3a-workbench-error-message', '总部复核 / 规范只对总部角色开放。当前账号不能进入这一页。');
+        document.body.hidden = false;
         return;
       }
       setText('#v3a-workbench-role', roleLabels[me.user.role] || me.user.role, '已激活');
       setText('#v3a-workbench-balance', me.wallet?.balance, '待同步');
       setText('#v3a-workbench-invite-code', me.inviteCode, '待生成');
       initWorkbenchDetails(me);
+      window.V3A_UI?.applyNavigation(me.user.role);
       initMobileNavigation();
       document.body.hidden = false;
+      document.dispatchEvent(new Event('v3a:workbench-ready'));
     } catch (error) {
       const shell = $('.app-shell');
       const errorShell = $('#v3a-workbench-error');

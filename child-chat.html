@@ -1176,6 +1176,29 @@ function closeShareCard() {
     display:flex;flex-direction:column;align-items:center;justify-content:flex-end;
     padding:0 0 env(safe-area-inset-bottom);
   `;
+  const guideCopy = {
+    child: {
+      ask: '什么时候发生、孩子当时说了什么、你当时的感受。',
+      good: '孩子写作业时，一说他错了就大哭',
+      bad: '孩子情绪很差，学习态度有问题'
+    },
+    self: {
+      ask: '什么时候发生、你当时对自己说了什么、身体和情绪是什么反应。',
+      good: '明知道要做，一坐下就开始刷手机，对自己说再等五分钟',
+      bad: '我就是拖延，性格有问题'
+    },
+    partner: {
+      ask: '什么时候发生、伴侣当时说了什么、你当时的感受。',
+      good: '一不开心就沉默，问了只说没事',
+      bad: 'TA 不爱我，性格冷淡'
+    },
+    business: {
+      ask: '什么时候发生、伙伴当时说了什么、事情卡在哪一步。',
+      good: '会上说好这周推进，到截止日期又说再看看',
+      bad: '他不靠谱，态度有问题'
+    }
+  };
+  const guide = guideCopy[_for] || guideCopy.child;
   overlay.innerHTML = `
     <div style="
       width:100%;max-width:480px;
@@ -1185,15 +1208,15 @@ function closeShareCard() {
       <div style="font-size:20px;font-weight:600;color:#EAE7E0;margin-bottom:8px;">描述越具体，AI越能打动你</div>
       <div style="font-size:14px;color:rgba(234,231,224,.6);line-height:1.8;margin-bottom:28px;">
         不用写分析，就说你<strong style="color:#EAE7E0">看到</strong>的那个具体行为——<br>
-        什么时候发生、孩子/TA说了什么、你当时的感受。<br>
+        ${guide.ask}<br>
         <br>
         AI 会帮你找到行为背后那句说不出口的话。
       </div>
       <div style="background:rgba(194,105,42,.1);border:1px solid rgba(194,105,42,.25);border-radius:14px;padding:16px;margin-bottom:24px;">
         <div style="font-size:12px;color:#C2692A;font-weight:600;margin-bottom:8px;">💡 这样描述效果更好</div>
         <div style="font-size:13px;color:rgba(234,231,224,.7);line-height:1.7;">
-          ✓ "孩子写作业时，一说他错了就大哭，说不想活了"<br>
-          ✗ "孩子情绪很差，学习态度有问题"
+          ✓ "${guide.good}"<br>
+          ✗ "${guide.bad}"
         </div>
       </div>
       <button onclick="document.body.removeChild(this.closest('[style]').parentElement.tagName==='DIV'?this.closest('[style]').parentElement:this.closest('[style]'));localStorage.setItem('aipiwen_guided','1')" style="
