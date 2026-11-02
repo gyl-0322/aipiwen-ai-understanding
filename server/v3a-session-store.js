@@ -136,18 +136,22 @@ function requireJsonRequest(req) {
 }
 
 function readRequestBody(req) {
-  if (!req.body) return {};
-  if (typeof req.body === 'object' && !Array.isArray(req.body)) {
-    if (JSON.stringify(req.body).length > 10000) {
+  let source = req && req.body;
+  if (!source && req && (typeof req.rawBody === 'string' || Buffer.isBuffer(req.rawBody))) {
+    source = Buffer.isBuffer(req.rawBody) ? req.rawBody.toString('utf8') : req.rawBody;
+  }
+  if (!source) return {};
+  if (typeof source === 'object' && !Array.isArray(source)) {
+    if (JSON.stringify(source).length > 10000) {
       throw new HttpError(400, '请求内容无效。', 'INVALID_REQUEST_BODY');
     }
-    return req.body;
+    return source;
   }
-  if (typeof req.body !== 'string' || req.body.length > 10000) {
+  if (typeof source !== 'string' || source.length > 10000) {
     throw new HttpError(400, '请求内容无效。', 'INVALID_REQUEST_BODY');
   }
   try {
-    const body = JSON.parse(req.body);
+    const body = JSON.parse(source);
     if (!body || typeof body !== 'object' || Array.isArray(body)) throw new Error('invalid');
     return body;
   } catch {

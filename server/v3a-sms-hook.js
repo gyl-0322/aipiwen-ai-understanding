@@ -120,6 +120,12 @@ async function readRawBody(req) {
   if (Number.isFinite(declaredLength) && declaredLength > MAX_BODY_BYTES) {
     throw new HookError(413, 'PAYLOAD_TOO_LARGE');
   }
+  if (req && (typeof req.rawBody === 'string' || Buffer.isBuffer(req.rawBody))) {
+    const buffer = Buffer.isBuffer(req.rawBody) ? req.rawBody : Buffer.from(req.rawBody);
+    if (buffer.length > MAX_BODY_BYTES) throw new HookError(413, 'PAYLOAD_TOO_LARGE');
+    if (buffer.length === 0) throw new HookError(400, 'INVALID_REQUEST_BODY');
+    return buffer.toString('utf8');
+  }
   if (!req || typeof req[Symbol.asyncIterator] !== 'function') {
     throw new HookError(400, 'INVALID_REQUEST_BODY');
   }

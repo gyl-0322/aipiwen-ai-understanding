@@ -20,6 +20,7 @@
  */
 
 const { redisGet, redisSet, callClaude, MODEL_DEEP } = require('./_lib');
+const { readRawText } = require('../lib/read-request-body');
 
 // ── 合法纹型符号白名单 ──────────────────────────────────────────────────
 const VALID_SYMS = new Set([
@@ -226,22 +227,9 @@ module.exports = async function handler(req, res) {
 
   // 读取 body（最大 4MB，图片可能较大）
   let body = '';
-  let bodyBytes = 0;
   const MAX_BODY = 4 * 1024 * 1024;
   try {
-    await new Promise((resolve, reject) => {
-      req.on('data', chunk => {
-        bodyBytes += chunk.length;
-        if (bodyBytes > MAX_BODY) {
-          reject(Object.assign(new Error('BODY_TOO_LARGE'), { code: 413 }));
-          req.destroy();
-        } else {
-          body += chunk;
-        }
-      });
-      req.on('end', resolve);
-      req.on('error', reject);
-    });
+    body = await readRawText(req, MAX_BODY);
   } catch(e) {
     const code = e.code === 413 ? 413 : 500;
     return res.status(code).json({ ok: false, error: code === 413 ? '图片过大，请压缩后再试（建议 < 3MB）' : '请求读取失败' });

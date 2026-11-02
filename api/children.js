@@ -13,14 +13,15 @@
 
 const crypto = require('crypto');
 const { redisSet, redisGet, getOpenid, generatePortrait, portraitNeedsRefresh, getGlobalPatterns, archiveRecordsIfNeeded, searchKnowledge, callClaude, MODEL_FREE } = require('./_lib');
+const { readRawText } = require('../lib/read-request-body');
 
-function readBody(req) {
-  return new Promise((resolve, reject) => {
-    let body = '';
-    req.on('data', chunk => (body += chunk));
-    req.on('end',  () => { try { resolve(JSON.parse(body)); } catch { resolve({}); } });
-    req.on('error', reject);
-  });
+async function readBody(req) {
+  try {
+    return JSON.parse(await readRawText(req));
+  } catch (error) {
+    if (error instanceof SyntaxError) return {};
+    throw error;
+  }
 }
 
 module.exports = async function handler(req, res) {

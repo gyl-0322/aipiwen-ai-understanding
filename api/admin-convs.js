@@ -21,6 +21,7 @@
 
 const crypto = require('crypto');
 const { redisGet, redisSet } = require('./_lib');
+const { readRawText } = require('../lib/read-request-body');
 
 // ── 错误日志 Redis 工具（list 操作，直接调 Upstash HTTP）───────────────────────
 const kvUrl   = () => process.env.KV_REST_API_URL   || process.env.REDIS_URL  || '';
@@ -113,12 +114,8 @@ async function handleErrorLog(req, res) {
 
   if (req.method === 'POST') {
     try {
-      let parsed = req.body;
-      if (!parsed || typeof parsed === 'string') {
-        let raw = '';
-        await new Promise(r => { req.on('data', c => (raw += c)); req.on('end', r); });
-        try { parsed = JSON.parse(raw); } catch { parsed = {}; }
-      }
+      let parsed;
+      try { parsed = JSON.parse(await readRawText(req)); } catch { parsed = {}; }
       const { msg, stack, page, module: productModule, context, ua } = parsed || {};
       if (!msg) return res.status(400).json({ ok: false, error: 'msg required' });
       const entry = {
@@ -167,10 +164,8 @@ async function handleStats(req, res) {
   if (req.method === 'OPTIONS') return res.status(204).end();
 
   if (req.method === 'POST') {
-    let body = '';
-    await new Promise(resolve => { req.on('data', c => (body += c)); req.on('end', resolve); });
     let payload = {};
-    try { payload = JSON.parse(body); } catch {}
+    try { payload = JSON.parse(await readRawText(req)); } catch {}
     const { event } = payload;
     if (!event?.trim()) return res.status(400).json({ error: 'event 必填' });
     const date     = statsToday();
@@ -367,8 +362,8 @@ async function handleKnowledge(req, res) {
 
   if (action === 'load' && req.method === 'POST') {
     if (!knowledgeIsAdmin(req)) return res.status(401).json({ error: '未授权' });
-    let b = '';
-    const body = await new Promise(resolve => { req.on('data', c => (b += c)); req.on('end', () => { try { resolve(JSON.parse(b)); } catch { resolve({}); } }); });
+    let body = {};
+    try { body = JSON.parse(await readRawText(req)); } catch { body = {}; }
     const incoming = body.chunks || [];
     if (!Array.isArray(incoming) || incoming.length === 0) return res.status(400).json({ error: 'chunks 数组不能为空' });
     const existing = await redisGet('knowledge:chunks') || [];

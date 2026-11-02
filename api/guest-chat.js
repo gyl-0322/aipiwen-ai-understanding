@@ -8,6 +8,7 @@
  */
 
 const { getGlobalPatterns, redisSet, redisGet, creditReferral, callClaude, MODEL_FREE, MODEL_DEEP } = require('./_lib');
+const { readRawText } = require('../lib/read-request-body');
 
 // ★ 免费对话轮数上限（超过提示升级，既控成本又软付费触发）
 const MAX_FREE_ROUNDS = 10;
@@ -29,12 +30,10 @@ async function handleLogSession(req, res) {
 
   let payload;
   try {
-    payload = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
+    payload = JSON.parse(await readRawText(req));
     if (!payload || typeof payload !== 'object') throw new Error('no payload');
   } catch {
-    let raw = '';
-    await new Promise(r => { req.on('data', c => (raw += c)); req.on('end', r); });
-    try { payload = JSON.parse(raw); } catch { return res.status(400).json({ error: 'Invalid JSON' }); }
+    return res.status(400).json({ error: 'Invalid JSON' });
   }
 
   const { sessionId, context, summary, detail } = payload || {};
@@ -195,22 +194,9 @@ module.exports = async function handler(req, res) {
 
   // P0: 请求体大小限制（Vision 请求含图片，2MB；普通请求 50KB）
   let body = '';
-  let bodyBytes = 0;
   const MAX_BODY = 2 * 1024 * 1024; // 2MB
   try {
-    await new Promise((resolve, reject) => {
-      req.on('data', chunk => {
-        bodyBytes += chunk.length;
-        if (bodyBytes > MAX_BODY) {
-          reject(Object.assign(new Error('BODY_TOO_LARGE'), { statusCode: 413 }));
-          req.destroy();
-        } else {
-          body += chunk;
-        }
-      });
-      req.on('end', resolve);
-      req.on('error', reject);
-    });
+    body = await readRawText(req, MAX_BODY);
   } catch(e) {
     if (e.statusCode === 413) {
       return res.status(413).json({ error: '请求体过大，图片请先压缩后再上传' });
@@ -749,12 +735,7 @@ async function handleSynthesize(req, res) {
   if (count >= 3) return res.status(429).json({ error: '请求过于频繁，请稍后再试' });
   await redisSet(rlKey, count + 1, 120);
 
-  let body = '';
-  await new Promise((resolve, reject) => {
-    req.on('data', c => (body += c));
-    req.on('end', resolve);
-    req.on('error', reject);
-  });
+  const body = await readRawText(req);
 
   let payload = {};
   try { payload = JSON.parse(body); } catch {}
