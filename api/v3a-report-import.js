@@ -12,6 +12,7 @@
 
 const crypto = require('crypto');
 const TRCEngine = require('../lib/trc-engine');
+const { readRawBuffer } = require('../lib/read-request-body');
 const {
   HttpError,
   getConfig,
@@ -114,34 +115,14 @@ async function readRawBody(req, limit) {
   if (Number.isFinite(declared) && declared > limit) {
     throw new HttpError(413, '请求内容过大。', 'REQUEST_TOO_LARGE');
   }
-  if (Buffer.isBuffer(req.body)) {
-    if (req.body.length > limit) throw new HttpError(413, '请求内容过大。', 'REQUEST_TOO_LARGE');
-    return req.body;
+  try {
+    return await readRawBuffer(req, limit);
+  } catch (error) {
+    if (error && (error.code === 413 || error.statusCode === 413)) {
+      throw new HttpError(413, '请求内容过大。', 'REQUEST_TOO_LARGE');
+    }
+    throw new HttpError(400, '请求内容无法读取。', 'INVALID_REQUEST_BODY');
   }
-  if (typeof req.body === 'string') {
-    const body = Buffer.from(req.body);
-    if (body.length > limit) throw new HttpError(413, '请求内容过大。', 'REQUEST_TOO_LARGE');
-    return body;
-  }
-  if (req.body && typeof req.body === 'object') {
-    const body = Buffer.from(JSON.stringify(req.body));
-    if (body.length > limit) throw new HttpError(413, '请求内容过大。', 'REQUEST_TOO_LARGE');
-    return body;
-  }
-  return new Promise((resolve, reject) => {
-    const chunks = [];
-    let size = 0;
-    req.on('data', (chunk) => {
-      size += chunk.length;
-      if (size > limit) {
-        reject(new HttpError(413, '请求内容过大。', 'REQUEST_TOO_LARGE'));
-        return;
-      }
-      chunks.push(chunk);
-    });
-    req.on('end', () => resolve(Buffer.concat(chunks)));
-    req.on('error', () => reject(new HttpError(400, '请求内容无法读取。', 'INVALID_REQUEST_BODY')));
-  });
 }
 
 async function readJsonBody(req) {

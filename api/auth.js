@@ -19,6 +19,7 @@
 const crypto = require('crypto');
 const { redisSet, redisGet, makeSessionToken, getSessionToken, parseSessionToken, registerUser,
         createInviteToken, creditReferral } = require('./_lib');
+const { readRawText } = require('../lib/read-request-body');
 
 const APPID        = process.env.WECHAT_OPEN_APPID || 'wxcd1f11f34b4cf731';
 const SECRET       = process.env.WECHAT_OPEN_SECRET || '';
@@ -60,12 +61,7 @@ function wxVerifySig(token, timestamp, nonce, sig) {
   return sha1 === sig;
 }
 function wxReadBody(req) {
-  return new Promise((resolve, reject) => {
-    let b = '';
-    req.on('data', c => (b += c));
-    req.on('end', () => resolve(b));
-    req.on('error', reject);
-  });
+  return readRawText(req);
 }
 function wxDecodeReport(text) {
   const m = text.match(/[?&]r=([A-Za-z0-9+/=_%-]+)/);
@@ -349,13 +345,7 @@ module.exports = async function handler(req, res) {
 
     let body = {};
     try {
-      const raw = await new Promise((resolve, reject) => {
-        let d = '';
-        req.on('data', c => { d += c; });
-        req.on('end', () => resolve(d));
-        req.on('error', reject);
-      });
-      body = JSON.parse(raw);
+      body = JSON.parse(await readRawText(req));
     } catch(e) { return res.status(400).json({ error: '请求体格式错误' }); }
 
     const oldOpenid = body.oldOpenid;

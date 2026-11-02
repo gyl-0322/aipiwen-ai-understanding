@@ -10,6 +10,7 @@
 
 const crypto = require('crypto');
 const { redisGet, redisSet, creditReferral, callClaude, MODEL_DEEP, MODEL_FREE, getOpenid } = require('./_lib');
+const { readRawText } = require('../lib/read-request-body');
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const ATTRIBUTION_TOKEN_PATTERN = /^[0-9a-f]{32}$/;
@@ -1158,17 +1159,7 @@ async function handleReportStore(req, res) {
     const MAX_BODY = 500 * 1024;
     let body;
     try {
-      const raw = await new Promise((resolve, reject) => {
-        let data = ''; let bytes = 0;
-        req.on('data', chunk => {
-          bytes += chunk.length;
-          if (bytes > MAX_BODY) { reject(Object.assign(new Error('BODY_TOO_LARGE'), { code: 413 })); req.destroy(); }
-          else data += chunk;
-        });
-        req.on('end', () => resolve(data));
-        req.on('error', reject);
-      });
-      body = JSON.parse(raw);
+      body = JSON.parse(await readRawText(req, MAX_BODY));
     } catch(e) {
       const code = e.code === 413 ? 413 : 400;
       return res.status(code).json({ ok: false, error: code === 413 ? '报告数据过大' : '请求体格式错误' });
@@ -1292,12 +1283,7 @@ module.exports = async function handler(req, res) {
   }
 
   // 读 body
-  let body = '';
-  await new Promise((resolve, reject) => {
-    req.on('data', c => { body += c; });
-    req.on('end', resolve);
-    req.on('error', reject);
-  });
+  const body = await readRawText(req);
 
   let payload = {};
   try { payload = JSON.parse(body); } catch {
